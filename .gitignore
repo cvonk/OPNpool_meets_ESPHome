@@ -1,3 +1,4 @@
 secrets.yaml
 .esphome/
 components/opnpool/__pycache__/
+components/opnpool/__pycache__/*.pyc

@@ -11,108 +11,127 @@
 namespace esphome {
 namespace opnpool {
 
+enum OpnPoolDebugLevel {
+  DEBUG_NONE = 0,
+  DEBUG_ERROR = 1,
+  DEBUG_WARN = 2,
+  DEBUG_INFO = 3,
+  DEBUG_DEBUG = 4,
+  DEBUG_VERBOSE = 5
+};
 class OpnPool; // Forward declaration for parent referencing
 
-// --- Climate Entity ---
+// climate entity
 
-class OpnPoolClimate : public climate::Climate {
- public:
-  climate::ClimateTraits traits() override;
-  void control(const climate::ClimateCall &call) override;
-  
-  void set_parent(OpnPool *parent) { this->parent_ = parent; }
+class OpnPoolClimate : public esphome::climate::Climate {
+  public:
+    esphome::climate::ClimateTraits traits() override;
+    void control(const esphome::climate::ClimateCall &call) override;  
+    void set_parent(OpnPool *parent) { this->parent_ = parent; }
 
- protected:
-  OpnPool *parent_{nullptr};
+  protected:
+    OpnPool *parent_{nullptr};
 };
 
-// --- Switch Entity ---
-class OpnPoolSwitch : public switch_::Switch {
+// switch entity
+
+class OpnPoolSwitch : public esphome::switch_::Switch {
  protected:
   void write_state(bool state) override { this->publish_state(state); }
 };
 
-// --- Main Component ---
+// main component
 
 class OpnPool : public Component, public uart::UARTDevice {
- public:
-  void setup() override;
-  void loop() override;
-  void dump_config() override;
+  public:
+    void setup() override;
+    void loop() override;
+    void dump_config() override;
 
-  // Climate Setters
-  void set_pool_heater(OpnPoolClimate *c) { 
-    pool_heater_ = c; 
-    c->set_parent(this); 
-  }
-  void set_spa_heater(OpnPoolClimate *c) { 
-    spa_heater_ = c; 
-    c->set_parent(this); 
-  }
+    // climate setters
+    void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; c->set_parent(this); }
+    void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; c->set_parent(this); }
 
-  void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
+    // switch setters
+    void set_pool_switch(switch_::Switch *s) { pool_sw_ = s; }
+    void set_spa_switch(switch_::Switch *s) { spa_sw_ = s; }
+    void set_aux1_switch(switch_::Switch *s) { aux1_sw_ = s; }
+    void set_aux2_switch(switch_::Switch *s) { aux2_sw_ = s; }
+    void set_feature1_switch(switch_::Switch *s) { feature1_sw_ = s; }
+    void set_feature2_switch(switch_::Switch *s) { feature2_sw_ = s; }
+    void set_feature3_switch(switch_::Switch *s) { feature3_sw_ = s; }
+    void set_feature4_switch(switch_::Switch *s) { feature4_sw_ = s; }
 
-  // Switch Setters
-  void set_pool_switch(switch_::Switch *s) { pool_sw_ = s; }
-  void set_spa_switch(switch_::Switch *s) { spa_sw_ = s; }
-  void set_aux1_switch(switch_::Switch *s) { aux1_sw_ = s; }
-  void set_aux2_switch(switch_::Switch *s) { aux2_sw_ = s; }
-  void set_flt1_switch(switch_::Switch *s) { flt1_sw_ = s; }
-  void set_flt2_switch(switch_::Switch *s) { flt2_sw_ = s; }
-  void set_flt3_switch(switch_::Switch *s) { flt3_sw_ = s; }
-  void set_flt4_switch(switch_::Switch *s) { flt4_sw_ = s; }
+    // analog sensor setters
+    void set_air_temperature_sensor(sensor::Sensor *s) { air_temp_s_ = s; }
+    void set_water_temperature_sensor(sensor::Sensor *s) { water_temp_s_ = s; }
+    void set_pump_power_sensor(sensor::Sensor *s) { pump_power_s_ = s; }
+    void set_pump_flow_sensor(sensor::Sensor *s) { pump_flow_s_ = s; }
+    void set_pump_speed_sensor(sensor::Sensor *s) { pump_speed_s_ = s; }
+    void set_chlorinator_percentage_sensor(sensor::Sensor *s) { chlor_pct_s_ = s; }
+    void set_chlorinator_salt_sensor(sensor::Sensor *s) { chlor_salt_s_ = s; }
+    void set_pump_status_sensor(sensor::Sensor *s) { pump_status_s_ = s; }
+    void set_pump_state_sensor(sensor::Sensor *s) { pump_state_s_ = s; }
+    void set_pump_error_sensor(sensor::Sensor *s) { pump_error_s_ = s; }
+    void set_chlorinator_status_sensor(sensor::Sensor *s) { chlor_status_s_ = s; }
 
-  // Analog Sensor Setters
-  void set_air_temperature_sensor(sensor::Sensor *s) { air_temp_s_ = s; }
-  void set_water_temperature_sensor(sensor::Sensor *s) { water_temp_s_ = s; }
-  void set_pump_power_sensor(sensor::Sensor *s) { pump_power_s_ = s; }
-  void set_pump_flow_sensor(sensor::Sensor *s) { pump_flow_s_ = s; }
-  void set_pump_speed_sensor(sensor::Sensor *s) { pump_speed_s_ = s; }
-  void set_chlorinator_percentage_sensor(sensor::Sensor *s) { chlor_pct_s_ = s; }
-  void set_chlorinator_salt_sensor(sensor::Sensor *s) { chlor_salt_s_ = s; }
-  void set_pump_status_sensor(sensor::Sensor *s) { pump_status_s_ = s; }
-  void set_pump_state_sensor(sensor::Sensor *s) { pump_state_s_ = s; }
-  void set_pump_error_sensor(sensor::Sensor *s) { pump_error_s_ = s; }
-  void set_chlorinator_status_sensor(sensor::Sensor *s) { chlor_status_s_ = s; }
+    // text sensor setters
+    void set_pool_sched_text_sensor(text_sensor::TextSensor *s) { pool_sched_ts_ = s; }
+    void set_spa_sched_text_sensor(text_sensor::TextSensor *s) { spa_sched_ts_ = s; }
+    void set_aux1_sched_text_sensor(text_sensor::TextSensor *s) { aux1_sched_ts_ = s; }
+    void set_aux2_sched_text_sensor(text_sensor::TextSensor *s) { aux2_sched_ts_ = s; }
+    void set_system_time_text_sensor(text_sensor::TextSensor *s) { system_time_ts_ = s; }
+    void set_controller_firmware_version_text_sensor(text_sensor::TextSensor *s) { controller_fw_ts_ = s; }
+    void set_interface_firmware_version_text_sensor(text_sensor::TextSensor *s) { interface_fw_ts_ = s; }
+    void set_pump_mode_text_sensor(text_sensor::TextSensor *s) { pump_mode_ts_ = s; }
+    void set_chlorinator_name_text_sensor(text_sensor::TextSensor *s) { chlor_name_ts_ = s; }
 
-  // Text Sensor Setters
-  void set_pool_sched_text_sensor(text_sensor::TextSensor *s) { pool_sched_ts_ = s; }
-  void set_spa_sched_text_sensor(text_sensor::TextSensor *s) { spa_sched_ts_ = s; }
-  void set_aux1_sched_text_sensor(text_sensor::TextSensor *s) { aux1_sched_ts_ = s; }
-  void set_aux2_sched_text_sensor(text_sensor::TextSensor *s) { aux2_sched_ts_ = s; }
-  void set_system_time_text_sensor(text_sensor::TextSensor *s) { system_time_ts_ = s; }
-  void set_controller_firmware_version_text_sensor(text_sensor::TextSensor *s) { controller_fw_ts_ = s; }
-  void set_interface_firmware_version_text_sensor(text_sensor::TextSensor *s) { interface_fw_ts_ = s; }
-  void set_pump_mode_text_sensor(text_sensor::TextSensor *s) { pump_mode_ts_ = s; }
-  void set_chlorinator_name_text_sensor(text_sensor::TextSensor *s) { chlor_name_ts_ = s; }
+    // binary sensor setters
+    void set_pump_running_binary_sensor(binary_sensor::BinarySensor *s) { pump_running_bs_ = s; }
+    void set_mode_service_binary_sensor(binary_sensor::BinarySensor *s) { mode_service_bs_ = s; }
+    void set_mode_temperature_inc_binary_sensor(binary_sensor::BinarySensor *s) { mode_temp_inc_bs_ = s; }
+    void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
+    void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
+    
+    // debug level setters
+    void set_datalink_debug(OpnPoolDebugLevel level) { datalink_level_ = level; }
+    void set_network_debug(OpnPoolDebugLevel level) { network_level_ = level; }
+    void set_pool_state_debug(OpnPoolDebugLevel level) { pool_state_level_ = level; }
+    void set_pool_task_debug(OpnPoolDebugLevel level) { pool_task_level_ = level; }
+    void set_mqtt_task_debug(OpnPoolDebugLevel level) { mqtt_task_level_ = level; }
+    void set_hass_task_debug(OpnPoolDebugLevel level) { hass_task_level_ = level; }
 
-  // Binary Sensor Setters
-  void set_pump_running_binary_sensor(binary_sensor::BinarySensor *s) { pump_running_bs_ = s; }
-  void set_mode_service_binary_sensor(binary_sensor::BinarySensor *s) { mode_service_bs_ = s; }
-  void set_mode_temperature_inc_binary_sensor(binary_sensor::BinarySensor *s) { mode_temp_inc_bs_ = s; }
-  void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
-  void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
-  
- protected:
-  void parse_packet_(const std::vector<uint8_t> &data);
+    void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
-  // Member Pointers
-  OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};
-  switch_::Switch *pool_sw_{nullptr}, *spa_sw_{nullptr}, *aux1_sw_{nullptr}, *aux2_sw_{nullptr};
-  switch_::Switch *flt1_sw_{nullptr}, *flt2_sw_{nullptr}, *flt3_sw_{nullptr}, *flt4_sw_{nullptr};
+  protected:
+    void parse_packet_(const std::vector<uint8_t> &data);
 
-  sensor::Sensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
-  sensor::Sensor *pump_speed_s_{nullptr}, *chlor_pct_s_{nullptr}, *chlor_salt_s_{nullptr};
-  sensor::Sensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr}, *chlor_status_s_{nullptr};
+    std::vector<uint8_t> rx_buffer_;
 
-  text_sensor::TextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
-  text_sensor::TextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
-  text_sensor::TextSensor *pump_mode_ts_{nullptr}, *chlor_name_ts_{nullptr};
+    // debug levels
+    OpnPoolDebugLevel datalink_level_{DEBUG_INFO};
+    OpnPoolDebugLevel network_level_{DEBUG_INFO};
+    OpnPoolDebugLevel pool_state_level_{DEBUG_INFO};
+    OpnPoolDebugLevel pool_task_level_{DEBUG_INFO};
+    OpnPoolDebugLevel mqtt_task_level_{DEBUG_INFO};
+    OpnPoolDebugLevel hass_task_level_{DEBUG_INFO};    
+    bool should_log_(OpnPoolDebugLevel module_level, OpnPoolDebugLevel check_level) { return module_level >= check_level; }    
 
-  binary_sensor::BinarySensor *pump_running_bs_{nullptr}, *mode_service_bs_{nullptr}, *mode_temp_inc_bs_{nullptr};
-  binary_sensor::BinarySensor *mode_freeze_bs_{nullptr}, *mode_timeout_bs_{nullptr};
+    // member pointers
+    OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};
+    switch_::Switch *pool_sw_{nullptr}, *spa_sw_{nullptr}, *aux1_sw_{nullptr}, *aux2_sw_{nullptr};
+    switch_::Switch *feature1_sw_{nullptr}, *feature2_sw_{nullptr}, *feature3_sw_{nullptr}, *feature4_sw_{nullptr};
 
-  std::vector<uint8_t> rx_buffer_;
+    sensor::Sensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
+    sensor::Sensor *pump_speed_s_{nullptr}, *chlor_pct_s_{nullptr}, *chlor_salt_s_{nullptr};
+    sensor::Sensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr}, *chlor_status_s_{nullptr};
+
+    text_sensor::TextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
+    text_sensor::TextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
+    text_sensor::TextSensor *pump_mode_ts_{nullptr}, *chlor_name_ts_{nullptr};
+
+    binary_sensor::BinarySensor *pump_running_bs_{nullptr}, *mode_service_bs_{nullptr}, *mode_temp_inc_bs_{nullptr};
+    binary_sensor::BinarySensor *mode_freeze_bs_{nullptr}, *mode_timeout_bs_{nullptr};
 };
 
 } // namespace opnpool

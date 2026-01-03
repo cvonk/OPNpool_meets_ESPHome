@@ -39,16 +39,30 @@ CONF_BINARY_SENSORS = [
     "pump_running", "mode_service", "mode_temperature_inc", 
     "mode_freeze_protection", "mode_timeout"
 ]
+# granular control of debug levels
+CONF_DEBUG_MODULES = [
+    "datalink", "network", "pool_state",
+    "pool_task", "mqtt_task", "hass_task"
+]
+DEBUG_LEVELS = {
+    "NONE": opnpool_ns.DEBUG_NONE,
+    "ERROR": opnpool_ns.DEBUG_ERROR,
+    "WARN": opnpool_ns.DEBUG_WARN,
+    "INFO": opnpool_ns.DEBUG_INFO,
+    "DEBUG": opnpool_ns.DEBUG_DEBUG,
+    "VERBOSE": opnpool_ns.DEBUG_VERBOSE,
+}
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
     cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
-
-    **{cv.Optional(h): climate.climate_schema(OpnPoolClimate) for h in CONF_HEATERS},
-    **{cv.Optional(s): switch.switch_schema(OpnPoolSwitch) for s in CONF_SWITCHES},
-    **{cv.Optional(ts): text_sensor.text_sensor_schema() for ts in CONF_TEXT_SENSORS},
-    **{cv.Optional(sensor_key): sensor.sensor_schema() for sensor_key in CONF_ANALOG_SENSORS},
-    **{cv.Optional(bs): binary_sensor.binary_sensor_schema() for bs in CONF_BINARY_SENSORS},
+    **{cv.Optional(key): climate.climate_schema(OpnPoolClimate) for key in CONF_HEATERS},
+    **{cv.Optional(key): switch.switch_schema(OpnPoolSwitch) for key in CONF_SWITCHES},
+    **{cv.Optional(key): text_sensor.text_sensor_schema() for key in CONF_TEXT_SENSORS},
+    **{cv.Optional(key): sensor.sensor_schema() for key in CONF_ANALOG_SENSORS},
+    **{cv.Optional(key): binary_sensor.binary_sensor_schema() for key in CONF_BINARY_SENSORS},
+    **{cv.Optional(f"{key}_debug", default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) 
+       for key in CONF_DEBUG_MODULES},
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
@@ -57,11 +71,10 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    # link the C++ class to the UART-bus
+    # link OpnPool component to the UART-bus
     await uart.register_uart_device(var, config)
 
-    # climate registration
-    for heater in ["pool_heater", "spa_heater"]:
+    for heater in CONF_HEATERS:
         if heater in config:
             clm = cg.new_Pvariable(config[heater][CONF_ID])
             await climate.register_climate(clm, config[heater])
@@ -73,12 +86,12 @@ async def to_code(config):
             await switch.register_switch(sw, config[key])
             cg.add(getattr(var, f"set_{key}_switch")(sw))
 
-    for sensor_key in CONF_ANALOG_SENSORS:
-        if sensor_key in config:
-            # Create the sensor object with all YAML settings (device_class, units, etc.)
-            sens = await sensor.new_sensor(config[sensor_key])
-            # Call the corresponding C++ setter: e.g., var->set_water_temperature_sensor(sens)
-            cg.add(getattr(var, f"set_{sensor_key}_sensor")(sens))
+    for key in CONF_ANALOG_SENSORS:
+        if key in config:
+            # create the sensor object with YAML-settings (device_class, units, etc.)
+            sens = await sensor.new_sensor(config[key])
+            # call the corresponding C++ setter: e.g., var->set_water_temperature_sensor(sens)
+            cg.add(getattr(var, f"set_{key}_sensor")(sens))
     for key in CONF_TEXT_SENSORS:
         if key in config:
             tsens = await text_sensor.new_text_sensor(config[key])
@@ -88,3 +101,8 @@ async def to_code(config):
         if key in config:
             bsens = await binary_sensor.new_binary_sensor(config[key])
             cg.add(getattr(var, f"set_{key}_binary_sensor")(bsens))
+
+    for m in CONF_DEBUG_MODULES:
+        conf_key = f"{m}_debug"
+        if conf_key in config:
+            cg.add(getattr(var, f"set_{m}_debug")(config[conf_key]))            

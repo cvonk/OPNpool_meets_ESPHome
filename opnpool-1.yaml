@@ -123,3 +123,8 @@ opnpool:
     name: "Main Board Firmware"
   interface_firmware_version:
     name: "Interface Board Firmware"
+
+  datalink_debug: VERBOSE
+  pool_task_debug: DEBUG
+  mqtt_task_debug: WARN
+  # Others default to INFO
