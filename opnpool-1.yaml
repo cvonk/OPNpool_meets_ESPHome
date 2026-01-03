@@ -63,27 +63,63 @@ uart:
   rx_pin: GPIO16
   flow_control_pin: GPIO4
   baud_rate: 9600
-  debug: # You can even see the raw RS485 traffic in logs!
+  debug:
     direction: BOTH
 
 opnpool:
   uart_id: uart_bus
+
   pool_heater:
     name: "Pool Heater"
   spa_heater:
     name: "Spa Heater"
   
-  pool: { name: "Pool Mode" }
-  spa: { name: "Spa Mode" }
-  aux1: { name: "Cleaner" }
-  aux2: { name: "Waterfall" }
+  pool:
+    name: "Pool Mode"
+  spa:
+    name: "Spa Mode"
+  aux1:
+    name: "Vacuum"
+  aux2:
+    name: "Light"
+
+  water_temperature:
+    name: "Pool water"
+    device_class: "temperature"
+    unit_of_measurement: "°F"
+  air_temperature:
+    name: "Outside air"
+    device_class: "temperature"
+    unit_of_measurement: "°F"
+  pump_power:
+    name: "Pump power"
+    unit_of_measurement: "W"
+  pump_flow:
+    name: "Pump flow"
+    unit_of_measurement: "gpm"
+  pump_speed:
+    name: "Pump speed"
+    unit_of_measurement: "rpm"
+  pump_status:
+    name: "Pump Status"
+  pump_state:
+    name: "Pump State"
+  pump_error:
+    name: "Pump Error"
+  pump_running:
+    name: "Pump Running"
+  chlorinator_percentage:
+    name: "Chlorinator percentage"
+    unit_of_measurement: "%"
+  chlorinator_salt:
+    name: "Chlorinator salt"
+    unit_of_measurement: "ppm"
+  chlorinator_status:
+    name: "Chlorinator Status"
   
-  water_temperature: { name: "Pool Water Temperature" }
-  air_temperature: { name: "Outside Air Temperature" }
-  
-  pump_power: { name: "Pump Power" }
-  pump_flow: { name: "Pump Flow" }
-  pump_running: { name: "Pump Is Running" }
-  
-  system_time: { name: "Controller System Time" }
-  controller_firmware_version: { name: "Main Board Firmware" }
+  system_time:
+    name: "Controller System Time"
+  controller_firmware_version:
+    name: "Main Board Firmware"
+  interface_firmware_version:
+    name: "Interface Board Firmware"
