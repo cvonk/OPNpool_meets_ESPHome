@@ -57,7 +57,17 @@ external_components:
       type: local
       path: components
 
+uart:
+  id: uart_bus
+  tx_pin: GPIO17
+  rx_pin: GPIO16
+  flow_control_pin: GPIO4
+  baud_rate: 9600
+  debug: # You can even see the raw RS485 traffic in logs!
+    direction: BOTH
+
 opnpool:
+  uart_id: uart_bus
   pool_heater:
     name: "Pool Heater"
   spa_heater:

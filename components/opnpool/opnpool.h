@@ -1,5 +1,6 @@
 #pragma once
 #include "esphome/core/component.h"
+#include "esphome/components/uart/uart.h"
 #include "esphome/components/climate/climate.h"
 #include "esphome/components/switch/switch.h"
 #include "esphome/components/sensor/sensor.h"
@@ -13,16 +14,15 @@ namespace opnpool {
 class OpnPool; // Forward declaration for parent referencing
 
 // --- Climate Entity ---
+
 class OpnPoolClimate : public climate::Climate {
  public:
   climate::ClimateTraits traits() override;
   void control(const climate::ClimateCall &call) override;
   
-  // FIX: Added set_parent
   void set_parent(OpnPool *parent) { this->parent_ = parent; }
 
  protected:
-  // FIX: Added parent_ member
   OpnPool *parent_{nullptr};
 };
 
@@ -33,7 +33,8 @@ class OpnPoolSwitch : public switch_::Switch {
 };
 
 // --- Main Component ---
-class OpnPool : public Component {
+
+class OpnPool : public Component, public uart::UARTDevice {
  public:
   void setup() override;
   void loop() override;
@@ -48,6 +49,8 @@ class OpnPool : public Component {
     spa_heater_ = c; 
     c->set_parent(this); 
   }
+
+  void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
   // Switch Setters
   void set_pool_switch(switch_::Switch *s) { pool_sw_ = s; }
@@ -89,12 +92,8 @@ class OpnPool : public Component {
   void set_mode_temperature_inc_binary_sensor(binary_sensor::BinarySensor *s) { mode_temp_inc_bs_ = s; }
   void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
   void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
-
-  // Communication Methods
-  void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
-
+  
  protected:
-  void process_byte_(uint8_t byte);
   void parse_packet_(const std::vector<uint8_t> &data);
 
   // Member Pointers

@@ -1,13 +1,14 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import switch, sensor, binary_sensor, text_sensor, climate
+from esphome.components import uart, switch, sensor, binary_sensor, text_sensor, climate
 from esphome.const import (
-    CONF_ID, UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT
+    CONF_ID, CONF_UART_ID, UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT
 )
 
 DEPENDENCIES = ["switch", "sensor", "binary_sensor", "text_sensor", "climate"]
 AUTO_LOAD = ["switch", "sensor", "binary_sensor", "text_sensor", "climate"]
 
+# Namespace and Class Definitions
 opnpool_ns = cg.esphome_ns.namespace("opnpool")
 OpnPool = opnpool_ns.class_("OpnPool", cg.Component)
 OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch)
@@ -33,6 +34,7 @@ CONF_BINARY_SENSORS = [
 
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
+    cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
     cv.Optional("pool_heater"): climate.climate_schema(OpnPoolClimate),
     cv.Optional("spa_heater"): climate.climate_schema(OpnPoolClimate),
     **{cv.Optional(s): switch.switch_schema(OpnPoolSwitch) for s in CONF_SWITCHES},
@@ -46,13 +48,16 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
+    # link the C++ class to the UART-bus and handle the direction pin
+    await uart.register_uart_device(var, config)
+
     # Climate Registration
     for heater in ["pool_heater", "spa_heater"]:
         if heater in config:
             clm = cg.new_Pvariable(config[heater][CONF_ID])
             await climate.register_climate(clm, config[heater])
             cg.add(getattr(var, f"set_{heater}")(clm))
-            
+
     for key in CONF_SWITCHES:
         if key in config:
             sw = cg.new_Pvariable(config[key][CONF_ID])

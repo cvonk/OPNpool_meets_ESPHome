@@ -51,34 +51,52 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
   this->publish_state();
 }
 
-// --- RS485 Write Logic ---
+
+void OpnPool::setup() {
+  // No manual serial initialization needed; UARTDevice handles it.
+}
+
+void OpnPool::loop() {
+  while (this->available()) {
+    uint8_t byte;
+    this->read_byte(&byte);
+    this->rx_buffer_.push_back(byte);
+
+    // Header Sync (0xFF 0xAA)
+    if (this->rx_buffer_.size() > 0 && this->rx_buffer_[0] != 0xFF) {
+      this->rx_buffer_.clear();
+      continue;
+    }
+    if (this->rx_buffer_.size() > 1 && this->rx_buffer_[1] != 0xAA) {
+      this->rx_buffer_.erase(this->rx_buffer_.begin());
+      continue;
+    }
+
+    if (this->rx_buffer_.size() < 4) continue;
+    uint8_t len = this->rx_buffer_[2];
+
+    if (this->rx_buffer_.size() < (size_t)(len + 6)) continue;
+
+    this->parse_packet_(this->rx_buffer_);
+    this->rx_buffer_.clear();
+  }
+}
 
 void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload) {
   std::vector<uint8_t> pkt;
-  pkt.push_back(0xFF); // Header
-  pkt.push_back(0xAA); // Header
-  pkt.push_back(payload.size()); // Length
+  pkt.push_back(0xFF); pkt.push_back(0xAA);
+  pkt.push_back((uint8_t)payload.size());
   pkt.push_back(command);
-  
   for (uint8_t b : payload) pkt.push_back(b);
 
-  // Checksum: Simple sum of Len + Cmd + Data
-  uint16_t checksum = pkt[2] + pkt[3];
-  for (uint8_t b : payload) checksum += b;
-  
-  pkt.push_back((uint8_t)(checksum >> 8));   // MSB
-  pkt.push_back((uint8_t)(checksum & 0xFF)); // LSB
+  uint16_t crc = pkt[2] + pkt[3];
+  for (uint8_t b : payload) crc += b;
+  pkt.push_back((uint8_t)(crc >> 8));
+  pkt.push_back((uint8_t)(crc & 0xFF));
 
-  // Since UART was removed, log the packet. 
-  // Replace this with your actual hardware write call (e.g., Serial.write).
-  ESP_LOGD(TAG, "Sending Packet: %s", format_hex_pretty(pkt).c_str());
+  // This automatically handles the RS485 Direction/RE/DE pin
+  this->write_array(pkt);
 }
-
-// --- Existing RS485 Loop/Parse Logic ---
-
-void OpnPool::setup() { ESP_LOGCONFIG(TAG, "OpnPool Initialized"); }
-
-void OpnPool::loop() { /* Feed process_byte_ here */ }
 
 void OpnPool::dump_config() {
   ESP_LOGCONFIG(TAG, "OpnPool:");
@@ -101,35 +119,35 @@ void OpnPool::dump_config() {
   
   // Log Text Sensors
   LOG_TEXT_SENSOR("  ", "System Time", this->system_time_ts_);
-}
-
-void OpnPool::process_byte_(uint8_t byte) {
-  this->rx_buffer_.push_back(byte);
-  if (this->rx_buffer_.size() > 0 && this->rx_buffer_[0] != 0xFF) {
-    this->rx_buffer_.clear();
-    return;
-  }
-  if (this->rx_buffer_.size() > 1 && this->rx_buffer_[1] != 0xAA) {
-    this->rx_buffer_.erase(this->rx_buffer_.begin());
-    return;
-  }
-  if (this->rx_buffer_.size() < 4) return;
-  uint8_t len = this->rx_buffer_[2];
-  if (this->rx_buffer_.size() < (size_t)(len + 6)) return;
-
-  this->parse_packet_(this->rx_buffer_);
-  this->rx_buffer_.clear();
+  ESP_LOGCONFIG(TAG, "OpnPool (UART Device)");
+  this->check_uart_settings(9600); // Verify baud rate in logs
 }
 
 void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
   uint8_t cmd = data[3];
+
+  // Assuming Command 0x01 is the status update containing temperature at index 5
   if (cmd == 0x01 && data.size() > 5) {
-    float temp = data[5];
-    if (this->water_temp_s_) this->water_temp_s_->publish_state(temp);
-    if (this->pool_heater_) {
-      this->pool_heater_->current_temperature = temp;
+    float current_temp = data[5];
+
+    // 1. Update the standalone Water Temperature sensor
+    if (this->water_temp_s_ != nullptr) {
+      this->water_temp_s_->publish_state(current_temp);
+    }
+
+    // 2. Feed temperature into Pool Heater climate
+    if (this->pool_heater_ != nullptr) {
+      this->pool_heater_->current_temperature = current_temp;
       this->pool_heater_->publish_state();
     }
+
+    // 3. Feed temperature into Spa Heater climate
+    if (this->spa_heater_ != nullptr) {
+      this->spa_heater_->current_temperature = current_temp;
+      this->spa_heater_->publish_state();
+    }
+    
+    ESP_LOGD(TAG, "Updated temperature to: %.1f°C", current_temp);
   }
 }
 
