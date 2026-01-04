@@ -73,6 +73,7 @@ CONF_DEBUG_MODULES = [
     "mqtt_task",
     "hass_task"
 ]
+CONF_DEBUG = "debug"
 DEBUG_LEVELS = {
     "NONE": opnpool_ns.DEBUG_LEVEL_NONE,
     "ERROR": opnpool_ns.DEBUG_LEVEL_ERROR,
@@ -95,7 +96,9 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-    **{cv.Optional(f"{key}_debug", default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES},
+    # keep per-key debug entries for backward-compatibility, and add a grouped 'debug' map
+    #**{cv.Optional(f"{key}_debug", default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES},
+    cv.Optional(CONF_DEBUG): cv.Schema({cv.Optional(key, default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES}),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
@@ -143,5 +146,9 @@ async def to_code(config):
 
     for key in CONF_DEBUG_MODULES:
         conf_key = f"{key}_debug"
-        if conf_key in config:
-            cg.add(getattr(var, f"set_{key}_debug")(config[conf_key]))
+        # prefer explicit per-key setting, fall back to grouped 'debug' map
+        level = None
+        if CONF_DEBUG in config and key in config[CONF_DEBUG]:
+            level = config[CONF_DEBUG][key]
+        if level is not None:
+            cg.add(getattr(var, f"set_{key}_debug")(level))

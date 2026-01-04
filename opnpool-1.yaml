@@ -175,6 +175,7 @@ opnpool:
     name: "Pump Error"
 
   # debug levels (others default to INFO)
-  datalink_debug: VERBOSE
-  pool_task_debug: DEBUG
-  mqtt_task_debug: WARN
+  debug:
+    datalink: VERBOSE
+    pool_task: DEBUG
+    mqtt_task: WARN
