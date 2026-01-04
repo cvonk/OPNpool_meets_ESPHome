@@ -96,6 +96,10 @@ void OpnPool::loop() {
 
     this->parse_packet_(this->rx_buffer_);
     this->rx_buffer_.clear();
+
+    //if (this->air_temperature_sensor_ != nullptr) {
+    //  this->air_temperature_sensor_->publish_state(new_temp_value);
+    //}
   }
 }
 
@@ -118,27 +122,56 @@ void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload)
 void OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
-    
+
+    // UART
+    ESP_LOGCONFIG("  ", "UART");
+    this->check_uart_settings(9600);
+
     // climate entities
     LOG_CLIMATE("  ", "Pool Heater", this->pool_heater_);
     LOG_CLIMATE("  ", "Spa Heater", this->spa_heater_);
 
-    // sensors
-    LOG_SENSOR("  ", "Water Temperature", this->water_temp_s_);
-    LOG_SENSOR("  ", "Air Temperature", this->air_temp_s_);
-    LOG_SENSOR("  ", "Pump Power", this->pump_power_s_);
-
     // switches
-    LOG_SWITCH("  ", "Pool Switch", this->pool_sw_);
-    LOG_SWITCH("  ", "Spa Switch", this->spa_sw_);
+    LOG_SWITCH("  ", "Pool switch", this->pool_sw_);
+    LOG_SWITCH("  ", "Spa switch", this->spa_sw_);
+    LOG_SWITCH("  ", "Aux1 switch", this->aux1_sw_);
+    LOG_SWITCH("  ", "Aux2 switch", this->aux2_sw_);
+    LOG_SWITCH("  ", "Feature1 switch", this->feature1_sw_);
+    LOG_SWITCH("  ", "Feature2 switch", this->feature2_sw_);
+    LOG_SWITCH("  ", "Feature3 switch", this->feature3_sw_);
+    LOG_SWITCH("  ", "Feature4 switch", this->feature4_sw_);
 
-    // binary sensors
-    LOG_BINARY_SENSOR("  ", "Pump Running", this->pump_running_bs_);
+    // sensors
+    LOG_SENSOR("  ", "Water temperature", this->water_temp_s_);
+    LOG_SENSOR("  ", "Air temperature", this->air_temp_s_);
+    LOG_SENSOR("  ", "Pump power", this->pump_power_s_);
+    LOG_SENSOR("  ", "Pump flow", this->pump_flow_s_);
+    LOG_SENSOR("  ", "Pump speed", this->pump_speed_s_);
+    LOG_SENSOR("  ", "Pump status", this->pump_status_s_);
+    LOG_SENSOR("  ", "Pump state", this->pump_state_s_);
+    LOG_SENSOR("  ", "Pump error", this->pump_error_s_);
+    LOG_SENSOR("  ", "Chlorinator level", this->chlor_level_s_);
+    LOG_SENSOR("  ", "Chlorinator salt", this->chlor_salt_s_);
     
+    // binary sensors
+    LOG_BINARY_SENSOR("  ", "Pump running", this->pump_running_bs_);
+    LOG_BINARY_SENSOR("  ", "Mode service", this->mode_service_bs_);
+    LOG_BINARY_SENSOR("  ", "Mode temperature increase", this->mode_temp_inc_bs_);
+    LOG_BINARY_SENSOR("  ", "Mode freeze protection", this->mode_freeze_bs_);
+    LOG_BINARY_SENSOR("  ", "Mode timeout", this->mode_timeout_bs_);
+
     // text sensors
-    LOG_TEXT_SENSOR("  ", "System Time", this->system_time_ts_);
-    ESP_LOGCONFIG(TAG, "OpnPool (UART Device)");
-    this->check_uart_settings(9600); // Verify baud rate in logs
+    LOG_TEXT_SENSOR("  ", "Pool schedule", this->pool_sched_ts_);
+    LOG_TEXT_SENSOR("  ", "Spa schedule", this->spa_sched_ts_);
+    LOG_TEXT_SENSOR("  ", "AUX1 schedule", this->aux1_sched_ts_);
+    LOG_TEXT_SENSOR("  ", "AUX2 schedule", this->aux2_sched_ts_);
+    LOG_TEXT_SENSOR("  ", "Pump mode", this->pump_mode_ts_);
+    LOG_TEXT_SENSOR("  ", "Chlorinator name", this->chlor_name_ts_);
+    LOG_TEXT_SENSOR("  ", "Chlorinator status", this->chlor_status_ts_);
+    LOG_TEXT_SENSOR("  ", "System time", this->system_time_ts_);
+    LOG_TEXT_SENSOR("  ", "Controller f/w version", this->controller_fw_ts_);
+    LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
+
 
     // log levels
     auto level_to_str = [](OpnPoolDebugLevel level) -> const char* {

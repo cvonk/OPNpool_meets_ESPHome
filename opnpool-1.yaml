@@ -69,11 +69,13 @@ uart:
 opnpool:
   uart_id: uart_bus
 
+  # climate thermostats
   pool_heater:
     name: "Pool Heater"
   spa_heater:
     name: "Spa Heater"
-  
+
+  # circuit switches
   pool:
     name: "Pool Mode"
   spa:
@@ -83,40 +85,77 @@ opnpool:
   aux2:
     name: "Light"
 
+  # feature switches
+  feature1:
+    name: "Feature 1"
+  feature2:
+    name: "Feature 2"
+  feature3:
+    name: "Feature 3"
+  feature4:
+    name: "Feature 4"
+
+  # analog sensors
   water_temperature:
     name: "Pool water"
+    state_class: "measurement"
     device_class: "temperature"
     unit_of_measurement: "°F"
   air_temperature:
     name: "Outside air"
+    state_class: "measurement"
     device_class: "temperature"
     unit_of_measurement: "°F"
   pump_power:
     name: "Pump power"
+    state_class: "measurement"
+    device_class: "power"
     unit_of_measurement: "W"
   pump_flow:
     name: "Pump flow"
-    unit_of_measurement: "gpm"
+    state_class: "measurement"
+    device_class: "volume_flow_rate"
+    unit_of_measurement: "gal/min"
   pump_speed:
     name: "Pump speed"
+    state_class: "measurement"
     unit_of_measurement: "rpm"
-  pump_status:
-    name: "Pump Status"
-  pump_state:
-    name: "Pump State"
-  pump_error:
-    name: "Pump Error"
-  pump_running:
-    name: "Pump Running"
-  chlorinator_percentage:
-    name: "Chlorinator percentage"
+  chlorinator_level:
+    name: "Chlorinator level"
     unit_of_measurement: "%"
   chlorinator_salt:
     name: "Chlorinator salt"
+    state_class: "measurement"
     unit_of_measurement: "ppm"
+
+  # binary sensors
+  pump_running:
+    name: "Pump running"
+    device_class: "running"
+  mode_service:
+    name: "Service mode"
+  mode_temperature_inc:
+    name: "Temperature increase mode"
+  mode_freeze_protection:
+    name: "Freeze protection mode"
+  mode_timeout:
+    name: "Timeout mode"
+
+  # text sensors
+  pool_sched:
+    name: "Pool schedule"
+  spa_sched:
+    name: "Spa schedule"
+  aux1_sched:
+    name: "Aux1 schedule"
+  aux2_sched:
+    name: "Aux2 schedule"
+  pump_mode:
+    name: "Pump mode"
+  chlorinator_name:
+    name: "Chlorinator name"
   chlorinator_status:
-    name: "Chlorinator Status"
-  
+    name: "Chlorinator status"
   system_time:
     name: "Controller System Time"
   controller_firmware_version:
@@ -124,7 +163,15 @@ opnpool:
   interface_firmware_version:
     name: "Interface Board Firmware"
 
+  # number sensors
+  pump_status:
+    name: "Pump Status"
+  pump_state:
+    name: "Pump State"
+  pump_error:
+    name: "Pump Error"
+
+  # debug levels (others default to INFO)
   datalink_debug: VERBOSE
   pool_task_debug: DEBUG
   mqtt_task_debug: WARN
-  # Others default to INFO

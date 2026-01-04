@@ -40,6 +40,19 @@ class OpnPoolSwitch : public esphome::switch_::Switch {
   void write_state(bool state) override { this->publish_state(state); }
 };
 
+class OpnPoolSensor : public esphome::sensor::Sensor {
+ protected:
+  // The base class sensor::Sensor already provides publish_state(float state)
+};
+
+class OpnPoolBinarySensor : public esphome::binary_sensor::BinarySensor {
+ protected:
+};
+
+class OpnPoolTextSensor : public esphome::text_sensor::TextSensor {
+ protected:
+};
+
 // main component
 
 class OpnPool : public Component, public uart::UARTDevice {
@@ -68,12 +81,11 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_pump_power_sensor(sensor::Sensor *s) { pump_power_s_ = s; }
     void set_pump_flow_sensor(sensor::Sensor *s) { pump_flow_s_ = s; }
     void set_pump_speed_sensor(sensor::Sensor *s) { pump_speed_s_ = s; }
-    void set_chlorinator_percentage_sensor(sensor::Sensor *s) { chlor_pct_s_ = s; }
+    void set_chlorinator_level_sensor(sensor::Sensor *s) { chlor_level_s_ = s; }
     void set_chlorinator_salt_sensor(sensor::Sensor *s) { chlor_salt_s_ = s; }
     void set_pump_status_sensor(sensor::Sensor *s) { pump_status_s_ = s; }
     void set_pump_state_sensor(sensor::Sensor *s) { pump_state_s_ = s; }
     void set_pump_error_sensor(sensor::Sensor *s) { pump_error_s_ = s; }
-    void set_chlorinator_status_sensor(sensor::Sensor *s) { chlor_status_s_ = s; }
 
     // text sensor setters
     void set_pool_sched_text_sensor(text_sensor::TextSensor *s) { pool_sched_ts_ = s; }
@@ -85,6 +97,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_interface_firmware_version_text_sensor(text_sensor::TextSensor *s) { interface_fw_ts_ = s; }
     void set_pump_mode_text_sensor(text_sensor::TextSensor *s) { pump_mode_ts_ = s; }
     void set_chlorinator_name_text_sensor(text_sensor::TextSensor *s) { chlor_name_ts_ = s; }
+    void set_chlorinator_status_text_sensor(text_sensor::TextSensor *s) { chlor_status_ts_ = s; }
 
     // binary sensor setters
     void set_pump_running_binary_sensor(binary_sensor::BinarySensor *s) { pump_running_bs_ = s; }
@@ -92,7 +105,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_temperature_inc_binary_sensor(binary_sensor::BinarySensor *s) { mode_temp_inc_bs_ = s; }
     void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
-    
+
     // debug level setters
     void set_datalink_debug(OpnPoolDebugLevel level) { datalink_level_ = level; }
     void set_network_debug(OpnPoolDebugLevel level) { network_level_ = level; }
@@ -123,15 +136,15 @@ class OpnPool : public Component, public uart::UARTDevice {
     switch_::Switch *feature1_sw_{nullptr}, *feature2_sw_{nullptr}, *feature3_sw_{nullptr}, *feature4_sw_{nullptr};
 
     sensor::Sensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
-    sensor::Sensor *pump_speed_s_{nullptr}, *chlor_pct_s_{nullptr}, *chlor_salt_s_{nullptr};
-    sensor::Sensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr}, *chlor_status_s_{nullptr};
-
-    text_sensor::TextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
-    text_sensor::TextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
-    text_sensor::TextSensor *pump_mode_ts_{nullptr}, *chlor_name_ts_{nullptr};
+    sensor::Sensor *pump_speed_s_{nullptr}, *chlor_level_s_{nullptr}, *chlor_salt_s_{nullptr};
+    sensor::Sensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr};
 
     binary_sensor::BinarySensor *pump_running_bs_{nullptr}, *mode_service_bs_{nullptr}, *mode_temp_inc_bs_{nullptr};
     binary_sensor::BinarySensor *mode_freeze_bs_{nullptr}, *mode_timeout_bs_{nullptr};
+
+    text_sensor::TextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
+    text_sensor::TextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
+    text_sensor::TextSensor *pump_mode_ts_{nullptr}, *chlor_name_ts_{nullptr}, *chlor_status_ts_{nullptr};
 };
 
 } // namespace opnpool
