@@ -17,10 +17,10 @@ esp32:
   variant: ESP32
   board: esp32dev
   framework:
-    type: arduino #esp-idf
+    type: esp-idf # arduino
 
 logger:
-  baud_rate: 0
+  #baud_rate: 0
   
 wifi:
   domain: !secret domain_name
@@ -59,10 +59,13 @@ external_components:
 
 uart:
   id: uart_bus
-  tx_pin: GPIO17
-  rx_pin: GPIO16
-  flow_control_pin: GPIO4
+  rx_pin: GPIO25
+  tx_pin: GPIO26
+  flow_control_pin: GPIO27
   baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
   debug:
     direction: BOTH
 

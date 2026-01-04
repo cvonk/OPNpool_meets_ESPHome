@@ -3,10 +3,21 @@
 
 namespace esphome {
 namespace opnpool {
+  
+// get base file name at compiler time
+constexpr const char* base_file(const char* path) {
+    const char* file = path;
+    while (*path) {
+        if (*path++ == '/') {
+            file = path;
+        }
+    }
+    return file;
+}
 
-#define OPN_LOG(module, level, tag, format, ...) \
+#define OPN_LOG(module, level, format, ...) \
     if (this->module##_level_ >= level) { \
-        esp_log_printf_(level_to_esphome(level), tag, __LINE__, format, ##__VA_ARGS__); \
+        esp_log_printf_(level_to_esphome(level), base_file(__FILE__), __LINE__, format, ##__VA_ARGS__); \
     }
 
 static const char *const TAG = "opnpool";
@@ -14,11 +25,11 @@ static const char *const TAG = "opnpool";
 // helper to map your enum to ESPHome's internal levels
 int level_to_esphome(OpnPoolDebugLevel level) {
     switch(level) {
-        case DEBUG_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
-        case DEBUG_WARN:  return ESPHOME_LOG_LEVEL_WARN;
-        case DEBUG_INFO:  return ESPHOME_LOG_LEVEL_INFO;
-        case DEBUG_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
-        case DEBUG_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
+        case DEBUG_LEVEL_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
+        case DEBUG_LEVEL_WARN:  return ESPHOME_LOG_LEVEL_WARN;
+        case DEBUG_LEVEL_INFO:  return ESPHOME_LOG_LEVEL_INFO;
+        case DEBUG_LEVEL_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
+        case DEBUG_LEVEL_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
         default: return ESPHOME_LOG_LEVEL_NONE;
     }
 }
@@ -74,9 +85,12 @@ void OpnPool::setup() {
 }
 
 void OpnPool::loop() {
-  while (this->available()) {
+  while (this->available()) {    
     uint8_t byte;
     this->read_byte(&byte);
+    
+    OPN_LOG(datalink, DEBUG_LEVEL_DEBUG, "Rx: %02X", byte);
+
     this->rx_buffer_.push_back(byte);
 
     // header Sync (0xFF 0xAA)
@@ -123,10 +137,6 @@ void OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
 
-    // UART
-    ESP_LOGCONFIG("  ", "UART");
-    this->check_uart_settings(9600);
-
     // climate entities
     LOG_CLIMATE("  ", "Pool Heater", this->pool_heater_);
     LOG_CLIMATE("  ", "Spa Heater", this->spa_heater_);
@@ -172,16 +182,15 @@ void OpnPool::dump_config() {
     LOG_TEXT_SENSOR("  ", "Controller f/w version", this->controller_fw_ts_);
     LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
 
-
     // log levels
     auto level_to_str = [](OpnPoolDebugLevel level) -> const char* {
       switch (level) {
-        case DEBUG_NONE:    return "NONE";
-        case DEBUG_ERROR:   return "ERROR";
-        case DEBUG_WARN:    return "WARN";
-        case DEBUG_INFO:    return "INFO";
-        case DEBUG_DEBUG:   return "DEBUG";
-        case DEBUG_VERBOSE: return "VERBOSE";
+        case DEBUG_LEVEL_NONE:    return "NONE";
+        case DEBUG_LEVEL_ERROR:   return "ERROR";
+        case DEBUG_LEVEL_WARN:    return "WARN";
+        case DEBUG_LEVEL_INFO:    return "INFO";
+        case DEBUG_LEVEL_DEBUG:   return "DEBUG";
+        case DEBUG_LEVEL_VERBOSE: return "VERBOSE";
         default:            return "UNKNOWN";
       }
     };
@@ -196,7 +205,7 @@ void OpnPool::dump_config() {
 
 void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
 
-  if (should_log_(datalink_level_, DEBUG_VERBOSE)) {
+  if (should_log_(datalink_level_, DEBUG_LEVEL_VERBOSE)) {
         ESP_LOGV("datalink", "Raw packet received: %s", format_hex_pretty(data).c_str());
     }
 

@@ -11,7 +11,7 @@ AUTO_LOAD = ["uart", "climate", "switch", "sensor", "binary_sensor", "text_senso
 
 # namespace and class definitions
 opnpool_ns = cg.esphome_ns.namespace("opnpool")
-OpnPool = opnpool_ns.class_("OpnPool", cg.Component)
+OpnPool = opnpool_ns.class_("OpnPool", cg.Component, uart.UARTDevice)
 OpnPoolClimate = opnpool_ns.class_("OpnPoolClimate", climate.Climate)
 OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch)
 OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor)
@@ -74,12 +74,12 @@ CONF_DEBUG_MODULES = [
     "hass_task"
 ]
 DEBUG_LEVELS = {
-    "NONE": opnpool_ns.DEBUG_NONE,
-    "ERROR": opnpool_ns.DEBUG_ERROR,
-    "WARN": opnpool_ns.DEBUG_WARN,
-    "INFO": opnpool_ns.DEBUG_INFO,
-    "DEBUG": opnpool_ns.DEBUG_DEBUG,
-    "VERBOSE": opnpool_ns.DEBUG_VERBOSE,
+    "NONE": opnpool_ns.DEBUG_LEVEL_NONE,
+    "ERROR": opnpool_ns.DEBUG_LEVEL_ERROR,
+    "WARN": opnpool_ns.DEBUG_LEVEL_WARN,
+    "INFO": opnpool_ns.DEBUG_LEVEL_INFO,
+    "DEBUG": opnpool_ns.DEBUG_LEVEL_DEBUG,
+    "VERBOSE": opnpool_ns.DEBUG_LEVEL_VERBOSE,
 }
 
 CONFIG_SCHEMA = cv.Schema({
@@ -95,16 +95,6 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-    #**{
-    #    cv.Optional(key): number.number_schema(
-    #        OpnPoolNumber,
-    #    ).extend({
-    #        # setting defaults here prevents the YAML from getting cluttered
-    #        cv.Optional(CONF_MIN_VALUE, default=0.0): cv.float_,
-    #        cv.Optional(CONF_MAX_VALUE, default=100.0): cv.float_,
-    #        cv.Optional(CONF_STEP, default=1.0): cv.float_,
-    #    }) for key in CONF_NUMBERS
-    #},
     **{cv.Optional(f"{key}_debug", default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES},
 }).extend(cv.COMPONENT_SCHEMA)
 
@@ -129,20 +119,14 @@ async def to_code(config):
             await switch.register_switch(obj, config[key])
             cg.add(getattr(var, f"set_{key}_switch")(obj))
 
-    #for key in CONF_ANALOG_SENSORS:
-    #    if key in config:
-    #        obj = await sensor.new_sensor(config[key])
-    #        await sensor.register_sensor(obj, config[key])
-    #        cg.add(getattr(var, f"set_{key}_sensor")(obj))
-
     for key in CONF_ANALOG_SENSORS:
         if key in config:
             conf = config[key]
-            # if for some reason the schema didn't inject this,
-            # we ensure it's there before calling new_sensor.
-            if "force_update" not in conf:
-                conf["force_update"] = False
+            # If you want a different default for force_update, set it here:
+            # if "force_update" not in conf:
+            #     conf["force_update"] = False
             obj = await sensor.new_sensor(conf)
+            await sensor.register_sensor(obj, conf)
             cg.add(getattr(var, f"set_{key}_sensor")(obj))
 
     for key in CONF_BINARY_SENSORS:
@@ -160,4 +144,4 @@ async def to_code(config):
     for key in CONF_DEBUG_MODULES:
         conf_key = f"{key}_debug"
         if conf_key in config:
-            cg.add(getattr(var, f"set_{key}_debug")(config[conf_key]))            
+            cg.add(getattr(var, f"set_{key}_debug")(config[conf_key]))

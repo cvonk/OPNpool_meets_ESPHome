@@ -12,12 +12,12 @@ namespace esphome {
 namespace opnpool {
 
 enum OpnPoolDebugLevel {
-  DEBUG_NONE = 0,
-  DEBUG_ERROR = 1,
-  DEBUG_WARN = 2,
-  DEBUG_INFO = 3,
-  DEBUG_DEBUG = 4,
-  DEBUG_VERBOSE = 5
+  DEBUG_LEVEL_NONE = 0,
+  DEBUG_LEVEL_ERROR = 1,
+  DEBUG_LEVEL_WARN = 2,
+  DEBUG_LEVEL_INFO = 3,
+  DEBUG_LEVEL_DEBUG = 4,
+  DEBUG_LEVEL_VERBOSE = 5
 };
 class OpnPool; // Forward declaration for parent referencing
 
@@ -62,8 +62,8 @@ class OpnPool : public Component, public uart::UARTDevice {
     void dump_config() override;
 
     // climate setters
-    void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; c->set_parent(this); }
-    void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; c->set_parent(this); }
+    void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; if (c) c->set_parent(this); }
+    void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; if (c) c->set_parent(this); }
 
     // switch setters
     void set_pool_switch(switch_::Switch *s) { pool_sw_ = s; }
@@ -122,12 +122,12 @@ class OpnPool : public Component, public uart::UARTDevice {
     std::vector<uint8_t> rx_buffer_;
 
     // debug levels
-    OpnPoolDebugLevel datalink_level_{DEBUG_INFO};
-    OpnPoolDebugLevel network_level_{DEBUG_INFO};
-    OpnPoolDebugLevel pool_state_level_{DEBUG_INFO};
-    OpnPoolDebugLevel pool_task_level_{DEBUG_INFO};
-    OpnPoolDebugLevel mqtt_task_level_{DEBUG_INFO};
-    OpnPoolDebugLevel hass_task_level_{DEBUG_INFO};    
+    OpnPoolDebugLevel datalink_level_{DEBUG_LEVEL_INFO};
+    OpnPoolDebugLevel network_level_{DEBUG_LEVEL_INFO};
+    OpnPoolDebugLevel pool_state_level_{DEBUG_LEVEL_INFO};
+    OpnPoolDebugLevel pool_task_level_{DEBUG_LEVEL_INFO};
+    OpnPoolDebugLevel mqtt_task_level_{DEBUG_LEVEL_INFO};
+    OpnPoolDebugLevel hass_task_level_{DEBUG_LEVEL_INFO};    
     bool should_log_(OpnPoolDebugLevel module_level, OpnPoolDebugLevel check_level) { return module_level >= check_level; }    
 
     // member pointers
