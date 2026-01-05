@@ -22,14 +22,16 @@ constexpr const char* base_file(const char* path) {
 
 static const char *const TAG = "opnpool";
 
-// helper to map your enum to ESPHome's internal levels
+// helper to map enum to ESPHome's internal levels
 int level_to_esphome(OpnPoolDebugLevel level) {
     switch(level) {
         case DEBUG_LEVEL_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
-        case DEBUG_LEVEL_WARN:  return ESPHOME_LOG_LEVEL_WARN;
-        case DEBUG_LEVEL_INFO:  return ESPHOME_LOG_LEVEL_INFO;
+        case DEBUG_LEVEL_WARN: return ESPHOME_LOG_LEVEL_WARN;
+        case DEBUG_LEVEL_INFO: return ESPHOME_LOG_LEVEL_INFO;
+        case DEBUG_LEVEL_CONFIG: return ESPHOME_LOG_LEVEL_CONFIG;
         case DEBUG_LEVEL_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
         case DEBUG_LEVEL_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
+        case DEBUG_LEVEL_VERY_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
         default: return ESPHOME_LOG_LEVEL_NONE;
     }
 }
@@ -37,20 +39,10 @@ int level_to_esphome(OpnPoolDebugLevel level) {
 climate::ClimateTraits OpnPoolClimate::traits() {
   auto traits = climate::ClimateTraits();
   
-  // 1. Current Temperature is a standard feature flag
-  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);
-  
-  // 2. Target Temperature is enabled by adding ACTION or specifically 
-  // defining the visual range. In many versions, it's actually 
-  // CLIMATE_SUPPORTS_ACTION or simply enabled by default when 
-  // min/max temperatures are set.
-  
-  // 3. Define the visual range (this often implicitly enables the target slider)
-  traits.set_visual_min_temperature(18);
-  traits.set_visual_max_temperature(35);
+  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);  
+  traits.set_visual_min_temperature(32);
+  traits.set_visual_max_temperature(110);
   traits.set_visual_temperature_step(1);
-  
-  // 4. Custom presets
   traits.set_supported_custom_presets({"None", "Heat", "Solar Preferred", "Solar"});
   
   return traits;
@@ -85,6 +77,9 @@ void OpnPool::setup() {
 }
 
 void OpnPool::loop() {
+
+
+  
   while (this->available()) {    
     uint8_t byte;
     this->read_byte(&byte);
@@ -183,17 +178,20 @@ void OpnPool::dump_config() {
     LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
 
     // log levels
-    auto level_to_str = [](OpnPoolDebugLevel level) -> const char* {
-      switch (level) {
-        case DEBUG_LEVEL_NONE:    return "NONE";
-        case DEBUG_LEVEL_ERROR:   return "ERROR";
-        case DEBUG_LEVEL_WARN:    return "WARN";
-        case DEBUG_LEVEL_INFO:    return "INFO";
-        case DEBUG_LEVEL_DEBUG:   return "DEBUG";
-        case DEBUG_LEVEL_VERBOSE: return "VERBOSE";
-        default:            return "UNKNOWN";
-      }
+    auto level_to_str = [](int level) -> const char* {
+        switch (level) {
+            case DEBUG_LEVEL_NONE:         return "NONE";
+            case DEBUG_LEVEL_ERROR:        return "ERROR";
+            case DEBUG_LEVEL_WARN:         return "WARN";
+            case DEBUG_LEVEL_INFO:         return "INFO";
+            case DEBUG_LEVEL_CONFIG:       return "CONFIG";
+            case DEBUG_LEVEL_DEBUG:        return "DEBUG";
+            case DEBUG_LEVEL_VERBOSE:      return "VERBOSE";
+            case DEBUG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
+            default:                       return "UNKNOWN";
+        }
     };
+
     ESP_LOGCONFIG(TAG, "  Debug Levels:");
     ESP_LOGCONFIG(TAG, "    Datalink: %s", level_to_str(this->datalink_level_));
     ESP_LOGCONFIG(TAG, "    Network: %s", level_to_str(this->network_level_));

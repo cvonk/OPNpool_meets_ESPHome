@@ -16,9 +16,11 @@ enum OpnPoolDebugLevel {
   DEBUG_LEVEL_ERROR = 1,
   DEBUG_LEVEL_WARN = 2,
   DEBUG_LEVEL_INFO = 3,
-  DEBUG_LEVEL_DEBUG = 4,
-  DEBUG_LEVEL_VERBOSE = 5
-};
+  DEBUG_LEVEL_CONFIG = 4,
+  DEBUG_LEVEL_DEBUG = 5,
+  DEBUG_LEVEL_VERBOSE = 6,
+  DEBUG_LEVEL_VERY_VERBOSE = 7
+};  
 class OpnPool; // Forward declaration for parent referencing
 
 // climate entity
@@ -107,12 +109,12 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
 
     // debug level setters
-    void set_datalink_debug(OpnPoolDebugLevel level) { datalink_level_ = level; }
-    void set_network_debug(OpnPoolDebugLevel level) { network_level_ = level; }
-    void set_pool_state_debug(OpnPoolDebugLevel level) { pool_state_level_ = level; }
-    void set_pool_task_debug(OpnPoolDebugLevel level) { pool_task_level_ = level; }
-    void set_mqtt_task_debug(OpnPoolDebugLevel level) { mqtt_task_level_ = level; }
-    void set_hass_task_debug(OpnPoolDebugLevel level) { hass_task_level_ = level; }
+    void set_datalink_debug(int level) { datalink_level_ = level; }
+    void set_network_debug(int level) { network_level_ = level; }
+    void set_pool_state_debug(int level) { pool_state_level_ = level; }
+    void set_pool_task_debug(int level) { pool_task_level_ = level; }
+    void set_mqtt_task_debug(int level) { mqtt_task_level_ = level; }
+    void set_hass_task_debug(int level) { hass_task_level_ = level; }
 
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
@@ -122,13 +124,13 @@ class OpnPool : public Component, public uart::UARTDevice {
     std::vector<uint8_t> rx_buffer_;
 
     // debug levels
-    OpnPoolDebugLevel datalink_level_{DEBUG_LEVEL_INFO};
-    OpnPoolDebugLevel network_level_{DEBUG_LEVEL_INFO};
-    OpnPoolDebugLevel pool_state_level_{DEBUG_LEVEL_INFO};
-    OpnPoolDebugLevel pool_task_level_{DEBUG_LEVEL_INFO};
-    OpnPoolDebugLevel mqtt_task_level_{DEBUG_LEVEL_INFO};
-    OpnPoolDebugLevel hass_task_level_{DEBUG_LEVEL_INFO};    
-    bool should_log_(OpnPoolDebugLevel module_level, OpnPoolDebugLevel check_level) { return module_level >= check_level; }    
+    int datalink_level_{ESPHOME_LOG_LEVEL_INFO};
+    int network_level_{ESPHOME_LOG_LEVEL_INFO};
+    int pool_state_level_{ESPHOME_LOG_LEVEL_INFO};
+    int pool_task_level_{ESPHOME_LOG_LEVEL_INFO};
+    int mqtt_task_level_{ESPHOME_LOG_LEVEL_INFO};
+    int hass_task_level_{ESPHOME_LOG_LEVEL_INFO};    
+    bool should_log_(int module_level, int check_level) { return module_level >= check_level; }    
 
     // member pointers
     OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};
