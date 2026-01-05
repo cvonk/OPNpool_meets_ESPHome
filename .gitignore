@@ -1,6 +1,4 @@
 secrets.yaml
 .esphome/
 components/opnpool/__pycache__/
-components/opnpool/__pycache__/*.pyc
-components/opnpool/__pycache__/__init__.cpython-313.pyc
 components/opnpool/tmp.py
