@@ -112,7 +112,7 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-    cv.Optional(CONF_DEBUG): cv.Schema({cv.Optional(key, default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES}),
+    cv.Optional(CONF_DEBUG): cv.Schema({cv.Optional(key, default="VERBOSE"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES}),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):

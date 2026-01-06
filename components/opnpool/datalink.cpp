@@ -33,9 +33,10 @@ namespace opnpool {
 
 void datalink_init(log_level_t const log_level)
 {
-  //LOG_LEVEL = log_level;
-  datalink_rx_init(log_level);
-  datalink_tx_init(log_level);
+    ESP_LOGI("datalink", "Initializing datalink layer (%u) ..", log_level);
+    //LOG_LEVEL = log_level;
+    datalink_rx_init(log_level);
+    datalink_tx_init(log_level);
 }
 
 datalink_preamble_a5_t datalink_preamble_a5 = { 0x00, 0xFF, 0xA5 };  // use 0xA5 in the preamble to detection more reliable

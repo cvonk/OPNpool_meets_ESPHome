@@ -24,7 +24,10 @@
 #include <string.h>
 #include <esp_system.h>
 #include <esp_log.h>
+#include "esphome/core/log.h"
+#include <esp_system.h>
 #include <time.h>
+#include <cstdlib>
 
 #include "skb.h"
 #include "rs485.h"
@@ -53,9 +56,17 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
     datalink_pkt_t pkt;
     network_msg_t msg;
 
+    ESP_LOGI(TAG, "Waiting for packet from RS485");
+
     if (datalink_rx_pkt(rs485, &pkt) == ESP_OK) {
+
+        ESP_LOGI(TAG, "Received packet from RS485");
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
+
+            ESP_LOGI(TAG, "Processed packet to network message");
             if (poolstate_rx_update(&msg, &state, ipc) == ESP_OK) {
+
+                ESP_LOGI(TAG, "Updated pool state from network message");
                 //hass_tx_state_to_mqtt(&state, ipc);
             }
         }
@@ -151,30 +162,44 @@ pool_req_task(void * rs485_void)
 void
 pool_task(void * ipc_void)
 {
+    ESP_LOGI(TAG, "pool_task initializing ..");
+
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
 
     LOG_LEVEL = ipc->config.log_levels.pool_task;
+    ESP_LOGI(TAG, "pool_task LOG_LEVEL (%d)..", LOG_LEVEL);
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     ipc_init(ipc->config.log_levels.ipc);
+
+    ESP_LOGI(TAG, "calling datalink_init (%u)..", ipc->config.log_levels.datalink);
     datalink_init(ipc->config.log_levels.datalink);
     network_init(ipc->config.log_levels.network);
     poolstate_init(ipc->config.log_levels.poolstate);
+
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+
     rs485_handle_t const rs485 = rs485_init(
       ipc->config.log_levels.rs485, ipc->config.rs485_pins.rx_pin,
       ipc->config.rs485_pins.tx_pin, ipc->config.rs485_pins.flow_control_pin);
 
+#if 0      
     // request some initial information from the controller
     _queue_req(rs485, MSG_TYP_CTRL_VERSION_REQ);
     _queue_req(rs485, MSG_TYP_CTRL_TIME_REQ);
 
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
+#endif
+
+    ESP_LOGI(TAG, "pool_task started");
 
     while (1) {
 
         // read from ipc->to_pool_q
 
-        _service_requests_from_mqtt_and_httpd(rs485, ipc);
+        //_service_requests_from_mqtt_and_httpd(rs485, ipc);
 
         // read from the rs485 device, until there is a packet,
         // then move the packet up the protocol stack to process it.
@@ -187,6 +212,7 @@ pool_task(void * ipc_void)
 
             _forward_queued_pkt_to_rs485(rs485, ipc);
         }
+        vTaskDelay(1);
     }
 }
 

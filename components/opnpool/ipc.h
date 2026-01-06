@@ -47,7 +47,6 @@ struct log_levels_t {
   log_level_t poolstate{log_level_t::LOG_LEVEL_INFO};
   log_level_t pool_task{log_level_t::LOG_LEVEL_INFO};
   log_level_t mqtt_task{log_level_t::LOG_LEVEL_INFO};
-  log_level_t hass_task{log_level_t::LOG_LEVEL_INFO};
 };
 
 struct config_t {

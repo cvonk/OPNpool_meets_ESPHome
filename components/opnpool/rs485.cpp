@@ -137,6 +137,7 @@ rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_p
         .rx_flow_ctrl_thresh = 122,
         .source_clk = UART_SCLK_DEFAULT,
     };
+    
     gpio_config_t io_conf = {
         .pin_bit_mask = (1ULL << flow_control_pin),
         .mode = GPIO_MODE_OUTPUT,
@@ -146,6 +147,9 @@ rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_p
     };
     ESP_ERROR_CHECK( gpio_config(&io_conf) );
     gpio_set_level(FLOW_CONTROL_PIN, 0);
+
+    ESP_LOGI(TAG, "Initializing RS485 on UART%d (RX pin %d, TX pin %d, RE/DE pin %d) ..",
+             _uart_port, rx_pin, tx_pin, flow_control_pin);
 
     uart_param_config(_uart_port, &uart_config);
     uart_set_pin(_uart_port, static_cast<gpio_num_t>(tx_pin), static_cast<gpio_num_t>(rx_pin), UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);

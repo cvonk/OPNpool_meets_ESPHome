@@ -2,7 +2,7 @@
 #include "esphome/core/log.h"
 #include <time.h>
 #include <esp_system.h>
-#include <cstdlib>   // <-- add this
+#include <cstdlib>
 
 #include "skb.h"
 #include "rs485.h"
@@ -84,16 +84,37 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
   this->publish_state();
 }
 
+#if 0
+void
+test_task(void * ipc_void)
+{
+    ESP_LOGI(TAG, "test_task initializing ..");
+
+    pool_task(ipc_void);
+
+    while (1) {
+        ESP_LOGI(TAG, "test_task heartbeat ..");
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
+}
+#endif
+
 void OpnPool::setup() {
 
-    ESP_LOGI(TAG, "starting ..");
+    ESP_LOGI(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
     this->ipc_.to_pool_q = xQueueCreate(10, sizeof(ipc_to_pool_msg_t));
     this->ipc_.to_mqtt_q = xQueueCreate(60, sizeof(ipc_to_mqtt_msg_t));
     assert(this->ipc_.to_mqtt_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
-    xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 5, NULL);
+    //BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 5, NULL);
+    BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
+    if (res != pdPASS) {
+      ESP_LOGE(TAG, "Failed to create pool_task! Error code: %d", res);
+    } else {
+      ESP_LOGI(TAG, "pool_task created successfully.");
+    } 
 }
 
 void OpnPool::loop() {
@@ -102,12 +123,17 @@ void OpnPool::loop() {
 
   ipc_to_mqtt_msg_t msg;
 
+  //ESP_LOGI(TAG, "Checking for pool_task messages ..");
+
   if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
+      ESP_LOGI(TAG, "Received message from pool_task");
       switch (msg.dataType) {
 
           // publish using topic and message from `msg.data`
           case IPC_TO_MQTT_TYP_PUBLISH: {  // publish a message (from `hass_task`)
+
+              ESP_LOGI(TAG, "Publishing MQTT message: %s", msg.data);
               char const * const topic = msg.data;
               char * message = strchr(msg.data, '\t');
               *message++ = '\0';
@@ -120,6 +146,7 @@ void OpnPool::loop() {
           }
       }
   }
+  vTaskDelay(1);
 
 
 #if 0
@@ -211,6 +238,8 @@ void OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
 
+#if 0
+
     // climate entities
     LOG_CLIMATE("  ", "Pool Heater", this->pool_heater_);
     LOG_CLIMATE("  ", "Spa Heater", this->spa_heater_);
@@ -279,7 +308,8 @@ void OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "    Pool State: %s", log_level_to_str(this->ipc_.config.log_levels.poolstate));
     ESP_LOGCONFIG(TAG, "    Pool Task: %s",  log_level_to_str(this->ipc_.config.log_levels.pool_task));
     ESP_LOGCONFIG(TAG, "    MQTT Task: %s",  log_level_to_str(this->ipc_.config.log_levels.mqtt_task));
-    ESP_LOGCONFIG(TAG, "    HASS Task: %s",  log_level_to_str(this->ipc_.config.log_levels.hass_task));  
+
+#endif    
 }
 
 } // namespace opnpool

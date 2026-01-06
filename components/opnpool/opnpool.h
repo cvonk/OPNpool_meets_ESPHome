@@ -107,6 +107,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
 
+    // log level setters
     void set_ipc_log_level(log_level_t log_level) { ipc_.config.log_levels.ipc = log_level; }
     void set_rs485_log_level(log_level_t log_level) { ipc_.config.log_levels.rs485 = log_level; }
     void set_datalink_log_level(log_level_t log_level) { ipc_.config.log_levels.datalink = log_level; }
