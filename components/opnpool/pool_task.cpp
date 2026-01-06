@@ -56,14 +56,14 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
     datalink_pkt_t pkt;
     network_msg_t msg;
 
-    ESP_LOGI(TAG, "Waiting for packet from RS485");
-
     if (datalink_rx_pkt(rs485, &pkt) == ESP_OK) {
 
-        ESP_LOGI(TAG, "Received packet from RS485");
+        ESP_LOGI(TAG, "Received pkt (prot=%02X prot_type=%02X src=%02X dst=%02X)", pkt.prot, pkt.prot_typ, pkt.src, pkt.dst);
+
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
 
-            ESP_LOGI(TAG, "Processed packet to network message");
+            ESP_LOGI(TAG, "Received msg (typ=%02X)", msg.typ);
+
             if (poolstate_rx_update(&msg, &state, ipc) == ESP_OK) {
 
                 ESP_LOGI(TAG, "Updated pool state from network message");

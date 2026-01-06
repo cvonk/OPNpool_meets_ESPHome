@@ -127,7 +127,7 @@ void OpnPool::loop() {
 
   if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-      ESP_LOGI(TAG, "Received message from pool_task");
+      ESP_LOGI(TAG, "Received message from pool_task (%u)", msg.dataType);
       switch (msg.dataType) {
 
           // publish using topic and message from `msg.data`

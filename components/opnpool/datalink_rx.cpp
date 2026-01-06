@@ -20,6 +20,7 @@
 #include <esp_system.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include "esphome/core/log.h"
 #include <time.h>
 
 #include "rs485.h"
@@ -31,7 +32,9 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "datalink_rx";
+//static char const * const TAG = "datalink_rx";
+static char const * const TAG = "pool_task";
+
 static log_level_t LOG_LEVEL;
 void datalink_rx_init(log_level_t const log_level) { LOG_LEVEL = log_level; }
 
