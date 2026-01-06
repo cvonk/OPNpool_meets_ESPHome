@@ -1,5 +1,17 @@
 #include "opnpool.h"
 #include "esphome/core/log.h"
+#include <time.h>
+#include <esp_system.h>
+#include <cstdlib>   // <-- add this
+
+#include "skb.h"
+#include "rs485.h"
+#include "datalink.h"
+#include "datalink_pkt.h"
+#include "network.h"
+#include "poolstate.h"
+#include "ipc.h"
+#include "pool_task.h"
 
 namespace esphome {
 namespace opnpool {
@@ -22,30 +34,31 @@ constexpr const char* base_file(const char* path) {
 
 static const char *const TAG = "opnpool";
 
-// helper to map enum to ESPHome's internal levels
-int level_to_esphome(OpnPoolDebugLevel level) {
-    switch(level) {
-        case DEBUG_LEVEL_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
-        case DEBUG_LEVEL_WARN: return ESPHOME_LOG_LEVEL_WARN;
-        case DEBUG_LEVEL_INFO: return ESPHOME_LOG_LEVEL_INFO;
-        case DEBUG_LEVEL_CONFIG: return ESPHOME_LOG_LEVEL_CONFIG;
-        case DEBUG_LEVEL_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
-        case DEBUG_LEVEL_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
-        case DEBUG_LEVEL_VERY_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
+// map enum to ESPHome's internal levels
+int level_to_esphome(log_level_t log_level) {
+
+    switch(log_level) {
+        case LOG_LEVEL_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
+        case LOG_LEVEL_WARN: return ESPHOME_LOG_LEVEL_WARN;
+        case LOG_LEVEL_INFO: return ESPHOME_LOG_LEVEL_INFO;
+        case LOG_LEVEL_CONFIG: return ESPHOME_LOG_LEVEL_CONFIG;
+        case LOG_LEVEL_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
+        case LOG_LEVEL_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
+        case LOG_LEVEL_VERY_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
         default: return ESPHOME_LOG_LEVEL_NONE;
     }
 }
 
 climate::ClimateTraits OpnPoolClimate::traits() {
-  auto traits = climate::ClimateTraits();
-  
-  traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);  
-  traits.set_visual_min_temperature(32);
-  traits.set_visual_max_temperature(110);
-  traits.set_visual_temperature_step(1);
-  traits.set_supported_custom_presets({"None", "Heat", "Solar Preferred", "Solar"});
-  
-  return traits;
+    auto traits = climate::ClimateTraits();
+    
+    traits.add_feature_flags(climate::CLIMATE_SUPPORTS_CURRENT_TEMPERATURE);  
+    traits.set_visual_min_temperature(32);
+    traits.set_visual_max_temperature(110);
+    traits.set_visual_temperature_step(1);
+    traits.set_supported_custom_presets({"None", "Heat", "Solar Preferred", "Solar"});
+    
+    return traits;
 }
 
 void OpnPoolClimate::control(const climate::ClimateCall &call) {
@@ -71,20 +84,50 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
   this->publish_state();
 }
 
-
 void OpnPool::setup() {
-  // No manual serial initialization needed; UARTDevice handles it.
+
+    ESP_LOGI(TAG, "starting ..");
+
+    this->ipc_.to_pool_q = xQueueCreate(10, sizeof(ipc_to_pool_msg_t));
+    this->ipc_.to_mqtt_q = xQueueCreate(60, sizeof(ipc_to_mqtt_msg_t));
+    assert(this->ipc_.to_mqtt_q && this->ipc_.to_pool_q);
+
+    // spin off a pool_task that handles RS485 and the pool state machine
+    xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 5, NULL);
 }
 
 void OpnPool::loop() {
 
+  // do whatever mqtt_task did in the past
 
-  
+  ipc_to_mqtt_msg_t msg;
+
+  if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+
+      switch (msg.dataType) {
+
+          // publish using topic and message from `msg.data`
+          case IPC_TO_MQTT_TYP_PUBLISH: {  // publish a message (from `hass_task`)
+              char const * const topic = msg.data;
+              char * message = strchr(msg.data, '\t');
+              *message++ = '\0';
+              if (this->ipc_.config.log_levels.mqtt_task >= LOG_LEVEL_WARN) {
+                  ESP_LOGI(TAG, "tx %s: %s", topic, message);
+              }
+              //esp_mqtt_client_publish(client, topic, message, strlen(message), 1, 0);
+              free(msg.data);
+              break;
+          }
+      }
+  }
+
+
+#if 0
   while (this->available()) {    
     uint8_t byte;
     this->read_byte(&byte);
     
-    OPN_LOG(datalink, DEBUG_LEVEL_DEBUG, "Rx: %02X", byte);
+    OPN_LOG(datalink, LOG_LEVEL_DEBUG, "Rx: %02X", byte);
 
     this->rx_buffer_.push_back(byte);
 
@@ -110,6 +153,7 @@ void OpnPool::loop() {
     //  this->air_temperature_sensor_->publish_state(new_temp_value);
     //}
   }
+#endif
 }
 
 void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload) {
@@ -126,6 +170,41 @@ void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload)
 
   // This automatically handles the RS485 Direction/RE/DE pin
   this->write_array(pkt);
+}
+
+void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
+
+#ifdef NOT_YET
+    if (should_log_(datalink_level_, LOG_LEVEL_VERBOSE)) {
+          ESP_LOGV("datalink", "Raw packet received: %s", format_hex_pretty(data).c_str());
+      }
+
+    uint8_t cmd = data[3];
+
+    // Assuming Command 0x01 is the status update containing temperature at index 5
+    if (cmd == 0x01 && data.size() > 5) {
+        float current_temp = data[5];
+
+        // 1. Update the standalone Water Temperature sensor
+        if (this->water_temp_s_ != nullptr) {
+          this->water_temp_s_->publish_state(current_temp);
+        }
+
+        // 2. Feed temperature into Pool Heater climate
+        if (this->pool_heater_ != nullptr) {
+          this->pool_heater_->current_temperature = current_temp;
+          this->pool_heater_->publish_state();
+        }
+
+        // 3. Feed temperature into Spa Heater climate
+        if (this->spa_heater_ != nullptr) {
+          this->spa_heater_->current_temperature = current_temp;
+          this->spa_heater_->publish_state();
+        }
+        
+        ESP_LOGD(TAG, "Updated temperature to: %.1f°C", current_temp);
+    }
+#endif
 }
 
 void OpnPool::dump_config() {
@@ -178,60 +257,29 @@ void OpnPool::dump_config() {
     LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
 
     // log levels
-    auto level_to_str = [](int level) -> const char* {
+    auto log_level_to_str = [](int level) -> const char* {
         switch (level) {
-            case DEBUG_LEVEL_NONE:         return "NONE";
-            case DEBUG_LEVEL_ERROR:        return "ERROR";
-            case DEBUG_LEVEL_WARN:         return "WARN";
-            case DEBUG_LEVEL_INFO:         return "INFO";
-            case DEBUG_LEVEL_CONFIG:       return "CONFIG";
-            case DEBUG_LEVEL_DEBUG:        return "DEBUG";
-            case DEBUG_LEVEL_VERBOSE:      return "VERBOSE";
-            case DEBUG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
-            default:                       return "UNKNOWN";
+            case LOG_LEVEL_NONE:         return "NONE";
+            case LOG_LEVEL_ERROR:        return "ERROR";
+            case LOG_LEVEL_WARN:         return "WARN";
+            case LOG_LEVEL_INFO:         return "INFO";
+            case LOG_LEVEL_CONFIG:       return "CONFIG";
+            case LOG_LEVEL_DEBUG:        return "DEBUG";
+            case LOG_LEVEL_VERBOSE:      return "VERBOSE";
+            case LOG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
+            default:                     return "UNKNOWN";
         }
     };
 
     ESP_LOGCONFIG(TAG, "  Debug Levels:");
-    ESP_LOGCONFIG(TAG, "    Datalink: %s", level_to_str(this->datalink_level_));
-    ESP_LOGCONFIG(TAG, "    Network: %s", level_to_str(this->network_level_));
-    ESP_LOGCONFIG(TAG, "    Pool State: %s", level_to_str(this->pool_state_level_));
-    ESP_LOGCONFIG(TAG, "    Pool Task: %s", level_to_str(this->pool_task_level_));
-    ESP_LOGCONFIG(TAG, "    MQTT Task: %s", level_to_str(this->mqtt_task_level_));
-    ESP_LOGCONFIG(TAG, "    HASS Task: %s", level_to_str(this->hass_task_level_));  
-}
-
-void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
-
-  if (should_log_(datalink_level_, DEBUG_LEVEL_VERBOSE)) {
-        ESP_LOGV("datalink", "Raw packet received: %s", format_hex_pretty(data).c_str());
-    }
-
-  uint8_t cmd = data[3];
-
-  // Assuming Command 0x01 is the status update containing temperature at index 5
-  if (cmd == 0x01 && data.size() > 5) {
-    float current_temp = data[5];
-
-    // 1. Update the standalone Water Temperature sensor
-    if (this->water_temp_s_ != nullptr) {
-      this->water_temp_s_->publish_state(current_temp);
-    }
-
-    // 2. Feed temperature into Pool Heater climate
-    if (this->pool_heater_ != nullptr) {
-      this->pool_heater_->current_temperature = current_temp;
-      this->pool_heater_->publish_state();
-    }
-
-    // 3. Feed temperature into Spa Heater climate
-    if (this->spa_heater_ != nullptr) {
-      this->spa_heater_->current_temperature = current_temp;
-      this->spa_heater_->publish_state();
-    }
-    
-    ESP_LOGD(TAG, "Updated temperature to: %.1f°C", current_temp);
-  }
+    ESP_LOGCONFIG(TAG, "    IPC: %s",        log_level_to_str(this->ipc_.config.log_levels.ipc));
+    ESP_LOGCONFIG(TAG, "    RS485: %s",      log_level_to_str(this->ipc_.config.log_levels.rs485));
+    ESP_LOGCONFIG(TAG, "    Datalink: %s",   log_level_to_str(this->ipc_.config.log_levels.datalink));
+    ESP_LOGCONFIG(TAG, "    Network: %s",    log_level_to_str(this->ipc_.config.log_levels.network));
+    ESP_LOGCONFIG(TAG, "    Pool State: %s", log_level_to_str(this->ipc_.config.log_levels.poolstate));
+    ESP_LOGCONFIG(TAG, "    Pool Task: %s",  log_level_to_str(this->ipc_.config.log_levels.pool_task));
+    ESP_LOGCONFIG(TAG, "    MQTT Task: %s",  log_level_to_str(this->ipc_.config.log_levels.mqtt_task));
+    ESP_LOGCONFIG(TAG, "    HASS Task: %s",  log_level_to_str(this->ipc_.config.log_levels.hass_task));  
 }
 
 } // namespace opnpool

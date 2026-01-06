@@ -7,10 +7,15 @@ esphome:
   name: ${device_name}
   comment: ${description}
   friendly_name: ${friendly_name}
-  libraries:
-    - SPI
-    - "SmartRC-CC1101-Driver-Lib"
-  # For debugging, store generated code in an accessible location:
+  #includes:
+  #  - components/opnpool/skb/skb.h
+  #  - components/opnpool/rs485/rs485.h
+  #  - components/opnpool/datalink/datalink.h
+  #libraries:
+  #platformio_options:
+  #  build_flags:
+  #    - -I src/esphome/components/opnpool
+  #    # - -DMY_DEF=1
   # build_path: "../config/esphome/component_build"
 
 esp32:
@@ -18,7 +23,7 @@ esp32:
   board: esp32dev
   framework:
     type: esp-idf # arduino
-
+      
 logger:
   #baud_rate: 0
   
@@ -57,20 +62,25 @@ external_components:
       type: local
       path: components
 
-uart:
-  id: uart_bus
-  rx_pin: GPIO25
-  tx_pin: GPIO26
-  flow_control_pin: GPIO27
-  baud_rate: 9600
-  data_bits: 8
-  parity: NONE
-  stop_bits: 1
-  debug:
-    direction: BOTH
+#uart:
+#  id: uart_bus
+#  rx_pin: GPIO25
+#  tx_pin: GPIO26
+#  flow_control_pin: GPIO27
+#  baud_rate: 9600
+#  data_bits: 8
+#  parity: NONE
+#  stop_bits: 1
+#  debug:
+#    direction: BOTH
 
 opnpool:
-  uart_id: uart_bus
+
+  # RS485 configuration
+  rs485:
+    rx_pin: 25            # default 25 (GPIO25)
+    tx_pin: 26            # default 26 (GPIO26)
+    flow_control_pin: 27  # default 27 (GPIO27)
 
   # climate thermostats
   pool_heater:

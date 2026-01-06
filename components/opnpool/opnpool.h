@@ -7,20 +7,13 @@
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include <vector>
+#include <string>
+
+#include "ipc.h"
 
 namespace esphome {
 namespace opnpool {
 
-enum OpnPoolDebugLevel {
-  DEBUG_LEVEL_NONE = 0,
-  DEBUG_LEVEL_ERROR = 1,
-  DEBUG_LEVEL_WARN = 2,
-  DEBUG_LEVEL_INFO = 3,
-  DEBUG_LEVEL_CONFIG = 4,
-  DEBUG_LEVEL_DEBUG = 5,
-  DEBUG_LEVEL_VERBOSE = 6,
-  DEBUG_LEVEL_VERY_VERBOSE = 7
-};  
 class OpnPool; // Forward declaration for parent referencing
 
 // climate entity
@@ -63,6 +56,12 @@ class OpnPool : public Component, public uart::UARTDevice {
     void loop() override;
     void dump_config() override;
 
+    // RS485 configuration
+    void set_rs485_rx_pin(uint8_t pin) { ipc_.config.rs485_pins.rx_pin = pin; }
+    void set_rs485_tx_pin(uint8_t pin) { ipc_.config.rs485_pins.tx_pin = pin; }
+    void set_rs485_flow_control_pin(uint8_t pin) { ipc_.config.rs485_pins.flow_control_pin = pin; }
+    void set_rs485_config(const rs485_pins_t &cfg) { ipc_.config.rs485_pins = cfg; }    
+    const rs485_pins_t &get_rs485_config() const { return ipc_.config.rs485_pins; }
     // climate setters
     void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; if (c) c->set_parent(this); }
     void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; if (c) c->set_parent(this); }
@@ -108,29 +107,27 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
 
-    // debug level setters
-    void set_datalink_debug(int level) { datalink_level_ = level; }
-    void set_network_debug(int level) { network_level_ = level; }
-    void set_pool_state_debug(int level) { pool_state_level_ = level; }
-    void set_pool_task_debug(int level) { pool_task_level_ = level; }
-    void set_mqtt_task_debug(int level) { mqtt_task_level_ = level; }
-    void set_hass_task_debug(int level) { hass_task_level_ = level; }
+    void set_ipc_log_level(log_level_t log_level) { ipc_.config.log_levels.ipc = log_level; }
+    void set_rs485_log_level(log_level_t log_level) { ipc_.config.log_levels.rs485 = log_level; }
+    void set_datalink_log_level(log_level_t log_level) { ipc_.config.log_levels.datalink = log_level; }
+    void set_network_log_level(log_level_t log_level) { ipc_.config.log_levels.network = log_level; }
+    void set_poolstate_log_level(log_level_t log_level) { ipc_.config.log_levels.poolstate = log_level; }
+    void set_pool_task_log_level(log_level_t log_level) { ipc_.config.log_levels.pool_task = log_level; }
+    void set_mqtt_task_log_level(log_level_t log_level) { ipc_.config.log_levels.mqtt_task = log_level; }
+
+    void set_log_level_config(const log_levels_t &cfg) { ipc_.config.log_levels = cfg; }
+    const log_levels_t &get_log_level_config() const { return ipc_.config.log_levels; }
 
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
   protected:
+
+    // interprocess communication structure (and log_level)
+    ipc_t ipc_{};
+
     void parse_packet_(const std::vector<uint8_t> &data);
 
     std::vector<uint8_t> rx_buffer_;
-
-    // debug levels
-    int datalink_level_{ESPHOME_LOG_LEVEL_INFO};
-    int network_level_{ESPHOME_LOG_LEVEL_INFO};
-    int pool_state_level_{ESPHOME_LOG_LEVEL_INFO};
-    int pool_task_level_{ESPHOME_LOG_LEVEL_INFO};
-    int mqtt_task_level_{ESPHOME_LOG_LEVEL_INFO};
-    int hass_task_level_{ESPHOME_LOG_LEVEL_INFO};    
-    bool should_log_(int module_level, int check_level) { return module_level >= check_level; }    
 
     // member pointers
     OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};

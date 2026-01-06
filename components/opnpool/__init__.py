@@ -2,7 +2,7 @@ import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import uart, climate, switch, sensor, binary_sensor, text_sensor
 from esphome.const import (
-    CONF_ID, CONF_UART_ID, CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS,
+    CONF_ID, CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS,
     UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT,
 )
 
@@ -17,6 +17,11 @@ OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch)
 OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor)
 OpnPoolBinarySensor = opnpool_ns.class_("OpnPoolBinarySensor", binary_sensor.BinarySensor)
 OpnPoolTextSensor = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSensor)
+
+CONF_RS485 = "rs485"
+CONF_RS485_RX_PIN = "rx_pin"
+CONF_RS485_TX_PIN = "tx_pin"
+CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
 
 # entity definitions
 CONF_CLIMATES = [
@@ -64,28 +69,39 @@ CONF_TEXT_SENSORS = [
     "controller_firmware_version",
     "interface_firmware_version"
 ]
+
 # granular control of debug levels
 CONF_DEBUG_MODULES = [
+    "ipc",
+    "rs485",
     "datalink",
     "network",
-    "pool_state",
+    "poolstate",
     "pool_task",
-    "mqtt_task",
-    "hass_task"
+    "mqtt_task"
 ]
 CONF_DEBUG = "debug"
 DEBUG_LEVELS = {
-    "NONE": opnpool_ns.DEBUG_LEVEL_NONE,
-    "ERROR": opnpool_ns.DEBUG_LEVEL_ERROR,
-    "WARN": opnpool_ns.DEBUG_LEVEL_WARN,
-    "INFO": opnpool_ns.DEBUG_LEVEL_INFO,
-    "DEBUG": opnpool_ns.DEBUG_LEVEL_DEBUG,
-    "VERBOSE": opnpool_ns.DEBUG_LEVEL_VERBOSE,
+    "NONE": opnpool_ns.LOG_LEVEL_NONE,
+    "ERROR": opnpool_ns.LOG_LEVEL_ERROR,
+    "WARN": opnpool_ns.LOG_LEVEL_WARN,
+    "CONF": opnpool_ns.LOG_LEVEL_CONFIG,
+    "INFO": opnpool_ns.LOG_LEVEL_INFO,
+    "DEBUG": opnpool_ns.LOG_LEVEL_DEBUG,
+    "VERBOSE": opnpool_ns.LOG_LEVEL_VERBOSE,
+    "VERY_VERBOSE": opnpool_ns.LOG_LEVEL_VERY_VERBOSE,
 }
 
+# Add default values and allowed parity enums where we build the CONFIG_SCHEMA.
+# Example addition (insert into the CONFIG_SCHEMA mapping):
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
-    cv.Required(CONF_UART_ID): cv.use_id(uart.UARTComponent),
+    # grouped RS485 settings (preferred)
+    cv.Optional(CONF_RS485): cv.Schema({
+        cv.Optional(CONF_RS485_RX_PIN, default=25): cv.int_,
+        cv.Optional(CONF_RS485_TX_PIN, default=26): cv.int_,
+        cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=27): cv.int_,
+     }),
     **{cv.Optional(key): climate.climate_schema(OpnPoolClimate) for key in CONF_CLIMATES},
     **{cv.Optional(key): switch.switch_schema(OpnPoolSwitch) for key in CONF_SWITCHES},
     **{
@@ -96,19 +112,23 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-    # keep per-key debug entries for backward-compatibility, and add a grouped 'debug' map
-    #**{cv.Optional(f"{key}_debug", default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES},
     cv.Optional(CONF_DEBUG): cv.Schema({cv.Optional(key, default="INFO"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES}),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
-    
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    # link OpnPool component to the UART-bus
-    await uart.register_uart_device(var, config)
+    # pass each RS485-setting to the C++ OpnPool instance
+    if CONF_RS485 in config:
+        rs485_conf = config[CONF_RS485]
+        if CONF_RS485_RX_PIN in rs485_conf:
+            cg.add(var.set_rs485_rx_pin(rs485_conf[CONF_RS485_RX_PIN]))
+        if CONF_RS485_TX_PIN in rs485_conf:
+            cg.add(var.set_rs485_tx_pin(rs485_conf[CONF_RS485_TX_PIN]))
+        if CONF_RS485_FLOW_CONTROL_PIN in rs485_conf:
+            cg.add(var.set_rs485_flow_control_pin(rs485_conf[CONF_RS485_FLOW_CONTROL_PIN]))
 
     for heater in CONF_CLIMATES:
         if heater in config:
@@ -125,7 +145,6 @@ async def to_code(config):
     for key in CONF_ANALOG_SENSORS:
         if key in config:
             conf = config[key]
-            # If you want a different default for force_update, set it here:
             # if "force_update" not in conf:
             #     conf["force_update"] = False
             obj = await sensor.new_sensor(conf)
@@ -151,4 +170,4 @@ async def to_code(config):
         if CONF_DEBUG in config and key in config[CONF_DEBUG]:
             level = config[CONF_DEBUG][key]
         if level is not None:
-            cg.add(getattr(var, f"set_{key}_debug")(level))
+            cg.add(getattr(var, f"set_{key}_log_level")(level))
