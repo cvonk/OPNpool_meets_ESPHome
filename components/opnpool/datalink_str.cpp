@@ -18,7 +18,7 @@
  */
 
 #include <esp_system.h>
-#include <esp_log.h>
+#include <esphome/core/log.h>
 #include <time.h>
 
 #include "utils.h"

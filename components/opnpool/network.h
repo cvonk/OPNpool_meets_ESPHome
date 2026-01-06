@@ -9,15 +9,12 @@ namespace esphome {
 namespace opnpool {
 
 /* network.c */
-void network_init(log_level_t const log_level);
 uint8_t network_ic_len(uint8_t const ic_typ);
 
 /* network_rx.c */
-void network_rx_init(log_level_t const log_level);
 esp_err_t network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity);
 
 /* network_create.c */
-void network_create_init(log_level_t const log_level);
 bool network_create_msg(network_msg_t const * const msg, datalink_pkt_t * const pkt);
 
 /* network_str.c */

@@ -27,27 +27,7 @@ constexpr const char* base_file(const char* path) {
     return file;
 }
 
-#define OPN_LOG(module, level, format, ...) \
-    if (this->module##_level_ >= level) { \
-        esp_log_printf_(level_to_esphome(level), base_file(__FILE__), __LINE__, format, ##__VA_ARGS__); \
-    }
-
 static const char *const TAG = "opnpool";
-
-// map enum to ESPHome's internal levels
-int level_to_esphome(log_level_t log_level) {
-
-    switch(log_level) {
-        case LOG_LEVEL_ERROR: return ESPHOME_LOG_LEVEL_ERROR;
-        case LOG_LEVEL_WARN: return ESPHOME_LOG_LEVEL_WARN;
-        case LOG_LEVEL_INFO: return ESPHOME_LOG_LEVEL_INFO;
-        case LOG_LEVEL_CONFIG: return ESPHOME_LOG_LEVEL_CONFIG;
-        case LOG_LEVEL_DEBUG: return ESPHOME_LOG_LEVEL_DEBUG;
-        case LOG_LEVEL_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
-        case LOG_LEVEL_VERY_VERBOSE: return ESPHOME_LOG_LEVEL_VERBOSE;
-        default: return ESPHOME_LOG_LEVEL_NONE;
-    }
-}
 
 climate::ClimateTraits OpnPoolClimate::traits() {
     auto traits = climate::ClimateTraits();
@@ -119,42 +99,38 @@ void OpnPool::setup() {
 
 void OpnPool::loop() {
 
-  // do whatever mqtt_task did in the past
+    // do whatever mqtt_task did in the past
 
-  ipc_to_mqtt_msg_t msg;
+    ipc_to_mqtt_msg_t msg;
 
-  //ESP_LOGI(TAG, "Checking for pool_task messages ..");
+    if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-  if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+        ESP_LOGV(TAG, "Received message from pool_task (%u)", msg.dataType);
+        switch (msg.dataType) {
 
-      ESP_LOGI(TAG, "Received message from pool_task (%u)", msg.dataType);
-      switch (msg.dataType) {
+            // publish using topic and message from `msg.data`
+            case IPC_TO_MQTT_TYP_PUBLISH: {  // publish a message (from `hass_task`)
 
-          // publish using topic and message from `msg.data`
-          case IPC_TO_MQTT_TYP_PUBLISH: {  // publish a message (from `hass_task`)
+                ESP_LOGV(TAG, "Publishing MQTT message: %s", msg.data);
 
-              ESP_LOGI(TAG, "Publishing MQTT message: %s", msg.data);
-              char const * const topic = msg.data;
-              char * message = strchr(msg.data, '\t');
-              *message++ = '\0';
-              if (this->ipc_.config.log_levels.mqtt_task >= LOG_LEVEL_WARN) {
-                  ESP_LOGI(TAG, "tx %s: %s", topic, message);
-              }
-              //esp_mqtt_client_publish(client, topic, message, strlen(message), 1, 0);
-              free(msg.data);
-              break;
-          }
-      }
-  }
-  vTaskDelay(1);
+                char const * const topic = msg.data;
+                char * message = strchr(msg.data, '\t');
+                *message++ = '\0';
+                ESP_LOGV(TAG, "tx %s: %s", topic, message);
 
+                //esp_mqtt_client_publish(client, topic, message, strlen(message), 1, 0);
+                free(msg.data);
+                break;
+            }
+        }
+    }
 
 #if 0
   while (this->available()) {    
     uint8_t byte;
     this->read_byte(&byte);
     
-    OPN_LOG(datalink, LOG_LEVEL_DEBUG, "Rx: %02X", byte);
+    ESP_LOGV(TAG, "Rx: %02X", byte);
 
     this->rx_buffer_.push_back(byte);
 
@@ -184,6 +160,7 @@ void OpnPool::loop() {
 }
 
 void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload) {
+
   std::vector<uint8_t> pkt;
   pkt.push_back(0xFF); pkt.push_back(0xAA);
   pkt.push_back((uint8_t)payload.size());
@@ -202,7 +179,7 @@ void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload)
 void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
 
 #ifdef NOT_YET
-    if (should_log_(datalink_level_, LOG_LEVEL_VERBOSE)) {
+    if (should_log_(datalink_level_, ESPHOME_LOG_LEVEL_VERBOSE)) {
           ESP_LOGV("datalink", "Raw packet received: %s", format_hex_pretty(data).c_str());
       }
 
@@ -285,29 +262,22 @@ void OpnPool::dump_config() {
     LOG_TEXT_SENSOR("  ", "Controller f/w version", this->controller_fw_ts_);
     LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
 
+#if 0
     // log levels
     auto log_level_to_str = [](int level) -> const char* {
         switch (level) {
-            case LOG_LEVEL_NONE:         return "NONE";
-            case LOG_LEVEL_ERROR:        return "ERROR";
-            case LOG_LEVEL_WARN:         return "WARN";
-            case LOG_LEVEL_INFO:         return "INFO";
-            case LOG_LEVEL_CONFIG:       return "CONFIG";
-            case LOG_LEVEL_DEBUG:        return "DEBUG";
-            case LOG_LEVEL_VERBOSE:      return "VERBOSE";
-            case LOG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
+            case ESPHOME_LOG_LEVEL_NONE:         return "NONE";
+            case ESPHOME_LOG_LEVEL_ERROR:        return "ERROR";
+            case ESPHOME_LOG_LEVEL_WARN:         return "WARN";
+            case ESPHOME_LOG_LEVEL_INFO:         return "INFO";
+            case ESPHOME_LOG_LEVEL_CONFIG:       return "CONFIG";
+            case ESPHOME_LOG_LEVEL_DEBUG:        return "DEBUG";
+            case ESPHOME_LOG_LEVEL_VERBOSE:      return "VERBOSE";
+            case ESPHOME_LOG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
             default:                     return "UNKNOWN";
         }
     };
-
-    ESP_LOGCONFIG(TAG, "  Debug Levels:");
-    ESP_LOGCONFIG(TAG, "    IPC: %s",        log_level_to_str(this->ipc_.config.log_levels.ipc));
-    ESP_LOGCONFIG(TAG, "    RS485: %s",      log_level_to_str(this->ipc_.config.log_levels.rs485));
-    ESP_LOGCONFIG(TAG, "    Datalink: %s",   log_level_to_str(this->ipc_.config.log_levels.datalink));
-    ESP_LOGCONFIG(TAG, "    Network: %s",    log_level_to_str(this->ipc_.config.log_levels.network));
-    ESP_LOGCONFIG(TAG, "    Pool State: %s", log_level_to_str(this->ipc_.config.log_levels.poolstate));
-    ESP_LOGCONFIG(TAG, "    Pool Task: %s",  log_level_to_str(this->ipc_.config.log_levels.pool_task));
-    ESP_LOGCONFIG(TAG, "    MQTT Task: %s",  log_level_to_str(this->ipc_.config.log_levels.mqtt_task));
+#endif
 
 #endif    
 }

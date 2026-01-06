@@ -22,9 +22,6 @@ typedef struct rs485_instance_t {
     rs485_available_fnc_t available;      // bytes available in rx buffer
     rs485_read_bytes_fnc_t read_bytes;    // read bytes from rx buffer
     rs485_write_bytes_fnc_t write_bytes;  // write bytes to tx buffer 
-#if 0
-    rs485_write_fnc_t write;              // write 1 byte to tx buffer
-#endif
     rs485_flush_fnc_t flush;              // wait until all bytes are transmitted
     rx485_tx_mode_fnc_t tx_mode;          // controls RTS pin (for half-duplex)
     rs485_queue_fnc_t queue;              // queue to handle->tx_q
@@ -38,7 +35,7 @@ typedef struct  rs485_q_msg_t {
 
 
 /* rs485.c */
-rs485_handle_t rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const flow_control_pin);
+rs485_handle_t rs485_init(rs485_pins_t const * const rs485_pins);
 
 } // namespace opnpool
 } // namespace esphome

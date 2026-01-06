@@ -19,9 +19,9 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <esp_ota_ops.h>
 #include <esp_flash.h>
+#include <esphome/core/log.h>
 #include <cJSON.h>
 
 #include "utils.h"
@@ -32,8 +32,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "poolstate_get";
-static log_level_t LOG_LEVEL;
-void poolstate_get_init(log_level_t const log_level) { LOG_LEVEL = log_level; }
 
 static void
 _alloc_str(char * * const value, char const * const str)
@@ -78,9 +76,7 @@ _system(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, p
             _alloc_str(value, network_time_str(system->tod.time.hour, system->tod.time.minute));
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
-            }
+            ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             return ESP_FAIL;
     }
     return ESP_OK;
@@ -98,9 +94,7 @@ _temp(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poo
             _alloc_uint(value, temp->temp);
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
-            } 
+            ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             return ESP_FAIL;
     }
     return ESP_OK;
@@ -124,9 +118,7 @@ _thermostat(poolstate_t const * const state, uint8_t const typ, uint8_t const id
             _alloc_bool(value, thermostat->heating);
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
-            }
+            ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             return ESP_FAIL;
     }
     return ESP_OK;
@@ -182,9 +174,7 @@ _pump(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poo
             _alloc_uint(value, pump->timer);
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
-            }
+            ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             return ESP_FAIL;
     }
     return ESP_OK;
@@ -212,9 +202,7 @@ _chlor(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
             _alloc_str(value, poolstate_chlor_status_str(chlor->status));
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
-            }
+            ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             return ESP_FAIL;
     }
     return ESP_OK;
@@ -243,7 +231,7 @@ _modes(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
             _alloc_bool(value, modes->set[NETWORK_MODE_timeout]);
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
+            if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
                 ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
             } 
             return ESP_FAIL;

@@ -19,11 +19,11 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
-#include <cstdlib>
+#include <esphome/core/log.h>
+//#include <cstdlib>
 
 #include "network.h"
 #include "poolstate.h"
@@ -32,7 +32,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "poolstate";
-static log_level_t LOG_LEVEL;
 
 static struct poolstate_prot_t {
     SemaphoreHandle_t xMutex;
@@ -41,24 +40,16 @@ static struct poolstate_prot_t {
 } _protected;
 
 void
-poolstate_init(log_level_t const log_level)
+poolstate_init()
 {
-    LOG_LEVEL = log_level;
-    poolstate_rx_init(log_level);
-    poolstate_get_init(log_level);
-
     _protected.xMutex = xSemaphoreCreateMutex();
     if (_protected.xMutex == nullptr) {
-        if (log_level >= LOG_LEVEL_ERROR) {
-            ESP_LOGE(TAG, "poolstate_init: mutex creation failed");
-        }
+        ESP_LOGE(TAG, "mutex creation failed");
         return;
     }
     _protected.state = static_cast<poolstate_t *>(calloc(1, sizeof(poolstate_t)));
     if (_protected.state == nullptr) {
-        if (log_level >= LOG_LEVEL_ERROR) {
-            ESP_LOGE(TAG, "poolstate_init: allocation failed");
-        }
+        ESP_LOGE(TAG, "allocation failed");
         return;
     }
 	  _protected.state->chlor.name[0] = '\0';

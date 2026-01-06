@@ -19,8 +19,8 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <esp_types.h>
+#include <esphome/core/log.h>
 
 #include "datalink.h"
 #include "network.h"
@@ -29,14 +29,6 @@ namespace esphome {
 namespace opnpool {
 
 // static char const * const TAG = "network";
-// static log_level_t LOG_LEVEL;
-
-void network_init(log_level_t const log_level)
-{
-  // LOG_LEVEL = log_level;
-  network_create_init(log_level);
-  network_rx_init(log_level);
-}
 
 uint8_t
 network_ic_len(uint8_t const ic_typ)

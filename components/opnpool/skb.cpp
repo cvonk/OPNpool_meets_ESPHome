@@ -27,8 +27,8 @@
  */
 
 #include <esp_system.h>
-#include <esp_log.h>
-#include <cstdlib>
+#include <esphome/core/log.h>
+//#include <cstdlib>
 
 #include "skb.h"
 

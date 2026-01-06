@@ -19,10 +19,10 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <driver/uart.h>
 #include <driver/gpio.h>
 #include <freertos/queue.h>
+#include <esphome/core/log.h>
 
 #include "rs485.h"
 #include "datalink.h"
@@ -32,14 +32,13 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "rs485";
-static log_level_t LOG_LEVEL;
-static gpio_num_t FLOW_CONTROL_PIN;
 
 static size_t     _rxBufSize = 127;
 static TickType_t _rxTimeout = (100 / portTICK_PERIOD_MS);
 static TickType_t _txTimeout = (100 / portTICK_PERIOD_MS);
 
 static uart_port_t _uart_port;
+static gpio_num_t _flow_control_pin;
 
 static int
 _available()
@@ -84,9 +83,7 @@ _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
         .pkt = pkt,
     };
     if (xQueueSendToBack(handle->tx_q, &msg, 0) != pdPASS) {
-        if (LOG_LEVEL >= LOG_LEVEL_ERROR) {
-            ESP_LOGE(TAG, "tx_q full");
-        }
+        ESP_LOGE(TAG, "tx_q full");
         free(pkt->skb);
         free((void *) pkt);
     }
@@ -112,21 +109,22 @@ _tx_mode(bool const tx_enable)
     //  - choose a GPIO that doesn't mind being pulled down during reset
 
     if (tx_enable) {
-        gpio_set_level(FLOW_CONTROL_PIN, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
+        gpio_set_level(_flow_control_pin, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
     } else {
         _flush();  // wait until last byte starts transmitting
         esp_rom_delay_us(1500);  // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
-        gpio_set_level(FLOW_CONTROL_PIN, 0);  // enable RS485 receive
+        gpio_set_level(_flow_control_pin, 0);  // enable RS485 receive
      }
 }
 
 rs485_handle_t
-rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const flow_control_pin)
+rs485_init(rs485_pins_t const * const rs485_pins)
 {
-    LOG_LEVEL = log_level;
-    FLOW_CONTROL_PIN = static_cast<gpio_num_t>(flow_control_pin);
-    
-    _uart_port = static_cast<uart_port_t>(2);  // use UART2
+    gpio_num_t const rx_pin = static_cast<gpio_num_t>(rs485_pins->rx_pin);
+    gpio_num_t const tx_pin = static_cast<gpio_num_t>(rs485_pins->tx_pin);
+    _flow_control_pin = static_cast<gpio_num_t>(rs485_pins->flow_control_pin);
+
+    _uart_port = static_cast<uart_port_t>(2);  // UART2
 
     uart_config_t const uart_config = {
         .baud_rate = 9600,
@@ -139,20 +137,20 @@ rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_p
     };
     
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << flow_control_pin),
+        .pin_bit_mask = (1ULL << static_cast<uint8_t>(_flow_control_pin)),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK( gpio_config(&io_conf) );
-    gpio_set_level(FLOW_CONTROL_PIN, 0);
+    gpio_set_level(_flow_control_pin, 0);
 
-    ESP_LOGI(TAG, "Initializing RS485 on UART%d (RX pin %d, TX pin %d, RE/DE pin %d) ..",
-             _uart_port, rx_pin, tx_pin, flow_control_pin);
+    ESP_LOGI(TAG, "Initializing RS485 on UART%u (RX pin %u, TX pin %u, RE/DE pin %u) ..",
+             _uart_port, rx_pin, tx_pin, _flow_control_pin);
 
     uart_param_config(_uart_port, &uart_config);
-    uart_set_pin(_uart_port, static_cast<gpio_num_t>(tx_pin), static_cast<gpio_num_t>(rx_pin), UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_set_pin(_uart_port, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(_uart_port, _rxBufSize * 2, 0, 0, NULL, 0);  // no tx buffer
     uart_set_mode(_uart_port, UART_MODE_RS485_HALF_DUPLEX);
 
@@ -165,9 +163,6 @@ rs485_init(log_level_t const log_level, uint8_t const rx_pin, uint8_t const tx_p
     handle->available = _available;
     handle->read_bytes = _read_bytes;
     handle->write_bytes = _write_bytes;
-#if 0
-    handle->write = _write;
-#endif
     handle->flush = _flush;
     handle->tx_mode = _tx_mode;
     handle->queue = _queue;

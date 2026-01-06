@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
+#include <esphome/core/log.h>
 
 #include "datalink.h"
 #include "datalink_pkt.h"
@@ -31,8 +31,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "network_create";
-static log_level_t LOG_LEVEL;
-void network_create_init(log_level_t const log_level) { LOG_LEVEL = log_level; }
 
 skb_handle_t
 _skb_alloc_a5(size_t const msg_size)
@@ -80,9 +78,7 @@ network_create_msg(network_msg_t const * const msg, datalink_pkt_t * const pkt)
             return true;
         }
     }
-    if (LOG_LEVEL >= LOG_LEVEL_ERROR) {
-        ESP_LOGE(TAG, "unknown msg typ (%u)", msg->typ);
-    }
+    ESP_LOGE(TAG, "unknown msg typ (%u)", msg->typ);
     return false;
 }
 

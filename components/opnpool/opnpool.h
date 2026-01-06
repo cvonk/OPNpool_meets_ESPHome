@@ -107,18 +107,6 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_freeze_protection_binary_sensor(binary_sensor::BinarySensor *s) { mode_freeze_bs_ = s; }
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
 
-    // log level setters
-    void set_ipc_log_level(log_level_t log_level) { ipc_.config.log_levels.ipc = log_level; }
-    void set_rs485_log_level(log_level_t log_level) { ipc_.config.log_levels.rs485 = log_level; }
-    void set_datalink_log_level(log_level_t log_level) { ipc_.config.log_levels.datalink = log_level; }
-    void set_network_log_level(log_level_t log_level) { ipc_.config.log_levels.network = log_level; }
-    void set_poolstate_log_level(log_level_t log_level) { ipc_.config.log_levels.poolstate = log_level; }
-    void set_pool_task_log_level(log_level_t log_level) { ipc_.config.log_levels.pool_task = log_level; }
-    void set_mqtt_task_log_level(log_level_t log_level) { ipc_.config.log_levels.mqtt_task = log_level; }
-
-    void set_log_level_config(const log_levels_t &cfg) { ipc_.config.log_levels = cfg; }
-    const log_levels_t &get_log_level_config() const { return ipc_.config.log_levels; }
-
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
   protected:

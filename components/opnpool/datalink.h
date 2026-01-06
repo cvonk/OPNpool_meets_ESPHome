@@ -4,7 +4,7 @@
 
 #include "skb.h"
 #include "rs485.h"
-#include "ipc.h"
+//#include "ipc.h"
 
 namespace esphome {
 namespace opnpool {
@@ -109,7 +109,6 @@ typedef union datalink_tail_t {
 #define DATALINK_MAX_TAIL_SIZE (sizeof(datalink_tail_t))
 
 /* datalink.c */
-void datalink_init(log_level_t const log_level);
 datalink_addrgroup_t datalink_groupaddr(uint16_t const addr);
 uint8_t datalink_devaddr(uint8_t group, uint8_t const id);
 uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
@@ -118,11 +117,9 @@ extern datalink_preamble_ic_t datalink_preamble_ic;
 extern datalink_postamble_ic_t datalink_postamble_ic;
 
 /* datalink_rx.c */
-void datalink_rx_init(log_level_t const log_level);
 esp_err_t datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt);
 
 /* datalink_tx.c */
-void datalink_tx_init(log_level_t const log_level);
 void datalink_tx_pkt_queue(rs485_handle_t const rs485_handle, datalink_pkt_t const * const pkt);
 
 /* datalink_str.c */

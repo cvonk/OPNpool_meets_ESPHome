@@ -70,28 +70,6 @@ CONF_TEXT_SENSORS = [
     "interface_firmware_version"
 ]
 
-# granular control of debug levels
-CONF_DEBUG_MODULES = [
-    "ipc",
-    "rs485",
-    "datalink",
-    "network",
-    "poolstate",
-    "pool_task",
-    "mqtt_task"
-]
-CONF_DEBUG = "debug"
-DEBUG_LEVELS = {
-    "NONE": opnpool_ns.LOG_LEVEL_NONE,
-    "ERROR": opnpool_ns.LOG_LEVEL_ERROR,
-    "WARN": opnpool_ns.LOG_LEVEL_WARN,
-    "CONF": opnpool_ns.LOG_LEVEL_CONFIG,
-    "INFO": opnpool_ns.LOG_LEVEL_INFO,
-    "DEBUG": opnpool_ns.LOG_LEVEL_DEBUG,
-    "VERBOSE": opnpool_ns.LOG_LEVEL_VERBOSE,
-    "VERY_VERBOSE": opnpool_ns.LOG_LEVEL_VERY_VERBOSE,
-}
-
 # Add default values and allowed parity enums where we build the CONFIG_SCHEMA.
 # Example addition (insert into the CONFIG_SCHEMA mapping):
 CONFIG_SCHEMA = cv.Schema({
@@ -112,7 +90,6 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-    cv.Optional(CONF_DEBUG): cv.Schema({cv.Optional(key, default="VERBOSE"): cv.enum(DEBUG_LEVELS, upper=True) for key in CONF_DEBUG_MODULES}),
 }).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
@@ -162,12 +139,3 @@ async def to_code(config):
             obj = await text_sensor.new_text_sensor(config[key])
             await text_sensor.register_text_sensor(obj, config[key])
             cg.add(getattr(var, f"set_{key}_text_sensor")(obj))
-
-    for key in CONF_DEBUG_MODULES:
-        conf_key = f"{key}_debug"
-        # prefer explicit per-key setting, fall back to grouped 'debug' map
-        level = None
-        if CONF_DEBUG in config and key in config[CONF_DEBUG]:
-            level = config[CONF_DEBUG][key]
-        if level is not None:
-            cg.add(getattr(var, f"set_{key}_log_level")(level))

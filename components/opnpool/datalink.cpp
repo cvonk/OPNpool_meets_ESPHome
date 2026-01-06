@@ -18,7 +18,7 @@
  */
 
 #include <esp_system.h>
-#include <esp_log.h>
+#include <esphome/core/log.h>
 #include <time.h>
 
 #include "rs485.h"
@@ -29,15 +29,6 @@ namespace esphome {
 namespace opnpool {
 
 // static char const * const TAG = "datalink";
-// static log_level_t LOG_LEVEL;
-
-void datalink_init(log_level_t const log_level)
-{
-    ESP_LOGI("datalink", "Initializing datalink layer (%u) ..", log_level);
-    //LOG_LEVEL = log_level;
-    datalink_rx_init(log_level);
-    datalink_tx_init(log_level);
-}
 
 datalink_preamble_a5_t datalink_preamble_a5 = { 0x00, 0xFF, 0xA5 };  // use 0xA5 in the preamble to detection more reliable
 datalink_preamble_ic_t datalink_preamble_ic = { 0x10, 0x02 };

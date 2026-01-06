@@ -18,8 +18,8 @@
  */
 
 #include <esp_system.h>
-#include <esp_log.h>
 #include <time.h>
+#include <esphome/core/log.h>
 
 #include "rs485.h"
 #include "skb.h"
@@ -30,12 +30,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "datalink_tx";
-static log_level_t LOG_LEVEL;
-
-void datalink_tx_init(log_level_t const log_level)
-{
-  LOG_LEVEL = log_level;
-}
 
 static void
 _enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, uint8_t const prot_typ)
@@ -109,11 +103,11 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
             break;
         }
     }
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         size_t const dbg_size = 128;
         char dbg[dbg_size];
         (void) skb_print(TAG, skb, dbg, dbg_size);
-        ESP_LOGI(TAG, " %s: { %s}", datalink_prot_str(pkt->prot), dbg);
+        ESP_LOGV(TAG, " %s: { %s}", datalink_prot_str(pkt->prot), dbg);
     }
 
     // queue for transmission by `pool_task`

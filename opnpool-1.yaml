@@ -24,27 +24,23 @@ esp32:
   variant: ESP32
   board: esp32dev
   framework:
-    type: esp-idf # arduino
+    type: esp-idf
       
 logger:
-  level: VERBOSE
-  logs: 
-    wifi: WARN
-    app: WARN
-    mdns: WARN
-    api: WARN
-    ota: WARN
-    web_server: WARN
-    web_server.ota: WARN
-    esphome.ota: WARN
-    safe_mode: WARN
-    logger: WARN
-    component: WARN
-    esp32.preferences: WARN
-    homeassistant.time: WARN
-    time: WARN
-  #baud_rate: 0
-  
+  level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
+  initial_level: WARN  # only show up to WARN globally
+  logs:
+    opnpool: VERBOSE   # specifically allow high detail for opnpool component
+    pool_task: VERBOSE
+    rs485: VERBOSE
+    datalink_rx: WARN
+    datalink_tx: VERBOSE
+    network_rx: VERBOSE
+    network_create: VERBOSE
+    poolstate: VERBOSE
+    poolstate_rx: VERBOSE
+    poolstate_get: VERBOSE
+
 wifi:
   domain: !secret domain_name
   min_auth_mode: WPA2
@@ -201,13 +197,3 @@ opnpool:
     name: "Pump State"
   pump_error:
     name: "Pump Error"
-
-  # debug levels (others default to VERBOSE)
-  debug:
-    ipc: VERBOSE
-    rs485: VERBOSE
-    datalink: VERBOSE
-    network: VERBOSE
-    poolstate: VERBOSE
-    pool_task: VERBOSE
-    mqtt_task: VERBOSE

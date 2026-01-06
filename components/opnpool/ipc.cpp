@@ -19,9 +19,9 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
+#include <esphome/core/log.h>
 
 #include "utils.h"
 #include "ipc.h"
@@ -31,12 +31,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "ipc";
-static log_level_t LOG_LEVEL;
-
-void ipc_init(log_level_t const log_level)
-{
-  LOG_LEVEL = log_level;
-}
 
 /**
  * network_heat_src_t
@@ -67,12 +61,10 @@ ipc_send_to_mqtt(ipc_to_mqtt_typ_t const dataType, char const * const data, ipc_
     };
     assert(msg.data);
     if (xQueueSendToBack(ipc->to_mqtt_q, &msg, 0) != pdPASS) {
-        if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-            ESP_LOGW(TAG, "to_mqtt_q full");
-        }
+        ESP_LOGW(TAG, "to_mqtt_q full");
         free(msg.data);
     }
-    vTaskDelay(1);  // give `mqtt_task` a chance to catch up
+    vTaskDelay(1);  // give others a chance to catch up
 }
 
 /**
@@ -89,9 +81,7 @@ ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, siz
     };
     assert(msg.data);
     if (xQueueSendToBack(ipc->to_pool_q, &msg, 0) != pdPASS) {
-        if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-            ESP_LOGW(TAG, "to_pool_q full");
-        }
+        ESP_LOGW(TAG, "to_pool_q full");
         free(msg.data);
     }
 }

@@ -28,30 +28,8 @@ struct rs485_pins_t {
     uint8_t flow_control_pin{27};
 };
 
-enum log_level_t {
-  LOG_LEVEL_NONE = 0,
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_WARN,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_CONFIG,
-  LOG_LEVEL_DEBUG,
-  LOG_LEVEL_VERBOSE,
-  LOG_LEVEL_VERY_VERBOSE
-};
-
-struct log_levels_t {
-  log_level_t ipc{log_level_t::LOG_LEVEL_INFO};
-  log_level_t rs485{log_level_t::LOG_LEVEL_INFO};
-  log_level_t datalink{log_level_t::LOG_LEVEL_INFO};
-  log_level_t network{log_level_t::LOG_LEVEL_INFO};
-  log_level_t poolstate{log_level_t::LOG_LEVEL_INFO};
-  log_level_t pool_task{log_level_t::LOG_LEVEL_INFO};
-  log_level_t mqtt_task{log_level_t::LOG_LEVEL_INFO};
-};
-
 struct config_t {
     rs485_pins_t rs485_pins;
-    log_levels_t log_levels;
 };
 
 typedef struct ipc_t {
@@ -94,7 +72,6 @@ typedef struct ipc_to_pool_msg_t {
     char  *            data;
 } ipc_to_pool_msg_t;
 
-void ipc_init(log_level_t const log_level);
 void ipc_send_to_mqtt(ipc_to_mqtt_typ_t const dataType, char const * const data, ipc_t const * const ipc);
 void ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, size_t const topic_len, char const * const data, size_t const data_len, ipc_t const * const ipc);
 char const * ipc_to_mqtt_typ_str(ipc_to_mqtt_typ_t const typ);

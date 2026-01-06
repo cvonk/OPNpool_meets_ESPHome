@@ -23,11 +23,10 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include "esphome/core/log.h"
 #include <esp_system.h>
 #include <time.h>
-#include <cstdlib>
+//#include <cstdlib>
 
 #include "skb.h"
 #include "rs485.h"
@@ -46,7 +45,6 @@ namespace opnpool {
 #endif
 
 static char const * const TAG = "pool_task";
-static log_level_t LOG_LEVEL;
 
 static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
@@ -58,15 +56,11 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 
     if (datalink_rx_pkt(rs485, &pkt) == ESP_OK) {
 
-        ESP_LOGI(TAG, "Received pkt (prot=%02X prot_type=%02X src=%02X dst=%02X)", pkt.prot, pkt.prot_typ, pkt.src, pkt.dst);
-
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
-
-            ESP_LOGI(TAG, "Received msg (typ=%02X)", msg.typ);
 
             if (poolstate_rx_update(&msg, &state, ipc) == ESP_OK) {
 
-                ESP_LOGI(TAG, "Updated pool state from network message");
+                ESP_LOGV(TAG, "Updated pool state from network message");
                 //hass_tx_state_to_mqtt(&state, ipc);
             }
         }
@@ -103,14 +97,10 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
     if (network_create_msg(&msg, pkt)) {
-        if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
-            ESP_LOGW(TAG, "%s typ=%u", __func__, typ);
-        }
+        ESP_LOGV(TAG, "%s typ=%u", __func__, typ);
         datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
     } else {
-        if (LOG_LEVEL >= LOG_LEVEL_ERROR) {
-            ESP_LOGE(TAG, "%s network_tx_typ failed", __func__);
-        }
+        ESP_LOGE(TAG, "%s network_tx_typ failed", __func__);
         free(pkt);
     }
 }
@@ -120,14 +110,12 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 {
     datalink_pkt_t const * const pkt = rs485->dequeue(rs485);
     if (pkt) {
-        if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+        if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
             size_t const dbg_size = 128;
             char dbg[dbg_size];
             assert(pkt->skb);
             (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
-            if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
-                ESP_LOGI(TAG, "tx { %s}", dbg);
-            }
+            ESP_LOGV(TAG, "tx { %s}", dbg);
         }
         rs485->tx_mode(true);
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);
@@ -166,23 +154,11 @@ pool_task(void * ipc_void)
 
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
 
-    LOG_LEVEL = ipc->config.log_levels.pool_task;
-    ESP_LOGI(TAG, "pool_task LOG_LEVEL (%d)..", LOG_LEVEL);
+    poolstate_init();
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-    ipc_init(ipc->config.log_levels.ipc);
-
-    ESP_LOGI(TAG, "calling datalink_init (%u)..", ipc->config.log_levels.datalink);
-    datalink_init(ipc->config.log_levels.datalink);
-    network_init(ipc->config.log_levels.network);
-    poolstate_init(ipc->config.log_levels.poolstate);
-
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-
-    rs485_handle_t const rs485 = rs485_init(
-      ipc->config.log_levels.rs485, ipc->config.rs485_pins.rx_pin,
-      ipc->config.rs485_pins.tx_pin, ipc->config.rs485_pins.flow_control_pin);
+    rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
+//      ipc->config.log_levels.rs485, ipc->config.rs485_pins.rx_pin,
+//      ipc->config.rs485_pins.tx_pin, ipc->config.rs485_pins.flow_control_pin);
 
 #if 0      
     // request some initial information from the controller

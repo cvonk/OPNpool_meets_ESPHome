@@ -18,7 +18,7 @@
  */
 
 #include <esp_system.h>
-#include <esp_log.h>
+#include <esphome/core/log.h>
 
 #include "datalink.h"
 #include "datalink_pkt.h"
@@ -29,8 +29,6 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "network_rx";
-static log_level_t LOG_LEVEL;
-void network_rx_init(log_level_t const log_level) { LOG_LEVEL = log_level; }
 
 typedef struct hdr_data_hdr_copy_t {
     uint8_t dst;  // destination
@@ -220,9 +218,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const netw
             }
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "unknown A5_CTRL pkt->prot_typ (0x%02X)", pkt->prot_typ);
-            }
+            ESP_LOGW(TAG, "unknown A5_CTRL pkt->prot_typ (0x%02X)", pkt->prot_typ);
             break;
     }
 };
@@ -306,7 +302,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const netw
             // silently ignore
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
+            if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
                 ESP_LOGW(TAG, "unknown A5 pump typ %u", pkt->prot_typ);
             }
             break;
@@ -360,7 +356,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const net
             }
             break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
+            if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
                 ESP_LOGW(TAG, "unknown IC typ %u", pkt->prot_typ);
             }
             break;
@@ -396,7 +392,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             _decode_msg_ic_chlor(pkt, msg);
 			break;
         default:
-            if (LOG_LEVEL >= LOG_LEVEL_WARN) {
+            if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
                 ESP_LOGW(TAG, "unknown prot %u", pkt->prot);
             }
 	}

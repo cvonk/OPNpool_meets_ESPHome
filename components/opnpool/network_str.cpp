@@ -19,7 +19,7 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
+#include <esphome/core/log.h>
 
 #include "utils.h"
 #include "network.h"

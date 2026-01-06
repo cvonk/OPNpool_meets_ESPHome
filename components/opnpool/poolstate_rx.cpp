@@ -19,10 +19,10 @@
 
 #include <string.h>
 #include <esp_system.h>
-#include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
+#include <esphome/core/log.h>
 #include <cJSON.h>
 
 #include "utils.h"
@@ -38,8 +38,6 @@ namespace opnpool {
 #endif
 
 static char const * const TAG = "poolstate_rx";
-static log_level_t LOG_LEVEL;
-void poolstate_rx_init(log_level_t const log_level) { LOG_LEVEL = log_level; }
 
 /**
  * ctrl
@@ -54,7 +52,7 @@ _ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolsta
     state->system.tod.date.month = msg->month;
     state->system.tod.date.year = msg->year;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddTodToObject(dbg, "tod", &state->system.tod);
     }
 }
@@ -68,7 +66,7 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     state->thermos[POOLSTATE_THERMO_TYP_spa].temp = msg->spaTemp;
     state->thermos[POOLSTATE_THERMO_TYP_spa].set_point = msg->spaSetpoint;
     state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = (msg->heatSrc >> 2) & 0x03;
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddThermosToObject(dbg, "thermos", state->thermos, true, true, true, false);
     }
 }
@@ -81,7 +79,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     state->thermos[POOLSTATE_THERMO_TYP_spa].set_point = msg->spaSetpoint;
     state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = msg->heatSrc >> 2;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddThermosToObject(dbg, "thermos", state->thermos, false, true, true, false);
     }
 }
@@ -94,7 +92,7 @@ _ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * co
     for (uint8_t ii = 0; ii < nrBytes; ii++) {
         str[ii] = hex8_str(bytes[ii]);
     }
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON * const array = cJSON_CreateStringArray(str, nrBytes);
         cJSON_AddItemToObject(dbg, "raw", array);
     }
@@ -105,7 +103,7 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
 {
     state->circuits.active[msg->circuit -1] = msg->value;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         {
             int idx = static_cast<int>(msg->circuit) - 1;
             if (idx >= 0) {
@@ -133,7 +131,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
         };
     }
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddSchedsToObject(dbg, "scheds", state->scheds, true);
     }
 }
@@ -192,7 +190,7 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
     state->temps[POOLSTATE_TEMP_TYP_air].temp = msg->airTemp;
     state->temps[POOLSTATE_TEMP_TYP_solar].temp = msg->solarTemp;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddStateToObject(dbg, "state", state);
     }
 }
@@ -207,7 +205,7 @@ _ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * co
     state->system.version.major = msg->major;
     state->system.version.minor = msg->minor;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddVersionToObject(dbg, "firmware", &state->system.version);
     }
 }
@@ -222,7 +220,7 @@ _pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
     uint16_t const address = (msg->addressHi << 8) | msg->addressLo;
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddPumpPrgToObject(dbg, network_pump_prg_str(address), value);
     }
 }
@@ -232,7 +230,7 @@ _pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const 
 {
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddPumpPrgToObject(dbg, "resp", value);
     }
 }
@@ -240,7 +238,7 @@ _pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const 
 static void
 _pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
 {
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
        cJSON_AddPumpCtrlToObject(dbg, "ctrl", msg->ctrl);
     }
 }
@@ -250,7 +248,7 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolsta
 {
     state->pump.mode = msg->mode;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddPumpModeToObject(dbg, "mode", msg->mode);
     }
 }
@@ -264,7 +262,7 @@ _pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate
         return;
     }
     state->pump.running = running;
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddPumpRunningToObject(dbg, "running", state->pump.running);
     }
 }
@@ -289,7 +287,7 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
     state->pump.time.hour = msg->clockHr;
     state->pump.time.minute = msg->clockMin;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
        cJSON_AddPumpToObject(dbg, "status", state);
     }
 }
@@ -297,7 +295,7 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
 static void
 _ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
 {
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "ack", msg->typ);
     }
 }
@@ -315,7 +313,7 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
     strncpy(state->chlor.name, msg->name, name_size);
     state->chlor.name[name_size - 1] = '\0';
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
         cJSON_AddStringToObject(dbg, "name", state->chlor.name);
     }
@@ -326,7 +324,7 @@ _chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const 
 {
     state->chlor.pct = msg->pct;
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "pct", state->chlor.pct);
     }
 }
@@ -335,9 +333,6 @@ static void
 _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state)
 {
     state->chlor.salt = (uint16_t)msg->salt * 50;
-    if (LOG_LEVEL >= LOG_LEVEL_ERROR) {
-        //ESP_LOGD(TAG, "%s salt=%u, status=0x%02X", __func__, msg->salt, msg->err);
-    }
     if (msg->err & 0x01) {
         state->chlor.status = POOLSTATE_CHLOR_STATUS_LOW_FLOW;
     } else if (msg->err & 0x02) {
@@ -355,7 +350,7 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
     }
     // good salt range is 2600 to 4500 ppm
 
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddChlorRespToObject(dbg, "chlor", &state->chlor);
     }
 }
@@ -363,7 +358,7 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
 esp_err_t
 poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, ipc_t const * const ipc_for_dbg)
 {
-	name_reset_idx();
+  	name_reset_idx();
 
     poolstate_t old_state;
     (void)poolstate_get(&old_state);
@@ -475,13 +470,13 @@ poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, 
         case MSG_TYP_NONE:  // to please the gcc
             break;  //
     }
-    if (LOG_LEVEL >= LOG_LEVEL_VERBOSE) {
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         size_t const json_size = 1024;
-        // allocate and zero-init; cast required in C++
         char * const json = static_cast<char *>(calloc(1, json_size));
         assert(json);
-        assert( cJSON_PrintPreallocated(dbg, json, json_size, false) );
-        ESP_LOGI(TAG, "{%s: %s}\n", network_msg_typ_str(msg->typ), json);
+        assert(cJSON_PrintPreallocated(dbg, json, json_size, false));
+        ESP_LOGV(TAG, "{%s: %s}\n", network_msg_typ_str(msg->typ), json);
         ipc_send_to_mqtt(IPC_TO_MQTT_TYP_PUBLISH_DATA_DBG, json, ipc_for_dbg);
         free(json);
     }

@@ -280,12 +280,11 @@ typedef enum {
 } poolstate_elem_typ_t;
 
 /* poolstate.c */
-void poolstate_init(log_level_t const log_level);
+void poolstate_init();
 void poolstate_set(poolstate_t const * const state);
 esp_err_t poolstate_get(poolstate_t * const state);
 
 /* poolstate_rx.c */
-void poolstate_rx_init(log_level_t const log_level);
 esp_err_t poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, ipc_t const * const ipc_for_dbg);
 
 /* poolstate_json.c */
@@ -310,7 +309,6 @@ typedef struct poolstate_get_params_t {
     uint8_t              elem_sub_typ;
     uint8_t const        idx;
 } poolstate_get_params_t;
-void poolstate_get_init(log_level_t const log_level);
 esp_err_t poolstate_get_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
 
 /* poolstate_str.c */
