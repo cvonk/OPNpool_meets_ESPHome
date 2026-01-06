@@ -155,16 +155,15 @@ pool_task(void * ipc_void)
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
 
     poolstate_init();
-
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
-//      ipc->config.log_levels.rs485, ipc->config.rs485_pins.rx_pin,
-//      ipc->config.rs485_pins.tx_pin, ipc->config.rs485_pins.flow_control_pin);
 
-#if 0      
     // request some initial information from the controller
+#if 0    
     _queue_req(rs485, MSG_TYP_CTRL_VERSION_REQ);
     _queue_req(rs485, MSG_TYP_CTRL_TIME_REQ);
+#endif
 
+#if 0
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
 #endif

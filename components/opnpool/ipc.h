@@ -38,7 +38,7 @@ typedef struct ipc_t {
     config_t      config;
 } ipc_t;
 
-#define IPC_TO_MQTT_TYP_MAP(XX)  \
+#define IPC_TO_HOME_TYP_MAP(XX)  \
   XX(0x00, SUBSCRIBE)            \
   XX(0x01, PUBLISH)              \
   XX(0x02, PUBLISH_DATA_RESTART) \
@@ -46,15 +46,15 @@ typedef struct ipc_t {
   XX(0x04, PUBLISH_DATA_DBG)
 
 typedef enum {
-#define XX(num, name) IPC_TO_MQTT_TYP_##name = num,
-  IPC_TO_MQTT_TYP_MAP(XX)
+#define XX(num, name) IPC_TO_HOME_TYP_##name = num,
+  IPC_TO_HOME_TYP_MAP(XX)
 #undef XX
-} ipc_to_mqtt_typ_t;
+} ipc_to_home_typ_t;
 
-typedef struct ipc_to_mqtt_msg_t {
-    ipc_to_mqtt_typ_t dataType;
+typedef struct ipc_to_home_msg_t {
+    ipc_to_home_typ_t dataType;
     char *            data;  // must be freed by recipient
-} ipc_to_mqtt_msg_t;
+} ipc_to_home_msg_t;
 
 #define IPC_TO_POOL_TYP_MAP(XX) \
   XX(0x00, SET)   \
@@ -72,9 +72,9 @@ typedef struct ipc_to_pool_msg_t {
     char  *            data;
 } ipc_to_pool_msg_t;
 
-void ipc_send_to_mqtt(ipc_to_mqtt_typ_t const dataType, char const * const data, ipc_t const * const ipc);
+void ipc_send_to_mqtt(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc);
 void ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, size_t const topic_len, char const * const data, size_t const data_len, ipc_t const * const ipc);
-char const * ipc_to_mqtt_typ_str(ipc_to_mqtt_typ_t const typ);
+char const * ipc_to_mqtt_typ_str(ipc_to_home_typ_t const typ);
 
 } // namespace opnpool
 } // namespace esphome  

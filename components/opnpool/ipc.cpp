@@ -38,12 +38,12 @@ static char const * const TAG = "ipc";
 
 static const char * const _ipc_to_mqtt_typs[] = {
 #define XX(num, name) #name,
-  IPC_TO_MQTT_TYP_MAP(XX)
+  IPC_TO_HOME_TYP_MAP(XX)
 #undef XX
 };
 
 const char *
-ipc_to_mqtt_typ_str(ipc_to_mqtt_typ_t const typ)
+ipc_to_mqtt_typ_str(ipc_to_home_typ_t const typ)
 {
     return ELEM_AT(_ipc_to_mqtt_typs, typ, hex8_str(typ));
 }
@@ -53,9 +53,9 @@ ipc_to_mqtt_typ_str(ipc_to_mqtt_typ_t const typ)
  **/
 
 void
-ipc_send_to_mqtt(ipc_to_mqtt_typ_t const dataType, char const * const data, ipc_t const * const ipc)
+ipc_send_to_mqtt(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc)
 {
-    ipc_to_mqtt_msg_t msg = {
+    ipc_to_home_msg_t msg = {
         .dataType = dataType,
         .data = strdup(data)
     };

@@ -84,7 +84,7 @@ void OpnPool::setup() {
     ESP_LOGI(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
     this->ipc_.to_pool_q = xQueueCreate(10, sizeof(ipc_to_pool_msg_t));
-    this->ipc_.to_mqtt_q = xQueueCreate(60, sizeof(ipc_to_mqtt_msg_t));
+    this->ipc_.to_mqtt_q = xQueueCreate(60, sizeof(ipc_to_home_msg_t));
     assert(this->ipc_.to_mqtt_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
@@ -101,15 +101,19 @@ void OpnPool::loop() {
 
     // do whatever mqtt_task did in the past
 
-    ipc_to_mqtt_msg_t msg;
+    ipc_to_home_msg_t msg;
 
     if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-        ESP_LOGV(TAG, "Received message from pool_task (%u)", msg.dataType);
+        //ESP_LOGV(TAG, "Received message from pool_task (%u)", msg.dataType);
         switch (msg.dataType) {
 
-            // publish using topic and message from `msg.data`
-            case IPC_TO_MQTT_TYP_PUBLISH: {  // publish a message (from `hass_task`)
+                // subscribe to a topic on behalf of `hass_task`
+            case IPC_TO_HOME_TYP_SUBSCRIBE: {  
+            }
+
+                // publish using topic and message from `msg.data`
+            case IPC_TO_HOME_TYP_PUBLISH: {  // publish a message (from `hass_task`)
 
                 ESP_LOGV(TAG, "Publishing MQTT message: %s", msg.data);
 
@@ -119,6 +123,26 @@ void OpnPool::loop() {
                 ESP_LOGV(TAG, "tx %s: %s", topic, message);
 
                 //esp_mqtt_client_publish(client, topic, message, strlen(message), 1, 0);
+                free(msg.data);
+                break;
+            }
+
+                // publish to `/opnpool/data/SUB` where `SUB` is `msg.dataType` and the value is `msg.data`
+            case IPC_TO_HOME_TYP_PUBLISH_DATA_RESTART:  // publish response when restarting device (from `_dispatch_restart`)
+            case IPC_TO_HOME_TYP_PUBLISH_DATA_WHO:      // publish response with info about device (from `_dispatch_who`)
+            case IPC_TO_HOME_TYP_PUBLISH_DATA_DBG: {    // publish debug info (from e.g. `poolstate_rx`)
+                char * topic;
+                char const * const subtopic = ipc_to_mqtt_typ_str(msg.dataType);                
+                if (subtopic) {
+                    assert( asprintf(&topic, "%s/%s/%s", "TOPIC", subtopic, "dev.name") >= 0);
+                } else {
+                    assert( asprintf(&topic, "%s/%s", "TOPIC", "dev.name") >= 0);
+                }
+                char * message = strchr(msg.data, '\t');
+                *message++ = '\0';
+                ESP_LOGV(TAG, "publish %s: %s", topic, message);
+                // esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
+                free(topic);
                 free(msg.data);
                 break;
             }
