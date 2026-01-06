@@ -138,9 +138,7 @@ void OpnPool::loop() {
                 } else {
                     assert( asprintf(&topic, "%s/%s", "TOPIC", "dev.name") >= 0);
                 }
-                char * message = strchr(msg.data, '\t');
-                *message++ = '\0';
-                ESP_LOGV(TAG, "publish %s: %s", topic, message);
+                ESP_LOGV(TAG, "pub %s: %s", topic, msg.data);
                 // esp_mqtt_client_publish(client, topic, msg.data, strlen(msg.data), 1, 0);
                 free(topic);
                 free(msg.data);

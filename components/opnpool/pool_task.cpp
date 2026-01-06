@@ -158,12 +158,12 @@ pool_task(void * ipc_void)
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
     // request some initial information from the controller
-#if 0    
+#ifdef NOT_YET  
     _queue_req(rs485, MSG_TYP_CTRL_VERSION_REQ);
     _queue_req(rs485, MSG_TYP_CTRL_TIME_REQ);
 #endif
 
-#if 0
+#ifdef NOT_YET  
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
 #endif
