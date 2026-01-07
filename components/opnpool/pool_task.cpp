@@ -92,12 +92,11 @@ static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
 {
     network_msg_t msg = {
-            .typ = typ
+        .typ = typ
     };
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
     if (network_create_msg(&msg, pkt)) {
-        ESP_LOGV(TAG, "%s typ=%u", __func__, typ);
         datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
     } else {
         ESP_LOGE(TAG, "%s network_tx_typ failed", __func__);
@@ -158,15 +157,11 @@ pool_task(void * ipc_void)
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
     // request some initial information from the controller
-#ifdef NOT_YET  
     _queue_req(rs485, MSG_TYP_CTRL_VERSION_REQ);
     _queue_req(rs485, MSG_TYP_CTRL_TIME_REQ);
-#endif
 
-#ifdef NOT_YET  
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
-#endif
 
     ESP_LOGI(TAG, "pool_task started");
 

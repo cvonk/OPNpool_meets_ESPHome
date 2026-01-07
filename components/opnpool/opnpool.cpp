@@ -1,9 +1,9 @@
-#include "opnpool.h"
-#include "esphome/core/log.h"
 #include <time.h>
 #include <esp_system.h>
 #include <cstdlib>
+#include <esphome/core/log.h>
 
+#include "opnpool.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
@@ -64,21 +64,6 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
   this->publish_state();
 }
 
-#if 0
-void
-test_task(void * ipc_void)
-{
-    ESP_LOGI(TAG, "test_task initializing ..");
-
-    pool_task(ipc_void);
-
-    while (1) {
-        ESP_LOGI(TAG, "test_task heartbeat ..");
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-    }
-}
-#endif
-
 void OpnPool::setup() {
 
     ESP_LOGI(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
@@ -88,7 +73,6 @@ void OpnPool::setup() {
     assert(this->ipc_.to_mqtt_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
-    //BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 5, NULL);
     BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
     if (res != pdPASS) {
       ESP_LOGE(TAG, "Failed to create pool_task! Error code: %d", res);

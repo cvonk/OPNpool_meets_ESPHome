@@ -35,7 +35,7 @@ logger:
     rs485: VERBOSE
     datalink_rx: WARN
     datalink_tx: VERBOSE
-    network_rx: VERBOSE
+    network_rx: WARN
     network_create: VERBOSE
     poolstate: VERBOSE
     poolstate_rx: VERBOSE
