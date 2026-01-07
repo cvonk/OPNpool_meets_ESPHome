@@ -40,7 +40,6 @@ static char const * const TAG = "skb";
 skb_handle_t
 skb_alloc(size_t size)
 {
-    // allocate and zero-init
     skb_t * const skb = static_cast<skb_t *>(calloc(1, sizeof(skb_t) + size));
     if (skb == nullptr) {
         ESP_LOGE(TAG, "skb_alloc: allocation failed");
@@ -55,23 +54,20 @@ skb_alloc(size_t size)
     return skb;
 }
 
-void
 skb_free(skb_handle_t const skb)
 {
     free(skb);
 }
 
-// reserve headroom for protocol headers
 void
 skb_reserve(skb_handle_t const skb, size_t const header_len)
 {
-    assert(skb->priv.head == skb->priv.tail);  // only once after skb_alloc()
-    assert(skb->priv.tail + header_len <= skb->priv.end);
+    assert(skb->priv.head == skb->priv.tail);  // ensure no data has been added yet
+    assert(skb->priv.tail + header_len <= skb->priv.end); // ensures buffer capacity is not exceeded
     skb->priv.data += header_len;
     skb->priv.tail += header_len;
 }
 
-// returns pointer to write user data
 uint8_t *
 skb_put(skb_handle_t const skb, size_t const user_data_len)
 {
@@ -82,7 +78,6 @@ skb_put(skb_handle_t const skb, size_t const user_data_len)
     return ret;
 }
 
-// reclaims user_data, and returns pointer to user data
 uint8_t *
 skb_call(skb_handle_t const skb, size_t const user_data_adj)
 {
@@ -92,7 +87,6 @@ skb_call(skb_handle_t const skb, size_t const user_data_adj)
     return skb->priv.data;
 }
 
-// returns pointer to write header protocol data
 uint8_t *
 skb_push(skb_handle_t const skb, size_t const header_len)
 {
@@ -101,11 +95,10 @@ skb_push(skb_handle_t const skb, size_t const header_len)
     return skb->priv.data -= header_len;
 }
 
-// reclaims header, and returns pointer to user data
 uint8_t *
 skb_pull(skb_handle_t const skb, size_t const header_len)
 {
-    assert(skb->priv.data - header_len >= skb->priv.head);
+    assert(skb->priv.data - header_len >= skb->priv.head);  // prevent underflow
     skb->len -= header_len;
     return skb->priv.data -= header_len;
 }
