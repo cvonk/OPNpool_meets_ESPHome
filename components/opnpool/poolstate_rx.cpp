@@ -356,12 +356,12 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
 }
 
 esp_err_t
-poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, ipc_t const * const ipc_for_dbg)
+poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state)
 {
   	name_reset_idx();
 
     poolstate_t old_state;
-    (void)poolstate_get(&old_state);
+    (void) poolstate_get(&old_state);
     memcpy(state, &old_state, sizeof(poolstate_t));
 
     cJSON * const dbg = cJSON_CreateObject();
@@ -467,7 +467,7 @@ poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, 
         case MSG_TYP_CHLOR_LEVEL_RESP:
             _chlor_level_set_resp(dbg, msg->u.chlor_level_resp, state);
             break;
-        case MSG_TYP_NONE:  // to please the gcc
+        case MSG_TYP_NONE:  // to please gcc
             break;  //
     }
 
@@ -477,7 +477,6 @@ poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state, 
         assert(json);
         assert(cJSON_PrintPreallocated(dbg, json, json_size, false));
         ESP_LOGV(TAG, "{%s: %s}\n", network_msg_typ_str(msg->typ), json);
-        ipc_send_to_mqtt(IPC_TO_HOME_TYP_PUBLISH_DATA_DBG, json, ipc_for_dbg);
         free(json);
     }
     cJSON_Delete(dbg);

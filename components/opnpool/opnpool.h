@@ -11,6 +11,16 @@
 
 #include "ipc.h"
 
+/**
+   ideas:
+
+   Move poolstate to the home_task.  That implies
+    - pool_task sents IPC with network_msg_t with incoming msgs
+    - home_task sents IPC with network_msg_t to request outgoing msgs
+
+ **/
+
+
 namespace esphome {
 namespace opnpool {
 
@@ -19,6 +29,7 @@ class OpnPool; // Forward declaration for parent referencing
 // climate entity
 
 class OpnPoolClimate : public esphome::climate::Climate {
+
   public:
     esphome::climate::ClimateTraits traits() override;
     void control(const esphome::climate::ClimateCall &call) override;  
@@ -31,26 +42,27 @@ class OpnPoolClimate : public esphome::climate::Climate {
 // switch entity
 
 class OpnPoolSwitch : public esphome::switch_::Switch {
- protected:
-  void write_state(bool state) override { this->publish_state(state); }
+  protected:
+    void write_state(bool state) override { this->publish_state(state); }
 };
 
 class OpnPoolSensor : public esphome::sensor::Sensor {
- protected:
-  // The base class sensor::Sensor already provides publish_state(float state)
+  protected:
+    // The base class sensor::Sensor already provides publish_state(float state)
 };
 
 class OpnPoolBinarySensor : public esphome::binary_sensor::BinarySensor {
- protected:
+   protected:
 };
 
 class OpnPoolTextSensor : public esphome::text_sensor::TextSensor {
- protected:
+   protected:
 };
 
 // main component
 
 class OpnPool : public Component, public uart::UARTDevice {
+
   public:
     void setup() override;
     void loop() override;
@@ -111,8 +123,7 @@ class OpnPool : public Component, public uart::UARTDevice {
 
   protected:
 
-    // interprocess communication structure (and log_level)
-    ipc_t ipc_{};
+    ipc_t ipc_{};  // interprocess communication structure and RS485-pins
 
     void parse_packet_(const std::vector<uint8_t> &data);
 

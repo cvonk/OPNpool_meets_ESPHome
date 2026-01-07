@@ -58,10 +58,16 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
 
-            if (poolstate_rx_update(&msg, &state, ipc) == ESP_OK) {
 
-                ESP_LOGV(TAG, "Updated pool state from network message");
-                //hass_tx_state_to_mqtt(&state, ipc);
+            // 2BD: send msg to home_task, that will then do 
+            // something similar to poolstate_rx_update() and update
+            // the HA entities
+
+
+            if (poolstate_rx_update(&msg, &state) == ESP_OK) {
+
+                ESP_LOGV(TAG, "Poolstate changed");
+                //hass_tx_state_to_home(&state, ipc);
             }
         }
         free(pkt.skb);
@@ -70,11 +76,16 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 }
 
 static void
-_service_requests_from_mqtt_and_httpd(rs485_handle_t rs485, ipc_t const * const ipc)
+_service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
 {
     ipc_to_pool_msg_t queued_msg;
 
     if (xQueueReceive(ipc->to_pool_q, &queued_msg, (TickType_t)0) == pdPASS) {
+
+
+      // 2BD: this will receive network_msg_t from home_task
+      // and send them on their merry way to the pool controller
+
 
 #if 0
         assert(queued_msg.dataType == IPC_TO_POOL_TYP_SET);
@@ -125,7 +136,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         bool txOpportunity = false;
         network_msg_t msg;
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
-            if (poolstate_rx_update(&msg, &state, ipc) == ESP_OK) {
+            if (poolstate_rx_update(&msg, &state) == ESP_OK) {
                 // hass_tx_state_to_mqtt(&state, ipc);
             }
         }
@@ -169,7 +180,7 @@ pool_task(void * ipc_void)
 
         // read from ipc->to_pool_q
 
-        //_service_requests_from_mqtt_and_httpd(rs485, ipc);
+        _service_requests_from_home(rs485, ipc);
 
         // read from the rs485 device, until there is a packet,
         // then move the packet up the protocol stack to process it.

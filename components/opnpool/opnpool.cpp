@@ -69,8 +69,8 @@ void OpnPool::setup() {
     ESP_LOGI(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
     this->ipc_.to_pool_q = xQueueCreate(10, sizeof(ipc_to_pool_msg_t));
-    this->ipc_.to_mqtt_q = xQueueCreate(60, sizeof(ipc_to_home_msg_t));
-    assert(this->ipc_.to_mqtt_q && this->ipc_.to_pool_q);
+    this->ipc_.to_home_q = xQueueCreate(60, sizeof(ipc_to_home_msg_t));
+    assert(this->ipc_.to_home_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
     BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
@@ -83,21 +83,15 @@ void OpnPool::setup() {
 
 void OpnPool::loop() {
 
-    // do whatever mqtt_task did in the past
-
     ipc_to_home_msg_t msg;
 
-    if (xQueueReceive(this->ipc_.to_mqtt_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+    if (xQueueReceive(this->ipc_.to_home_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
         //ESP_LOGV(TAG, "Received message from pool_task (%u)", msg.dataType);
         switch (msg.dataType) {
 
-                // subscribe to a topic on behalf of `hass_task`
-            case IPC_TO_HOME_TYP_SUBSCRIBE: {  
-            }
-
                 // publish using topic and message from `msg.data`
-            case IPC_TO_HOME_TYP_PUBLISH: {  // publish a message (from `hass_task`)
+            case IPC_TO_HOME_TYP_NETWORK_MSG: {  // publish a message (from `hass_task`)
 
                 ESP_LOGV(TAG, "Publishing MQTT message: %s", msg.data);
 
@@ -111,12 +105,13 @@ void OpnPool::loop() {
                 break;
             }
 
+#if 0            
                 // publish to `/opnpool/data/SUB` where `SUB` is `msg.dataType` and the value is `msg.data`
             case IPC_TO_HOME_TYP_PUBLISH_DATA_RESTART:  // publish response when restarting device (from `_dispatch_restart`)
             case IPC_TO_HOME_TYP_PUBLISH_DATA_WHO:      // publish response with info about device (from `_dispatch_who`)
             case IPC_TO_HOME_TYP_PUBLISH_DATA_DBG: {    // publish debug info (from e.g. `poolstate_rx`)
                 char * topic;
-                char const * const subtopic = ipc_to_mqtt_typ_str(msg.dataType);                
+                char const * const subtopic = ipc_to_homet_typ_str(msg.dataType);                
                 if (subtopic) {
                     assert( asprintf(&topic, "%s/%s/%s", "TOPIC", subtopic, "dev.name") >= 0);
                 } else {
@@ -128,6 +123,7 @@ void OpnPool::loop() {
                 free(msg.data);
                 break;
             }
+#endif
         }
     }
 

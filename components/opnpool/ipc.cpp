@@ -43,25 +43,25 @@ static const char * const _ipc_to_mqtt_typs[] = {
 };
 
 const char *
-ipc_to_mqtt_typ_str(ipc_to_home_typ_t const typ)
+ipc_to_homet_typ_str(ipc_to_home_typ_t const typ)
 {
     return ELEM_AT(_ipc_to_mqtt_typs, typ, hex8_str(typ));
 }
 
 /**
- * ipc_send_to_mqtt
+ * ipc_send_to_home
  **/
 
 void
-ipc_send_to_mqtt(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc)
+ipc_send_to_home(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc)
 {
     ipc_to_home_msg_t msg = {
         .dataType = dataType,
         .data = strdup(data)
     };
     assert(msg.data);
-    if (xQueueSendToBack(ipc->to_mqtt_q, &msg, 0) != pdPASS) {
-        ESP_LOGW(TAG, "to_mqtt_q full");
+    if (xQueueSendToBack(ipc->to_home_q, &msg, 0) != pdPASS) {
+        ESP_LOGW(TAG, "to_home_q full");
         free(msg.data);
     }
     vTaskDelay(1);  // give others a chance to catch up

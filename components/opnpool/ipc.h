@@ -19,31 +19,29 @@ namespace opnpool {
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #endif
 
+#if 0
 #define WIFI_DEVNAME_LEN (32)
 #define WIFI_DEVIPADDR_LEN (16)
+#endif
 
-struct rs485_pins_t {
+typedef struct rs485_pins_t {
     uint8_t rx_pin{25};
     uint8_t tx_pin{26};
     uint8_t flow_control_pin{27};
-};
+} rs485_pins_t;
 
-struct config_t {
+typedef struct config_t {
     rs485_pins_t rs485_pins;
-};
+} config_t;
 
 typedef struct ipc_t {
-    QueueHandle_t to_mqtt_q;
+    QueueHandle_t to_home_q;
     QueueHandle_t to_pool_q;
     config_t      config;
 } ipc_t;
 
 #define IPC_TO_HOME_TYP_MAP(XX)  \
-  XX(0x00, SUBSCRIBE)            \
-  XX(0x01, PUBLISH)              \
-  XX(0x02, PUBLISH_DATA_RESTART) \
-  XX(0x03, PUBLISH_DATA_WHO)     \
-  XX(0x04, PUBLISH_DATA_DBG)
+  XX(0x00, NETWORK_MSG)
 
 typedef enum {
 #define XX(num, name) IPC_TO_HOME_TYP_##name = num,
@@ -57,8 +55,7 @@ typedef struct ipc_to_home_msg_t {
 } ipc_to_home_msg_t;
 
 #define IPC_TO_POOL_TYP_MAP(XX) \
-  XX(0x00, SET)   \
-  XX(0x01, REQ)
+  XX(0x00, NETWORK_MSG)
 
 typedef enum {
 #define XX(num, name) IPC_TO_POOL_TYP_##name = num,
@@ -72,9 +69,9 @@ typedef struct ipc_to_pool_msg_t {
     char  *            data;
 } ipc_to_pool_msg_t;
 
-void ipc_send_to_mqtt(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc);
+void ipc_send_to_home(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc);
 void ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, size_t const topic_len, char const * const data, size_t const data_len, ipc_t const * const ipc);
-char const * ipc_to_mqtt_typ_str(ipc_to_home_typ_t const typ);
+char const * ipc_to_homet_typ_str(ipc_to_home_typ_t const typ);
 
 } // namespace opnpool
 } // namespace esphome  
