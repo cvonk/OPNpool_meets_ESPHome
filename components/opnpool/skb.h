@@ -192,6 +192,8 @@ uint8_t * skb_pull(skb_handle_t const skb, size_t const header_len);
 
 void skb_reset(skb_handle_t skb);
 
+    // debugging
+
 /**
  * @brief Format the buffer contents as a hex string
  * 

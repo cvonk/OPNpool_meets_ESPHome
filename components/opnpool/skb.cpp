@@ -4,8 +4,8 @@
  *   Since this code originated from code which is public domain, I
  *   hereby declare this code to be public domain as well.
  *
- *   Derived more functionality from macros to C++ template.
- *   Coert Vonk, 2015, 2019
+ *   Write as C code instead of macros.
+ *   Coert Vonk, 2015, 2019, 2026.
  *
  *   loosely based on http://www.keil.com/download/docs/200.asp
  ****************************************************************************
@@ -28,7 +28,6 @@
 
 #include <esp_system.h>
 #include <esphome/core/log.h>
-//#include <cstdlib>
 
 #include "skb.h"
 
@@ -54,6 +53,7 @@ skb_alloc(size_t size)
     return skb;
 }
 
+void
 skb_free(skb_handle_t const skb)
 {
     free(skb);
@@ -98,9 +98,9 @@ skb_push(skb_handle_t const skb, size_t const header_len)
 uint8_t *
 skb_pull(skb_handle_t const skb, size_t const header_len)
 {
-    assert(skb->priv.data - header_len >= skb->priv.head);  // prevent underflow
+    assert(skb->priv.data + header_len <= skb->priv.tail);  // ensure we don't pull beyond available data
     skb->len -= header_len;
-    return skb->priv.data -= header_len;
+    return skb->priv.data += header_len;
 }
 
 void
