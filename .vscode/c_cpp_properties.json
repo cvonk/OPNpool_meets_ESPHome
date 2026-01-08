@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "ESPHome",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/components/opnpool",
+                "${userHome}/.esphome/**",
+                "${userHome}/.platformio/packages/framework-espidf**/components/**",
+                "${userHome}/.platformio/packages/framework-espidf**/tools/cmake/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "compilerPath": "C:/Program Files/LLVM/bin/clang.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "clang-x64"
+        }
+    ],
+    "version": 4
+}
