@@ -78,9 +78,53 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
 
                 ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_pool_typ_str(queued_msg.typ));
 
-                // 2BD: handle this received network message
+                // Handle MSG_TYP_CTRL_CIRCUIT_SET
+                if (msg->typ == MSG_TYP_CTRL_CIRCUIT_SET) {
+                    network_msg_ctrl_circuit_set_t * const ctrl = msg->u.ctrl_circuit_set;
+                    
+                    if (ctrl == nullptr) {
+                        ESP_LOGE(TAG, "Received null ctrl_circuit_set pointer");
+                        break;
+                    }
+                    
+                    ESP_LOGI(TAG, "Processing circuit_set: circuit=%u, value=%u", ctrl->circuit, ctrl->value);
+                    
+                    // Allocate datalink packet
+                    datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
+                    if (pkt == nullptr) {
+                        ESP_LOGE(TAG, "Failed to allocate datalink_pkt_t");
+                        free(ctrl);
+                        break;
+                    }
+                    
+                    // Set protocol and type
+                    pkt->prot = DATALINK_PROT_A5_CTRL;
+                    pkt->prot_typ = NETWORK_TYP_CTRL_CIRCUIT_SET;
+                    pkt->data_len = sizeof(network_msg_ctrl_circuit_set_t);
+                    
+                    // Allocate skb
+                    pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + pkt->data_len + DATALINK_MAX_TAIL_SIZE);
+                    if (pkt->skb == nullptr) {
+                        ESP_LOGE(TAG, "Failed to allocate skb");
+                        free(pkt);
+                        free(ctrl);
+                        break;
+                    }
+                    
+                    // Reserve space for header and copy data
+                    skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
+                    pkt->data = skb_put(pkt->skb, pkt->data_len);
+                    memcpy(pkt->data, ctrl, pkt->data_len);
+                    
+                    // Queue for transmission
+                    datalink_tx_pkt_queue(rs485, pkt);
+                    ESP_LOGD(TAG, "Queued circuit_set packet for transmission");
+                    
+                    // Free the ctrl payload (allocated by OpnPool::on_switch_command)
+                    free(ctrl);
+                }
 
-                // along the lines of the old `hass_create_message()`
+                // 2BD: handle other network message types here
 
                 break;
             }
