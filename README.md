@@ -1,3 +1,3 @@
 # This is a work in progress
 
-Porting OPNpool to the ESPHome platform.
+Porting my [OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
