@@ -94,7 +94,7 @@ _service_requests_from_pool(ipc_t const * const ipc)
             case IPC_TO_HOME_TYP_NETWORK_MSG: {
                 network_msg_t * const msg = &queued_msg.u.network_msg;
 
-                ESP_LOGV(TAG, "Handling msg typ=%u", ipc_to_home_typ_str(queued_msg.typ));
+                ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
 
                 if (poolstate_rx_update(msg) == ESP_OK) {
 
@@ -102,8 +102,10 @@ _service_requests_from_pool(ipc_t const * const ipc)
 
 
                     // 2BD: publish this as an update to the HA sensors 
-
-
+                    // Maybe this should be inside poolstate_rx_update(). If the sensors
+                    //   keep track of their previous state, then only publish changes.
+                    // Maybe2, poolstate should be a class that encapsulates the state and the sensors.
+                    // Maybe3, that is where the OpnPoolSwitch, OpnPoolClimate et al classes are for.
                 }
                 break;
             }

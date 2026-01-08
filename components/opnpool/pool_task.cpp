@@ -76,7 +76,7 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
             case IPC_TO_POOL_TYP_NETWORK_MSG: {
                 network_msg_t * const msg = &queued_msg.u.network_msg;
 
-                ESP_LOGV(TAG, "Handling msg typ=%u", ipc_to_pool_typ_str(queued_msg.typ));
+                ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_pool_typ_str(queued_msg.typ));
 
                 // 2BD: handle this received network message
 
