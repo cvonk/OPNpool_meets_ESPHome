@@ -94,7 +94,7 @@ _service_requests_from_pool(ipc_t const * const ipc)
             case IPC_TO_HOME_TYP_NETWORK_MSG: {
                 network_msg_t * const msg = &queued_msg.u.network_msg;
 
-                ESP_LOGV(TAG, "Handling msg typ=%u", ipc_to_home_typ_str(msg->typ));
+                ESP_LOGV(TAG, "Handling msg typ=%u", ipc_to_home_typ_str(queued_msg.typ));
 
                 if (poolstate_rx_update(msg) == ESP_OK) {
 
@@ -103,7 +103,7 @@ _service_requests_from_pool(ipc_t const * const ipc)
 
                     // 2BD: publish this as an update to the HA sensors 
 
-                    
+
                 }
                 break;
             }
