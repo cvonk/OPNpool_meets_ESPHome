@@ -4,10 +4,10 @@
  *   Since this code originated from code which is public domain, I
  *   hereby declare this code to be public domain as well.
  *
- *   Write as C code instead of macros.
+ *   Rewite as C code instead of macros.
  *   Coert Vonk, 2015, 2019, 2026.
  *
- *   loosely based on http://www.keil.com/download/docs/200.asp
+ *   Loosely based on http://www.keil.com/download/docs/200.asp
  ****************************************************************************
  *
  *   Since this code originated from code which is public domain, I

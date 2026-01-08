@@ -285,7 +285,7 @@ void poolstate_set(poolstate_t const * const state);
 esp_err_t poolstate_get(poolstate_t * const state);
 
 /* poolstate_rx.c */
-esp_err_t poolstate_rx_update(network_msg_t const * const msg, poolstate_t * const state);
+esp_err_t poolstate_rx_update(network_msg_t const * const msg);
 
 /* poolstate_json.c */
 void cJSON_AddTodToObject(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);

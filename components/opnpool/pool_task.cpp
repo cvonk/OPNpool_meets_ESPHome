@@ -26,14 +26,12 @@
 #include "esphome/core/log.h"
 #include <esp_system.h>
 #include <time.h>
-//#include <cstdlib>
 
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network.h"
-#include "poolstate.h"
 #include "ipc.h"
 #include "pool_task.h"
 
@@ -49,7 +47,6 @@ static char const * const TAG = "pool_task";
 static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 {
-    poolstate_t state;
     bool txOpportunity = false;
     datalink_pkt_t pkt;
     network_msg_t msg;
@@ -58,17 +55,10 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
 
+// 2BD: it makes more sense to the msg in as data instead of a pointer
+// then it gets copied into the queue instead of just passing a pointer
 
-            // 2BD: send msg to home_task, that will then do 
-            // something similar to poolstate_rx_update() and update
-            // the HA entities
-
-
-            if (poolstate_rx_update(&msg, &state) == ESP_OK) {
-
-                ESP_LOGV(TAG, "Poolstate changed");
-                //hass_tx_state_to_home(&state, ipc);
-            }
+            ipc_send_network_msg_to_home(&msg, ipc);
         }
         free(pkt.skb);
     }
@@ -82,20 +72,22 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
 
     if (xQueueReceive(ipc->to_pool_q, &queued_msg, (TickType_t)0) == pdPASS) {
 
+        switch(queued_msg.typ) {
+            case IPC_TO_POOL_TYP_NETWORK_MSG: {
+                network_msg_t * const msg = &queued_msg.u.network_msg;
 
-      // 2BD: this will receive network_msg_t from home_task
-      // and send them on their merry way to the pool controller
+                ESP_LOGV(TAG, "Handling msg typ=%u", ipc_to_pool_typ_str(msg->typ));
 
+                // 2BD: handle this received network message
 
-#if 0
-        assert(queued_msg.dataType == IPC_TO_POOL_TYP_SET);
-        datalink_pkt_t * const pkt = malloc(sizeof(datalink_pkt_t));
+                // along the lines of the old `hass_create_message()`
 
-        if (hass_create_message(queued_msg.topic, queued_msg.data, pkt) == ESP_OK) {
-            datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
+                break;
+            }
+            default:
+                ESP_LOGW(TAG, "Unknown msg typ: %u", queued_msg.typ);
+                break;
         }
-#endif        
-        free(queued_msg.data);
     }
 }
 
@@ -132,14 +124,16 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         rs485->tx_mode(false);
 
         // pretent that we received our own message
-        poolstate_t state;
+
         bool txOpportunity = false;
         network_msg_t msg;
+
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
-            if (poolstate_rx_update(&msg, &state) == ESP_OK) {
-                // hass_tx_state_to_mqtt(&state, ipc);
-            }
+
+            ipc_send_network_msg_to_home(&msg, ipc);
+
         }
+
         free(pkt->skb);
         free((void *) pkt);
     }
@@ -160,11 +154,9 @@ pool_req_task(void * rs485_void)
 void
 pool_task(void * ipc_void)
 {
-    ESP_LOGI(TAG, "pool_task initializing ..");
+    ESP_LOGI(TAG, "init ..");
 
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
-
-    poolstate_init();
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
     // request some initial information from the controller
@@ -174,7 +166,7 @@ pool_task(void * ipc_void)
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
 
-    ESP_LOGI(TAG, "pool_task started");
+    ESP_LOGI(TAG, "started");
 
     while (1) {
 

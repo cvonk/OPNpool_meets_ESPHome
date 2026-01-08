@@ -32,58 +32,70 @@ namespace opnpool {
 
 static char const * const TAG = "ipc";
 
-/**
- * network_heat_src_t
- **/
 
-static const char * const _ipc_to_mqtt_typs[] = {
+static const char * const _ipc_to_home_typs[] = {
 #define XX(num, name) #name,
   IPC_TO_HOME_TYP_MAP(XX)
 #undef XX
 };
 
 const char *
-ipc_to_homet_typ_str(ipc_to_home_typ_t const typ)
+ipc_to_home_typ_str(ipc_to_home_typ_t const typ)
 {
-    return ELEM_AT(_ipc_to_mqtt_typs, typ, hex8_str(typ));
+    return ELEM_AT(_ipc_to_home_typs, typ, hex8_str(typ));
+}
+
+
+//
+
+static const char * const _ipc_to_pool_typs[] = {
+#define XX(num, name) #name,
+  IPC_TO_POOL_TYP_MAP(XX)
+#undef XX
+};
+
+const char *
+ipc_to_pool_typ_str(ipc_to_pool_typ_t const typ)
+{
+    return ELEM_AT(_ipc_to_pool_typs, typ, hex8_str(typ));
 }
 
 /**
- * ipc_send_to_home
+ * IPC send network_msg to home_task
  **/
 
 void
-ipc_send_to_home(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc)
+ipc_send_network_msg_to_home(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    ipc_to_home_msg_t msg = {
-        .dataType = dataType,
-        .data = strdup(data)
+    ipc_to_home_msg_t home_msg = {
+        .typ = IPC_TO_HOME_TYP_NETWORK_MSG,
+        .u = {
+            .network_msg = *network_msg,
+        },
     };
-    assert(msg.data);
-    if (xQueueSendToBack(ipc->to_home_q, &msg, 0) != pdPASS) {
+    if (xQueueSendToBack(ipc->to_home_q, &home_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_home_q full");
-        free(msg.data);
     }
     vTaskDelay(1);  // give others a chance to catch up
 }
 
 /**
- * ipc_send_to_pool
+ * IPC send network_msg to pool_task
  **/
 
 void
-ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, size_t const topic_len, char const * const data, size_t const data_len, ipc_t const * const ipc)
+ipc_send_network_msg_to_pool(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    ipc_to_pool_msg_t msg = {
-        .dataType = dataType,
-        .topic = strndup(topic, topic_len),
-        .data = strndup(data, data_len),
+    ipc_to_pool_msg_t pool_msg = {
+        .typ = IPC_TO_POOL_TYP_NETWORK_MSG,
+        .u = {
+            .network_msg = *network_msg,
+        },
     };
-    assert(msg.data);
-    if (xQueueSendToBack(ipc->to_pool_q, &msg, 0) != pdPASS) {
+    if (xQueueSendToBack(ipc->to_pool_q, &pool_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_pool_q full");
-        free(msg.data);
     }
+    //vTaskDelay(1);  // give others a chance to catch up
 }
 
 } // namespace opnpool

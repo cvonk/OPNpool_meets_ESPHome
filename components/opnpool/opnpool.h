@@ -10,6 +10,7 @@
 #include <string>
 
 #include "ipc.h"
+#include "poolstate.h"
 
 /**
    ideas:

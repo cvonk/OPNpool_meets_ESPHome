@@ -1,4 +1,6 @@
 #pragma once
+#include <esp_system.h>
+#include <esp_types.h>
 #include <driver/uart.h>
 
 #include "ipc.h"

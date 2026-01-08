@@ -1,7 +1,9 @@
 #pragma once
 #include <esp_types.h>
+#include <freertos/queue.h>
 
 #include "skb.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {
@@ -19,10 +21,7 @@ namespace opnpool {
 #define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
 #endif
 
-#if 0
-#define WIFI_DEVNAME_LEN (32)
-#define WIFI_DEVIPADDR_LEN (16)
-#endif
+    // ipc_t passed to tasks
 
 typedef struct rs485_pins_t {
     uint8_t rx_pin{25};
@@ -40,6 +39,9 @@ typedef struct ipc_t {
     config_t      config;
 } ipc_t;
 
+    // message to home_task
+    // use XX-Macro pattern to keep enums and strings synchronized
+
 #define IPC_TO_HOME_TYP_MAP(XX)  \
   XX(0x00, NETWORK_MSG)
 
@@ -50,9 +52,14 @@ typedef enum {
 } ipc_to_home_typ_t;
 
 typedef struct ipc_to_home_msg_t {
-    ipc_to_home_typ_t dataType;
-    char *            data;  // must be freed by recipient
+    ipc_to_home_typ_t typ;
+    union {
+        network_msg_t network_msg;
+    } u;
 } ipc_to_home_msg_t;
+
+    // message to pool_task
+    // use XX-Macro pattern to keep enums and strings synchronized
 
 #define IPC_TO_POOL_TYP_MAP(XX) \
   XX(0x00, NETWORK_MSG)
@@ -64,14 +71,16 @@ typedef enum {
 } ipc_to_pool_typ_t;
 
 typedef struct ipc_to_pool_msg_t {
-    ipc_to_pool_typ_t  dataType;
-    char  *            topic;
-    char  *            data;
+    ipc_to_pool_typ_t typ;
+    union {
+        network_msg_t network_msg;
+    } u;
 } ipc_to_pool_msg_t;
 
-void ipc_send_to_home(ipc_to_home_typ_t const dataType, char const * const data, ipc_t const * const ipc);
-void ipc_send_to_pool(ipc_to_pool_typ_t const dataType, char const * const topic, size_t const topic_len, char const * const data, size_t const data_len, ipc_t const * const ipc);
-char const * ipc_to_homet_typ_str(ipc_to_home_typ_t const typ);
+void ipc_send_network_msg_to_home(network_msg_t const * const network_msg, ipc_t const * const ipc);
+void ipc_send_network_msg_to_pool(network_msg_t const * const network_msg, ipc_t const * const ipc);
+char const * ipc_to_home_typ_str(ipc_to_home_typ_t const typ);
+char const * ipc_to_pool_typ_str(ipc_to_pool_typ_t const typ);
 
 } // namespace opnpool
-} // namespace esphome  
+} // namespace esphome
