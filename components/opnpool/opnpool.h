@@ -43,8 +43,14 @@ class OpnPoolClimate : public esphome::climate::Climate {
 // switch entity
 
 class OpnPoolSwitch : public esphome::switch_::Switch {
+  public:
+    void set_parent(OpnPool *parent) { this->parent_ = parent; }
+    void set_circuit_id(uint8_t circuit_id) { this->circuit_id_ = circuit_id; }
+  
   protected:
-    void write_state(bool state) override { this->publish_state(state); }
+    void write_state(bool state) override;
+    OpnPool *parent_{nullptr};
+    uint8_t circuit_id_{0};
 };
 
 class OpnPoolSensor : public esphome::sensor::Sensor {
@@ -121,6 +127,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_timeout_binary_sensor(binary_sensor::BinarySensor *s) { mode_timeout_bs_ = s; }
 
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
+    void on_switch_command(uint8_t circuit, bool state);
 
   protected:
 

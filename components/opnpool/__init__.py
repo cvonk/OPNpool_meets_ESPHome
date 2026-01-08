@@ -118,6 +118,22 @@ async def to_code(config):
             obj = cg.new_Pvariable(config[key][CONF_ID])
             await switch.register_switch(obj, config[key])
             cg.add(getattr(var, f"set_{key}_switch")(obj))
+            
+            # Wire up parent and circuit_id based on network_msg.h mapping
+            cg.add(obj.set_parent(var))
+            
+            # Circuit ID mapping (0-based): spa=0, aux1=1, aux2=2, ft1=4, pool=5, ft2=6, ft3=7, ft4=8
+            circuit_map = {
+                "spa": 0,
+                "aux1": 1,
+                "aux2": 2,
+                "feature1": 4,  # ft1
+                "pool": 5,
+                "feature2": 6,  # ft2
+                "feature3": 7,  # ft3
+                "feature4": 8   # ft4
+            }
+            cg.add(obj.set_circuit_id(circuit_map[key]))
 
     for key in CONF_ANALOG_SENSORS:
         if key in config:

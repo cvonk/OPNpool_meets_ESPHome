@@ -64,6 +64,40 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
   this->publish_state();
 }
 
+void OpnPoolSwitch::write_state(bool state) {
+  this->publish_state(state);
+  if (this->parent_ != nullptr) {
+    this->parent_->on_switch_command(this->circuit_id_, state);
+  }
+}
+
+void OpnPool::on_switch_command(uint8_t circuit, bool state) {
+  // Allocate control structure on heap
+  network_msg_ctrl_circuit_set_t *ctrl = static_cast<network_msg_ctrl_circuit_set_t*>(
+    malloc(sizeof(network_msg_ctrl_circuit_set_t))
+  );
+  
+  if (ctrl == nullptr) {
+    ESP_LOGE(TAG, "Failed to allocate memory for circuit set command");
+    return;
+  }
+  
+  // Fill in the circuit (1-based) and value
+  ctrl->circuit = circuit + 1;  // Convert 0-based to 1-based
+  ctrl->value = state ? 1 : 0;
+  
+  // Build network message
+  network_msg_t msg;
+  msg.typ = MSG_TYP_CTRL_CIRCUIT_SET;
+  msg.u.ctrl_circuit_set = ctrl;
+  
+  // Send to pool_task via IPC
+  ESP_LOGI(TAG, "Sending circuit_set command: circuit=%u (1-based), value=%u", ctrl->circuit, ctrl->value);
+  ipc_send_network_msg_to_pool(&msg, &this->ipc_);
+  
+  // Note: pool_task will free ctrl after processing
+}
+
 void OpnPool::setup() {
 
     ESP_LOGI(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
