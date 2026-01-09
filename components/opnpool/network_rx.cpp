@@ -231,7 +231,7 @@ static void
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const network)
 {
     network->typ = MSG_TYP_NONE;
-	bool toPump = (datalink_groupaddr(pkt->dst) == DATALINK_ADDRGROUP_PUMP);
+	bool toPump = (datalink_groupaddr(pkt->dst) == datalink_addrgroup_t::PUMP);
 
     switch (pkt->prot_typ) {
         case NETWORK_TYP_PUMP_REG:
@@ -376,8 +376,8 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
 #if 1
     // silently ignore packets that we can't decode
     datalink_addrgroup_t const dst = datalink_groupaddr(pkt->dst);
-    if ((pkt->prot == DATALINK_PROT_A5_CTRL && dst == DATALINK_ADDRGROUP_X09) ||
-        (pkt->prot == DATALINK_PROT_IC && dst != DATALINK_ADDRGROUP_ALL && dst != DATALINK_ADDRGROUP_CHLOR)) {
+    if ((pkt->prot == DATALINK_PROT_A5_CTRL && dst == datalink_addrgroup_t::X09) ||
+        (pkt->prot == DATALINK_PROT_IC && dst != datalink_addrgroup_t::ALL && dst != datalink_addrgroup_t::CHLOR)) {
         return ESP_FAIL;
     }
 #endif
@@ -398,8 +398,8 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
   	}
     *txOpportunity =
         pkt->prot == DATALINK_PROT_A5_CTRL &&
-        datalink_groupaddr(pkt->src) == DATALINK_ADDRGROUP_CTRL &&
-        datalink_groupaddr(pkt->dst) == DATALINK_ADDRGROUP_ALL;
+        datalink_groupaddr(pkt->src) == datalink_addrgroup_t::CTRL &&
+        datalink_groupaddr(pkt->dst) == datalink_addrgroup_t::ALL;
 
     return msg->typ == MSG_TYP_NONE ? ESP_FAIL : ESP_OK;
 }

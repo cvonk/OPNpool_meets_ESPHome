@@ -38,7 +38,7 @@ _enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, uint8_t 
     for (uint_least8_t ii = 0; ii < sizeof(datalink_preamble_ic); ii++) {
         head->preamble[ii] = datalink_preamble_ic[ii];
     }
-    head->hdr.dst = datalink_devaddr(DATALINK_ADDRGROUP_CTRL, 0);
+    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
     head->hdr.typ = prot_typ;
 }
 
@@ -56,8 +56,8 @@ _enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, uint8_t 
         head->preamble[ii] = datalink_preamble_a5[ii];
     }
     head->hdr.ver = 0x01;
-    head->hdr.dst = datalink_devaddr(DATALINK_ADDRGROUP_CTRL, 0);
-    head->hdr.src = datalink_devaddr(DATALINK_ADDRGROUP_REMOTE, 2);  // 2BD 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
+    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
+    head->hdr.src = datalink_devaddr(datalink_addrgroup_t::REMOTE, 2);  // 2BD 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
     head->hdr.typ = prot_typ;
     head->hdr.len = data_len;
 }

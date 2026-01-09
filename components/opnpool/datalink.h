@@ -1,12 +1,11 @@
 #pragma once
 #include <sdkconfig.h>
 #include <esp_system.h>
+#define MAGIC_ENUM_RANGE_MAX 0x100
 
 #include "skb.h"
 #include "rs485.h"
-//#include "ipc.h"
-
-  /* X-Macro pattern keeps enums and strings synchronized */
+#include "magic_enum.h"
 
 namespace esphome {
 namespace opnpool {
@@ -27,21 +26,15 @@ namespace opnpool {
 // 0x60 .. 0x6F = intelliflow pump 0 .. 15
 // 
 // `addrgroup` is the high nibble of the address
-/* X-Macro pattern keeps enums and strings synchronized */
 
-#define DATALINK_ADDRGROUP_MAP(XX) \
-  XX(0x00, ALL)  \
-  XX(0x01, CTRL) \
-  XX(0x02, REMOTE) \
-  XX(0x05, CHLOR) \
-  XX(0x06, PUMP) \
-  XX(0x09, X09)
-
-typedef enum {
-#define XX(num, name) DATALINK_ADDRGROUP_##name = num,
-  DATALINK_ADDRGROUP_MAP(XX)
-#undef XX
-} datalink_addrgroup_t;
+enum class datalink_addrgroup_t : uint8_t {
+  ALL = 0x00,
+  CTRL = 0x01,
+  REMOTE = 0x02,
+  CHLOR = 0x05,
+  PUMP = 0x06,
+  X09 = 0x09,
+};
 
 /**
  * datalink_head_t
@@ -114,7 +107,7 @@ typedef union datalink_tail_t {
 
 /* datalink.c */
 datalink_addrgroup_t datalink_groupaddr(uint16_t const addr);
-uint8_t datalink_devaddr(uint8_t group, uint8_t const id);
+uint8_t datalink_devaddr(datalink_addrgroup_t group, uint8_t const id);
 uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
 extern datalink_preamble_a5_t datalink_preamble_a5;
 extern datalink_preamble_ic_t datalink_preamble_ic;

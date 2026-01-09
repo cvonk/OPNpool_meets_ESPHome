@@ -41,9 +41,9 @@ datalink_groupaddr(uint16_t const addr)
 }
 
 uint8_t
-datalink_devaddr(uint8_t group, uint8_t const id)
+datalink_devaddr(datalink_addrgroup_t const group, uint8_t const id)
 {
-	return (group << 4) | id;
+    return (static_cast<uint8_t>(group) << 4) | (id & 0x0F);
 }
 
 uint16_t

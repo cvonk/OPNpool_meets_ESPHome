@@ -180,7 +180,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 if (hdr->len > DATALINK_MAX_DATA_SIZE) {
                   return ESP_FAIL;  // pkt length exceeds what we have planned for
                 }
-                if ( (datalink_groupaddr(hdr->src) == DATALINK_ADDRGROUP_PUMP) || (datalink_groupaddr(hdr->dst) == DATALINK_ADDRGROUP_PUMP) ) {
+                if ( (datalink_groupaddr(hdr->src) == datalink_addrgroup_t::PUMP) || (datalink_groupaddr(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
                     pkt->prot = DATALINK_PROT_A5_PUMP;
                 }
                 pkt->prot_typ = hdr->typ;
