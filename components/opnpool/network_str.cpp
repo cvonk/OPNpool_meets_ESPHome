@@ -1,7 +1,7 @@
 /**
  * @brief OPNpool - Network layer: support enum/various to string
  *
- * © Copyright 2014, 2019, 2022, Coert Vonk
+ * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of

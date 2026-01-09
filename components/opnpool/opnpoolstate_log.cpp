@@ -1,5 +1,5 @@
 /**
- * @brief OPNpool - Pool state: support, state to cJSON
+ * @brief OPNpool - Pool state: log state as a JSON-formatted string
  *
  * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 

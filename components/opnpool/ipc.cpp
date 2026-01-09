@@ -1,7 +1,7 @@
 /**
  * @brief OPNpool - Inter Process Communication: mailbox messages exchanged between the tasks
  *
- * © Copyright 2014, 2019, 2022, Coert Vonk
+ * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of

@@ -5,7 +5,7 @@
  *   - 	A5 has messages such as 0x00 0xFF <ldb> <sub> <dst> <src> <cfi> <len> [<data>] <chH> <ckL>
  *   -  IC has messages such as 0x10 0x02 <data0> <data1> <data2> .. <dataN> <ch> 0x10 0x03
  *
- * © Copyright 2014, 2019, 2022, Coert Vonk
+ * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
