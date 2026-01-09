@@ -14,7 +14,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  * 
  * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022 Coert Vonk
+ * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
 #include <string.h>
