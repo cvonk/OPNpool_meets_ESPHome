@@ -74,57 +74,28 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
 
         switch(queued_msg.typ) {
             case IPC_TO_POOL_TYP_NETWORK_MSG: {
-                network_msg_t * const msg = &queued_msg.u.network_msg;
+                network_msg_t const * const msg = &queued_msg.u.network_msg;
 
-                ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_pool_typ_str(queued_msg.typ));
+                ESP_LOGV(TAG, "Rx CIRCUIT_SET command: circuit=%u to %u", msg->u.ctrl_circuit_set.circuit, msg->u.ctrl_circuit_set.value);
 
-                // Handle MSG_TYP_CTRL_CIRCUIT_SET
                 if (msg->typ == MSG_TYP_CTRL_CIRCUIT_SET) {
-                    network_msg_ctrl_circuit_set_t * const ctrl = msg->u.ctrl_circuit_set;
-                    
-                    if (ctrl == nullptr) {
-                        ESP_LOGE(TAG, "Received null ctrl_circuit_set pointer");
-                        break;
-                    }
-                    
-                    ESP_LOGI(TAG, "Processing circuit_set: circuit=%u, value=%u", ctrl->circuit, ctrl->value);
-                    
-                    // Allocate datalink packet
+
                     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
-                    if (pkt == nullptr) {
-                        ESP_LOGE(TAG, "Failed to allocate datalink_pkt_t");
-                        free(ctrl);
-                        break;
+
+                    if (network_create_pkt(msg, pkt) == ESP_OK) {
+
+                        datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by recipient
+                        ESP_LOGV(TAG, "Queued CIRCUIT_SET pkt for transmission");
+                        return;
                     }
-                    
-                    // Set protocol and type
-                    pkt->prot = DATALINK_PROT_A5_CTRL;
-                    pkt->prot_typ = NETWORK_TYP_CTRL_CIRCUIT_SET;
-                    pkt->data_len = sizeof(network_msg_ctrl_circuit_set_t);
-                    
-                    // Allocate skb
-                    pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + pkt->data_len + DATALINK_MAX_TAIL_SIZE);
-                    if (pkt->skb == nullptr) {
-                        ESP_LOGE(TAG, "Failed to allocate skb");
-                        free(pkt);
-                        free(ctrl);
-                        break;
-                    }
-                    
-                    // Reserve space for header and copy data
-                    skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
-                    pkt->data = skb_put(pkt->skb, pkt->data_len);
-                    memcpy(pkt->data, ctrl, pkt->data_len);
-                    
-                    // Queue for transmission
-                    datalink_tx_pkt_queue(rs485, pkt);
-                    ESP_LOGD(TAG, "Queued circuit_set packet for transmission");
-                    
-                    // Free the ctrl payload (allocated by OpnPool::on_switch_command)
-                    free(ctrl);
+                    free(pkt);
+                    ESP_LOGW(TAG, "Failed to queue CIRCUIT_SET pkt for transmission");
+                    return;
                 }
 
+
                 // 2BD: handle other network message types here
+
 
                 break;
             }
@@ -143,7 +114,7 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
     };
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
-    if (network_create_msg(&msg, pkt)) {
+    if (network_create_pkt(&msg, pkt) == ESP_OK) {
         datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
     } else {
         ESP_LOGE(TAG, "%s network_tx_typ failed", __func__);

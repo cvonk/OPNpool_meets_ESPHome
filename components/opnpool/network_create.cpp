@@ -61,10 +61,11 @@ static const network_datalink_map_t _msg_typ_map[] = {
  * Create datalink_pkt from network_msg.
  */
 
-bool
-network_create_msg(network_msg_t const * const msg, datalink_pkt_t * const pkt)
+esp_err_t
+network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 {
     network_datalink_map_t const * map = _msg_typ_map;
+
     for (uint8_t ii = 0; ii < ARRAY_SIZE(_msg_typ_map); ii++, map++) {
         if (msg->typ == map->network.typ) {
 
@@ -75,11 +76,12 @@ network_create_msg(network_msg_t const * const msg, datalink_pkt_t * const pkt)
             skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
             pkt->data = skb_put(pkt->skb, map->network.data_len);
             memcpy(pkt->data, msg->u.bytes, map->network.data_len);
-            return true;
+            ESP_LOGV(TAG, "created datalink_pkt for network_msg(%u)", msg->typ);
+            return ESP_OK;
         }
     }
-    ESP_LOGE(TAG, "unknown msg typ (%u)", msg->typ);
-    return false;
+    ESP_LOGE(TAG, "unknown msg typ(%u)", msg->typ);
+    return ESP_FAIL;
 }
 
 } // namespace opnpool

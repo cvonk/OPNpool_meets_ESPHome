@@ -562,7 +562,7 @@ typedef union network_msg_data_t {
   XX(10, CTRL_HEAT_RESP,   network_msg_ctrl_heat_resp_t,   DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_RESP)   \
   XX(11, CTRL_HEAT_SET,    network_msg_ctrl_heat_set_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_SET)    \
   XX(12, CTRL_LAYOUT_REQ,  network_msg_ctrl_layout_req_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_REQ)  \
-  XX(13, CTRL_LAYOUT,      network_msg_ctrl_layout_resp_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_RESP) \
+  XX(13, CTRL_LAYOUT_RESP, network_msg_ctrl_layout_resp_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_RESP) \
   XX(14, CTRL_LAYOUT_SET,  network_msg_ctrl_layout_set_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_SET)  \
   XX(15, PUMP_REG_SET,     network_msg_pump_reg_set_t,     DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_REG)         \
   XX(16, PUMP_REG_RESP,    network_msg_pump_reg_resp_t,    DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_REG)         \
@@ -605,43 +605,43 @@ typedef enum {
 typedef struct network_msg_t {
     network_msg_typ_t typ;
     union network_msg_union_t {
-        network_msg_pump_reg_set_t * pump_reg_set;
-        network_msg_pump_reg_resp_t * pump_reg_set_resp;
-        network_msg_pump_ctrl_t * pump_ctrl;
-        network_msg_pump_mode_t * pump_mode;
-        network_msg_pump_run_t * pump_run;
-        network_msg_pump_status_resp_t * pump_status_resp;
-        network_msg_ctrl_set_ack_t * ctrl_set_ack;
-        network_msg_ctrl_circuit_set_t * ctrl_circuit_set;
-        network_msg_ctrl_sched_resp_t * ctrl_sched_resp;
-        network_msg_ctrl_state_bcast_t * ctrl_state;
-        network_msg_ctrl_time_set_t * ctrl_time_set;
-        network_msg_ctrl_time_resp_t * ctrl_time_resp;
-        network_msg_ctrl_heat_resp_t * ctrl_heat_resp;
-        network_msg_ctrl_heat_set_t * ctrl_heat_set;
-        network_msg_ctrl_layout_resp_t * ctrl_layout_resp;
-        network_msg_ctrl_layout_set_t * ctrl_layout_set;
-        network_msg_ctrl_version_req_t * ctrl_version_req;
-        network_msg_ctrl_version_resp_t * ctrl_version_resp;
-        network_msg_ctrl_valve_req_t * ctrl_valve_req;
-        network_msg_ctrl_valve_resp_t * ctrl_valve_resp;
-        network_msg_ctrl_solarpump_req_t * ctrl_solarpump_req;
-        network_msg_ctrl_solarpump_resp_t * ctrl_solarpump_resp;
-        network_msg_ctrl_delay_req_t * ctrl_delay_req;
-        network_msg_ctrl_delay_resp_t * ctrl_delay_resp;
-        network_msg_ctrl_heat_setpt_req_t * ctrl_heat_set_req;
-        network_msg_ctrl_heat_setpt_resp_t * ctrl_heat_set_resp;
-        network_msg_ctrl_circ_names_req_t * ctrl_circ_names_req;
-        network_msg_ctrl_circ_names_resp_t * ctrl_circ_names_resp;
-        network_msg_ctrl_chem_req_t * ctrl_chem_req;
-        network_msg_ctrl_scheds_req_t * ctrl_scheds_req;
-        network_msg_ctrl_scheds_resp_t * ctrl_scheds_resp;
-        network_msg_chlor_ping_req_t * chlor_ping_req;
-        network_msg_chlor_ping_resp_t * chlor_ping;
-        network_msg_chlor_name_resp_t * chlor_name_resp;
-        network_msg_chlor_level_set_t * chlor_level_set;
-        network_msg_chlor_level_resp_t * chlor_level_resp;
-        network_msg_chlor_name_req_t * chlor_name_req;
+        network_msg_pump_reg_set_t  pump_reg_set;
+        network_msg_pump_reg_resp_t  pump_reg_set_resp;
+        network_msg_pump_ctrl_t  pump_ctrl;
+        network_msg_pump_mode_t  pump_mode;
+        network_msg_pump_run_t  pump_run;
+        network_msg_pump_status_resp_t  pump_status_resp;
+        network_msg_ctrl_set_ack_t ctrl_set_ack;
+        network_msg_ctrl_circuit_set_t  ctrl_circuit_set;
+        network_msg_ctrl_sched_resp_t  ctrl_sched_resp;
+        network_msg_ctrl_state_bcast_t  ctrl_state;
+        network_msg_ctrl_time_set_t  ctrl_time_set;
+        network_msg_ctrl_time_resp_t  ctrl_time_resp;
+        network_msg_ctrl_heat_resp_t  ctrl_heat_resp;
+        network_msg_ctrl_heat_set_t  ctrl_heat_set;
+        network_msg_ctrl_layout_resp_t  ctrl_layout_resp;
+        network_msg_ctrl_layout_set_t  ctrl_layout_set;
+        network_msg_ctrl_version_req_t  ctrl_version_req;
+        network_msg_ctrl_version_resp_t  ctrl_version_resp;
+        network_msg_ctrl_valve_req_t  ctrl_valve_req;
+        network_msg_ctrl_valve_resp_t  ctrl_valve_resp;
+        network_msg_ctrl_solarpump_req_t  ctrl_solarpump_req;
+        network_msg_ctrl_solarpump_resp_t  ctrl_solarpump_resp;
+        network_msg_ctrl_delay_req_t  ctrl_delay_req;
+        network_msg_ctrl_delay_resp_t  ctrl_delay_resp;
+        network_msg_ctrl_heat_setpt_req_t  ctrl_heat_set_req;
+        network_msg_ctrl_heat_setpt_resp_t  ctrl_heat_set_resp;
+        network_msg_ctrl_circ_names_req_t  ctrl_circ_names_req;
+        network_msg_ctrl_circ_names_resp_t  ctrl_circ_names_resp;
+        network_msg_ctrl_chem_req_t  ctrl_chem_req;
+        network_msg_ctrl_scheds_req_t  ctrl_scheds_req;
+        network_msg_ctrl_scheds_resp_t  ctrl_scheds_resp;
+        network_msg_chlor_ping_req_t  chlor_ping_req;
+        network_msg_chlor_ping_resp_t  chlor_ping;
+        network_msg_chlor_name_resp_t  chlor_name_resp;
+        network_msg_chlor_level_set_t  chlor_level_set;
+        network_msg_chlor_level_resp_t  chlor_level_resp;
+        network_msg_chlor_name_req_t  chlor_name_req;
         uint8_t bytes[0];
     } u;
 } network_msg_t;

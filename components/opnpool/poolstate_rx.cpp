@@ -372,37 +372,37 @@ poolstate_rx_update(network_msg_t const * const msg)
     cJSON * const dbg = cJSON_CreateObject();
     switch (msg->typ) {
         case MSG_TYP_CTRL_SET_ACK:  // response to various set requests
-            _ctrl_set_ack(dbg, msg->u.ctrl_set_ack);
+            _ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);
             break;
         case MSG_TYP_CTRL_CIRCUIT_SET:
-            _ctrl_circuit_set(dbg, msg->u.ctrl_circuit_set, &new_state);
+            _ctrl_circuit_set(dbg, &msg->u.ctrl_circuit_set, &new_state);
             break;
         case MSG_TYP_CTRL_SCHED_REQ:
             break;
         case MSG_TYP_CTRL_SCHED_RESP:
-            _ctrl_sched_resp(dbg, msg->u.ctrl_sched_resp, &new_state);
+            _ctrl_sched_resp(dbg, &msg->u.ctrl_sched_resp, &new_state);
             break;
         case MSG_TYP_CTRL_STATE_BCAST:
-            _ctrl_state(dbg, msg->u.ctrl_state, &new_state);
+            _ctrl_state(dbg, &msg->u.ctrl_state, &new_state);
             break;
         case MSG_TYP_CTRL_TIME_REQ:
             break;
         case MSG_TYP_CTRL_TIME_RESP:
-            _ctrl_time(dbg, msg->u.ctrl_time_resp, &new_state);
+            _ctrl_time(dbg, &msg->u.ctrl_time_resp, &new_state);
             break;
         case MSG_TYP_CTRL_TIME_SET:
-            _ctrl_time(dbg, msg->u.ctrl_time_set, &new_state);
+            _ctrl_time(dbg, &msg->u.ctrl_time_set, &new_state);
             break;
         case MSG_TYP_CTRL_HEAT_REQ:
             break;
         case MSG_TYP_CTRL_HEAT_RESP:
-            _ctrl_heat_resp(dbg, msg->u.ctrl_heat_resp, &new_state);
+            _ctrl_heat_resp(dbg, &msg->u.ctrl_heat_resp, &new_state);
             break;
         case MSG_TYP_CTRL_HEAT_SET:
-            _ctrl_heat_set(dbg, msg->u.ctrl_heat_set, &new_state);
+            _ctrl_heat_set(dbg, &msg->u.ctrl_heat_set, &new_state);
             break;
         case MSG_TYP_CTRL_LAYOUT_REQ:
-        case MSG_TYP_CTRL_LAYOUT:
+        case MSG_TYP_CTRL_LAYOUT_RESP:
         case MSG_TYP_CTRL_LAYOUT_SET:
         case MSG_TYP_CTRL_VALVE_REQ:
         case MSG_TYP_CTRL_SOLARPUMP_REQ:
@@ -417,7 +417,7 @@ poolstate_rx_update(network_msg_t const * const msg)
             _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, 1);
             break;
         case MSG_TYP_CTRL_VERSION_RESP:
-            _ctrl_version_resp(dbg, msg->u.ctrl_version_resp, &new_state);
+            _ctrl_version_resp(dbg, &msg->u.ctrl_version_resp, &new_state);
             break;
         case MSG_TYP_CTRL_VALVE_RESP:
             _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_valve_resp_t));
@@ -438,39 +438,39 @@ poolstate_rx_update(network_msg_t const * const msg)
             _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_scheds_resp_t));
             break;
         case MSG_TYP_PUMP_REG_SET:
-            _pump_reg_set(dbg, msg->u.pump_reg_set);
+            _pump_reg_set(dbg, &msg->u.pump_reg_set);
             break;
         case MSG_TYP_PUMP_REG_RESP:
-            _pump_reg_set_resp(dbg, msg->u.pump_reg_set_resp);
+            _pump_reg_set_resp(dbg, &msg->u.pump_reg_set_resp);
             break;
         case MSG_TYP_PUMP_CTRL_SET:
         case MSG_TYP_PUMP_CTRL_RESP:
-            _pump_ctrl(dbg, msg->u.pump_ctrl);
+            _pump_ctrl(dbg, &msg->u.pump_ctrl);
             break;
         case MSG_TYP_PUMP_MODE_SET:
         case MSG_TYP_PUMP_MODE_RESP:
-            _pump_mode(dbg, msg->u.pump_mode, &new_state);
+            _pump_mode(dbg, &msg->u.pump_mode, &new_state);
             break;
         case MSG_TYP_PUMP_RUN_SET:
         case MSG_TYP_PUMP_RUN_RESP:
-            _pump_run(dbg, msg->u.pump_run, &new_state);
+            _pump_run(dbg, &msg->u.pump_run, &new_state);
             break;
         case MSG_TYP_PUMP_STATUS_REQ:
              break;
         case MSG_TYP_PUMP_STATUS_RESP:
-            _pump_status(dbg, msg->u.pump_status_resp, &new_state);
+            _pump_status(dbg, &msg->u.pump_status_resp, &new_state);
             break;
         case MSG_TYP_CHLOR_PING_REQ:
         case MSG_TYP_CHLOR_PING_RESP:
             break;
         case MSG_TYP_CHLOR_NAME_RESP:
-            _chlor_name_resp(dbg, msg->u.chlor_name_resp, &new_state);
+            _chlor_name_resp(dbg, &msg->u.chlor_name_resp, &new_state);
             break;
         case MSG_TYP_CHLOR_LEVEL_SET:
-            _chlor_level_set(dbg, msg->u.chlor_level_set, &new_state);
+            _chlor_level_set(dbg, &msg->u.chlor_level_set, &new_state);
             break;
         case MSG_TYP_CHLOR_LEVEL_RESP:
-            _chlor_level_set_resp(dbg, msg->u.chlor_level_resp, &new_state);
+            _chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
             break;
         case MSG_TYP_NONE:  // to please gcc
             break;  //
