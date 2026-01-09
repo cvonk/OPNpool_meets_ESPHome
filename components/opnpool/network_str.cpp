@@ -252,7 +252,7 @@ network_typ_pump_str(network_typ_pump_t typ)
 }
 
   /* X-Macro pattern keeps enums and strings synchronized */
-name_pair_t _typ_chlors[] = {
+str_value_name_pair_t _typ_chlors[] = {
 #define XX(num, name) { .typ = num, .str = #name },
   NETWORK_TYP_CHLOR_MAP(XX)
 #undef XX
