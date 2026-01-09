@@ -76,7 +76,7 @@ network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
             skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
             pkt->data = skb_put(pkt->skb, map->network.data_len);
             memcpy(pkt->data, msg->u.bytes, map->network.data_len);
-            ESP_LOGV(TAG, "created datalink_pkt for network_msg(%u)", msg->typ);
+            //ESP_LOGV(TAG, "created datalink_pkt for network_msg(%u)", msg->typ);
             return ESP_OK;
         }
     }

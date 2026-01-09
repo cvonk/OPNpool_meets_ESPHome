@@ -46,34 +46,20 @@ ipc_to_home_typ_str(ipc_to_home_typ_t const typ)
 }
 
 
-//
-
-static const char * const _ipc_to_pool_typs[] = {
-#define XX(num, name) #name,
-  IPC_TO_POOL_TYP_MAP(XX)
-#undef XX
-};
-
-const char *
-ipc_to_pool_typ_str(ipc_to_pool_typ_t const typ)
-{
-    return ELEM_AT(_ipc_to_pool_typs, typ, hex8_str(typ));
-}
-
 /**
- * IPC send network_msg to home_task
- **/
+ * IPC send network_msg to main_task
+ */
 
 void
-ipc_send_network_msg_to_home(network_msg_t const * const network_msg, ipc_t const * const ipc)
+ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    ipc_to_home_msg_t home_msg = {
+    ipc_to_main_msg_t main_msg = {
         .typ = IPC_TO_HOME_TYP_NETWORK_MSG,
         .u = {
             .network_msg = *network_msg,
         },
     };
-    if (xQueueSendToBack(ipc->to_home_q, &home_msg, 0) != pdPASS) {
+    if (xQueueSendToBack(ipc->to_home_q, &main_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_home_q full");
     }
     vTaskDelay(1);  // give others a chance to catch up
@@ -84,18 +70,11 @@ ipc_send_network_msg_to_home(network_msg_t const * const network_msg, ipc_t cons
  **/
 
 void
-ipc_send_network_msg_to_pool(network_msg_t const * const network_msg, ipc_t const * const ipc)
+ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    ipc_to_pool_msg_t pool_msg = {
-        .typ = IPC_TO_POOL_TYP_NETWORK_MSG,
-        .u = {
-            .network_msg = *network_msg,
-        },
-    };
-    if (xQueueSendToBack(ipc->to_pool_q, &pool_msg, 0) != pdPASS) {
+    if (xQueueSendToBack(ipc->to_pool_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_pool_q full");
     }
-    //vTaskDelay(1);  // give others a chance to catch up
 }
 
 } // namespace opnpool

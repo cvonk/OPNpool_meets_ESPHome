@@ -83,9 +83,8 @@ void OpnPool::on_switch_command(uint8_t circuit, bool state) {
         },
     };
 
-        // forward to the pool_task
     ESP_LOGV(TAG, "Sending CIRCUIT_SET command: circuit=%u to %u", msg.u.ctrl_circuit_set.circuit, msg.u.ctrl_circuit_set.value);
-    ipc_send_network_msg_to_pool(&msg, &this->ipc_);
+    ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
 void OpnPool::setup() {
@@ -94,8 +93,8 @@ void OpnPool::setup() {
 
     poolstate_init();
 
-    this->ipc_.to_pool_q = xQueueCreate(4, sizeof(ipc_to_pool_msg_t));
-    this->ipc_.to_home_q = xQueueCreate(20, sizeof(ipc_to_home_msg_t));
+    this->ipc_.to_pool_q = xQueueCreate(4, sizeof(network_msg_t));
+    this->ipc_.to_home_q = xQueueCreate(20, sizeof(ipc_to_main_msg_t));
     assert(this->ipc_.to_home_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
@@ -110,7 +109,7 @@ void OpnPool::setup() {
 static void
 _service_requests_from_pool(ipc_t const * const ipc)
 {
-    ipc_to_home_msg_t queued_msg;
+    ipc_to_main_msg_t queued_msg;
 
     if (xQueueReceive(ipc->to_home_q, &queued_msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
@@ -118,11 +117,11 @@ _service_requests_from_pool(ipc_t const * const ipc)
             case IPC_TO_HOME_TYP_NETWORK_MSG: {
                 network_msg_t * const msg = &queued_msg.u.network_msg;
 
-                ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
+                //ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
 
                 if (poolstate_rx_update(msg) == ESP_OK) {
 
-                    ESP_LOGV(TAG, "Poolstate changed");
+                    //ESP_LOGV(TAG, "Poolstate changed");
 
 
                     // 2BD: publish this as an update to the HA sensors 

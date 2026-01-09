@@ -15,9 +15,9 @@
 /**
    ideas:
 
-   Move poolstate to the home_task.  That implies
+   Move poolstate to the main_task.  That implies
     - pool_task sents IPC with network_msg_t with incoming msgs
-    - home_task sents IPC with network_msg_t to request outgoing msgs
+    - main_task sents IPC with network_msg_t to request outgoing msgs
 
  **/
 

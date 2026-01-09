@@ -39,8 +39,8 @@ typedef struct ipc_t {
     config_t      config;
 } ipc_t;
 
-    // message to home_task
-    // use XX-Macro pattern to keep enums and strings synchronized
+    // message to main_task
+    // use X-Macro pattern to keep enums and strings synchronized
 
 #define IPC_TO_HOME_TYP_MAP(XX)  \
   XX(0x00, NETWORK_MSG)
@@ -51,36 +51,16 @@ typedef enum {
 #undef XX
 } ipc_to_home_typ_t;
 
-typedef struct ipc_to_home_msg_t {
+typedef struct ipc_to_main_msg_t {
     ipc_to_home_typ_t typ;
     union {
         network_msg_t network_msg;
     } u;
-} ipc_to_home_msg_t;
+} ipc_to_main_msg_t;
 
-    // message to pool_task
-    // use XX-Macro pattern to keep enums and strings synchronized
-
-#define IPC_TO_POOL_TYP_MAP(XX) \
-  XX(0x00, NETWORK_MSG)
-
-typedef enum {
-#define XX(num, name) IPC_TO_POOL_TYP_##name = num,
-  IPC_TO_POOL_TYP_MAP(XX)
-#undef XX
-} ipc_to_pool_typ_t;
-
-typedef struct ipc_to_pool_msg_t {
-    ipc_to_pool_typ_t typ;
-    union {
-        network_msg_t network_msg;
-    } u;
-} ipc_to_pool_msg_t;
-
-void ipc_send_network_msg_to_home(network_msg_t const * const network_msg, ipc_t const * const ipc);
-void ipc_send_network_msg_to_pool(network_msg_t const * const network_msg, ipc_t const * const ipc);
+void ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
+void ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
 char const * ipc_to_home_typ_str(ipc_to_home_typ_t const typ);
-char const * ipc_to_pool_typ_str(ipc_to_pool_typ_t const typ);
 
 } // namespace opnpool
 } // namespace esphome

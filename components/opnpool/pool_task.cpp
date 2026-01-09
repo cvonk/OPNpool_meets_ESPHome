@@ -55,10 +55,7 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
 
-// 2BD: it makes more sense to the msg in as data instead of a pointer
-// then it gets copied into the queue instead of just passing a pointer
-
-            ipc_send_network_msg_to_home(&msg, ipc);
+            ipc_send_network_msg_to_main_task(&msg, ipc);
         }
         free(pkt.skb);
     }
@@ -68,41 +65,20 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 static void
 _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
 {
-    ipc_to_pool_msg_t queued_msg;
+    network_msg_t msg;
 
-    if (xQueueReceive(ipc->to_pool_q, &queued_msg, (TickType_t)0) == pdPASS) {
+    if (xQueueReceive(ipc->to_pool_q, &msg, (TickType_t)0) == pdPASS) {
 
-        switch(queued_msg.typ) {
-            case IPC_TO_POOL_TYP_NETWORK_MSG: {
-                network_msg_t const * const msg = &queued_msg.u.network_msg;
+        datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
-                ESP_LOGV(TAG, "Rx CIRCUIT_SET command: circuit=%u to %u", msg->u.ctrl_circuit_set.circuit, msg->u.ctrl_circuit_set.value);
+        if (network_create_pkt(&msg, pkt) == ESP_OK) {
 
-                if (msg->typ == MSG_TYP_CTRL_CIRCUIT_SET) {
-
-                    datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
-
-                    if (network_create_pkt(msg, pkt) == ESP_OK) {
-
-                        datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by recipient
-                        ESP_LOGV(TAG, "Queued CIRCUIT_SET pkt for transmission");
-                        return;
-                    }
-                    free(pkt);
-                    ESP_LOGW(TAG, "Failed to queue CIRCUIT_SET pkt for transmission");
-                    return;
-                }
-
-
-                // 2BD: handle other network message types here
-
-
-                break;
-            }
-            default:
-                ESP_LOGW(TAG, "Unknown msg typ: %u", queued_msg.typ);
-                break;
+            datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by recipient
+            ESP_LOGV(TAG, "Queued CIRCUIT_SET pkt for transmission");
+            return;
         }
+        free(pkt);
+        ESP_LOGW(TAG, "Failed to queue CIRCUIT_SET pkt for transmission");
     }
 }
 
@@ -145,7 +121,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
 
-            ipc_send_network_msg_to_home(&msg, ipc);
+            ipc_send_network_msg_to_main_task(&msg, ipc);
 
         }
 
