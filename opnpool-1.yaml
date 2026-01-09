@@ -31,15 +31,15 @@ logger:
   initial_level: WARN  # only show up to WARN globally
   logs:
     opnpool: VERBOSE   # specifically allow high detail for opnpool component
-    pool_task: VERBOSE
-    rs485: VERBOSE
-    datalink_rx: WARN
-    datalink_tx: VERBOSE
-    network_rx: WARN
-    network_create: VERBOSE
     opnpoolstate: VERBOSE
     opnpoolstate_rx: VERBOSE
     opnpoolstate_get: VERBOSE
+    pool_task: VERBOSE
+    rs485: WARN
+    datalink_rx: WARN
+    datalink_tx: WARN
+    network_rx: WARN
+    network_create: WARN
 
 wifi:
   domain: !secret domain_name
