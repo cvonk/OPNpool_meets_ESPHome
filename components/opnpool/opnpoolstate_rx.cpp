@@ -476,7 +476,11 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
             break;  //
     }
 
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+    bool const bcast = msg->typ == MSG_TYP_CTRL_STATE_BCAST;
+    bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
+    bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
+
+    if ((verbose && !bcast) || very_verbose) {
         size_t const json_size = 1024;
         char * const json = static_cast<char *>(calloc(1, json_size));
         assert(json);

@@ -124,7 +124,7 @@ OpnPool::service_requests_from_pool(ipc_t const * const ipc)
 
         if (opnPoolState_->rx_update(&msg) == ESP_OK) {
 
-            ESP_LOGV(TAG, "Poolstate changed");
+            ESP_LOGVV(TAG, "Poolstate changed");
 
             // 2BD: publish this as an update to the HA sensors 
             // Maybe this should be inside poolstate_rx_update(). If the sensors

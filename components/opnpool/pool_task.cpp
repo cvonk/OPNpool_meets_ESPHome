@@ -108,7 +108,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
             char dbg[dbg_size];
             assert(pkt->skb);
             (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
-            ESP_LOGV(TAG, "tx { %s}", dbg);
+            ESP_LOGVV(TAG, "tx { %s}", dbg);
         }
         rs485->tx_mode(true);
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);
