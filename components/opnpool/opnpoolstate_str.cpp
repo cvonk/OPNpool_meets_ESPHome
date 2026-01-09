@@ -22,7 +22,7 @@
 #include <esphome/core/log.h>
 
 #include "utils.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
@@ -38,7 +38,7 @@ static const char * const _poolstate_chlor_statuses[] = {
 };
 
 const char *
-poolstate_chlor_status_str(poolstate_chlor_status_t const chlor_state_id)
+poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id)
 {
   return ELEM_AT(_poolstate_chlor_statuses, chlor_state_id, hex8_str(chlor_state_id));
 }
@@ -50,13 +50,13 @@ static const char * const _poolstate_thermos[] = {
 };
 
 const char *
-poolstate_thermo_str(poolstate_thermo_typ_t const thermostat_id)
+poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id)
 {
   return ELEM_AT(_poolstate_thermos, thermostat_id, hex8_str(thermostat_id));
 }
 
 int
-poolstate_thermo_nr(char const * const thermostat_str)
+poolstate_str_thermo_nr(char const * const thermostat_str)
 {
     ELEM_POS(_poolstate_thermos, thermostat_str);
 }
@@ -68,13 +68,13 @@ static const char * const _poolstate_temps[] = {
 };
 
 const char *
-poolstate_temp_str(poolstate_temp_typ_t const temp_id)
+poolstate_str_temp_str(poolstate_temp_typ_t const temp_id)
 {
   return ELEM_AT(_poolstate_temps, temp_id, hex8_str(temp_id));
 }
 
 int
-poolstate_temp_nr(char const * const temp_str)
+poolstate_str_temp_nr(char const * const temp_str)
 {
     ELEM_POS(_poolstate_temps, temp_str);
 }

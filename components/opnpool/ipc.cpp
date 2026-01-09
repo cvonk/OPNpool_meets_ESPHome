@@ -32,21 +32,6 @@ namespace opnpool {
 
 static char const * const TAG = "ipc";
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-static const char * const _ipc_to_home_typs[] = {
-#define XX(num, name) #name,
-  IPC_TO_HOME_TYP_MAP(XX)
-#undef XX
-};
-
-const char *
-ipc_to_home_typ_str(ipc_to_home_typ_t const typ)
-{
-    return ELEM_AT(_ipc_to_home_typs, typ, hex8_str(typ));
-}
-
-
 /**
  * IPC send network_msg to main_task
  */
@@ -54,8 +39,8 @@ ipc_to_home_typ_str(ipc_to_home_typ_t const typ)
 void
 ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    if (xQueueSendToBack(ipc->to_home_q, network_msg, 0) != pdPASS) {
-        ESP_LOGW(TAG, "to_home_q full");
+    if (xQueueSendToBack(ipc->to_main_q, network_msg, 0) != pdPASS) {
+        ESP_LOGW(TAG, "to_main_q full");
     }
     vTaskDelay(1);  // give others a chance to catch up
 }

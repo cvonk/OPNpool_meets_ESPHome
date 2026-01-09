@@ -28,7 +28,7 @@
 #include "utils.h"
 #include "network.h"
 #include "ipc.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
@@ -37,14 +37,14 @@ namespace opnpool {
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
-static char const * const TAG = "poolstate_rx";
+static char const * const TAG = "opnpoolstate_rx";
 
 /**
  * ctrl
  **/
 
-static void
-_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state)
 {
     state->system.tod.time.minute = msg->minute;
     state->system.tod.time.hour = msg->hour;
@@ -57,8 +57,8 @@ _ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolsta
     }
 }
 
-static void
-_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
 {
     state->thermos[POOLSTATE_THERMO_TYP_pool].temp = msg->poolTemp;
     state->thermos[POOLSTATE_THERMO_TYP_pool].set_point = msg->poolSetpoint;
@@ -71,8 +71,8 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     }
 }
 
-static void
-_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
 {
     state->thermos[POOLSTATE_THERMO_TYP_pool].set_point = msg->poolSetpoint;
     state->thermos[POOLSTATE_THERMO_TYP_pool].heat_src = msg->heatSrc & 0x03;
@@ -85,7 +85,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
 }
 
 static void
-_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
+_rx_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
 {
     char const * str[nrBytes];
 
@@ -98,8 +98,8 @@ _ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * co
     }
 }
 
-static void
-_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state)
 {
     state->circuits.active[msg->circuit -1] = msg->value;
 
@@ -115,8 +115,8 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
     }
 }
 
-static void
-_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
 {
     poolstate_sched_t * state_scheds = state->scheds;    
     memset(state_scheds, 0, sizeof(poolstate_sched_t) * NETWORK_CIRCUIT_COUNT );
@@ -136,8 +136,8 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     }
 }
 
-static void
-_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * state)
+void
+OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * state)
 {
     // update state->circuits.active
     bool * state_active = state->circuits.active;
@@ -199,8 +199,8 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
  * version
  */
 
-static void
-_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * state)
+void
+OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * state)
 {
     state->system.version.major = msg->major;
     state->system.version.minor = msg->minor;
@@ -214,8 +214,8 @@ _ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * co
  * pump
  **/
 
-static void
-_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
+void
+OpnPoolState::rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
 {
     uint16_t const address = (msg->addressHi << 8) | msg->addressLo;
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
@@ -225,8 +225,8 @@ _pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
     }
 }
 
-static void
-_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg)
+void
+OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg)
 {
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
@@ -235,16 +235,16 @@ _pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const 
     }
 }
 
-static void
-_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
+void
+OpnPoolState::rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
        cJSON_AddPumpCtrlToObject(dbg, "ctrl", msg->ctrl);
     }
 }
 
-static void
-_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state)
 {
     state->pump.mode = msg->mode;
 
@@ -253,8 +253,8 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolsta
     }
 }
 
-static void
-_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state)
 {
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
@@ -267,8 +267,8 @@ _pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate
     }
 }
 
-static void
-_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state)
 {
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
@@ -292,8 +292,8 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
     }
 }
 
-static void
-_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
+void
+OpnPoolState::rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "ack", msg->typ);
@@ -304,8 +304,8 @@ _ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
  * chlor
  **/
 
-static void
-_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state)
 {
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
@@ -319,8 +319,8 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
     }
 }
 
-static void
-_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state)
 {
     state->chlor.pct = msg->pct;
 
@@ -329,8 +329,8 @@ _chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const 
     }
 }
 
-static void
-_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state)
+void
+OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state)
 {
     state->chlor.salt = (uint16_t)msg->salt * 50;
     if (msg->err & 0x01) {
@@ -356,13 +356,13 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
 }
 
 esp_err_t
-poolstate_rx_update(network_msg_t const * const msg)
+OpnPoolState::rx_update(network_msg_t const * const msg)
 {
   	name_reset_idx();
 
         // remember the current state
     poolstate_t old_state;
-    (void) poolstate_get(&old_state);
+    (void) get(&old_state);
 
         // start with the current state
     poolstate_t new_state;
@@ -372,34 +372,34 @@ poolstate_rx_update(network_msg_t const * const msg)
     cJSON * const dbg = cJSON_CreateObject();
     switch (msg->typ) {
         case MSG_TYP_CTRL_SET_ACK:  // response to various set requests
-            _ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);
+            rx_ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);
             break;
         case MSG_TYP_CTRL_CIRCUIT_SET:
-            _ctrl_circuit_set(dbg, &msg->u.ctrl_circuit_set, &new_state);
+            rx_ctrl_circuit_set(dbg, &msg->u.ctrl_circuit_set, &new_state);
             break;
         case MSG_TYP_CTRL_SCHED_REQ:
             break;
         case MSG_TYP_CTRL_SCHED_RESP:
-            _ctrl_sched_resp(dbg, &msg->u.ctrl_sched_resp, &new_state);
+            rx_ctrl_sched_resp(dbg, &msg->u.ctrl_sched_resp, &new_state);
             break;
         case MSG_TYP_CTRL_STATE_BCAST:
-            _ctrl_state(dbg, &msg->u.ctrl_state, &new_state);
+            rx_ctrl_state(dbg, &msg->u.ctrl_state, &new_state);
             break;
         case MSG_TYP_CTRL_TIME_REQ:
             break;
         case MSG_TYP_CTRL_TIME_RESP:
-            _ctrl_time(dbg, &msg->u.ctrl_time_resp, &new_state);
+            rx_ctrl_time(dbg, &msg->u.ctrl_time_resp, &new_state);
             break;
         case MSG_TYP_CTRL_TIME_SET:
-            _ctrl_time(dbg, &msg->u.ctrl_time_set, &new_state);
+            rx_ctrl_time(dbg, &msg->u.ctrl_time_set, &new_state);
             break;
         case MSG_TYP_CTRL_HEAT_REQ:
             break;
         case MSG_TYP_CTRL_HEAT_RESP:
-            _ctrl_heat_resp(dbg, &msg->u.ctrl_heat_resp, &new_state);
+            rx_ctrl_heat_resp(dbg, &msg->u.ctrl_heat_resp, &new_state);
             break;
         case MSG_TYP_CTRL_HEAT_SET:
-            _ctrl_heat_set(dbg, &msg->u.ctrl_heat_set, &new_state);
+            rx_ctrl_heat_set(dbg, &msg->u.ctrl_heat_set, &new_state);
             break;
         case MSG_TYP_CTRL_LAYOUT_REQ:
         case MSG_TYP_CTRL_LAYOUT_RESP:
@@ -414,63 +414,63 @@ poolstate_rx_update(network_msg_t const * const msg)
         case MSG_TYP_CTRL_CIRC_NAMES_REQ:
         case MSG_TYP_CTRL_CHEM_REQ:
         case MSG_TYP_CHLOR_NAME_REQ:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, 1);
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, 1);
             break;
         case MSG_TYP_CTRL_VERSION_RESP:
-            _ctrl_version_resp(dbg, &msg->u.ctrl_version_resp, &new_state);
+            rx_ctrl_version_resp(dbg, &msg->u.ctrl_version_resp, &new_state);
             break;
         case MSG_TYP_CTRL_VALVE_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_valve_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_valve_resp_t));
             break;
         case MSG_TYP_CTRL_SOLARPUMP_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
             break;
         case MSG_TYP_CTRL_DELAY_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_delay_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_delay_resp_t));
             break;
         case MSG_TYP_CTRL_HEAT_SETPT_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
             break;
         case MSG_TYP_CTRL_CIRC_NAMES_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
             break;
         case MSG_TYP_CTRL_SCHEDS_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_scheds_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_scheds_resp_t));
             break;
         case MSG_TYP_PUMP_REG_SET:
-            _pump_reg_set(dbg, &msg->u.pump_reg_set);
+            rx_pump_reg_set(dbg, &msg->u.pump_reg_set);
             break;
         case MSG_TYP_PUMP_REG_RESP:
-            _pump_reg_set_resp(dbg, &msg->u.pump_reg_set_resp);
+            rx_pump_reg_set_resp(dbg, &msg->u.pump_reg_set_resp);
             break;
         case MSG_TYP_PUMP_CTRL_SET:
         case MSG_TYP_PUMP_CTRL_RESP:
-            _pump_ctrl(dbg, &msg->u.pump_ctrl);
+            rx_pump_ctrl(dbg, &msg->u.pump_ctrl);
             break;
         case MSG_TYP_PUMP_MODE_SET:
         case MSG_TYP_PUMP_MODE_RESP:
-            _pump_mode(dbg, &msg->u.pump_mode, &new_state);
+            rx_pump_mode(dbg, &msg->u.pump_mode, &new_state);
             break;
         case MSG_TYP_PUMP_RUN_SET:
         case MSG_TYP_PUMP_RUN_RESP:
-            _pump_run(dbg, &msg->u.pump_run, &new_state);
+            rx_pump_run(dbg, &msg->u.pump_run, &new_state);
             break;
         case MSG_TYP_PUMP_STATUS_REQ:
              break;
         case MSG_TYP_PUMP_STATUS_RESP:
-            _pump_status(dbg, &msg->u.pump_status_resp, &new_state);
+            rx_pump_status(dbg, &msg->u.pump_status_resp, &new_state);
             break;
         case MSG_TYP_CHLOR_PING_REQ:
         case MSG_TYP_CHLOR_PING_RESP:
             break;
         case MSG_TYP_CHLOR_NAME_RESP:
-            _chlor_name_resp(dbg, &msg->u.chlor_name_resp, &new_state);
+            rx_chlor_name_resp(dbg, &msg->u.chlor_name_resp, &new_state);
             break;
         case MSG_TYP_CHLOR_LEVEL_SET:
-            _chlor_level_set(dbg, &msg->u.chlor_level_set, &new_state);
+            rx_chlor_level_set(dbg, &msg->u.chlor_level_set, &new_state);
             break;
         case MSG_TYP_CHLOR_LEVEL_RESP:
-            _chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
+            rx_chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
             break;
         case MSG_TYP_NONE:  // to please gcc
             break;  //
@@ -488,7 +488,7 @@ poolstate_rx_update(network_msg_t const * const msg)
 
     bool const state_changed = memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
     if (state_changed) {
-        poolstate_set(&new_state);
+        set(&new_state);
     }
     return state_changed ? ESP_OK : ESP_FAIL;
 }

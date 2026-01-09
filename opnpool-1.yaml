@@ -37,9 +37,9 @@ logger:
     datalink_tx: VERBOSE
     network_rx: WARN
     network_create: VERBOSE
-    poolstate: VERBOSE
-    poolstate_rx: VERBOSE
-    poolstate_get: VERBOSE
+    opnpoolstate: VERBOSE
+    opnpoolstate_rx: VERBOSE
+    opnpoolstate_get: VERBOSE
 
 wifi:
   domain: !secret domain_name

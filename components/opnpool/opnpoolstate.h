@@ -5,6 +5,8 @@
 
 #include "network.h"
 #include "ipc.h"
+#include "opnpool.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {
@@ -295,15 +297,65 @@ typedef enum {
 #undef XX
 } poolstate_elem_typ_t;
 
-/* poolstate.c */
-void poolstate_init();
-void poolstate_set(poolstate_t const * const state);
-esp_err_t poolstate_get(poolstate_t * const state);
+typedef char * poolstate_get_value_t;
+typedef struct poolstate_get_params_t {
+    poolstate_elem_typ_t elem_typ;
+    uint8_t              elem_sub_typ;
+    uint8_t const        idx;
+} poolstate_get_params_t;
 
-/* poolstate_rx.c */
-esp_err_t poolstate_rx_update(network_msg_t const * const msg);
 
-/* poolstate_json.c */
+class OpnPool; // Forward declaration for parent referencing
+
+class OpnPoolState {
+
+    public:
+        /* poolstate.cpp */
+        OpnPoolState(OpnPool *parent);
+        bool is_valid() const { return protected_.valid; }
+        
+        void set(poolstate_t const * const state);
+        esp_err_t get(poolstate_t * const state);
+        esp_err_t update(network_msg_t const * const msg);
+        esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
+        const char * to_json(poolstate_elem_typ_t const typ);
+
+        /* poolstate_rx.c */
+        esp_err_t rx_update(network_msg_t const * const msg);
+
+        /* poolstate_get.c */
+        esp_err_t get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
+
+    private:
+        typedef struct poolstate_prot_t {
+            SemaphoreHandle_t xMutex;
+            poolstate_t * state;
+            bool valid;
+        } poolstate_prot_t;
+
+        OpnPool * parent_;
+        poolstate_prot_t protected_;
+        void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * state);
+        void rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * state);
+        void rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg);
+        void rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg);
+        void rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg);
+        void rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state);
+        void rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state);
+        void rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state);
+        //void rx_pump_err(cJSON * const dbg, network_msg_pump_err_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg);
+        void rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state);
+        void rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state);
+        void rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state);
+};
+
+/* helpers in poolstate_json.c */
 void cJSON_AddTodToObject(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void cJSON_AddSystemToObject(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void cJSON_AddThermosToObject(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
@@ -316,23 +368,15 @@ void cJSON_AddPumpRunningToObject(cJSON * const obj, char const * const key, boo
 void cJSON_AddPumpToObject(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void cJSON_AddChlorRespToObject(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
 void cJSON_AddVersionToObject(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
-char const * poolstate_to_json(poolstate_t const * const state, poolstate_elem_typ_t const typ);
+char const * cJSON_poolstate(poolstate_t const * const state, poolstate_elem_typ_t const typ);
 
-/* poolstate_get.c */
-typedef char * poolstate_get_value_t;
-typedef struct poolstate_get_params_t {
-    poolstate_elem_typ_t elem_typ;
-    uint8_t              elem_sub_typ;
-    uint8_t const        idx;
-} poolstate_get_params_t;
-esp_err_t poolstate_get_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
-
-/* poolstate_str.c */
-const char * poolstate_chlor_status_str(poolstate_chlor_status_t const chlor_state_id);
-const char * poolstate_thermo_str(poolstate_thermo_typ_t const thermostat_id);
-const char * poolstate_temp_str(poolstate_temp_typ_t const temp_id);
-int poolstate_temp_nr(char const * const temp_str);
-int poolstate_thermo_nr(char const * const thermostat_str);
+/* helpers in poolstate_str.c */
+const char * poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id);
+const char * poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id);
+const char * poolstate_str_temp_str(poolstate_temp_typ_t const temp_id);
+int poolstate_str_temp_nr(char const * const temp_str);
+int poolstate_str_thermo_nr(char const * const thermostat_str);
+int poolstate_str_chlor_status_nr(char const * const chlor_status_str);
 
 }  // namespace opnpool
 }  // namespace esphome

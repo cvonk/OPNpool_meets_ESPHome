@@ -10,22 +10,13 @@
 #include <string>
 
 #include "ipc.h"
-#include "poolstate.h"
-
-/**
-   ideas:
-
-   Move poolstate to the main_task.  That implies
-    - pool_task sents IPC with network_msg_t with incoming msgs
-    - main_task sents IPC with network_msg_t to request outgoing msgs
-
- **/
-
 
 namespace esphome {
 namespace opnpool {
-
-class OpnPool; // Forward declaration for parent referencing
+  
+  // forward declarations
+class OpnPool;
+class OpnPoolState; 
 
 // climate entity
 
@@ -71,6 +62,7 @@ class OpnPoolTextSensor : public esphome::text_sensor::TextSensor {
 class OpnPool : public Component, public uart::UARTDevice {
 
   public:
+    OpnPool();
     void setup() override;
     void loop() override;
     void dump_config() override;
@@ -81,6 +73,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_rs485_flow_control_pin(uint8_t pin) { ipc_.config.rs485_pins.flow_control_pin = pin; }
     void set_rs485_config(const rs485_pins_t &cfg) { ipc_.config.rs485_pins = cfg; }    
     const rs485_pins_t &get_rs485_config() const { return ipc_.config.rs485_pins; }
+
     // climate setters
     void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; if (c) c->set_parent(this); }
     void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; if (c) c->set_parent(this); }
@@ -133,8 +126,12 @@ class OpnPool : public Component, public uart::UARTDevice {
 
     ipc_t ipc_{};  // interprocess communication structure and RS485-pins
 
-    void parse_packet_(const std::vector<uint8_t> &data);
+    OpnPoolState * opnPoolState_{nullptr};
 
+    void service_requests_from_pool(ipc_t const * const ipc);
+
+
+    void parse_packet_(const std::vector<uint8_t> &data);
     std::vector<uint8_t> rx_buffer_;
 
     // member pointers

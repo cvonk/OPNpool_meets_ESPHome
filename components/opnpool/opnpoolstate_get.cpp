@@ -1,7 +1,7 @@
 /**
  * @brief OPNpool - Pool state: support, state to cJSON
  *
- * © Copyright 2014, 2019, 2022, Coert Vonk
+ * © Copyright 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -26,12 +26,12 @@
 
 #include "utils.h"
 #include "network.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "poolstate_get";
+static char const * const TAG = "opnpoolstate_get";
 
 static void
 _alloc_str(char * * const value, char const * const str)
@@ -199,7 +199,7 @@ _chlor(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
             _alloc_uint(value, chlor->salt);
             break;
         case POOLSTATE_ELEM_CHLOR_TYP_STATUS:
-            _alloc_str(value, poolstate_chlor_status_str(chlor->status));
+            _alloc_str(value, poolstate_str_chlor_status_str(chlor->status));
             break;
         default:
             ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
@@ -262,7 +262,7 @@ static dispatch_t const _dispatches[] = {
 };
 
 esp_err_t
-poolstate_get_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * const value)
+OpnPoolState::get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * const value)
 {
     dispatch_t const * dispatch = _dispatches;
     for (uint8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {

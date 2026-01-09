@@ -9,7 +9,7 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 #include "ipc.h"
 #include "pool_task.h"
 
@@ -87,15 +87,22 @@ void OpnPool::on_switch_command(uint8_t circuit, bool state) {
     ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
+OpnPool::OpnPool() {
+    opnPoolState_ = new OpnPoolState(this);
+}
+
 void OpnPool::setup() {
 
     ESP_LOGV(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
-    poolstate_init();
+    if (!opnPoolState_->is_valid()) {
+        ESP_LOGE(TAG, "Failed to initialize pool state");
+        return;
+    }
 
     this->ipc_.to_pool_q = xQueueCreate(6, sizeof(network_msg_t));
-    this->ipc_.to_home_q = xQueueCreate(10, sizeof(network_msg_t));
-    assert(this->ipc_.to_home_q && this->ipc_.to_pool_q);
+    this->ipc_.to_main_q = xQueueCreate(10, sizeof(network_msg_t));
+    assert(this->ipc_.to_main_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
     BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
@@ -106,16 +113,16 @@ void OpnPool::setup() {
     } 
 }
 
-static void
-_service_requests_from_pool(ipc_t const * const ipc)
+void
+OpnPool::service_requests_from_pool(ipc_t const * const ipc)
 {
     network_msg_t msg;
 
-    if (xQueueReceive(ipc->to_home_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+    if (xQueueReceive(ipc->to_main_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
         //ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
 
-        if (poolstate_rx_update(&msg) == ESP_OK) {
+        if (opnPoolState_->rx_update(&msg) == ESP_OK) {
 
             ESP_LOGV(TAG, "Poolstate changed");
 
@@ -130,7 +137,7 @@ _service_requests_from_pool(ipc_t const * const ipc)
 
 void OpnPool::loop() {
 
-  _service_requests_from_pool(&this->ipc_);
+  service_requests_from_pool(&this->ipc_);
 
 #if 0
   while (this->available()) {    

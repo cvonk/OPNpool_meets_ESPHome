@@ -1,7 +1,7 @@
 /**
  * @brief OPNpool - Pool state: support, state to cJSON
  *
- * © Copyright 2014, 2019, 2022, Coert Vonk
+ * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -24,7 +24,7 @@
 
 #include "utils.h"
 #include "network.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
@@ -123,7 +123,7 @@ cJSON_AddThermosToObject(cJSON * const obj, char const * const key, poolstate_th
 {
     cJSON * const item = _create_item(obj, key);
     for (uint8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
-        _addThermostatToObject(item, poolstate_thermo_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
+        _addThermostatToObject(item, poolstate_str_thermo_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
                                showTemp, showSp, showSrc, showHeating);
     }
 }
@@ -178,7 +178,7 @@ _addTempsToObject(cJSON * const obj, char const * const key, poolstate_t const *
     cJSON * const item = _create_item(obj, key);
     poolstate_temp_t const * temp = state->temps;
     for (uint8_t ii = 0; ii < POOLSTATE_TEMP_TYP_COUNT; ii++, temp++) {
-        _addTempToObject(item, poolstate_temp_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
+        _addTempToObject(item, poolstate_str_temp_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
     }
 }
 
@@ -323,7 +323,7 @@ cJSON_AddChlorRespToObject(cJSON * const obj, char const * const key, poolstate_
 {
     cJSON * const item = _create_item(obj, key);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", poolstate_chlor_status_str(chlor->status));
+    cJSON_AddStringToObject(item, "status", poolstate_str_chlor_status_str(chlor->status));
 }
 
 static void
@@ -334,7 +334,7 @@ _addChlorToObject(cJSON * const obj, char const * const key, poolstate_t const *
     cJSON_AddStringToObject(item, "name", chlor->name);
     cJSON_AddNumberToObject(item, "pct", chlor->pct);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", poolstate_chlor_status_str(chlor->status));
+    cJSON_AddStringToObject(item, "status", poolstate_str_chlor_status_str(chlor->status));
 }
 
 /**
@@ -361,7 +361,7 @@ static poolstate_json_dispatch_t _dispatches[] = {
 };
 
 char const *
-poolstate_to_json(poolstate_t const * const state, poolstate_elem_typ_t const typ)
+cJSON_poolstate(poolstate_t const * const state, poolstate_elem_typ_t const typ)
 {
     name_reset_idx();
     cJSON * const obj = cJSON_CreateObject();

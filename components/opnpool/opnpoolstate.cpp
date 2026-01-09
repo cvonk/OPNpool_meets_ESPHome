@@ -26,62 +26,61 @@
 //#include <cstdlib>
 
 #include "network.h"
-#include "poolstate.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "poolstate";
+static char const * const TAG = "opnpoolstate";
 
-static struct poolstate_prot_t {
-    SemaphoreHandle_t xMutex;
-    poolstate_t * state;
-    bool valid;
-} _protected;
-
-void
-poolstate_init()
+OpnPoolState::OpnPoolState(OpnPool * parent) : parent_(parent)
 {
-    _protected.xMutex = xSemaphoreCreateMutex();
-    if (_protected.xMutex == nullptr) {
+    protected_.xMutex = xSemaphoreCreateMutex();
+    if (protected_.xMutex == nullptr) {
         ESP_LOGE(TAG, "mutex creation failed");
+        protected_.valid = false;
+        protected_.state = nullptr;
         return;
     }
-    _protected.state = static_cast<poolstate_t *>(calloc(1, sizeof(poolstate_t)));
-    if (_protected.state == nullptr) {
+    
+    protected_.state = static_cast<poolstate_t *>(calloc(1, sizeof(poolstate_t)));
+    if (protected_.state == nullptr) {
         ESP_LOGE(TAG, "allocation failed");
+        protected_.valid = false;
         return;
     }
-	  _protected.state->chlor.name[0] = '\0';
+    
+    protected_.state->chlor.name[0] = '\0';
+    protected_.valid = true;
 }
 
 void
-poolstate_set(poolstate_t const * const state)
+OpnPoolState::set(poolstate_t const * const state)
 {
-    xSemaphoreTake( _protected.xMutex, portMAX_DELAY );
+    xSemaphoreTake( this->protected_.xMutex, portMAX_DELAY );
     {
-        _protected.valid = true;
-        memcpy(_protected.state, state, sizeof(poolstate_t));
+        this->protected_.valid = true;
+        memcpy(this->protected_.state, state, sizeof(poolstate_t));
     }
-    xSemaphoreGive( _protected.xMutex );
+    xSemaphoreGive( this->protected_.xMutex );
 }
 
 esp_err_t
-poolstate_get(poolstate_t * const state)
+OpnPoolState::get(poolstate_t * const state)
 {
     bool valid;
-    xSemaphoreTake( _protected.xMutex, portMAX_DELAY );
+    xSemaphoreTake( this->protected_.xMutex, portMAX_DELAY );
     {
-        valid = _protected.valid;
-        memcpy(state, _protected.state, sizeof(poolstate_t));
+        valid = this->protected_.valid;
+        memcpy(state, this->protected_.state, sizeof(poolstate_t));
     }
-    xSemaphoreGive( _protected.xMutex );
+    xSemaphoreGive( this->protected_.xMutex );
     return valid ? ESP_OK : ESP_FAIL;
 }
 
 #if 0
 bool
-poolstate_get_circuit(char const * const key)
+OpnPoolState::get_circuit(char const * const key)
 {
 	uint16_t mask = 0x00001;
 	for (uint_least8_t ii = 0; mask; ii++) {
@@ -94,42 +93,42 @@ poolstate_get_circuit(char const * const key)
 }
 
 heatpoolstate_t
-poolstate_get_heat(void)
+OpnPoolState::get_heat(void)
 {
 	heatpoolstate_t current;
-	current.pool.setPoint = _protected.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
-	current.pool.heatSrc = _protected.state->thermos[POOLSTATE_THERMO_TYP_pool].heatSrc;
-	current.spa.setPoint = _protected.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
-	current.spa.heatSrc = _protected.state->thermos[POOLSTATE_THERMO_TYP_spa].heatSrc;
+	current.pool.setPoint = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
+	current.pool.heatSrc = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].heatSrc;
+	current.spa.setPoint = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
+	current.spa.heatSrc = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].heatSrc;
 	return current;
 }
 
 char const *
-poolstate_get_heat_src(char const * const key)
+OpnPoolState::get_heat_src(char const * const key)
 {
 	if (strcmp(key, "pool") == 0) {
-		return _heatSrcStr(this->poolstate_->pool.heatSrc);
+		return _heatSrcStr(this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].heatSrc);
 	}
 	if (strcmp(key, "spa") == 0) {
-		return _heatSrcStr(this->poolstate_->spa.heatSrc);
+		return _heatSrcStr(this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].heatSrc);
 	}
 	return "err";
 }
 
 uint8_t
-poolstate_get_heat_sp(char const * const key)
+OpnPoolState::get_heat_sp(char const * const key)
 {
 	if (strcmp(key, "pool") == 0) {
-		return _protected.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
+		return this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
 	}
 	if (strcmp(key, "spa") == 0) {
-		return _protected.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
+		return this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
 	}
 	return 0;
 }
 
 void
-poolstate_name_schedule(JsonObject & json, uint8_t const circuit, uint16_t const start, uint16_t const stop)
+OpnPoolState::name_schedule(JsonObject & json, uint8_t const circuit, uint16_t const start, uint16_t const stop)
 {
 	char const * const key = _circuitName(circuit);
 	JsonObject & sched = json.createNestedObject(key);
