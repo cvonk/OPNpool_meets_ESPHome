@@ -53,7 +53,7 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * co
     state->system.tod.date.year = msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddTodToObject(dbg, "tod", &state->system.tod);
+        opnpoolstate_log_add_tod(dbg, "tod", &state->system.tod);
     }
 }
 
@@ -67,7 +67,7 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t 
     state->thermos[POOLSTATE_THERMO_TYP_spa].set_point = msg->spaSetpoint;
     state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = (msg->heatSrc >> 2) & 0x03;
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddThermosToObject(dbg, "thermos", state->thermos, true, true, true, false);
+        opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
     }
 }
 
@@ -80,7 +80,7 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t co
     state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = msg->heatSrc >> 2;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddThermosToObject(dbg, "thermos", state->thermos, false, true, true, false);
+        opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
     }
 }
 
@@ -132,7 +132,7 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddSchedsToObject(dbg, "scheds", state->scheds, true);
+        opnpoolstate_log_add_sched(dbg, "scheds", state->scheds, true);
     }
 }
 
@@ -191,7 +191,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     state->temps[POOLSTATE_TEMP_TYP_solar].temp = msg->solarTemp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddStateToObject(dbg, "state", state);
+        opnpoolstate_log_add_state(dbg, "state", state);
     }
 }
 
@@ -206,7 +206,7 @@ OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_r
     state->system.version.minor = msg->minor;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddVersionToObject(dbg, "firmware", &state->system.version);
+        opnpoolstate_log_add_version(dbg, "firmware", &state->system.version);
     }
 }
 
@@ -221,7 +221,7 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t cons
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddPumpPrgToObject(dbg, network_pump_prg_str(address), value);
+        opnpoolstate_log_add_pump_program(dbg, network_pump_prg_str(address), value);
     }
 }
 
@@ -231,7 +231,7 @@ OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddPumpPrgToObject(dbg, "resp", value);
+        opnpoolstate_log_add_pump_program(dbg, "resp", value);
     }
 }
 
@@ -239,7 +239,7 @@ void
 OpnPoolState::rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       cJSON_AddPumpCtrlToObject(dbg, "ctrl", msg->ctrl);
+       opnpoolstate_log_add_pump_ctrl(dbg, "ctrl", msg->ctrl);
     }
 }
 
@@ -249,7 +249,7 @@ OpnPoolState::rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * co
     state->pump.mode = msg->mode;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddPumpModeToObject(dbg, "mode", msg->mode);
+        opnpoolstate_log_add_pump_mode(dbg, "mode", msg->mode);
     }
 }
 
@@ -263,7 +263,7 @@ OpnPoolState::rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * cons
     }
     state->pump.running = running;
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddPumpRunningToObject(dbg, "running", state->pump.running);
+        opnpoolstate_log_add_pump_running(dbg, "running", state->pump.running);
     }
 }
 
@@ -288,7 +288,7 @@ OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t c
     state->pump.time.minute = msg->clockMin;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       cJSON_AddPumpToObject(dbg, "status", state);
+       opnpoolstate_log_add_pump(dbg, "status", state);
     }
 }
 
@@ -351,7 +351,7 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level
     // good salt range is 2600 to 4500 ppm
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddChlorRespToObject(dbg, "chlor", &state->chlor);
+        opnpoolstate_log_add_chlor_resp(dbg, "chlor", &state->chlor);
     }
 }
 

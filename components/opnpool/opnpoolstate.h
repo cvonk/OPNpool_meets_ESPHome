@@ -320,10 +320,10 @@ class OpnPoolState {
         esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
         const char * to_json(poolstate_elem_typ_t const typ);
 
-        /* poolstate_rx.c */
+        /* poolstate_rx.cpp */
         esp_err_t rx_update(network_msg_t const * const msg);
 
-        /* poolstate_get.c */
+        /* poolstate_get.cpp */
         esp_err_t get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
 
     private:
@@ -355,22 +355,22 @@ class OpnPoolState {
         void rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state);
 };
 
-/* helpers in poolstate_json.c */
-void cJSON_AddTodToObject(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
-void cJSON_AddSystemToObject(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void cJSON_AddThermosToObject(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
-void cJSON_AddSchedsToObject(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
-void cJSON_AddStateToObject(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void cJSON_AddPumpPrgToObject(cJSON * const obj, char const * const key, uint16_t const value);
-void cJSON_AddPumpCtrlToObject(cJSON * const obj, char const * const key, uint8_t const ctrl);
-void cJSON_AddPumpModeToObject(cJSON * const obj, char const * const key, uint8_t const mode);
-void cJSON_AddPumpRunningToObject(cJSON * const obj, char const * const key, bool const running);
-void cJSON_AddPumpToObject(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void cJSON_AddChlorRespToObject(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
-void cJSON_AddVersionToObject(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
-char const * cJSON_poolstate(poolstate_t const * const state, poolstate_elem_typ_t const typ);
+/* helpers from poolstate_log.cpp */
+void opnpoolstate_log_add_tod(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
+void opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
+void opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
+void opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
+void opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
+void opnpoolstate_log_add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
+void opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
+void opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode);
+void opnpoolstate_log_add_pump_running(cJSON * const obj, char const * const key, bool const running);
+void opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
+void opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
+void opnpoolstate_log_add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
+char const * opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
 
-/* helpers in poolstate_str.c */
+/* helpers from poolstate_str.cpp */
 const char * poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id);
 const char * poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id);
 const char * poolstate_str_temp_str(poolstate_temp_typ_t const temp_id);
