@@ -39,6 +39,7 @@ typedef struct poolstate_system_t {
     poolstate_version_t version;
 } poolstate_system_t;
 
+
 #define POOLSTATE_ELEM_SYSTEM_TYP_MAP(XX) \
   XX(0, TIME) \
   XX(1, CTRL_VERSION) \
@@ -54,6 +55,7 @@ typedef enum {
  * poolstate_thermo_typ_t
  **/
 
+   /* X-Macro pattern keeps enums and strings synchronized */
 #define POOLSTATE_THERMO_TYP_MAP(XX) \
   XX(0, pool) \
   XX(1, spa)  \
@@ -72,6 +74,8 @@ typedef struct poolstate_thermo_t {
     bool     heating;
 } poolstate_thermo_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 #define POOLSTATE_ELEM_THERMO_TYP_MAP(XX) \
   XX(0, TEMP) \
   XX(1, SET_POINT) \
@@ -87,6 +91,8 @@ typedef enum {
 /**
  * poolstate_sched_t
  */
+
+   /* X-Macro pattern keeps enums and strings synchronized */
 
 #define POOLSTATE_ELEM_SCHED_TYP_MAP(XX) \
   XX(0, START) \
@@ -110,7 +116,7 @@ typedef struct poolstate_sched_t {
 /**
  * poolstate_temp_t
  **/
-
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define POOLSTATE_TEMP_TYP_MAP(XX) \
   XX(0, air) \
   XX(1, solar)  \
@@ -126,6 +132,7 @@ typedef struct poolstate_temp_t {
     uint8_t temp;
 } poolstate_temp_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define POOLSTATE_ELEM_TEMP_TYP_MAP(XX) \
   XX(0, TEMP) \
 
@@ -142,6 +149,8 @@ typedef enum {
 typedef struct poolstate_modes_t {
     bool     set[NETWORK_MODE_COUNT];
 } poolstate_modes_t;
+
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 #define POOLSTATE_ELEM_MODES_TYP_MAP(XX) \
   XX(0, SERVICE) \
@@ -163,6 +172,8 @@ typedef struct poolstate_circuits_t {
     bool     active[NETWORK_CIRCUIT_COUNT];
     bool     delay[NETWORK_CIRCUIT_COUNT];
 } poolstate_circuits_t;
+
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 #define POOLSTATE_ELEM_CIRCUITS_TYP_MAP(XX) \
   XX(0, ACTIVE) \
@@ -191,6 +202,7 @@ typedef struct {
     uint8_t  timer;
 } poolstate_pump_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define POOLSTATE_ELEM_PUMP_TYP_MAP(XX) \
   XX(0, TIME) \
   XX(1, MODE) \
@@ -235,6 +247,8 @@ typedef struct poolstate_chlor_t {
     poolstate_chlor_status_t  status;
 } poolstate_chlor_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 #define POOLSTATE_ELEM_CHLOR_TYP_MAP(XX) \
   XX(0, NAME) \
   XX(1, PCT) \
@@ -261,6 +275,8 @@ typedef struct poolstate_t {
     poolstate_pump_t      pump;
     poolstate_chlor_t     chlor;
 } poolstate_t;
+
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 #define POOLSTATE_ELEM_TYP_MAP(XX) \
   XX(0x00, SYSTEM) \

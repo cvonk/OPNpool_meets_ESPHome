@@ -92,6 +92,8 @@ network_version_str(uint8_t const major, uint8_t const minor)
  * network_mode_t
  **/
 
+   /* X-Macro pattern keeps enums and strings synchronized */
+
 static const char * const _network_modes[] = {
 #define XX(num, name) #name,
   NETWORK_MODE_MAP(XX)
@@ -107,6 +109,7 @@ network_mode_str(network_mode_t const mode)
 /**
  * network_circuit_t
  **/
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 static const char * const _network_circuits[] = {
 #define XX(num, name) #name,
@@ -133,6 +136,7 @@ network_circuit_nr(char const * const circuit_str)
 /**
  * network_pump_mode_t
  **/
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 static const char * const _network_pump_modes[] = {
 #define XX(num, name) #name,
@@ -149,7 +153,7 @@ network_pump_mode_str(network_pump_mode_t const pump_mode)
 /**
  * network_pump_state_t
  **/
-
+  /* X-Macro pattern keeps enums and strings synchronized */
 static const char * const _network_pump_states[] = {
 #define XX(num, name) #name,
   NETWORK_PUMP_STATE_MAP(XX)
@@ -165,7 +169,7 @@ network_pump_state_str(network_pump_state_t const pump_state)
 /**
  * network_heat_src_t
  **/
-
+  /* X-Macro pattern keeps enums and strings synchronized */
 static const char * const _network_heat_srcs[] = {
 #define XX(num, name) #name,
   NETWORK_HEAT_SRC_MAP(XX)
@@ -207,6 +211,7 @@ network_pump_prg_str(uint16_t const address)
 	return s;
 }
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 str_value_name_pair_t _typ_ctrls[] = {
 #define XX(num, name) { .typ = num, .str = #name },
@@ -226,6 +231,8 @@ network_typ_ctrl_str(network_typ_ctrl_t typ)
     return hex8_str(typ);
 }
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 str_value_name_pair_t _typ_pumps[] = {
 #define XX(num, name) { .typ = num, .str = #name },
   NETWORK_TYP_PUMP_MAP(XX)
@@ -244,7 +251,8 @@ network_typ_pump_str(network_typ_pump_t typ)
     return hex8_str(typ);
 }
 
-str_value_name_pair_t _typ_chlors[] = {
+  /* X-Macro pattern keeps enums and strings synchronized */
+name_pair_t _typ_chlors[] = {
 #define XX(num, name) { .typ = num, .str = #name },
   NETWORK_TYP_CHLOR_MAP(XX)
 #undef XX
@@ -265,6 +273,8 @@ network_typ_chlor_str(network_typ_chlor_t typ)
 /**
  * msg_typ_t
  **/
+
+   /* X-Macro pattern keeps enums and strings synchronized */
 
 static const char * const _network_msg_typs[] = {
 #define XX(num, name, typ, proto, prot_typ) #name,

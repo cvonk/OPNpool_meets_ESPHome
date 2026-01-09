@@ -32,6 +32,8 @@ namespace opnpool {
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 static const char * const _datalink_prots[] = {
 #define XX(num, name) #name,
   DATALINK_PROT_MAP(XX)

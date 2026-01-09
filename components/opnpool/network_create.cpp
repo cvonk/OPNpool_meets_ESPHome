@@ -51,6 +51,8 @@ typedef struct network_datalink_map_t {
     } datalink;
 } network_datalink_map_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 static const network_datalink_map_t _msg_typ_map[] = {
 #define XX(num, name, typ, proto, prot_typ) { { MSG_TYP_##name, sizeof(typ)}, {proto, prot_typ} },
   NETWORK_MSG_TYP_MAP(XX)

@@ -6,6 +6,8 @@
 #include "rs485.h"
 //#include "ipc.h"
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 namespace esphome {
 namespace opnpool {
 
@@ -25,6 +27,8 @@ namespace opnpool {
 // 0x60 .. 0x6F = intelliflow pump 0 .. 15
 // 
 // `addrgroup` is the high nibble of the address
+/* X-Macro pattern keeps enums and strings synchronized */
+
 #define DATALINK_ADDRGROUP_MAP(XX) \
   XX(0x00, ALL)  \
   XX(0x01, CTRL) \

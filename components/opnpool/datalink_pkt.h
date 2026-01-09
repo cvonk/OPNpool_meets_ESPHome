@@ -14,7 +14,8 @@ namespace opnpool {
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
-/* order MUST match _proto_descr[] */
+  /* X-Macro pattern keeps enums and strings synchronized */
+  /* order MUST match _proto_descr[] */
 #define DATALINK_PROT_MAP(XX) \
   XX(0x00, IC)      \
   XX(0x01, A5_CTRL) \

@@ -20,6 +20,7 @@ namespace opnpool {
 
 // #define NETWORK_TYP_CTRL_SET (0x80)
 // #define NETWORK_TYP_CTRL_REQ (0xC0)
+/* X-Macro pattern keeps enums and strings synchronized */
 
 #define NETWORK_TYP_CTRL_MAP(XX) \
   XX(0x01, SET_ACK)              \
@@ -44,6 +45,8 @@ namespace opnpool {
 NETWORK_TYP_CTRL_UNKNOWNxD9 = 0xD9, // sending [], returns: [11 3C 00 3F 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
 */
 
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 typedef enum {
 #define XX(num, name) NETWORK_TYP_CTRL_##name = num,
   NETWORK_TYP_CTRL_MAP(XX)
@@ -55,6 +58,8 @@ typedef enum {
  **/
 
 // FYI occasionally there is a src=0x10 dst=0x60 typ=0xFF with data=[0x80]; pump doesn't reply to it
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 #define NETWORK_TYP_PUMP_MAP(XX) \
   XX(0x01, REG) \
   XX(0x04, CTRL) \
@@ -74,6 +79,8 @@ typedef enum {
  **/
 
 // FYI there is a 0x14, has dst=0x50 data=[0x00]
+  /* X-Macro pattern keeps enums and strings synchronized */
+
  #define NETWORK_TYP_CHLOR_MAP(XX) \
   XX(0x00, PING_REQ)               \
   XX(0x01, PING_RESP)              \
@@ -91,6 +98,7 @@ typedef enum {
 /**
  * macro "magic" to get an enum and matching *_str functions (in *_str.c)
  **/
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 #define NETWORK_MODE_MAP(XX) \
   XX( 0, service) \
@@ -107,6 +115,8 @@ typedef enum {
 } network_mode_t;
 
 // MUST add 1 for network messages (1-based)
+  /* X-Macro pattern keeps enums and strings synchronized */
+
 #define NETWORK_CIRCUIT_MAP(XX) \
   XX( 0, spa)  \
   XX( 1, aux1) \
@@ -125,6 +135,7 @@ typedef enum {
 #undef XX
 } network_circuit_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define NETWORK_PUMP_MODE_MAP(XX) \
   XX(0, FILTER)  \
   XX(1, MAN)  \
@@ -146,6 +157,7 @@ typedef enum {
 #undef XX
 } network_pump_mode_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define NETWORK_PUMP_STATE_MAP(XX) \
   XX(0, OK) \
   XX(1, PRIMING)  \
@@ -159,6 +171,7 @@ typedef enum {
 #undef XX
 } network_pump_state_t;
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 #define NETWORK_HEAT_SRC_MAP(XX) \
   XX(0, None)       \
   XX(1, Heater)     \
@@ -547,6 +560,7 @@ typedef union network_msg_data_t {
 } PACK8 network_msg_data_t;
 #define NETWORK_DATA_MAX_SIZE (sizeof(network_msg_data_t))
 
+/* X-Macro pattern keeps enums and strings synchronized */
 // extended DATALINK_PROT_MAP and changed 0's in this first entry to DATALINK_PROT_NONE to satisfy compiler
 #define NETWORK_MSG_TYP_MAP(XX) \
   XX( 0, NONE,             network_msg_none_t,             DATALINK_PROT_NONE,    DATALINK_PROT_NONE)              \

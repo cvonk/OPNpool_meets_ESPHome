@@ -32,6 +32,7 @@ namespace opnpool {
 
 static char const * const TAG = "ipc";
 
+  /* X-Macro pattern keeps enums and strings synchronized */
 
 static const char * const _ipc_to_home_typs[] = {
 #define XX(num, name) #name,
