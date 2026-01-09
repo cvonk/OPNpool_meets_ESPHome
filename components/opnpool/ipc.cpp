@@ -54,13 +54,7 @@ ipc_to_home_typ_str(ipc_to_home_typ_t const typ)
 void
 ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
-    ipc_to_main_msg_t main_msg = {
-        .typ = IPC_TO_HOME_TYP_NETWORK_MSG,
-        .u = {
-            .network_msg = *network_msg,
-        },
-    };
-    if (xQueueSendToBack(ipc->to_home_q, &main_msg, 0) != pdPASS) {
+    if (xQueueSendToBack(ipc->to_home_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_home_q full");
     }
     vTaskDelay(1);  // give others a chance to catch up

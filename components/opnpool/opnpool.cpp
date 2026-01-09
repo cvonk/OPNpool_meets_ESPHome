@@ -93,8 +93,8 @@ void OpnPool::setup() {
 
     poolstate_init();
 
-    this->ipc_.to_pool_q = xQueueCreate(4, sizeof(network_msg_t));
-    this->ipc_.to_home_q = xQueueCreate(20, sizeof(ipc_to_main_msg_t));
+    this->ipc_.to_pool_q = xQueueCreate(6, sizeof(network_msg_t));
+    this->ipc_.to_home_q = xQueueCreate(10, sizeof(network_msg_t));
     assert(this->ipc_.to_home_q && this->ipc_.to_pool_q);
 
     // spin off a pool_task that handles RS485 and the pool state machine
@@ -109,34 +109,23 @@ void OpnPool::setup() {
 static void
 _service_requests_from_pool(ipc_t const * const ipc)
 {
-    ipc_to_main_msg_t queued_msg;
+    network_msg_t msg;
 
-    if (xQueueReceive(ipc->to_home_q, &queued_msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+    if (xQueueReceive(ipc->to_home_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
 
-        switch (queued_msg.typ) {
-            case IPC_TO_HOME_TYP_NETWORK_MSG: {
-                network_msg_t * const msg = &queued_msg.u.network_msg;
+        //ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
 
-                //ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
+        if (poolstate_rx_update(&msg) == ESP_OK) {
 
-                if (poolstate_rx_update(msg) == ESP_OK) {
+            ESP_LOGV(TAG, "Poolstate changed");
 
-                    //ESP_LOGV(TAG, "Poolstate changed");
-
-
-                    // 2BD: publish this as an update to the HA sensors 
-                    // Maybe this should be inside poolstate_rx_update(). If the sensors
-                    //   keep track of their previous state, then only publish changes.
-                    // Maybe2, poolstate should be a class that encapsulates the state and the sensors.
-                    // Maybe3, that is where the OpnPoolSwitch, OpnPoolClimate et al classes are for.
-                }
-                break;
-            }
-            default:
-                ESP_LOGW(TAG, "Unknown msg typ: %u", queued_msg.typ);
-                break;
+            // 2BD: publish this as an update to the HA sensors 
+            // Maybe this should be inside poolstate_rx_update(). If the sensors
+            //   keep track of their previous state, then only publish changes.
+            // Maybe2, poolstate should be a class that encapsulates the state and the sensors.
+            // Maybe3, that is where the OpnPoolSwitch, OpnPoolClimate et al classes are for.
         }
-  }
+    }
 }
 
 void OpnPool::loop() {
