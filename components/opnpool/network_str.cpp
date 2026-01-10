@@ -94,9 +94,10 @@ network_version_str(uint8_t const major, uint8_t const minor)
 
    /* X-Macro pattern keeps enums and strings synchronized */
 
+#if 0   
 static const char * const _network_modes[] = {
 #define XX(num, name) #name,
-  NETWORK_MODE_MAP(XX)
+  network_mode_t::MAP(XX)
 #undef XX
 };
 
@@ -113,7 +114,7 @@ network_mode_str(network_mode_t const mode)
 
 static const char * const _network_circuits[] = {
 #define XX(num, name) #name,
-  NETWORK_CIRCUIT_MAP(XX)
+  network_circuit_t::MAP(XX)
 #undef XX
 };
 
@@ -140,7 +141,7 @@ network_circuit_nr(char const * const circuit_str)
 
 static const char * const _network_pump_modes[] = {
 #define XX(num, name) #name,
-  NETWORK_PUMP_MODE_MAP(XX)
+  network_pump_mode_t::MAP(XX)
 #undef XX
 };
 
@@ -156,7 +157,7 @@ network_pump_mode_str(network_pump_mode_t const pump_mode)
   /* X-Macro pattern keeps enums and strings synchronized */
 static const char * const _network_pump_states[] = {
 #define XX(num, name) #name,
-  NETWORK_PUMP_STATE_MAP(XX)
+  network_pump_state_t::MAP(XX)
 #undef XX
 };
 
@@ -172,7 +173,7 @@ network_pump_state_str(network_pump_state_t const pump_state)
   /* X-Macro pattern keeps enums and strings synchronized */
 static const char * const _network_heat_srcs[] = {
 #define XX(num, name) #name,
-  NETWORK_HEAT_SRC_MAP(XX)
+  network_heat_src_t::MAP(XX)
 #undef XX
 };
 
@@ -187,6 +188,7 @@ network_heat_src_nr(char const * const heat_src_str)
 {
     ELEM_POS(_network_heat_srcs, heat_src_str);
 }
+#endif
 
 /**
  *
@@ -213,9 +215,11 @@ network_pump_prg_str(uint16_t const address)
 
   /* X-Macro pattern keeps enums and strings synchronized */
 
+#if 0
+  
 str_value_name_pair_t _typ_ctrls[] = {
 #define XX(num, name) { .typ = num, .str = #name },
- NETWORK_TYP_CTRL_MAP(XX)
+ network_typ_ctrl_t::MAP(XX)
 #undef XX
 };
 
@@ -235,7 +239,7 @@ network_typ_ctrl_str(network_typ_ctrl_t typ)
 
 str_value_name_pair_t _typ_pumps[] = {
 #define XX(num, name) { .typ = num, .str = #name },
-  NETWORK_TYP_PUMP_MAP(XX)
+  network_typ_pump_t::MAP(XX)
 #undef XX
 };
 
@@ -250,11 +254,13 @@ network_typ_pump_str(network_typ_pump_t typ)
     }
     return hex8_str(typ);
 }
+#endif
 
+#if 0
   /* X-Macro pattern keeps enums and strings synchronized */
 str_value_name_pair_t _typ_chlors[] = {
 #define XX(num, name) { .typ = num, .str = #name },
-  NETWORK_TYP_CHLOR_MAP(XX)
+  network_typ_chlor_t::MAP(XX)
 #undef XX
 };
 
@@ -269,13 +275,15 @@ network_typ_chlor_str(network_typ_chlor_t typ)
     }
     return hex8_str(typ);
 }
+#endif
 
 /**
- * msg_typ_t
+ * network_msg_typ_t
  **/
 
    /* X-Macro pattern keeps enums and strings synchronized */
 
+#if 0
 static const char * const _network_msg_typs[] = {
 #define XX(num, name, typ, proto, prot_typ) #name,
   NETWORK_MSG_TYP_MAP(XX)
@@ -293,6 +301,8 @@ network_msg_typ_nr(char const * const msg_typ_str)
 {
     ELEM_POS(_network_msg_typs, msg_typ_str);
 }
+
+#endif
 
 } // namespace opnpool
 } // namespace esphome

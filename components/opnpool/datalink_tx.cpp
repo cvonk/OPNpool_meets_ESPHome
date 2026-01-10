@@ -81,7 +81,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
     skb_handle_t const skb = pkt->skb;
 
     switch (pkt->prot) {
-        case DATALINK_PROT_IC: {
+        case datalink_prot_t::IC: {
             datalink_head_ic_t * const head = (datalink_head_ic_t *) skb_push(skb, sizeof(datalink_head_ic_t));
             _enter_ic_head(head, skb, pkt->prot_typ);
 
@@ -91,8 +91,8 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
             _enter_ic_tail(tail, crc_start, crc_stop);
             break;
         }
-        case DATALINK_PROT_A5_CTRL:
-        case DATALINK_PROT_A5_PUMP: {
+        case datalink_prot_t::A5_CTRL:
+        case datalink_prot_t::A5_PUMP: {
             datalink_head_a5_t * const head = (datalink_head_a5_t *) skb_push(skb, sizeof(datalink_head_a5_t));
             _enter_a5_head(head, skb, pkt->prot_typ, pkt->data_len);
 

@@ -37,7 +37,7 @@ datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 datalink_addrgroup_t
 datalink_groupaddr(uint16_t const addr)
 {
-	return (datalink_addrgroup_t)(addr >> 4);
+    return static_cast<datalink_addrgroup_t>((addr >> 4) & 0x0F);
 }
 
 uint8_t

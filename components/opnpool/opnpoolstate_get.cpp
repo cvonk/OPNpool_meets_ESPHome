@@ -129,7 +129,7 @@ _schedule(poolstate_t const * const state, uint8_t const typ_dummy, uint8_t cons
 {
     (void)typ_dummy;
     network_circuit_t const circuit = (network_circuit_t)idx;
-    poolstate_sched_t const * const sched = &state->scheds[circuit];
+    poolstate_sched_t const * const sched = &state->scheds[static_cast<uint8_t>(idx)];
 
     if (sched->active) {
         _alloc_strs(value, 
@@ -219,16 +219,16 @@ _modes(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
     poolstate_modes_t const * const modes = &state->modes;
     switch (typ) {
         case POOLSTATE_ELEM_MODES_TYP_SERVICE:
-            _alloc_bool(value, modes->set[NETWORK_MODE_service]);
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::service)]);
             break;
         case POOLSTATE_ELEM_MODES_TYP_TEMP_INC:
-            _alloc_bool(value, modes->set[NETWORK_MODE_tempInc]);
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::tempInc)]);
             break;
         case POOLSTATE_ELEM_MODES_TYP_FREEZE_PROT:
-            _alloc_bool(value, modes->set[NETWORK_MODE_freezeProt]);
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::freezeProt)]);
             break;
         case POOLSTATE_ELEM_MODES_TYP_TIMEOUT:
-            _alloc_bool(value, modes->set[NETWORK_MODE_timeout]);
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::timeout)]);
             break;
         default:
             if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {

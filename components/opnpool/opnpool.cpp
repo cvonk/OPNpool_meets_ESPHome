@@ -74,7 +74,7 @@ void OpnPoolSwitch::write_state(bool state) {
 void OpnPool::on_switch_command(uint8_t circuit, bool state) {
 
     network_msg_t msg = {
-        .typ = MSG_TYP_CTRL_CIRCUIT_SET,
+        .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {
               .circuit = static_cast<uint8_t>(circuit + 1),  // convert 0-based to 1-based

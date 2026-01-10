@@ -136,8 +136,8 @@ pool_req_task(void * rs485_void)
     rs485_handle_t const rs485 = (rs485_handle_t)rs485_void;
 
     while (1) {
-        _queue_req(rs485, MSG_TYP_CTRL_HEAT_REQ);
-        _queue_req(rs485, MSG_TYP_CTRL_SCHED_REQ);
+        _queue_req(rs485, network_msg_typ_t::CTRL_HEAT_REQ);
+        _queue_req(rs485, network_msg_typ_t::CTRL_SCHED_REQ);
         vTaskDelay((TickType_t)30 * 1000 / portTICK_PERIOD_MS);
     }
 }
@@ -151,8 +151,8 @@ pool_task(void * ipc_void)
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
     // request some initial information from the controller
-    _queue_req(rs485, MSG_TYP_CTRL_VERSION_REQ);
-    _queue_req(rs485, MSG_TYP_CTRL_TIME_REQ);
+    _queue_req(rs485, network_msg_typ_t::CTRL_VERSION_REQ);
+    _queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
 
     // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);

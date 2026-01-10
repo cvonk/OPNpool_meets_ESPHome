@@ -29,6 +29,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #ifndef NEARGYE_MAGIC_ENUM_HPP
 #define NEARGYE_MAGIC_ENUM_HPP
 

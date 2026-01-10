@@ -1,3 +1,7 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
 
 /**

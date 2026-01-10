@@ -1,33 +1,36 @@
+# For better development experience: in VS Code, install the ESPHome extension.
+#
+# Compile with ctrl-shift-b, or on mac use cmd-shift-b.  
+# The `tasks.json` file defines the build tasks. It will map the compile
+# pathnames back from the build directory to the project directory.
+# You can then inspect the build output in the PROBLEMS tab in VS Code.
+#
+# To compile & upload: ctrl-shift-p → "Run Task" → "ESPHome Upload"
+# To view logs: ctrl-shift-p → "Run Task" → "ESPHome Monitor"
+
 substitutions:
   device_name: opnpool-1
-  friendly_name: "Test external component OPNpool"
-  description: "test external component, see https://medium.com/@vinsce/create-an-esphome-external-component-part-1-introduction-config-validation-and-code-generation-e0389e674bd6"
+  friendly_name: "External component OPNpool"
+  description: "External component, see https://github.com/cvonk/OPNpool_meets_ESPHome"
 
 esphome:
   name: ${device_name}
   comment: ${description}
   friendly_name: ${friendly_name}
-  #includes:
-  #  - components/opnpool/skb/skb.h
-  #  - components/opnpool/rs485/rs485.h
-  #  - components/opnpool/datalink/datalink.h
-  #libraries:
   platformio_options:
     monitor_filters:
       - esp32_exception_decoder
-    #lib_deps:
-    #  - neargye/magic_enum@^0.9.5
-  #  build_flags:
-  #    - -I src/esphome/components/opnpool
-  #    # - -DMY_DEF=1
-  # build_path: "../config/esphome/component_build"
+    build_flags:
+      - -fmax-errors=5
+      - -DMAGIC_ENUM_RANGE_MIN=0
+      - -DMAGIC_ENUM_RANGE_MAX=256      
 
 esp32:
   variant: ESP32
   board: esp32dev
   framework:
     type: esp-idf
-      
+
 logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
   initial_level: WARN  # only show up to WARN globally

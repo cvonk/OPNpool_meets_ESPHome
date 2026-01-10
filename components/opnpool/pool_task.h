@@ -1,4 +1,9 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
+
 #include <sdkconfig.h>
 #include <esp_system.h>
 

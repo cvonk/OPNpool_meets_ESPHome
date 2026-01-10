@@ -1,5 +1,17 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
+
 #include <esp_system.h>
+
+#include "datalink_pkt.h"
+
+    // configure magic_enum to search full uint8_t range (0x00-0xFF)
+#define MAGIC_ENUM_RANGE_MIN 0
+#define MAGIC_ENUM_RANGE_MAX 256
+#include "magic_enum.h"
 
 namespace esphome {
 namespace opnpool {
@@ -15,175 +27,244 @@ namespace opnpool {
 #endif
 
 /**
- * NETWORK_TYP_CTRL_t
+ * network_typ_ctrl_t
  **/
 
-// #define NETWORK_TYP_CTRL_SET (0x80)
-// #define NETWORK_TYP_CTRL_REQ (0xC0)
-/* X-Macro pattern keeps enums and strings synchronized */
+enum class network_typ_ctrl_t : uint8_t {
+  SET_ACK = 0x01,
+  STATE_BCAST = 0x02,
+  CANCEL_DELAY = 0x03,
+  TIME_RESP = 0x05,
+  TIME_SET = 0x85,
+  TIME_REQ = 0xC5,
+  CIRCUIT_RESP = 0x06,
+  CIRCUIT_SET = 0x86,
+  CIRCUIT_REQ = 0xC6,
+  HEAT_RESP = 0x08,
+  HEAT_SET = 0x88,
+  HEAT_REQ = 0xC8,
+  HEAT_PUMP_RESP = 0x10,
+  HEAT_PUMP_SET = 0x90,
+  HEAT_PUMP_REQ = 0xD0,
+  SCHED_RESP = 0x1E,
+  SCHED_SET = 0x9E,
+  SCHED_REQ = 0xDE,
+  LAYOUT_RESP = 0x21,
+  LAYOUT_SET = 0xA1,
+  LAYOUT_REQ = 0xE1,
+  CIRC_NAMES_RESP = 0x0B,
+  CIRC_NAMES_REQ = 0xCB,
+  SCHEDS_RESP = 0x11,
+  SCHEDS_REQ = 0xD1,
+  CHEM_RESP = 0x12,
+  CHEM_REQ = 0xD2,
+  VALVE_RESP = 0x1D,
+  VALVE_REQ = 0xDD,
+  SOLARPUMP_RESP = 0x22,
+  SOLARPUMP_REQ = 0xE2,
+  DELAY_RESP = 0x23,
+  DELAY_REQ = 0xE3,
+  HEAT_SETPT_RESP = 0x28,
+  HEAT_SETPT_REQ = 0xE8,
+  VERSION_RESP = 0xFC,
+  VERSION_REQ = 0xFD,
+};
 
-#define NETWORK_TYP_CTRL_MAP(XX) \
-  XX(0x01, SET_ACK)              \
-  XX(0x02, STATE_BCAST)          \
-  XX(0x03, CANCEL_DELAY)         \
-  XX(0x05, TIME_RESP)       XX(0x85, TIME_SET)      XX(0xC5, TIME_REQ)      \
-  XX(0x06, CIRCUIT_RESP)    XX(0x86, CIRCUIT_SET)   XX(0xC6, CIRCUIT_REQ)   \
-  XX(0x08, HEAT_RESP)       XX(0x88, HEAT_SET)      XX(0xC8, HEAT_REQ)      \
-  XX(0x10, HEAT_PUMP_RESP)  XX(0x90, HEAT_PUMP_SET) XX(0xD0, HEAT_PUMP_REQ) \
-  XX(0x1E, SCHED_RESP)      XX(0x9E, SCHED_SET)     XX(0xDE, SCHED_REQ)     \
-  XX(0x21, LAYOUT_RESP)     XX(0xA1, LAYOUT_SET)    XX(0xE1, LAYOUT_REQ)    \
-  XX(0x0B, CIRC_NAMES_RESP) XX(0xCB, CIRC_NAMES_REQ) \
-  XX(0x11, SCHEDS_RESP)     XX(0xD1, SCHEDS_REQ)     \
-  XX(0x12, CHEM_RESP)       XX(0xD2, CHEM_REQ)       \
-  XX(0x1D, VALVE_RESP)      XX(0xDD, VALVE_REQ)      \
-  XX(0x22, SOLARPUMP_RESP)  XX(0xE2, SOLARPUMP_REQ)  \
-  XX(0x23, DELAY_RESP)      XX(0xE3, DELAY_REQ)      \
-  XX(0x28, HEAT_SETPT_RESP) XX(0xE8, HEAT_SETPT_REQ) \
-  XX(0xFC, VERSION_RESP)    XX(0xFD, VERSION_REQ)
+inline const char *
+network_typ_ctrl_str(network_typ_ctrl_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-/* results of sending requests:
-NETWORK_TYP_CTRL_UNKNOWNxD9 = 0xD9, // sending [], returns: [11 3C 00 3F 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00]
-*/
-
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-typedef enum {
-#define XX(num, name) NETWORK_TYP_CTRL_##name = num,
-  NETWORK_TYP_CTRL_MAP(XX)
-#undef XX
-} network_typ_ctrl_t;
 
 /**
- * NETWORK_TYP_PUMP_t
+ * network_typ_pump_t
  **/
 
-// FYI occasionally there is a src=0x10 dst=0x60 typ=0xFF with data=[0x80]; pump doesn't reply to it
-  /* X-Macro pattern keeps enums and strings synchronized */
+enum class network_typ_pump_t : uint8_t {
+  REG = 0x01,
+  CTRL = 0x04,
+  MODE = 0x05,
+  RUN = 0x06,
+  STATUS = 0x07,
+  FF = 0xFF,
+};
 
-#define NETWORK_TYP_PUMP_MAP(XX) \
-  XX(0x01, REG) \
-  XX(0x04, CTRL) \
-  XX(0x05, MODE) \
-  XX(0x06, RUN) \
-  XX(0x07, STATUS) \
-  XX(0xff, FF)
+inline const char *
+network_typ_pump_str(network_typ_pump_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-typedef enum {
-#define XX(num, name) NETWORK_TYP_PUMP_##name = num,
-  NETWORK_TYP_PUMP_MAP(XX)
-#undef XX
-} network_typ_pump_t;
 
 /**
- * NETWORK_TYP_CHLOR_t
+ * network_typ_chlor_t
  **/
 
-// FYI there is a 0x14, has dst=0x50 data=[0x00]
-  /* X-Macro pattern keeps enums and strings synchronized */
+enum class network_typ_chlor_t : uint8_t {
+  PING_REQ = 0x00,
+  PING_RESP = 0x01,
+  NAME_RESP = 0x03,
+  LEVEL_SET = 0x11,
+  LEVEL_RESP = 0x12,
+  NAME_REQ = 0x14,
+};
 
- #define NETWORK_TYP_CHLOR_MAP(XX) \
-  XX(0x00, PING_REQ)               \
-  XX(0x01, PING_RESP)              \
-  XX(0x03, NAME_RESP)              \
-  XX(0x11, LEVEL_SET)              \
-  XX(0x12, LEVEL_RESP)             \
-  XX(0x14, NAME_REQ)
-
-typedef enum {
-#define XX(num, name) NETWORK_TYP_CHLOR_##name = num,
-  NETWORK_TYP_CHLOR_MAP(XX)
-#undef XX
-} network_typ_chlor_t;
+inline const char *
+network_typ_chlor_str(network_typ_chlor_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
 /**
- * macro "magic" to get an enum and matching *_str functions (in *_str.c)
+ * Other enums
  **/
-  /* X-Macro pattern keeps enums and strings synchronized */
 
-#define NETWORK_MODE_MAP(XX) \
-  XX( 0, service) \
-  XX( 1, UNKOWN_01) \
-  XX( 2, tempInc) \
-  XX( 3, freezeProt) \
-  XX( 4, timeout) \
-  XX( 5, COUNT)
+enum class network_mode_t : uint8_t {
+  service = 0,
+  UNKOWN_01 = 1,
+  tempInc = 2,
+  freezeProt = 3,
+  timeout = 4
+};
 
-typedef enum {
-#define XX(num, name) NETWORK_MODE_##name = num,
-  NETWORK_MODE_MAP(XX)
-#undef XX
-} network_mode_t;
+inline const char *
+network_mode_str(network_mode_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-// MUST add 1 for network messages (1-based)
-  /* X-Macro pattern keeps enums and strings synchronized */
+constexpr size_t network_mode_count() {
+    return magic_enum::enum_count<network_mode_t>();
+}
 
-#define NETWORK_CIRCUIT_MAP(XX) \
-  XX( 0, spa)  \
-  XX( 1, aux1) \
-  XX( 2, aux2) \
-  XX( 3, aux3) \
-  XX( 4, ft1)  \
-  XX( 5, pool) \
-  XX( 6, ft2)  \
-  XX( 7, ft3)  \
-  XX( 8, ft4)  \
-  XX( 9, COUNT)
 
-typedef enum {
-#define XX(num, name) NETWORK_CIRCUIT_##name = num,
-  NETWORK_CIRCUIT_MAP(XX)
-#undef XX
-} network_circuit_t;
+enum class network_circuit_t : uint8_t {
+  spa = 0,
+  aux1 = 1,
+  aux2 = 2,
+  aux3 = 3,
+  ft1 = 4,
+  pool = 5,
+  ft2 = 6,
+  ft3 = 7,
+  ft4 = 8
+};
+  
+constexpr size_t network_circuit_count() {
+    return magic_enum::enum_count<network_circuit_t>();
+}
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define NETWORK_PUMP_MODE_MAP(XX) \
-  XX(0, FILTER)  \
-  XX(1, MAN)  \
-  XX(2, BKWASH)  \
-  XX(3, X03)  \
-  XX(4, X04)  \
-  XX(5, X05)  \
-  XX(6, FT1)  \
-  XX(7, X07)  \
-  XX(8, X08)  \
-  XX(9, EP1)  \
-  XX(10, EP2)  \
-  XX(11, EP3)  \
-  XX(12, EP4)
+inline const char *
+network_circuit_str(network_circuit_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-typedef enum {
-#define XX(num, name) NETWORK_PUMP_MODE_##name = num,
-  NETWORK_PUMP_MODE_MAP(XX)
-#undef XX
-} network_pump_mode_t;
+enum class network_pump_mode_t : uint8_t {
+  FILTER = 0,
+  MAN = 1,
+  BKWASH = 2,
+  X03 = 3,
+  X04 = 4,
+  X05 = 5,
+  FT1 = 6,
+  X07 = 7,
+  X08 = 8,
+  EP1 = 9,
+  EP2 = 10,
+  EP3 = 11,
+  EP4 = 12,
+};
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define NETWORK_PUMP_STATE_MAP(XX) \
-  XX(0, OK) \
-  XX(1, PRIMING)  \
-  XX(2, RUNNING)  \
-  XX(3, X03)  \
-  XX(4, SYSPRIMING)
+inline const char *
+network_pump_mode_str(network_pump_mode_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-typedef enum {
-#define XX(num, name) NETWORK_PUMP_STATE_##name = num,
-  NETWORK_PUMP_STATE_MAP(XX)
-#undef XX
-} network_pump_state_t;
+enum class network_pump_state_t : uint8_t {
+  OK = 0,
+  PRIMING = 1,
+  RUNNING = 2,
+  X03 = 3,
+  SYSPRIMING = 4,
+};
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define NETWORK_HEAT_SRC_MAP(XX) \
-  XX(0, None)       \
-  XX(1, Heater)     \
-  XX(2, SolarPref) \
-  XX(3, Solar)
+inline const char *
+network_pump_state_str(network_pump_state_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
-typedef enum {
-#define XX(num, name) NETWORK_HEAT_SRC_##name = num,
-  NETWORK_HEAT_SRC_MAP(XX)
-#undef XX
-} network_heat_src_t;
+enum class network_heat_src_t : uint8_t {
+  None = 0,
+  Heater = 1,
+  SolarPref = 2,
+  Solar = 3,
+};
 
+inline const char *
+network_heat_src_str(network_heat_src_t const prot)
+{
+    auto name = magic_enum::enum_name(prot);
+    if (!name.empty()) {
+        return name.data();
+    }
+    // fallback for unknown values
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    return buf;
+}
 
 /*
  * A5 messages, used to communicate with components except IntelliChlor
@@ -193,7 +274,7 @@ typedef struct network_msg_none_t {
 } network_msg_none_t;
 
 typedef struct network_msg_ctrl_set_ack_t {
-    uint8_t typ;  // NETWORK_TYP_CTRL_*  type that it is ACK'íng
+    uint8_t typ;  // network_typ_ctrl_t::*  type that it is ACK'íng
 } PACK8 network_msg_ctrl_set_ack_t;
 
 typedef struct network_msg_ctrl_circuit_set_t {
@@ -256,7 +337,7 @@ typedef network_msg_ctrl_state_bcast_t network_msg_ctrl_state_set_t;
 typedef struct network_msg_ctrl_time_req_t {
 } network_msg_ctrl_time_req_t;
 
-// message from controller to all (NETWORK_TYP_CTRL_TIME, or NETWORK_TYP_CTRL_TIME_SET)
+// message from controller to all (network_typ_ctrl_t::TIME, or network_typ_ctrl_t::TIME_SET)
 typedef struct network_msg_ctrl_time_t {
     uint8_t hour;            // 0
     uint8_t minute;          // 1
@@ -560,61 +641,162 @@ typedef union network_msg_data_t {
 } PACK8 network_msg_data_t;
 #define NETWORK_DATA_MAX_SIZE (sizeof(network_msg_data_t))
 
-/* X-Macro pattern keeps enums and strings synchronized */
-// extended DATALINK_PROT_MAP and changed 0's in this first entry to DATALINK_PROT_NONE to satisfy compiler
-#define NETWORK_MSG_TYP_MAP(XX) \
-  XX( 0, NONE,             network_msg_none_t,             DATALINK_PROT_NONE,    DATALINK_PROT_NONE)              \
-  XX( 1, CTRL_SET_ACK,     network_msg_ctrl_set_ack_t,     DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SET_ACK)     \
-  XX( 2, CTRL_CIRCUIT_SET, network_msg_ctrl_circuit_set_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_CIRCUIT_SET) \
-  XX( 3, CTRL_SCHED_REQ,   network_msg_ctrl_sched_req_t,   DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SCHED_REQ)   \
-  XX( 4, CTRL_SCHED_RESP,  network_msg_ctrl_sched_resp_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SCHED_RESP)  \
-  XX( 5, CTRL_STATE_BCAST, network_msg_ctrl_state_bcast_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_STATE_BCAST) \
-  XX( 6, CTRL_TIME_REQ,    network_msg_ctrl_time_req_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_TIME_REQ)    \
-  XX( 7, CTRL_TIME_RESP,   network_msg_ctrl_time_resp_t,   DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_TIME_RESP)   \
-  XX( 8, CTRL_TIME_SET,    network_msg_ctrl_time_set_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_TIME_SET)    \
-  XX( 9, CTRL_HEAT_REQ,    network_msg_ctrl_heat_req_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_REQ)    \
-  XX(10, CTRL_HEAT_RESP,   network_msg_ctrl_heat_resp_t,   DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_RESP)   \
-  XX(11, CTRL_HEAT_SET,    network_msg_ctrl_heat_set_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_SET)    \
-  XX(12, CTRL_LAYOUT_REQ,  network_msg_ctrl_layout_req_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_REQ)  \
-  XX(13, CTRL_LAYOUT_RESP, network_msg_ctrl_layout_resp_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_RESP) \
-  XX(14, CTRL_LAYOUT_SET,  network_msg_ctrl_layout_set_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_LAYOUT_SET)  \
-  XX(15, PUMP_REG_SET,     network_msg_pump_reg_set_t,     DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_REG)         \
-  XX(16, PUMP_REG_RESP,    network_msg_pump_reg_resp_t,    DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_REG)         \
-  XX(17, PUMP_CTRL_SET,    network_msg_pump_ctrl_t,        DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_CTRL)        \
-  XX(18, PUMP_CTRL_RESP,   network_msg_pump_ctrl_t,        DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_CTRL)        \
-  XX(19, PUMP_MODE_SET,    network_msg_pump_mode_t,        DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_MODE)        \
-  XX(20, PUMP_MODE_RESP,   network_msg_pump_mode_t,        DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_MODE)        \
-  XX(21, PUMP_RUN_SET,     network_msg_pump_run_t,         DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_RUN)         \
-  XX(22, PUMP_RUN_RESP,    network_msg_pump_run_t,         DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_RUN)         \
-  XX(23, PUMP_STATUS_REQ,  network_msg_pump_status_req_t,  DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_STATUS)      \
-  XX(24, PUMP_STATUS_RESP, network_msg_pump_status_resp_t, DATALINK_PROT_A5_PUMP, NETWORK_TYP_PUMP_STATUS)      \
-  XX(25, CHLOR_PING_REQ,   network_msg_chlor_ping_req_t,   DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_PING_REQ)   \
-  XX(26, CHLOR_PING_RESP,  network_msg_chlor_ping_resp_t,  DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_PING_RESP)  \
-  XX(27, CHLOR_NAME_RESP,  network_msg_chlor_name_resp_t,  DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_NAME_RESP) \
-  XX(28, CHLOR_LEVEL_SET,  network_msg_chlor_level_set_t,  DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_LEVEL_SET)  \
-  XX(29, CHLOR_LEVEL_RESP, network_msg_chlor_level_resp_t, DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_LEVEL_RESP) \
-  XX(30, CHLOR_NAME_REQ,   network_msg_chlor_name_req_t,   DATALINK_PROT_IC,      NETWORK_TYP_CHLOR_NAME_REQ)    \
-  XX(31, CTRL_VALVE_REQ,       network_msg_ctrl_valve_req_t,       DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_VALVE_REQ)       \
-  XX(32, CTRL_VALVE_RESP,      network_msg_ctrl_valve_resp_t,      DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_VALVE_RESP)      \
-  XX(33, CTRL_VERSION_REQ,     network_msg_ctrl_version_req_t,     DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_VERSION_REQ)     \
-  XX(34, CTRL_VERSION_RESP,    network_msg_ctrl_version_resp_t,    DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_VERSION_RESP)    \
-  XX(35, CTRL_SOLARPUMP_REQ,   network_msg_ctrl_solarpump_req_t,   DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SOLARPUMP_REQ)   \
-  XX(36, CTRL_SOLARPUMP_RESP,  network_msg_ctrl_solarpump_resp_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SOLARPUMP_RESP)  \
-  XX(37, CTRL_DELAY_REQ,       network_msg_ctrl_delay_req_t,       DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_DELAY_REQ)       \
-  XX(38, CTRL_DELAY_RESP,      network_msg_ctrl_delay_resp_t,      DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_DELAY_RESP)      \
-  XX(39, CTRL_HEAT_SETPT_REQ,  network_msg_ctrl_heat_setpt_req_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_SETPT_REQ)  \
-  XX(40, CTRL_HEAT_SETPT_RESP, network_msg_ctrl_heat_setpt_resp_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_HEAT_SETPT_RESP) \
-  XX(41, CTRL_CIRC_NAMES_REQ,  network_msg_ctrl_circ_names_req_t,  DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_CIRC_NAMES_REQ)  \
-  XX(42, CTRL_CIRC_NAMES_RESP, network_msg_ctrl_circ_names_resp_t, DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_CIRC_NAMES_RESP) \
-  XX(43, CTRL_SCHEDS_REQ,      network_msg_ctrl_scheds_req_t,      DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SCHEDS_REQ)      \
-  XX(44, CTRL_SCHEDS_RESP,     network_msg_ctrl_scheds_resp_t,     DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_SCHEDS_RESP)     \
-  XX(45, CTRL_CHEM_REQ,        network_msg_ctrl_chem_req_t,     DATALINK_PROT_A5_CTRL, NETWORK_TYP_CTRL_CHEM_REQ)
-  
-typedef enum {
-#define XX(num, name, typ, proto, prot_typ) MSG_TYP_##name = num,
-  NETWORK_MSG_TYP_MAP(XX)
-#undef XX
-} network_msg_typ_t;
+// extended datalink_prot_t::MAP and changed 0's in this first entry to datalink_prot_t::NONE to satisfy compiler
+
+enum class network_msg_typ_t : uint8_t {
+  NONE = 0,
+  CTRL_SET_ACK = 1,
+  CTRL_CIRCUIT_SET = 2,
+  CTRL_SCHED_REQ = 3,
+  CTRL_SCHED_RESP = 4,
+  CTRL_STATE_BCAST = 5,
+  CTRL_TIME_REQ = 6,
+  CTRL_TIME_RESP = 7,
+  CTRL_TIME_SET = 8,
+  CTRL_HEAT_REQ = 9,
+  CTRL_HEAT_RESP = 10,
+  CTRL_HEAT_SET = 11,
+  CTRL_LAYOUT_REQ = 12,
+  CTRL_LAYOUT_RESP = 13,
+  CTRL_LAYOUT_SET = 14,
+  PUMP_REG_SET = 15,
+  PUMP_REG_RESP = 16,
+  PUMP_CTRL_SET = 17,
+  PUMP_CTRL_RESP = 18,
+  PUMP_MODE_SET = 19,
+  PUMP_MODE_RESP = 20,
+  PUMP_RUN_SET = 21,
+  PUMP_RUN_RESP = 22,
+  PUMP_STATUS_REQ = 23,
+  PUMP_STATUS_RESP = 24,
+  CHLOR_PING_REQ = 25,
+  CHLOR_PING_RESP = 26,
+  CHLOR_NAME_RESP = 27,
+  CHLOR_LEVEL_SET = 28,
+  CHLOR_LEVEL_RESP = 29,
+  CHLOR_NAME_REQ = 30,
+  CTRL_VALVE_REQ = 31,
+  CTRL_VALVE_RESP = 32,
+  CTRL_VERSION_REQ = 33,
+  CTRL_VERSION_RESP = 34,
+  CTRL_SOLARPUMP_REQ = 35,
+  CTRL_SOLARPUMP_RESP = 36,
+  CTRL_DELAY_REQ = 37,
+  CTRL_DELAY_RESP = 38,
+  CTRL_HEAT_SETPT_REQ = 39,
+  CTRL_HEAT_SETPT_RESP = 40,
+  CTRL_CIRC_NAMES_REQ = 41,
+  CTRL_CIRC_NAMES_RESP = 42,
+  CTRL_SCHEDS_REQ = 43,
+  CTRL_SCHEDS_RESP = 44,
+  CTRL_CHEM_REQ = 45,
+};
+
+    // structure to hold message type metadata
+struct network_msg_typ_info_t {
+    datalink_prot_t proto;
+    uint8_t prot_typ;
+    
+    constexpr network_msg_typ_info_t(datalink_prot_t p, uint8_t pt) 
+        : proto(p), prot_typ(pt) {}
+};
+
+    // map datalink_prot_t to network_typ_ctrl_t
+constexpr network_msg_typ_info_t network_msg_typ_info[] = {
+    {datalink_prot_t::NONE, 0},  // 0: NONE
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SET_ACK)},  // 1: CTRL_SET_ACK
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::CIRCUIT_SET)},  // 2: CTRL_CIRCUIT_SET
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SCHED_REQ)},  // 3: CTRL_SCHED_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SCHED_RESP)},  // 4: CTRL_SCHED_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::STATE_BCAST)},  // 5: CTRL_STATE_BCAST
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::TIME_REQ)},  // 6: CTRL_TIME_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::TIME_RESP)},  // 7: CTRL_TIME_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::TIME_SET)},  // 8: CTRL_TIME_SET
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::HEAT_REQ)},  // 9: CTRL_HEAT_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::HEAT_RESP)},  // 10: CTRL_HEAT_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::HEAT_SET)},  // 11: CTRL_HEAT_SET
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::LAYOUT_REQ)},  // 12: CTRL_LAYOUT_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::LAYOUT_RESP)},  // 13: CTRL_LAYOUT_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::LAYOUT_SET)},  // 14: CTRL_LAYOUT_SET
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::REG)},  // 15: PUMP_REG_SET
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::REG)},  // 16: PUMP_REG_RESP
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::CTRL)},  // 17: PUMP_CTRL_SET
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::CTRL)},  // 18: PUMP_CTRL_RESP
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::MODE)},  // 19: PUMP_MODE_SET
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::MODE)},  // 20: PUMP_MODE_RESP
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::RUN)},  // 21: PUMP_RUN_SET
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::RUN)},  // 22: PUMP_RUN_RESP
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::STATUS)},  // 23: PUMP_STATUS_REQ
+    {datalink_prot_t::A5_PUMP, static_cast<uint8_t>(network_typ_pump_t::STATUS)},  // 24: PUMP_STATUS_RESP
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::PING_REQ)},  // 25: CHLOR_PING_REQ
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::PING_RESP)},  // 26: CHLOR_PING_RESP
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::NAME_RESP)},  // 27: CHLOR_NAME_RESP
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::LEVEL_SET)},  // 28: CHLOR_LEVEL_SET
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::LEVEL_RESP)},  // 29: CHLOR_LEVEL_RESP
+    {datalink_prot_t::IC, static_cast<uint8_t>(network_typ_chlor_t::NAME_REQ)},  // 30: CHLOR_NAME_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::VALVE_REQ)},  // 31: CTRL_VALVE_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::VALVE_RESP)},  // 32: CTRL_VALVE_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::VERSION_REQ)},  // 33: CTRL_VERSION_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::VERSION_RESP)},  // 34: CTRL_VERSION_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SOLARPUMP_REQ)},  // 35: CTRL_SOLARPUMP_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SOLARPUMP_RESP)},  // 36: CTRL_SOLARPUMP_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::DELAY_REQ)},  // 37: CTRL_DELAY_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::DELAY_RESP)},  // 38: CTRL_DELAY_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::HEAT_SETPT_REQ)},  // 39: CTRL_HEAT_SETPT_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::HEAT_SETPT_RESP)},  // 40: CTRL_HEAT_SETPT_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::CIRC_NAMES_REQ)},  // 41: CTRL_CIRC_NAMES_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::CIRC_NAMES_RESP)},  // 42: CTRL_CIRC_NAMES_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SCHEDS_REQ)},  // 43: CTRL_SCHEDS_REQ
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::SCHEDS_RESP)},  // 44: CTRL_SCHEDS_RESP
+    {datalink_prot_t::A5_CTRL, static_cast<uint8_t>(network_typ_ctrl_t::CHEM_REQ)},  // 45: CTRL_CHEM_REQ
+};
+
+    // helper functions using magic_enum
+inline const char *
+network_msg_typ_str(network_msg_typ_t const typ)
+{
+    auto name = magic_enum::enum_name(typ);
+    if (!name.empty()) {
+        return name.data();
+    }
+    static char buf[8];
+    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(typ));
+    return buf;
+}
+
+inline int
+network_msg_typ_nr(char const * const msg_typ_str)
+{
+    if (!msg_typ_str) {
+        return -1;
+    }
+    
+    auto value = magic_enum::enum_cast<network_msg_typ_t>(std::string_view(msg_typ_str), magic_enum::case_insensitive);
+    if (value.has_value()) {
+        return static_cast<int>(value.value());
+    }
+    
+    for (uint16_t i = 0; i <= 0xFF; i++) {
+        auto candidate = static_cast<network_msg_typ_t>(i);
+        auto name = magic_enum::enum_name(candidate);
+        if (!name.empty() && strcasecmp(msg_typ_str, name.data()) == 0) {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+  // helper to get protocol info for a message type
+inline const network_msg_typ_info_t& 
+network_msg_typ_get_info(network_msg_typ_t typ)
+{
+    uint8_t idx = static_cast<uint8_t>(typ);
+    if (idx < ARRAY_SIZE(network_msg_typ_info)) {
+        return network_msg_typ_info[idx];
+    }
+    return network_msg_typ_info[0];  // Return NONE info for invalid types
+}
 
 typedef struct network_msg_t {
     network_msg_typ_t typ;
@@ -662,3 +844,63 @@ typedef struct network_msg_t {
 
 }  // namespace opnpool
 }  // namespace esphome
+
+#if 0
+
+  // the old X-macro approach
+
+#define NETWORK_MSG_TYP_MAP(XX) \
+  XX( 0, NONE,             network_msg_none_t,             datalink_prot_t::NONE,    datalink_prot_t::NONE)              \
+  XX( 1, CTRL_SET_ACK,     network_msg_ctrl_set_ack_t,     datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SET_ACK)     \
+  XX( 2, CTRL_CIRCUIT_SET, network_msg_ctrl_circuit_set_t, datalink_prot_t::A5_CTRL, network_typ_ctrl_t::CIRCUIT_SET) \
+  XX( 3, CTRL_SCHED_REQ,   network_msg_ctrl_sched_req_t,   datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SCHED_REQ)   \
+  XX( 4, CTRL_SCHED_RESP,  network_msg_ctrl_sched_resp_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SCHED_RESP)  \
+  XX( 5, CTRL_STATE_BCAST, network_msg_ctrl_state_bcast_t, datalink_prot_t::A5_CTRL, network_typ_ctrl_t::STATE_BCAST) \
+  XX( 6, CTRL_TIME_REQ,    network_msg_ctrl_time_req_t,    datalink_prot_t::A5_CTRL, network_typ_ctrl_t::TIME_REQ)    \
+  XX( 7, CTRL_TIME_RESP,   network_msg_ctrl_time_resp_t,   datalink_prot_t::A5_CTRL, network_typ_ctrl_t::TIME_RESP)   \
+  XX( 8, CTRL_TIME_SET,    network_msg_ctrl_time_set_t,    datalink_prot_t::A5_CTRL, network_typ_ctrl_t::TIME_SET)    \
+  XX( 9, CTRL_HEAT_REQ,    network_msg_ctrl_heat_req_t,    datalink_prot_t::A5_CTRL, network_typ_ctrl_t::HEAT_REQ)    \
+  XX(10, CTRL_HEAT_RESP,   network_msg_ctrl_heat_resp_t,   datalink_prot_t::A5_CTRL, network_typ_ctrl_t::HEAT_RESP)   \
+  XX(11, CTRL_HEAT_SET,    network_msg_ctrl_heat_set_t,    datalink_prot_t::A5_CTRL, network_typ_ctrl_t::HEAT_SET)    \
+  XX(12, CTRL_LAYOUT_REQ,  network_msg_ctrl_layout_req_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::LAYOUT_REQ)  \
+  XX(13, CTRL_LAYOUT_RESP, network_msg_ctrl_layout_resp_t, datalink_prot_t::A5_CTRL, network_typ_ctrl_t::LAYOUT_RESP) \
+  XX(14, CTRL_LAYOUT_SET,  network_msg_ctrl_layout_set_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::LAYOUT_SET)  \
+  XX(15, PUMP_REG_SET,     network_msg_pump_reg_set_t,     datalink_prot_t::A5_PUMP, network_typ_pump_t::REG)         \
+  XX(16, PUMP_REG_RESP,    network_msg_pump_reg_resp_t,    datalink_prot_t::A5_PUMP, network_typ_pump_t::REG)         \
+  XX(17, PUMP_CTRL_SET,    network_msg_pump_ctrl_t,        datalink_prot_t::A5_PUMP, network_typ_pump_t::CTRL)        \
+  XX(18, PUMP_CTRL_RESP,   network_msg_pump_ctrl_t,        datalink_prot_t::A5_PUMP, network_typ_pump_t::CTRL)        \
+  XX(19, PUMP_MODE_SET,    network_msg_pump_mode_t,        datalink_prot_t::A5_PUMP, network_typ_pump_t::MODE)        \
+  XX(20, PUMP_MODE_RESP,   network_msg_pump_mode_t,        datalink_prot_t::A5_PUMP, network_typ_pump_t::MODE)        \
+  XX(21, PUMP_RUN_SET,     network_msg_pump_run_t,         datalink_prot_t::A5_PUMP, network_typ_pump_t::RUN)         \
+  XX(22, PUMP_RUN_RESP,    network_msg_pump_run_t,         datalink_prot_t::A5_PUMP, network_typ_pump_t::RUN)         \
+  XX(23, PUMP_STATUS_REQ,  network_msg_pump_status_req_t,  datalink_prot_t::A5_PUMP, network_typ_pump_t::STATUS)      \
+  XX(24, PUMP_STATUS_RESP, network_msg_pump_status_resp_t, datalink_prot_t::A5_PUMP, network_typ_pump_t::STATUS)      \
+  XX(25, CHLOR_PING_REQ,   network_msg_chlor_ping_req_t,   datalink_prot_t::IC,      network_typ_chlor_t::PING_REQ)   \
+  XX(26, CHLOR_PING_RESP,  network_msg_chlor_ping_resp_t,  datalink_prot_t::IC,      network_typ_chlor_t::PING_RESP)  \
+  XX(27, CHLOR_NAME_RESP,  network_msg_chlor_name_resp_t,  datalink_prot_t::IC,      network_typ_chlor_t::NAME_RESP) \
+  XX(28, CHLOR_LEVEL_SET,  network_msg_chlor_level_set_t,  datalink_prot_t::IC,      network_typ_chlor_t::LEVEL_SET)  \
+  XX(29, CHLOR_LEVEL_RESP, network_msg_chlor_level_resp_t, datalink_prot_t::IC,      network_typ_chlor_t::LEVEL_RESP) \
+  XX(30, CHLOR_NAME_REQ,   network_msg_chlor_name_req_t,   datalink_prot_t::IC,      network_typ_chlor_t::NAME_REQ)    \
+  XX(31, CTRL_VALVE_REQ,       network_msg_ctrl_valve_req_t,       datalink_prot_t::A5_CTRL, network_typ_ctrl_t::VALVE_REQ)       \
+  XX(32, CTRL_VALVE_RESP,      network_msg_ctrl_valve_resp_t,      datalink_prot_t::A5_CTRL, network_typ_ctrl_t::VALVE_RESP)      \
+  XX(33, CTRL_VERSION_REQ,     network_msg_ctrl_version_req_t,     datalink_prot_t::A5_CTRL, network_typ_ctrl_t::VERSION_REQ)     \
+  XX(34, CTRL_VERSION_RESP,    network_msg_ctrl_version_resp_t,    datalink_prot_t::A5_CTRL, network_typ_ctrl_t::VERSION_RESP)    \
+  XX(35, CTRL_SOLARPUMP_REQ,   network_msg_ctrl_solarpump_req_t,   datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SOLARPUMP_REQ)   \
+  XX(36, CTRL_SOLARPUMP_RESP,  network_msg_ctrl_solarpump_resp_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SOLARPUMP_RESP)  \
+  XX(37, CTRL_DELAY_REQ,       network_msg_ctrl_delay_req_t,       datalink_prot_t::A5_CTRL, network_typ_ctrl_t::DELAY_REQ)       \
+  XX(38, CTRL_DELAY_RESP,      network_msg_ctrl_delay_resp_t,      datalink_prot_t::A5_CTRL, network_typ_ctrl_t::DELAY_RESP)      \
+  XX(39, CTRL_HEAT_SETPT_REQ,  network_msg_ctrl_heat_setpt_req_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::HEAT_SETPT_REQ)  \
+  XX(40, CTRL_HEAT_SETPT_RESP, network_msg_ctrl_heat_setpt_resp_t, datalink_prot_t::A5_CTRL, network_typ_ctrl_t::HEAT_SETPT_RESP) \
+  XX(41, CTRL_CIRC_NAMES_REQ,  network_msg_ctrl_circ_names_req_t,  datalink_prot_t::A5_CTRL, network_typ_ctrl_t::CIRC_NAMES_REQ)  \
+  XX(42, CTRL_CIRC_NAMES_RESP, network_msg_ctrl_circ_names_resp_t, datalink_prot_t::A5_CTRL, network_typ_ctrl_t::CIRC_NAMES_RESP) \
+  XX(43, CTRL_SCHEDS_REQ,      network_msg_ctrl_scheds_req_t,      datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SCHEDS_REQ)      \
+  XX(44, CTRL_SCHEDS_RESP,     network_msg_ctrl_scheds_resp_t,     datalink_prot_t::A5_CTRL, network_typ_ctrl_t::SCHEDS_RESP)     \
+  XX(45, CTRL_CHEM_REQ,        network_msg_ctrl_chem_req_t,     datalink_prot_t::A5_CTRL, network_typ_ctrl_t::CHEM_REQ)
+  
+typedef enum {
+#define XX(num, name, typ, proto, prot_typ) MSG_TYP_##name = num,
+  NETWORK_MSG_TYP_MAP(XX)
+#undef XX
+} network_msg_typ_t;
+
+#endif

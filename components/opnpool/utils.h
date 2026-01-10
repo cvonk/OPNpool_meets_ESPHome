@@ -1,6 +1,11 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
 
-#include <strings.h>
+//#include <strings.h>
+
 #include "datalink.h"
 #include "network.h"
 

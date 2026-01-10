@@ -1,9 +1,13 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
+
 #include <esp_system.h>
 
-#include "datalink.h"
-#include "datalink_pkt.h"
 #include "network_msg.h"
+#include "datalink_pkt.h"
 
 namespace esphome {
 namespace opnpool {
@@ -22,7 +26,6 @@ char const * network_date_str(uint8_t const year, uint8_t const month, uint8_t c
 char const * network_time_str(uint8_t const hours, uint8_t const minutes);
 char const * network_version_str(uint8_t const major, uint8_t const minor);
 const char * network_mode_str(network_mode_t const mode);
-const char * network_circuit_str(network_circuit_t const circuit);
 const char * network_pump_mode_str(network_pump_mode_t const pump_mode);
 const char * network_pump_state_str(network_pump_state_t const pump_state);
 char const * network_pump_prg_str(uint16_t const address);

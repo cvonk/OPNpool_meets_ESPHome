@@ -40,50 +40,95 @@ _skb_alloc_a5(size_t const msg_size)
     return txb;
 }
 
-typedef struct network_datalink_map_t {
-    struct {
-        network_msg_typ_t  typ;
-        size_t             data_len;
-    } network;
-    struct {
-        datalink_prot_t    prot;
-        uint8_t            prot_typ;
-    } datalink;
-} network_datalink_map_t;
-
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-static const network_datalink_map_t _msg_typ_map[] = {
-#define XX(num, name, typ, proto, prot_typ) { { MSG_TYP_##name, sizeof(typ)}, {proto, prot_typ} },
-  NETWORK_MSG_TYP_MAP(XX)
-#undef XX
+// Size lookup table for message types (moved from X-macro)
+static constexpr size_t network_msg_typ_sizes[] = {
+    0,  // 0: NONE
+    sizeof(network_msg_ctrl_set_ack_t),  // 1: CTRL_SET_ACK
+    sizeof(network_msg_ctrl_circuit_set_t),  // 2: CTRL_CIRCUIT_SET
+    sizeof(network_msg_ctrl_sched_req_t),  // 3: CTRL_SCHED_REQ
+    sizeof(network_msg_ctrl_sched_resp_t),  // 4: CTRL_SCHED_RESP
+    sizeof(network_msg_ctrl_state_bcast_t),  // 5: CTRL_STATE_BCAST
+    sizeof(network_msg_ctrl_time_req_t),  // 6: CTRL_TIME_REQ
+    sizeof(network_msg_ctrl_time_resp_t),  // 7: CTRL_TIME_RESP
+    sizeof(network_msg_ctrl_time_set_t),  // 8: CTRL_TIME_SET
+    sizeof(network_msg_ctrl_heat_req_t),  // 9: CTRL_HEAT_REQ
+    sizeof(network_msg_ctrl_heat_resp_t),  // 10: CTRL_HEAT_RESP
+    sizeof(network_msg_ctrl_heat_set_t),  // 11: CTRL_HEAT_SET
+    sizeof(network_msg_ctrl_layout_req_t),  // 12: CTRL_LAYOUT_REQ
+    sizeof(network_msg_ctrl_layout_resp_t),  // 13: CTRL_LAYOUT_RESP
+    sizeof(network_msg_ctrl_layout_set_t),  // 14: CTRL_LAYOUT_SET
+    sizeof(network_msg_pump_reg_set_t),  // 15: PUMP_REG_SET
+    sizeof(network_msg_pump_reg_resp_t),  // 16: PUMP_REG_RESP
+    sizeof(network_msg_pump_ctrl_t),  // 17: PUMP_CTRL_SET
+    sizeof(network_msg_pump_ctrl_t),  // 18: PUMP_CTRL_RESP
+    sizeof(network_msg_pump_mode_t),  // 19: PUMP_MODE_SET
+    sizeof(network_msg_pump_mode_t),  // 20: PUMP_MODE_RESP
+    sizeof(network_msg_pump_run_t),  // 21: PUMP_RUN_SET
+    sizeof(network_msg_pump_run_t),  // 22: PUMP_RUN_RESP
+    sizeof(network_msg_pump_status_req_t),  // 23: PUMP_STATUS_REQ
+    sizeof(network_msg_pump_status_resp_t),  // 24: PUMP_STATUS_RESP
+    sizeof(network_msg_chlor_ping_req_t),  // 25: CHLOR_PING_REQ
+    sizeof(network_msg_chlor_ping_resp_t),  // 26: CHLOR_PING_RESP
+    sizeof(network_msg_chlor_name_resp_t),  // 27: CHLOR_NAME_RESP
+    sizeof(network_msg_chlor_level_set_t),  // 28: CHLOR_LEVEL_SET
+    sizeof(network_msg_chlor_level_resp_t),  // 29: CHLOR_LEVEL_RESP
+    sizeof(network_msg_chlor_name_req_t),  // 30: CHLOR_NAME_REQ
+    sizeof(network_msg_ctrl_valve_req_t),  // 31: CTRL_VALVE_REQ
+    sizeof(network_msg_ctrl_valve_resp_t),  // 32: CTRL_VALVE_RESP
+    sizeof(network_msg_ctrl_version_req_t),  // 33: CTRL_VERSION_REQ
+    sizeof(network_msg_ctrl_version_resp_t),  // 34: CTRL_VERSION_RESP
+    sizeof(network_msg_ctrl_solarpump_req_t),  // 35: CTRL_SOLARPUMP_REQ
+    sizeof(network_msg_ctrl_solarpump_resp_t),  // 36: CTRL_SOLARPUMP_RESP
+    sizeof(network_msg_ctrl_delay_req_t),  // 37: CTRL_DELAY_REQ
+    sizeof(network_msg_ctrl_delay_resp_t),  // 38: CTRL_DELAY_RESP
+    sizeof(network_msg_ctrl_heat_setpt_req_t),  // 39: CTRL_HEAT_SETPT_REQ
+    sizeof(network_msg_ctrl_heat_setpt_resp_t),  // 40: CTRL_HEAT_SETPT_RESP
+    sizeof(network_msg_ctrl_circ_names_req_t),  // 41: CTRL_CIRC_NAMES_REQ
+    sizeof(network_msg_ctrl_circ_names_resp_t),  // 42: CTRL_CIRC_NAMES_RESP
+    sizeof(network_msg_ctrl_scheds_req_t),  // 43: CTRL_SCHEDS_REQ
+    sizeof(network_msg_ctrl_scheds_resp_t),  // 44: CTRL_SCHEDS_RESP
+    sizeof(network_msg_ctrl_chem_req_t),  // 45: CTRL_CHEM_REQ
 };
+
+// Helper to get message size
+inline size_t
+network_msg_typ_get_size(network_msg_typ_t typ)
+{
+    uint8_t idx = static_cast<uint8_t>(typ);
+    if (idx < ARRAY_SIZE(network_msg_typ_sizes)) {
+        return network_msg_typ_sizes[idx];
+    }
+    return 0;
+}
 
 /*
  * Create datalink_pkt from network_msg.
+ * Replaces the old X-macro loop with direct array lookups.
  */
 
 esp_err_t
 network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 {
-    network_datalink_map_t const * map = _msg_typ_map;
-
-    for (uint8_t ii = 0; ii < ARRAY_SIZE(_msg_typ_map); ii++, map++) {
-        if (msg->typ == map->network.typ) {
-
-            pkt->prot = map->datalink.prot;
-            pkt->prot_typ = map->datalink.prot_typ;
-            pkt->data_len = map->network.data_len;
-            pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + map->network.data_len + DATALINK_MAX_TAIL_SIZE);
-            skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
-            pkt->data = skb_put(pkt->skb, map->network.data_len);
-            memcpy(pkt->data, msg->u.bytes, map->network.data_len);
-            //ESP_LOGV(TAG, "created datalink_pkt for network_msg(%u)", msg->typ);
-            return ESP_OK;
-        }
+    // Get protocol info from the lookup table in network_msg.h
+    const network_msg_typ_info_t& info = network_msg_typ_get_info(msg->typ);
+    
+    // Get message size from local lookup table
+    size_t data_len = network_msg_typ_get_size(msg->typ);
+    
+    if (data_len == 0) {
+        ESP_LOGE(TAG, "unknown msg typ(%s)", network_msg_typ_str(msg->typ));
+        return ESP_FAIL;
     }
-    ESP_LOGE(TAG, "unknown msg typ(%u)", msg->typ);
-    return ESP_FAIL;
+
+    pkt->prot = info.proto;
+    pkt->prot_typ = info.prot_typ;
+    pkt->data_len = data_len;
+    pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
+    skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
+    pkt->data = skb_put(pkt->skb, data_len);
+    memcpy(pkt->data, msg->u.bytes, data_len);
+    
+    return ESP_OK;
 }
 
 } // namespace opnpool

@@ -45,12 +45,12 @@ static proto_info_t _proto_descr[] = {
     {
           .preamble = datalink_preamble_ic,
           .len = sizeof(datalink_preamble_ic),
-          .prot = DATALINK_PROT_IC,
+          .prot = datalink_prot_t::IC,
       },
     {
           .preamble = datalink_preamble_a5,
           .len = sizeof(datalink_preamble_a5),
-          .prot = DATALINK_PROT_A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
+          .prot = datalink_prot_t::A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
     },
 };
 
@@ -77,23 +77,23 @@ _preamble_reset()
     proto_info_t * info = _proto_descr;
 
     for (uint8_t ii = 0; ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
-    		info->idx = 0;
-  	}
+        info->idx = 0;
+    }
 }
 
 static bool
 _preamble_complete(struct proto_info_t * const pi, uint8_t const b, bool * part_of_preamble)
 {
-	if (b == pi->preamble[pi->idx]) {
+    if (b == pi->preamble[pi->idx]) {
       *part_of_preamble = true;
       pi->idx++;
       if (pi->idx == pi->len) {
           return true;
       }
-	} else {
-  		*part_of_preamble = false;
-	}
-	return false;
+    } else {
+          *part_of_preamble = false;
+    }
+    return false;
 }
 
 /*
@@ -124,19 +124,21 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
                 pkt->prot = info->prot;
                 uint8_t * preamble = NULL;
                 switch (pkt->prot) {
-                    case DATALINK_PROT_A5_CTRL:
-                    case DATALINK_PROT_A5_PUMP:
+                    case datalink_prot_t::A5_CTRL:
+                    case datalink_prot_t::A5_PUMP:
                         // add to pkt just in case we want to retransmit it
                         local->head->a5.ff = 0xFF;
                         preamble = local->head->a5.preamble;
                         local->head_len = sizeof(datalink_head_a5_t) ;
                         local->tail_len = sizeof(datalink_tail_a5_t) ;
                         break;
-                    case DATALINK_PROT_IC:
+                    case datalink_prot_t::IC:
                         preamble = local->head->ic.preamble;
                         local->head_len = sizeof(datalink_head_ic_t) ;
                         local->tail_len = sizeof(datalink_tail_ic_t) ;
                         break;
+                    default:
+                        return ESP_FAIL;
                 }
                 for (uint8_t jj = 0; jj < info->len; jj++) {
                     preamble[jj] = info->preamble[jj];
@@ -169,8 +171,8 @@ static esp_err_t
 _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     switch (pkt->prot) {
-        case DATALINK_PROT_A5_CTRL:
-        case DATALINK_PROT_A5_PUMP: {
+        case datalink_prot_t::A5_CTRL:
+        case datalink_prot_t::A5_PUMP: {
             datalink_hdr_a5_t * const hdr = &local->head->a5.hdr;
 
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_a5_t)) == sizeof(datalink_hdr_a5_t)) {
@@ -181,7 +183,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                   return ESP_FAIL;  // pkt length exceeds what we have planned for
                 }
                 if ( (datalink_groupaddr(hdr->src) == datalink_addrgroup_t::PUMP) || (datalink_groupaddr(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
-                    pkt->prot = DATALINK_PROT_A5_PUMP;
+                    pkt->prot = datalink_prot_t::A5_PUMP;
                 }
                 pkt->prot_typ = hdr->typ;
                 pkt->src = hdr->src;
@@ -194,7 +196,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             }
             break;
         }
-        case DATALINK_PROT_IC: {
+        case datalink_prot_t::IC: {
             datalink_hdr_ic_t * const hdr = &local->head->ic.hdr;
             
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_ic_t)) == sizeof(datalink_hdr_ic_t)) {
@@ -206,10 +208,13 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 pkt->data_len = network_ic_len(hdr->typ);
                 return ESP_OK;
             }
+            break;
         }
+        default:
+            break;
     }
-    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X", pkt->prot);
-  	return ESP_FAIL;
+    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X", static_cast<uint8_t>(pkt->prot));
+      return ESP_FAIL;
 }
 
 /*
@@ -247,8 +252,8 @@ static esp_err_t
 _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     switch (pkt->prot) {
-        case DATALINK_PROT_A5_CTRL:
-        case DATALINK_PROT_A5_PUMP: {
+        case datalink_prot_t::A5_CTRL:
+        case datalink_prot_t::A5_PUMP: {
             uint8_t * const crc = local->tail->a5.crc;
             if (rs485->read_bytes(crc, sizeof(datalink_tail_a5_t)) == sizeof(datalink_tail_a5_t)) {
                 ESP_LOGV(TAG, " %03X (checksum)", (uint16_t)crc[0] << 8 | crc[1]);
@@ -256,7 +261,7 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             }
             break;
         }
-        case DATALINK_PROT_IC: {
+        case datalink_prot_t::IC: {
             uint8_t * const crc = local->tail->ic.crc;
             uint8_t * const postamble = local->tail->ic.postamble;
             if (rs485->read_bytes(crc, sizeof(datalink_tail_ic_t)) == sizeof(datalink_tail_ic_t)) {
@@ -266,8 +271,10 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             }
             break;
         }
+        default:
+            break;
     }
-    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X !", pkt->prot);
+    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X !", static_cast<uint8_t>(pkt->prot));
     return ESP_FAIL;
 }
 
@@ -277,21 +284,23 @@ _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
     struct {uint16_t rx, calc;} crc;
 
     switch (pkt->prot) {
-        case DATALINK_PROT_A5_CTRL:
-        case DATALINK_PROT_A5_PUMP: {
+        case datalink_prot_t::A5_CTRL:
+        case datalink_prot_t::A5_PUMP: {
             crc.rx = (uint16_t)local->tail->a5.crc[0] << 8 | local->tail->a5.crc[1];
             uint8_t * const crc_start = &local->head->a5.preamble[sizeof(datalink_preamble_a5_t) - 1];  // starting at the last byte of the preamble
             uint8_t * const crc_stop = pkt->data + pkt->data_len;
             crc.calc = datalink_calc_crc(crc_start, crc_stop);
             break;
         }
-        case DATALINK_PROT_IC: {
-            crc.rx = local->tail->a5.crc[0];
+        case datalink_prot_t::IC: {
+            crc.rx = local->tail->ic.crc[0];
             uint8_t * const crc_start = local->head->ic.preamble;  // starting at the first byte of the preamble
             uint8_t * const crc_stop = pkt->data + pkt->data_len;
             crc.calc = datalink_calc_crc(crc_start, crc_stop) & 0xFF;
             break;
         }
+        default:
+            return ESP_FAIL;
     }
     local->crc_ok = crc.rx == crc.calc;
     if (local->crc_ok) {

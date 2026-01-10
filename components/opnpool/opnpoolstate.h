@@ -1,3 +1,7 @@
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #pragma once
 
 #include <esp_system.h>
@@ -149,7 +153,7 @@ typedef enum {
  **/
 
 typedef struct poolstate_modes_t {
-    bool     set[NETWORK_MODE_COUNT];
+    bool     set[network_mode_count()];
 } poolstate_modes_t;
 
   /* X-Macro pattern keeps enums and strings synchronized */
@@ -171,8 +175,8 @@ typedef enum {
  **/
 
 typedef struct poolstate_circuits_t {
-    bool     active[NETWORK_CIRCUIT_COUNT];
-    bool     delay[NETWORK_CIRCUIT_COUNT];
+    bool     active[network_circuit_count()];
+    bool     delay[network_circuit_count()];
 } poolstate_circuits_t;
 
   /* X-Macro pattern keeps enums and strings synchronized */
@@ -271,7 +275,7 @@ typedef struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
     poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
-    poolstate_sched_t     scheds[NETWORK_CIRCUIT_COUNT];
+    poolstate_sched_t     scheds[network_circuit_count()];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;
