@@ -74,11 +74,9 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
         if (network_create_pkt(&msg, pkt) == ESP_OK) {
 
             datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by recipient
-            ESP_LOGV(TAG, "Queued CIRCUIT_SET pkt for transmission");
             return;
         }
         free(pkt);
-        ESP_LOGW(TAG, "Failed to queue CIRCUIT_SET pkt for transmission");
     }
 }
 
@@ -91,9 +89,10 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
     if (network_create_pkt(&msg, pkt) == ESP_OK) {
+
         datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
+
     } else {
-        ESP_LOGE(TAG, "%s network_tx_typ failed", __func__);
         free(pkt);
     }
 }
@@ -103,28 +102,30 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 {
     datalink_pkt_t const * const pkt = rs485->dequeue(rs485);
     if (pkt) {
+        ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", network_typ_ctrl_str(static_cast<network_typ_ctrl_t>(pkt->prot_typ)));
+
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-            size_t const dbg_size = 128;
-            char dbg[dbg_size];
-            assert(pkt->skb);
-            (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
-            ESP_LOGVV(TAG, "tx { %s}", dbg);
+              size_t const dbg_size = 128;
+              char dbg[dbg_size];
+              assert(pkt->skb);
+              (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
+              ESP_LOGVV(TAG, "tx { %s}", dbg);
         }
         rs485->tx_mode(true);
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);
         rs485->tx_mode(false);
 
-        // pretent that we received our own message
+        // pretend that we received our own message
 
         bool txOpportunity = false;
         network_msg_t msg;
 
+        ESP_LOGVV(TAG, "pretent rx: pkt typ=%s", network_typ_ctrl_str(static_cast<network_typ_ctrl_t>(pkt->prot_typ)));
+
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
 
             ipc_send_network_msg_to_main_task(&msg, ipc);
-
         }
-
         free(pkt->skb);
         free((void *) pkt);
     }

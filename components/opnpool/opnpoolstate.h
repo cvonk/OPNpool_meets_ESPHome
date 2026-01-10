@@ -1,12 +1,14 @@
+#pragma once
 #ifndef __cplusplus
 # error "This header requires C++ compilation"
 #endif
 
-#pragma once
-
 #include <esp_system.h>
 #include <cJSON.h>
 
+#define MAGIC_ENUM_RANGE_MIN 0
+#define MAGIC_ENUM_RANGE_MAX 256
+#include "magic_enum.h"
 #include "network.h"
 #include "ipc.h"
 #include "opnpool.h"
@@ -45,33 +47,34 @@ typedef struct poolstate_system_t {
     poolstate_version_t version;
 } poolstate_system_t;
 
-
-#define POOLSTATE_ELEM_SYSTEM_TYP_MAP(XX) \
-  XX(0, TIME) \
-  XX(1, CTRL_VERSION) \
-  XX(2, IF_VERSION) \
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_SYSTEM_TYP_##name = num,
-  POOLSTATE_ELEM_SYSTEM_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_system_typ_t;
+enum class poolstate_elem_system_typ_t : uint8_t {
+    TIME = 0,
+    CTRL_VERSION = 1,
+    IF_VERSION = 2,
+};
 
 /**
  * poolstate_thermo_typ_t
  **/
 
-   /* X-Macro pattern keeps enums and strings synchronized */
-#define POOLSTATE_THERMO_TYP_MAP(XX) \
-  XX(0, pool) \
-  XX(1, spa)  \
-  XX(2, COUNT)
+enum class poolstate_thermo_typ_t : uint8_t {
+    POOL = 0,
+    SPA = 1
+};
 
-typedef enum {
-#define XX(num, name) POOLSTATE_THERMO_TYP_##name = num,
-  POOLSTATE_THERMO_TYP_MAP(XX)
-#undef XX
-} poolstate_thermo_typ_t;
+constexpr size_t poolstate_thermo_typ_count() {
+    return magic_enum::enum_count<poolstate_thermo_typ_t>();
+}
+
+inline const char * poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id) {
+    auto name = magic_enum::enum_name(thermostat_id);
+    return name.data();
+}
+
+inline int poolstate_str_thermo_nr(char const * const thermostat_str) {
+    auto value = magic_enum::enum_cast<poolstate_thermo_typ_t>(thermostat_str);
+    return value.has_value() ? static_cast<int>(*value) : -1;
+}
 
 typedef struct poolstate_thermo_t {
     uint8_t  temp;
@@ -80,95 +83,73 @@ typedef struct poolstate_thermo_t {
     bool     heating;
 } poolstate_thermo_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_THERMO_TYP_MAP(XX) \
-  XX(0, TEMP) \
-  XX(1, SET_POINT) \
-  XX(2, HEAT_SRC) \
-  XX(3, HEATING)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_THERMO_TYP_##name = num,
-  POOLSTATE_ELEM_THERMO_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_thermo_typ_t;
+enum class poolstate_elem_thermos_typ_t : uint8_t {
+    TEMP = 0,
+    SET_POINT = 1,
+    HEAT_SRC = 2,
+    HEATING = 3
+};
 
 /**
  * poolstate_sched_t
  */
 
-   /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_SCHED_TYP_MAP(XX) \
-  XX(0, START) \
-  XX(1, STOP)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_SCHED_TYP_##name = num,
-  POOLSTATE_ELEM_SCHED_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_sched_typ_t;
+enum class poolstate_elem_sched_typ_t : uint8_t {
+    START = 0,
+    STOP = 1
+};
 
 typedef struct poolstate_sched_t {
-    bool              active;
-    //network_circuit_t circuit;
-    uint16_t          start;
-    uint16_t          stop;
+    bool      active;
+    uint16_t  start;
+    uint16_t  stop;
 } poolstate_sched_t;
-
-// #define POOLSTATE_SCHED_TYP_COUNT (2)
 
 /**
  * poolstate_temp_t
  **/
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define POOLSTATE_TEMP_TYP_MAP(XX) \
-  XX(0, air) \
-  XX(1, solar)  \
-  XX(2, COUNT)
 
-typedef enum {
-#define XX(num, name) POOLSTATE_TEMP_TYP_##name = num,
-  POOLSTATE_TEMP_TYP_MAP(XX)
-#undef XX
-} poolstate_temp_typ_t;
+enum class poolstate_temp_typ_t : uint8_t {
+    AIR = 0,
+    SOLAR = 1
+};
+
+constexpr size_t poolstate_temp_typ_count() {
+    return magic_enum::enum_count<poolstate_temp_typ_t>();
+}
+
+inline const char * poolstate_str_temp_str(poolstate_temp_typ_t const temp_id) {
+    auto name = magic_enum::enum_name(temp_id);
+    return name.data();
+}
+
+inline int poolstate_str_temp_nr(char const * const temp_str) {
+    auto value = magic_enum::enum_cast<poolstate_temp_typ_t>(temp_str);
+    return value.has_value() ? static_cast<int>(*value) : -1;
+}
 
 typedef struct poolstate_temp_t {
     uint8_t temp;
 } poolstate_temp_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define POOLSTATE_ELEM_TEMP_TYP_MAP(XX) \
-  XX(0, TEMP) \
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_TEMP_TYP_##name = num,
-  POOLSTATE_ELEM_TEMP_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_temp_typ_t;
+enum class PoolstateElemTempTyp : uint8_t {
+    TEMP = 0
+};
 
 /**
  * poolstate_modes_t
  **/
 
 typedef struct poolstate_modes_t {
-    bool     set[network_mode_count()];
+    bool  set[network_mode_count()];
 } poolstate_modes_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_MODES_TYP_MAP(XX) \
-  XX(0, SERVICE) \
-  XX(1, TEMP_INC) \
-  XX(2, FREEZE_PROT) \
-  XX(3, TIMEOUT)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_MODES_TYP_##name = num,
-  POOLSTATE_ELEM_MODES_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_modes_typ_t;
+enum class poolstate_elem_modes_typ_t : uint8_t {
+    SERVICE = 0,
+    TEMP_INC = 1,
+    FREEZE_PROT = 2,
+    TIMEOUT = 3
+};
 
 /**
  * poolstate_circuits_t
@@ -179,17 +160,10 @@ typedef struct poolstate_circuits_t {
     bool     delay[network_circuit_count()];
 } poolstate_circuits_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_CIRCUITS_TYP_MAP(XX) \
-  XX(0, ACTIVE) \
-  XX(1, DELAY)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_CIRCUITS_TYP_##name = num,
-  POOLSTATE_ELEM_CIRCUITS_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_circuits_typ_t;
+enum class poolstate_elem_circuits_typ_t : uint8_t {
+    ACTIVE = 0,
+    DELAY = 1
+};
 
 /**
  * poolstate_pump_t
@@ -208,64 +182,56 @@ typedef struct {
     uint8_t  timer;
 } poolstate_pump_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-#define POOLSTATE_ELEM_PUMP_TYP_MAP(XX) \
-  XX(0, TIME) \
-  XX(1, MODE) \
-  XX(2, RUNNING) \
-  XX(3, STATE) \
-  XX(4, PWR) \
-  XX(5, GPM) \
-  XX(6, RPM) \
-  XX(7, PCT) \
-  XX(8, ERR) \
-  XX(9, TIMER)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_PUMP_TYP_##name = num,
-  POOLSTATE_ELEM_PUMP_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_pump_typ_t;
+enum class poolstate_elem_pump_typ_t : uint8_t {
+    TIME = 0,
+    MODE = 1,
+    RUNNING = 2,
+    STATE = 3,
+    PWR = 4,
+    GPM = 5,
+    RPM = 6,
+    PCT = 7,
+    ERR = 8,
+    TIMER = 9
+};
 
 /**
  * poolstate_chlor_t
  **/
 
-#define POOLSTATE_CHLOR_STATUS_MAP(XX) \
-  XX(0, OK)         \
-  XX(1, LOW_FLOW)   \
-  XX(2, LOW_SALT)   \
-  XX(3, HIGH_SALT)  \
-  XX(4, COLD)       \
-  XX(5, CLEAN_CELL) \
-  XX(6, OTHER)
+enum class poolstate_chlor_status_t : uint8_t {
+    OK = 0,
+    LOW_FLOW = 1,
+    LOW_SALT = 2,
+    HIGH_SALT = 3,
+    COLD = 4,
+    CLEAN_CELL = 5,
+    OTHER = 6
+};
 
-typedef enum {
-#define XX(num, name) POOLSTATE_CHLOR_STATUS_##name = num,
-  POOLSTATE_CHLOR_STATUS_MAP(XX)
-#undef XX
-} poolstate_chlor_status_t;
+inline const char * poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id) {
+    auto name = magic_enum::enum_name(chlor_state_id);
+    return name.data();
+}
+
+inline int poolstate_str_chlor_status_nr(char const * const chlor_status_str) {
+    auto value = magic_enum::enum_cast<poolstate_chlor_status_t>(chlor_status_str);
+    return value.has_value() ? static_cast<int>(*value) : -1;
+}
 
 typedef struct poolstate_chlor_t {
-    char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
-    uint8_t                   pct;
-    uint16_t                  salt;  // <2800 == low, <2600 == veryLow, > 4500 == high
-    poolstate_chlor_status_t  status;
+    char                   name[sizeof(network_msg_chlor_name_str_t) + 1];
+    uint8_t                pct;
+    uint16_t               salt;
+    poolstate_chlor_status_t    status;
 } poolstate_chlor_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_CHLOR_TYP_MAP(XX) \
-  XX(0, NAME) \
-  XX(1, PCT) \
-  XX(2, SALT) \
-  XX(3, STATUS)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_CHLOR_TYP_##name = num,
-  POOLSTATE_ELEM_CHLOR_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_chlor_typ_t;
+enum class poolstate_elem_chlor_typ_t : uint8_t {
+    NAME = 0,
+    PCT = 1,
+    SALT = 2,
+    STATUS = 3
+};
 
 /**
  * all together now
@@ -273,8 +239,8 @@ typedef enum {
 
 typedef struct poolstate_t {
     poolstate_system_t    system;
-    poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
-    poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
+    poolstate_temp_t      temps[poolstate_temp_typ_count()];
+    poolstate_thermo_t    thermos[poolstate_thermo_typ_count()];
     poolstate_sched_t     scheds[network_circuit_count()];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
@@ -282,39 +248,30 @@ typedef struct poolstate_t {
     poolstate_chlor_t     chlor;
 } poolstate_t;
 
-  /* X-Macro pattern keeps enums and strings synchronized */
-
-#define POOLSTATE_ELEM_TYP_MAP(XX) \
-  XX(0x00, SYSTEM) \
-  XX(0x01, TEMP) \
-  XX(0x02, THERMO) \
-  XX(0x03, SCHED) \
-  XX(0x04, CIRCUITS) \
-  XX(0x05, PUMP) \
-  XX(0x06, CHLOR) \
-  XX(0x07, MODES) \
-  XX(0x08, ALL)
-
-typedef enum {
-#define XX(num, name) POOLSTATE_ELEM_TYP_##name = num,
-  POOLSTATE_ELEM_TYP_MAP(XX)
-#undef XX
-} poolstate_elem_typ_t;
+enum class poolstate_elem_typ_t : uint8_t {
+    SYSTEM = 0x00,
+    TEMP = 0x01,
+    THERMO = 0x02,
+    SCHED = 0x03,
+    CIRCUITS = 0x04,
+    PUMP = 0x05,
+    CHLOR = 0x06,
+    MODES = 0x07,
+    ALL = 0x08
+};
 
 typedef char * poolstate_get_value_t;
 typedef struct poolstate_get_params_t {
     poolstate_elem_typ_t elem_typ;
-    uint8_t              elem_sub_typ;
-    uint8_t const        idx;
+    uint8_t          elem_sub_typ;
+    uint8_t const    idx;
 } poolstate_get_params_t;
 
-
-class OpnPool; // Forward declaration for parent referencing
+class OpnPool;
 
 class OpnPoolState {
 
     public:
-        /* poolstate.cpp */
         OpnPoolState(OpnPool *parent);
         bool is_valid() const { return protected_.valid; }
         
@@ -324,10 +281,7 @@ class OpnPoolState {
         esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
         const char * to_json(poolstate_elem_typ_t const typ);
 
-        /* poolstate_rx.cpp */
         esp_err_t rx_update(network_msg_t const * const msg);
-
-        /* poolstate_get.cpp */
         esp_err_t get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
 
     private:
@@ -339,6 +293,7 @@ class OpnPoolState {
 
         OpnPool * parent_;
         poolstate_prot_t protected_;
+        
         void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state);
@@ -352,7 +307,6 @@ class OpnPoolState {
         void rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state);
         void rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state);
         void rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state);
-        //void rx_pump_err(cJSON * const dbg, network_msg_pump_err_t const * const msg, poolstate_t * const state);
         void rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg);
         void rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state);
         void rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state);
@@ -373,14 +327,6 @@ void opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolst
 void opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
 void opnpoolstate_log_add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
 char const * opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
-
-/* helpers from poolstate_str.cpp */
-const char * poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id);
-const char * poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id);
-const char * poolstate_str_temp_str(poolstate_temp_typ_t const temp_id);
-int poolstate_str_temp_nr(char const * const temp_str);
-int poolstate_str_thermo_nr(char const * const thermostat_str);
-int poolstate_str_chlor_status_nr(char const * const chlor_status_str);
 
 }  // namespace opnpool
 }  // namespace esphome

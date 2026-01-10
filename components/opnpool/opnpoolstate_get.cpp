@@ -61,18 +61,20 @@ static esp_err_t
 _system(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poolstate_get_value_t * value)
 {
     poolstate_system_t const * const system = &state->system;
-    switch (typ) {
-        case POOLSTATE_ELEM_SYSTEM_TYP_CTRL_VERSION:
+    poolstate_elem_system_typ_t const elem_system_typ = static_cast<poolstate_elem_system_typ_t>(typ);
+
+    switch (elem_system_typ) {
+        case poolstate_elem_system_typ_t::CTRL_VERSION:
             _alloc_str(value, network_version_str(system->version.major, system->version.minor));
             break;
-        case POOLSTATE_ELEM_SYSTEM_TYP_IF_VERSION: {
+        case poolstate_elem_system_typ_t::IF_VERSION: {
             esp_partition_t const * const running_part = esp_ota_get_running_partition();
             esp_app_desc_t running_app_info;
             ESP_ERROR_CHECK(esp_ota_get_partition_description(running_part, &running_app_info));
             _alloc_str(value, running_app_info.version);
             break;
         }
-        case POOLSTATE_ELEM_SYSTEM_TYP_TIME:
+        case poolstate_elem_system_typ_t::TIME:
             _alloc_str(value, network_time_str(system->tod.time.hour, system->tod.time.minute));
             break;
         default:
@@ -89,8 +91,10 @@ _temp(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poo
     if (temp->temp == 0) {
         return ESP_FAIL;
     }
-    switch (typ) {
-        case POOLSTATE_ELEM_TEMP_TYP_TEMP:            
+    PoolstateElemTempTyp const elem_temp_typ = static_cast<PoolstateElemTempTyp>(typ);
+    
+    switch (elem_temp_typ) {
+        case PoolstateElemTempTyp::TEMP:            
             _alloc_uint(value, temp->temp);
             break;
         default:
@@ -104,17 +108,19 @@ static esp_err_t
 _thermostat(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poolstate_get_value_t * const value)
 {
     poolstate_thermo_t const * const thermostat = &state->thermos[idx];
-    switch (typ) {
-        case POOLSTATE_ELEM_THERMO_TYP_TEMP:
+    poolstate_elem_thermos_typ_t const elem_thermo_typ = static_cast<poolstate_elem_thermos_typ_t>(typ);
+
+    switch (elem_thermo_typ) {
+        case poolstate_elem_thermos_typ_t::TEMP:
             _alloc_uint(value, thermostat->temp);
             break;
-        case POOLSTATE_ELEM_THERMO_TYP_SET_POINT:
+        case poolstate_elem_thermos_typ_t::SET_POINT:
             _alloc_uint(value, thermostat->set_point);
             break;
-        case POOLSTATE_ELEM_THERMO_TYP_HEAT_SRC:
+        case poolstate_elem_thermos_typ_t::HEAT_SRC:
             _alloc_str(value, network_heat_src_str(static_cast<network_heat_src_t>(thermostat->heat_src)));
             break;
-        case POOLSTATE_ELEM_THERMO_TYP_HEATING:
+        case poolstate_elem_thermos_typ_t::HEATING:
             _alloc_bool(value, thermostat->heating);
             break;
         default:
@@ -145,32 +151,34 @@ static esp_err_t
 _pump(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poolstate_get_value_t * const value)
 {
     poolstate_pump_t const * const pump = &state->pump;
-    switch (typ) {
-        case POOLSTATE_ELEM_PUMP_TYP_MODE:
+    poolstate_elem_pump_typ_t const elem_pump_typ = static_cast<poolstate_elem_pump_typ_t>(typ);
+
+    switch (elem_pump_typ) {
+        case poolstate_elem_pump_typ_t::MODE:
             _alloc_str(value, network_pump_mode_str(static_cast<network_pump_mode_t>(pump->mode)));
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_RUNNING:
+        case poolstate_elem_pump_typ_t::RUNNING:
             _alloc_bool(value, pump->running);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_STATE:
+        case poolstate_elem_pump_typ_t::STATE:
             _alloc_str(value, network_pump_state_str(static_cast<network_pump_state_t>(pump->state)));
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_PWR:
+        case poolstate_elem_pump_typ_t::PWR:
             _alloc_uint(value, pump->pwr);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_GPM:
+        case poolstate_elem_pump_typ_t::GPM:
             _alloc_uint(value, pump->gpm);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_RPM:
+        case poolstate_elem_pump_typ_t::RPM:
             _alloc_uint(value, pump->rpm);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_PCT:
+        case poolstate_elem_pump_typ_t::PCT:
             _alloc_uint(value, pump->pct);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_ERR:
+        case poolstate_elem_pump_typ_t::ERR:
             _alloc_uint(value, pump->err);
             break;
-        case POOLSTATE_ELEM_PUMP_TYP_TIMER:
+        case poolstate_elem_pump_typ_t::TIMER:
             _alloc_uint(value, pump->timer);
             break;
         default:
@@ -188,17 +196,19 @@ static esp_err_t
 _chlor(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poolstate_get_value_t * const value)
 {
     poolstate_chlor_t const * const chlor = &state->chlor;
-    switch (typ) {
-        case POOLSTATE_ELEM_CHLOR_TYP_NAME:
+    poolstate_elem_chlor_typ_t const elem_chlor_typ = static_cast<poolstate_elem_chlor_typ_t>(typ);
+
+    switch (elem_chlor_typ) {
+        case poolstate_elem_chlor_typ_t::NAME:
             _alloc_str(value, chlor->name);
             break;
-        case POOLSTATE_ELEM_CHLOR_TYP_PCT:
+        case poolstate_elem_chlor_typ_t::PCT:
             _alloc_uint(value, chlor->pct);
             break;
-        case POOLSTATE_ELEM_CHLOR_TYP_SALT:
+        case poolstate_elem_chlor_typ_t::SALT:
             _alloc_uint(value, chlor->salt);
             break;
-        case POOLSTATE_ELEM_CHLOR_TYP_STATUS:
+        case poolstate_elem_chlor_typ_t::STATUS:
             _alloc_str(value, poolstate_str_chlor_status_str(chlor->status));
             break;
         default:
@@ -217,18 +227,20 @@ static esp_err_t
 _modes(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poolstate_get_value_t * const value)
 {
     poolstate_modes_t const * const modes = &state->modes;
-    switch (typ) {
-        case POOLSTATE_ELEM_MODES_TYP_SERVICE:
-            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::service)]);
+    poolstate_elem_modes_typ_t const elem_modes_typ = static_cast<poolstate_elem_modes_typ_t>(typ);
+
+    switch (elem_modes_typ) {
+        case poolstate_elem_modes_typ_t::SERVICE:
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::SERVICE)]);
             break;
-        case POOLSTATE_ELEM_MODES_TYP_TEMP_INC:
-            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::tempInc)]);
+        case poolstate_elem_modes_typ_t::TEMP_INC:
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::TEMP_INC)]);
             break;
-        case POOLSTATE_ELEM_MODES_TYP_FREEZE_PROT:
-            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::freezeProt)]);
+        case poolstate_elem_modes_typ_t::FREEZE_PROT:
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::FREEZE_PROT)]);
             break;
-        case POOLSTATE_ELEM_MODES_TYP_TIMEOUT:
-            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::timeout)]);
+        case poolstate_elem_modes_typ_t::TIMEOUT:
+            _alloc_bool(value, modes->set[static_cast<uint8_t>(network_mode_t::TIMEOUT)]);
             break;
         default:
             if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
@@ -247,18 +259,18 @@ _modes(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
 typedef esp_err_t (* dispatch_fnc_t)(poolstate_t const * const state, uint8_t const sub_typ, uint8_t const idx, poolstate_get_value_t * const value);
 
 typedef struct dispatch_t {
-    uint8_t const  typ;
-    dispatch_fnc_t fnc;
+    poolstate_elem_typ_t const  typ;
+    dispatch_fnc_t              fnc;
 } dispatch_t;
 
 static dispatch_t const _dispatches[] = {
-    { POOLSTATE_ELEM_TYP_SYSTEM, _system},
-    { POOLSTATE_ELEM_TYP_TEMP,   _temp},
-    { POOLSTATE_ELEM_TYP_THERMO, _thermostat},
-    { POOLSTATE_ELEM_TYP_SCHED,  _schedule},
-    { POOLSTATE_ELEM_TYP_PUMP,   _pump},
-    { POOLSTATE_ELEM_TYP_CHLOR,  _chlor},
-    { POOLSTATE_ELEM_TYP_MODES,  _modes},
+    { poolstate_elem_typ_t::SYSTEM, _system},
+    { poolstate_elem_typ_t::TEMP,   _temp},
+    { poolstate_elem_typ_t::THERMO, _thermostat},
+    { poolstate_elem_typ_t::SCHED,  _schedule},
+    { poolstate_elem_typ_t::PUMP,   _pump},
+    { poolstate_elem_typ_t::CHLOR,  _chlor},
+    { poolstate_elem_typ_t::MODES,  _modes},
 };
 
 esp_err_t

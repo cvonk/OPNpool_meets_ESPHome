@@ -1,8 +1,7 @@
+#pragma once
 #ifndef __cplusplus
 # error "This header requires C++ compilation"
 #endif
-
-#pragma once
 
 /**
  * @brief OPNpool - Linux sk_buff inspired continuous memory

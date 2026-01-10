@@ -33,10 +33,6 @@
 namespace esphome {
 namespace opnpool {
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
 static char const * const TAG = "opnpoolstate_rx";
 
 /**
@@ -60,12 +56,16 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * co
 void
 OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
 {
-    state->thermos[POOLSTATE_THERMO_TYP_pool].temp = msg->poolTemp;
-    state->thermos[POOLSTATE_THERMO_TYP_pool].set_point = msg->poolSetpoint;
-    state->thermos[POOLSTATE_THERMO_TYP_pool].heat_src = msg->heatSrc & 0x03;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].temp = msg->spaTemp;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].set_point = msg->spaSetpoint;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = (msg->heatSrc >> 2) & 0x03;
+    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+
+    state->thermos[pool_idx].temp = msg->poolTemp;
+    state->thermos[pool_idx].set_point = msg->poolSetpoint;
+    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
+    state->thermos[spa_idx].temp = msg->spaTemp;
+    state->thermos[spa_idx].set_point = msg->spaSetpoint;
+    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
     }
@@ -74,10 +74,13 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t 
 void
 OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
 {
-    state->thermos[POOLSTATE_THERMO_TYP_pool].set_point = msg->poolSetpoint;
-    state->thermos[POOLSTATE_THERMO_TYP_pool].heat_src = msg->heatSrc & 0x03;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].set_point = msg->spaSetpoint;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = msg->heatSrc >> 2;
+    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+
+    state->thermos[pool_idx].set_point = msg->poolSetpoint;
+    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
+    state->thermos[spa_idx].set_point = msg->spaSetpoint;
+    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
@@ -148,8 +151,8 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
         msg_mask <<= 1;
     }
     // if both SPA and POOL bits are set, only SPA runs
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::spa)]) {
-        state->circuits.active[static_cast<uint8_t>(network_circuit_t::pool)] = false;
+    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::SPA)]) {
+        state->circuits.active[static_cast<uint8_t>(network_circuit_t::POOL)] = false;
     }
 
     // update state->circuits.delay
@@ -161,18 +164,19 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     }
 
     // update state->circuits.thermos (only update when the pump is running)
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::spa)]) {
-        state->thermos[POOLSTATE_THERMO_TYP_spa].temp = msg->poolTemp;
-    }
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::pool)]) {
-        state->thermos[POOLSTATE_THERMO_TYP_pool].temp = msg->poolTemp;
-    }
+    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
 
-    state->thermos[POOLSTATE_THERMO_TYP_pool].heating = msg->heatStatus & 0x04;
-    state->thermos[POOLSTATE_THERMO_TYP_spa].heating = msg->heatStatus & 0x08;
-
-    state->thermos[POOLSTATE_THERMO_TYP_pool].heat_src = msg->heatSrc & 0x03;  // network_heat_src_t::*
-    state->thermos[POOLSTATE_THERMO_TYP_spa].heat_src = msg->heatSrc >> 2;     // network_heat_src_t::*
+    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::SPA)]) {
+        state->thermos[spa_idx].temp = msg->poolTemp;
+    }
+    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::POOL)]) {
+        state->thermos[pool_idx].temp = msg->poolTemp;
+    }
+    state->thermos[pool_idx].heating = msg->heatStatus & 0x04;
+    state->thermos[spa_idx].heating = msg->heatStatus & 0x08;
+    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
+    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
 
     // update state->modes.set
     bool * state_mode = state->modes.set;
@@ -187,8 +191,11 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     state->system.tod.time.hour = msg->hour;
 
     // update state->temps
-    state->temps[POOLSTATE_TEMP_TYP_air].temp = msg->airTemp;
-    state->temps[POOLSTATE_TEMP_TYP_solar].temp = msg->solarTemp;
+    uint8_t const air_idx = static_cast<uint8_t>(poolstate_temp_typ_t::AIR);
+    uint8_t const solar_idx = static_cast<uint8_t>(poolstate_temp_typ_t::SOLAR);
+
+    state->temps[air_idx].temp = msg->airTemp;
+    state->temps[solar_idx].temp = msg->solarTemp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_state(dbg, "state", state);
@@ -334,19 +341,19 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level
 {
     state->chlor.salt = (uint16_t)msg->salt * 50;
     if (msg->err & 0x01) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_LOW_FLOW;
+        state->chlor.status = poolstate_chlor_status_t::LOW_FLOW;
     } else if (msg->err & 0x02) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_LOW_SALT;
+        state->chlor.status = poolstate_chlor_status_t::LOW_SALT;
     } else if (msg->err & 0x04) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_HIGH_SALT;
+        state->chlor.status = poolstate_chlor_status_t::HIGH_SALT;
     } else if (msg->err & 0x10) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_CLEAN_CELL;
+        state->chlor.status = poolstate_chlor_status_t::CLEAN_CELL;
     } else if (msg->err & 0x40) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_COLD;
+        state->chlor.status = poolstate_chlor_status_t::COLD;
     } else if (msg->err & 0x80) {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_OK;
+        state->chlor.status = poolstate_chlor_status_t::OK;
     } else {
-        state->chlor.status = POOLSTATE_CHLOR_STATUS_OTHER;
+        state->chlor.status = poolstate_chlor_status_t::OTHER;
     }
     // good salt range is 2600 to 4500 ppm
 

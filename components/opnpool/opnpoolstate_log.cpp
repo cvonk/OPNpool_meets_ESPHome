@@ -122,7 +122,7 @@ opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstat
                              bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
+    for (uint8_t ii = 0; ii < poolstate_thermo_typ_count(); ii++, thermos++) {
         _add_thermostat(item, poolstate_str_thermo_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
                         showTemp, showSp, showSrc, showHeating);
     }
@@ -177,7 +177,7 @@ _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 {
     cJSON * const item = _create_item(obj, key);
     poolstate_temp_t const * temp = state->temps;
-    for (uint8_t ii = 0; ii < POOLSTATE_TEMP_TYP_COUNT; ii++, temp++) {
+    for (uint8_t ii = 0; ii < poolstate_temp_typ_count(); ii++, temp++) {
         _add_temp(item, poolstate_str_temp_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
     }
 }
@@ -345,19 +345,19 @@ typedef void (* poolstate_json_fnc_t)(cJSON * const obj, char const * const key,
 
 typedef struct poolstate_json_dispatch_t {
     poolstate_elem_typ_t const  typ;
-    char const * const          name;
+    char const * const      name;
     poolstate_json_fnc_t const  fnc;
 } poolstate_json_dispatch_t;
 
 static poolstate_json_dispatch_t _dispatches[] = {
-    { POOLSTATE_ELEM_TYP_SYSTEM,   "system",   _add_system   },
-    { POOLSTATE_ELEM_TYP_TEMP,     "temps",    _add_temps    },
-    { POOLSTATE_ELEM_TYP_THERMO,   "thermos",  _add_thermos  },
-    { POOLSTATE_ELEM_TYP_PUMP,     "pump",     _add_pump     },
-    { POOLSTATE_ELEM_TYP_CHLOR,    "chlor",    _add_chlor    },
-    { POOLSTATE_ELEM_TYP_CIRCUITS, "circuits", _add_circuits },
-    { POOLSTATE_ELEM_TYP_SCHED,    "scheds",   _add_scheds   },
-    { POOLSTATE_ELEM_TYP_MODES,    "modes",    _add_modes    },
+    { poolstate_elem_typ_t::SYSTEM,   "system",   _add_system   },
+    { poolstate_elem_typ_t::TEMP,     "temps",    _add_temps    },
+    { poolstate_elem_typ_t::THERMO,   "thermos",  _add_thermos  },
+    { poolstate_elem_typ_t::PUMP,     "pump",     _add_pump     },
+    { poolstate_elem_typ_t::CHLOR,    "chlor",    _add_chlor    },
+    { poolstate_elem_typ_t::CIRCUITS, "circuits", _add_circuits },
+    { poolstate_elem_typ_t::SCHED,    "scheds",   _add_scheds   },
+    { poolstate_elem_typ_t::MODES,    "modes",    _add_modes    },
 };
 
 char const *
@@ -367,7 +367,7 @@ opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t con
     cJSON * const obj = cJSON_CreateObject();
     poolstate_json_dispatch_t const * dispatch = _dispatches;
     for (uint8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {
-        bool const all_types = typ == POOLSTATE_ELEM_TYP_ALL;
+        bool const all_types = typ == poolstate_elem_typ_t::ALL;
         if (typ == dispatch->typ || all_types) {
 
             dispatch->fnc(obj, all_types ? dispatch->name : NULL, state);

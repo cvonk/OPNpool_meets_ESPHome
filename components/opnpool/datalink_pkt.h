@@ -1,11 +1,13 @@
 #pragma once
+#ifndef __cplusplus
+# error "This header requires C++ compilation"
+#endif
+
 #include <esp_system.h>
 
-    // configure magic_enum to search full uint8_t range (0x00-0xFF)
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-
 #include "skb.h"
 
 namespace esphome {

@@ -96,10 +96,10 @@ heatpoolstate_t
 OpnPoolState::get_heat(void)
 {
 	heatpoolstate_t current;
-	current.pool.setPoint = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
-	current.pool.heatSrc = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].heatSrc;
-	current.spa.setPoint = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
-	current.spa.heatSrc = this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].heatSrc;
+	current.pool.setPoint = this->protected_.state->thermos[poolstate_thermo_type_t::pool].setPoint;
+	current.pool.heatSrc = this->protected_.state->thermos[poolstate_thermo_type_t::pool].heatSrc;
+	current.spa.setPoint = this->protected_.state->thermos[poolstate_thermo_type_t::spa].setPoint;
+	current.spa.heatSrc = this->protected_.state->thermos[poolstate_thermo_type_t::spa].heatSrc;
 	return current;
 }
 
@@ -107,10 +107,10 @@ char const *
 OpnPoolState::get_heat_src(char const * const key)
 {
 	if (strcmp(key, "pool") == 0) {
-		return _heatSrcStr(this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].heatSrc);
+		return _heatSrcStr(this->protected_.state->thermos[poolstate_thermo_type_t::pool].heatSrc);
 	}
 	if (strcmp(key, "spa") == 0) {
-		return _heatSrcStr(this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].heatSrc);
+		return _heatSrcStr(this->protected_.state->thermos[poolstate_thermo_type_t::spa].heatSrc);
 	}
 	return "err";
 }
@@ -119,10 +119,10 @@ uint8_t
 OpnPoolState::get_heat_sp(char const * const key)
 {
 	if (strcmp(key, "pool") == 0) {
-		return this->protected_.state->thermos[POOLSTATE_THERMO_TYP_pool].setPoint;
+		return this->protected_.state->thermos[poolstate_thermo_type_t::pool].setPoint;
 	}
 	if (strcmp(key, "spa") == 0) {
-		return this->protected_.state->thermos[POOLSTATE_THERMO_TYP_spa].setPoint;
+		return this->protected_.state->thermos[poolstate_thermo_type_t::spa].setPoint;
 	}
 	return 0;
 }
