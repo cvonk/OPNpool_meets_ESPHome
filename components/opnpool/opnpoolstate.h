@@ -328,7 +328,7 @@ class OpnPoolState {
         void rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state);
 };
 
-/* helpers from poolstate_log.cpp */
+    // poolstate_log.cpp
 void opnpoolstate_log_add_tod(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);

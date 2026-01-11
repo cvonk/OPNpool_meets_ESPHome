@@ -1,8 +1,3 @@
-#pragma once
-#ifndef __cplusplus
-# error "Requires C++ compilation"
-#endif
-
 /**
  * @brief OPNpool - Linux sk_buff inspired continuous memory
  * the removed header. The assertion ensures that the data pointer doesn't move before
@@ -10,6 +5,11 @@
  * pointer to a single `skb`, modifying its internal pointers to "strip" or "add"
  * headers.
  */
+
+#pragma once
+#ifndef __cplusplus
+# error "Requires C++ compilation"
+#endif
 
 #include <esp_system.h>
 

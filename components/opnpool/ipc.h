@@ -5,6 +5,7 @@
 
 #include <esp_types.h>
 #include <freertos/queue.h>
+
 #include "skb.h"
 
 namespace esphome {

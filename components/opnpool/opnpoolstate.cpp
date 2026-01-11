@@ -23,7 +23,6 @@
 #include <freertos/task.h>
 #include <freertos/semphr.h>
 #include <esphome/core/log.h>
-//#include <cstdlib>
 
 #include "network.h"
 #include "opnpoolstate.h"

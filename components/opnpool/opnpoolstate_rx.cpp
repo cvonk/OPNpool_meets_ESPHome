@@ -229,7 +229,7 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t cons
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_program(dbg, network_pump_prg_str(address), value);
+        opnpoolstate_log_add_pump_program(dbg, network_pump_program_str(address), value);
     }
 }
 

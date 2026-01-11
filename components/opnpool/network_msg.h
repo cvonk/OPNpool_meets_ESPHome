@@ -36,7 +36,7 @@ network_pool_mode_str(network_pool_mode_t const mode)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
@@ -72,7 +72,7 @@ network_pool_circuit_str(network_pool_circuit_t const circuit)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(circuit));
     return buf;
 }
@@ -104,7 +104,7 @@ network_pump_mode_str(network_pump_mode_t const mode)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
@@ -128,7 +128,7 @@ network_pump_state_str(network_pump_state_t const pump_state)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump_state));
     return buf;
 }
@@ -151,7 +151,7 @@ network_heat_src_str(network_heat_src_t const heat_src)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(heat_src));
     return buf;
 }
@@ -534,7 +534,8 @@ typedef union network_msg_data_t {
     network_msg_data_a5_t a5;
     network_msg_data_ic_t ic;
 } PACK8 network_msg_data_t;
-uint_least8_t const NETWORK_DATA_MAX_SIZE = sizeof(network_msg_data_t);
+
+const size_t NETWORK_DATA_MAX_SIZE = sizeof(network_msg_data_t);
 
     // MUST MATCH network_msg_typ_info[]
     // MUST MATCH network_msg_typ_sizes[]
@@ -727,7 +728,7 @@ network_msg_typ_str(network_msg_typ_t const typ)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local static char buf[6];
+    thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
     return buf;
 }

@@ -23,6 +23,7 @@
 #include <esp_flash.h>
 #include <esphome/core/log.h>
 #include <cJSON.h>
+#include <assert.h>
 
 #include "utils.h"
 #include "network.h"
@@ -65,7 +66,7 @@ _system(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, p
 
     switch (elem_system_typ) {
         case poolstate_elem_system_typ_t::CTRL_VERSION:
-            _alloc_str(value, network_version_str(system->version.major, system->version.minor));
+            _alloc_str(value, network_ctrl_version_str(system->version.major, system->version.minor));
             break;
         case poolstate_elem_system_typ_t::IF_VERSION: {
             esp_partition_t const * const running_part = esp_ota_get_running_partition();
@@ -75,7 +76,7 @@ _system(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, p
             break;
         }
         case poolstate_elem_system_typ_t::TIME:
-            _alloc_str(value, network_time_str(system->tod.time.hour, system->tod.time.minute));
+            _alloc_str(value, network_ctrl_time_str(system->tod.time.hour, system->tod.time.minute));
             break;
         default:
             ESP_LOGW(TAG, "%s unknown sub_typ(%u)", __func__, typ);
@@ -139,8 +140,8 @@ _schedule(poolstate_t const * const state, uint8_t const typ_dummy, uint8_t cons
 
     if (sched->active) {
         _alloc_strs(value, 
-                    network_time_str(sched->start / 60, sched->start % 60),
-                    network_time_str(sched->stop / 60, sched->stop % 60));
+                    network_ctrl_time_str(sched->start / 60, sched->start % 60),
+                    network_ctrl_time_str(sched->stop / 60, sched->stop % 60));
     } else {
         _alloc_str(value, "no sched");
     }

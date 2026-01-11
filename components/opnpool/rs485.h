@@ -6,6 +6,7 @@
 #include <esp_system.h>
 #include <esp_types.h>
 #include <driver/uart.h>
+
 #include "ipc.h"
 
 namespace esphome {
@@ -40,7 +41,7 @@ typedef struct  rs485_q_msg_t {
 } rs485_q_msg_t;
 
 
-/* rs485.c */
+    // rs485.cpp
 rs485_handle_t rs485_init(rs485_pins_t const * const rs485_pins);
 
 } // namespace opnpool

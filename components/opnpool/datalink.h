@@ -9,8 +9,7 @@
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-
-#include "rs485.h"  // to get rs485_handle_t definition
+#include "rs485.h"
 
 namespace esphome {
 namespace opnpool {
@@ -26,14 +25,14 @@ namespace opnpool {
 # define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
 
-// 0x10 = suntouch ctrl system
-// 0x20 = easytouch
-// 0x21 = remote
-// 0x22 = wireless remote
-// 0x48 = quicktouch remote
-// 0x60 .. 0x6F = intelliflow pump 0 .. 15
-// 
-// `addrgroup` is the high nibble of the address
+    // 0x10 = suntouch ctrl system
+    // 0x20 = easytouch
+    // 0x21 = remote
+    // 0x22 = wireless remote
+    // 0x48 = quicktouch remote
+    // 0x60 .. 0x6F = intelliflow pump 0 .. 15
+    // 
+    // `addrgroup` is the high nibble of the address
 
 enum class datalink_addrgroup_t : uint8_t {
   ALL = 0x00,
@@ -44,8 +43,9 @@ enum class datalink_addrgroup_t : uint8_t {
   X09 = 0x09,
 };
 
+
 /**
- * datalink_head_t
+ * @brief Data link header structure
  **/
 
 typedef uint8_t datalink_preamble_a5_t[3];
@@ -86,17 +86,20 @@ typedef union datalink_head_t {
     datalink_head_ic_t ic;
     datalink_head_a5_t a5;
 } datalink_head_t;
-#define DATALINK_MAX_HEAD_SIZE (sizeof(datalink_head_t))
+
+size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
+
 
 /**
- * datalink_data_t
+ * @brief Datalink data "structure"
  **/
 
+    // using #define instead of a `const` prevents circular dependency
 #define DATALINK_MAX_DATA_SIZE (NETWORK_DATA_MAX_SIZE)
 
 /**
- * datalink_tail_t
- **/
+ * @brief Data link tail structure
+ */
 
 typedef struct datalink_tail_a5_t {
     uint8_t  crc[2];
@@ -111,8 +114,12 @@ typedef union datalink_tail_t {
     datalink_tail_ic_t ic;
     datalink_tail_a5_t a5;
 } datalink_tail_t;
-#define DATALINK_MAX_TAIL_SIZE (sizeof(datalink_tail_t))
 
+size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
+
+/**
+ * @brief Exported functions
+ */
 
     // forward declarations
 enum class datalink_prot_t : uint8_t;
