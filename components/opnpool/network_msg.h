@@ -587,9 +587,10 @@ enum class network_msg_typ_t : uint8_t {
     CTRL_CHEM_REQ = 44
 };
 
-constexpr size_t network_msg_typ_count() {
+consteval size_t network_msg_typ_count() {
     return magic_enum::enum_count<network_msg_typ_t>();
 }
+
     // size lookup table for message types 
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[network_msg_typ_count()] = {
