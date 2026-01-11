@@ -6,13 +6,13 @@
 #include <esp_system.h>
 #include <esp_types.h>
 #include <driver/uart.h>
-
 #include "ipc.h"
-#include "datalink_pkt.h"
 
 namespace esphome {
 namespace opnpool {
 
+    // forward declarations
+struct datalink_pkt_t;
 typedef struct rs485_instance_t * rs485_handle_t;
 
 typedef int (* rs485_available_fnc_t)(void);

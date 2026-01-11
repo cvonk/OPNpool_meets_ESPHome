@@ -17,19 +17,20 @@
 namespace esphome {
 namespace opnpool {
 
+
 /**
- * poolstate_system_t
+ * @brief Pool state system information
  **/
 
 typedef struct poolstate_time_t {
-    uint8_t hour;
-    uint8_t minute;
+    uint8_t  hour;
+    uint8_t  minute;
 } poolstate_time_t;
 
 typedef struct poolstate_date_t {
-    uint8_t day;
-    uint8_t month;
-    uint8_t year;
+    uint8_t  day;
+    uint8_t  month;
+    uint8_t  year;
 } poolstate_date_t;
 
 typedef struct poolstate_tod_t {
@@ -38,28 +39,29 @@ typedef struct poolstate_tod_t {
 } poolstate_tod_t;
 
 typedef struct poolstate_version_t {
-    uint8_t major;
-    uint8_t minor;
+    uint8_t  major;
+    uint8_t  minor;
 } poolstate_version_t;
 
 typedef struct poolstate_system_t {
-    poolstate_tod_t     tod;
-    poolstate_version_t version;
+    poolstate_tod_t      tod;
+    poolstate_version_t  version;
 } poolstate_system_t;
 
 enum class poolstate_elem_system_typ_t : uint8_t {
-    TIME = 0,
+    TIME         = 0,
     CTRL_VERSION = 1,
-    IF_VERSION = 2,
+    IF_VERSION   = 2
 };
 
+
 /**
- * poolstate_thermo_typ_t
+ * @brief Pool state thermostat types
  **/
 
 enum class poolstate_thermo_typ_t : uint8_t {
     POOL = 0,
-    SPA = 1
+    SPA  = 1
 };
 
 constexpr size_t poolstate_thermo_typ_count() {
@@ -84,15 +86,16 @@ typedef struct poolstate_thermo_t {
 } poolstate_thermo_t;
 
 enum class poolstate_elem_thermos_typ_t : uint8_t {
-    TEMP = 0,
+    TEMP      = 0,
     SET_POINT = 1,
-    HEAT_SRC = 2,
-    HEATING = 3
+    HEAT_SRC  = 2,
+    HEATING   = 3
 };
 
+
 /**
- * poolstate_sched_t
- */
+ * @brief Pool state schedule
+ **/
 
 enum class poolstate_elem_sched_typ_t : uint8_t {
     START = 0,
@@ -105,8 +108,9 @@ typedef struct poolstate_sched_t {
     uint16_t  stop;
 } poolstate_sched_t;
 
+
 /**
- * poolstate_temp_t
+ * @brief Pool state temperature types
  **/
 
 enum class poolstate_temp_typ_t : uint8_t {
@@ -136,12 +140,13 @@ enum class PoolstateElemTempTyp : uint8_t {
     TEMP = 0
 };
 
+
 /**
- * poolstate_modes_t
+ * @brief Pool state modes
  **/
 
 typedef struct poolstate_modes_t {
-    bool  set[network_mode_count()];
+    bool  set[network_pool_mode_count()];
 } poolstate_modes_t;
 
 enum class poolstate_elem_modes_typ_t : uint8_t {
@@ -151,13 +156,14 @@ enum class poolstate_elem_modes_typ_t : uint8_t {
     TIMEOUT = 3
 };
 
+
 /**
- * poolstate_circuits_t
+ * @brief Pool state circuits
  **/
 
 typedef struct poolstate_circuits_t {
-    bool     active[network_circuit_count()];
-    bool     delay[network_circuit_count()];
+    bool     active[network_pool_circuit_count()];
+    bool     delay[network_pool_circuit_count()];
 } poolstate_circuits_t;
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
@@ -165,8 +171,9 @@ enum class poolstate_elem_circuits_typ_t : uint8_t {
     DELAY = 1
 };
 
+
 /**
- * poolstate_pump_t
+ * @brief Pool state pump
  **/
 
 typedef struct {
@@ -195,8 +202,9 @@ enum class poolstate_elem_pump_typ_t : uint8_t {
     TIMER = 9
 };
 
+
 /**
- * poolstate_chlor_t
+ * @brief Pool state chlorinator
  **/
 
 enum class poolstate_chlor_status_t : uint8_t {
@@ -233,15 +241,16 @@ enum class poolstate_elem_chlor_typ_t : uint8_t {
     STATUS = 3
 };
 
+
 /**
- * all together now
+ * @brief Pool state structure containing all pool state information
  **/
 
 typedef struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[poolstate_temp_typ_count()];
     poolstate_thermo_t    thermos[poolstate_thermo_typ_count()];
-    poolstate_sched_t     scheds[network_circuit_count()];
+    poolstate_sched_t     scheds[network_pool_circuit_count()];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;
@@ -267,7 +276,13 @@ typedef struct poolstate_get_params_t {
     uint8_t const    idx;
 } poolstate_get_params_t;
 
+    // forward declaration of OpnPool class
 class OpnPool;
+
+
+/**
+ * @brief Class representing the current state of the pool system
+ **/    
 
 class OpnPoolState {
 
@@ -277,8 +292,8 @@ class OpnPoolState {
         
         void set(poolstate_t const * const state);
         esp_err_t get(poolstate_t * const state);
-        esp_err_t update(network_msg_t const * const msg);
-        esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
+        //esp_err_t update(network_msg_t const * const msg);
+        //esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
         const char * to_json(poolstate_elem_typ_t const typ);
 
         esp_err_t rx_update(network_msg_t const * const msg);

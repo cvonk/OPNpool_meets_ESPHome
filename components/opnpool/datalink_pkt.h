@@ -4,6 +4,7 @@
 #endif
 
 #include <esp_system.h>
+#include <strings.h>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
@@ -13,18 +14,22 @@
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8         __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
+#ifndef ALIGN
+# define ALIGN(type) __attribute__((aligned( __alignof__(type)) ))
+#endif
+#ifndef PACK
+# define PACK(type)  __attribute__((aligned( __alignof__(type)), packed))
+# define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
+#endif
 
 namespace esphome {
 namespace opnpool {
 
 enum class datalink_prot_t : uint8_t {
-  IC = 0x00,
-  A5_CTRL = 0x01,
-  A5_PUMP = 0x02,
-  NONE = 0xFF,
+    IC      = 0x00,
+    A5_CTRL = 0x01,
+    A5_PUMP = 0x02,
+    NONE    = 0xFF,
 };
 
 /**
@@ -32,43 +37,43 @@ enum class datalink_prot_t : uint8_t {
  */
 
 enum class datalink_typ_ctrl_t : uint8_t {
-    SET_ACK = 0x01,
-    STATE_BCAST = 0x02,
-    CANCEL_DELAY = 0x03,
-    TIME_RESP = 0x05,
-    TIME_SET = 0x85,
-    TIME_REQ = 0xC5,
-    CIRCUIT_RESP = 0x06,
-    CIRCUIT_SET = 0x86,
-    CIRCUIT_REQ = 0xC6,
-    HEAT_RESP = 0x08,
-    HEAT_SET = 0x88,
-    HEAT_REQ = 0xC8,
-    HEAT_PUMP_RESP = 0x10,
-    HEAT_PUMP_SET = 0x90,
-    HEAT_PUMP_REQ = 0xD0,
-    SCHED_RESP = 0x1E,
-    SCHED_SET = 0x9E,
-    SCHED_REQ = 0xDE,
-    LAYOUT_RESP = 0x21,
-    LAYOUT_SET = 0xA1,
-    LAYOUT_REQ = 0xE1,
+    SET_ACK         = 0x01,
+    STATE_BCAST     = 0x02,
+    CANCEL_DELAY    = 0x03,
+    TIME_RESP       = 0x05,
+    TIME_SET        = 0x85,
+    TIME_REQ        = 0xC5,
+    CIRCUIT_RESP    = 0x06,
+    CIRCUIT_SET     = 0x86,
+    CIRCUIT_REQ     = 0xC6,
+    HEAT_RESP       = 0x08,
+    HEAT_SET        = 0x88,
+    HEAT_REQ        = 0xC8,
+    HEAT_PUMP_RESP  = 0x10,
+    HEAT_PUMP_SET   = 0x90,
+    HEAT_PUMP_REQ   = 0xD0,
+    SCHED_RESP      = 0x1E,
+    SCHED_SET       = 0x9E,
+    SCHED_REQ       = 0xDE,
+    LAYOUT_RESP     = 0x21,
+    LAYOUT_SET      = 0xA1,
+    LAYOUT_REQ      = 0xE1,
     CIRC_NAMES_RESP = 0x0B,
-    CIRC_NAMES_REQ = 0xCB,
-    SCHEDS_RESP = 0x11,
-    SCHEDS_REQ = 0xD1,
-    CHEM_RESP = 0x12,
-    CHEM_REQ = 0xD2,
-    VALVE_RESP = 0x1D,
-    VALVE_REQ = 0xDD,
-    SOLARPUMP_RESP = 0x22,
-    SOLARPUMP_REQ = 0xE2,
-    DELAY_RESP = 0x23,
-    DELAY_REQ = 0xE3,
+    CIRC_NAMES_REQ  = 0xCB,
+    SCHEDS_RESP     = 0x11,
+    SCHEDS_REQ      = 0xD1,
+    CHEM_RESP       = 0x12,
+    CHEM_REQ        = 0xD2,
+    VALVE_RESP      = 0x1D,
+    VALVE_REQ       = 0xDD,
+    SOLARPUMP_RESP  = 0x22,
+    SOLARPUMP_REQ   = 0xE2,
+    DELAY_RESP      = 0x23,
+    DELAY_REQ       = 0xE3,
     HEAT_SETPT_RESP = 0x28,
-    HEAT_SETPT_REQ = 0xE8,
-    VERSION_RESP = 0xFC,
-    VERSION_REQ = 0xFD
+    HEAT_SETPT_REQ  = 0xE8,
+    VERSION_RESP    = 0xFC,
+    VERSION_REQ     = 0xFD
 };
 
 inline const char *
@@ -78,8 +83,8 @@ datalink_typ_ctrl_str(datalink_typ_ctrl_t const typ_ctrl)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(typ_ctrl));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ_ctrl));
     return buf;
 }
 
@@ -89,11 +94,11 @@ datalink_typ_ctrl_str(datalink_typ_ctrl_t const typ_ctrl)
  */
 
 enum class datalink_typ_pump_t : uint8_t {
-    REG = 0x01,
-    CTRL = 0x04,
-    MODE = 0x05,
-    RUN = 0x06,
-    STATUS = 0x07,
+    REG        = 0x01,
+    CTRL       = 0x04,
+    MODE       = 0x05,
+    RUN        = 0x06,
+    STATUS     = 0x07,
     UNKNOWN_FF = 0xFF
 };
 
@@ -104,8 +109,8 @@ datalink_typ_pump_str(datalink_typ_pump_t const pump)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(pump));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump));
     return buf;
 }
 
@@ -114,12 +119,12 @@ datalink_typ_pump_str(datalink_typ_pump_t const pump)
  */
 
 enum class datalink_typ_chlor_t : uint8_t {
-    PING_REQ = 0x00,
-    PING_RESP = 0x01,
-    NAME_RESP = 0x03,
-    LEVEL_SET = 0x11,
+    PING_REQ   = 0x00,
+    PING_RESP  = 0x01,
+    NAME_RESP  = 0x03,
+    LEVEL_SET  = 0x11,
     LEVEL_RESP = 0x12,
-    NAME_REQ = 0x14
+    NAME_REQ   = 0x14
 };
 
 inline const char *
@@ -129,8 +134,8 @@ datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(chlor));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(chlor));
     return buf;
 }
 
@@ -159,7 +164,6 @@ typedef struct datalink_pkt_t {
     skb_handle_t       skb;
 } datalink_pkt_t;
 
-/* Helper functions for datalink_prot_t */
 inline const char *
 datalink_prot_str(datalink_prot_t const prot)
 {
@@ -167,8 +171,8 @@ datalink_prot_str(datalink_prot_t const prot)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(prot));
     return buf;
 }
 

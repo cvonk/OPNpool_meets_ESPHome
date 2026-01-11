@@ -6,21 +6,24 @@
 #include <sdkconfig.h>
 #include <esp_system.h>
 
-#include "skb.h"
-#include "rs485.h"
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
 
+#include "rs485.h"  // to get rs485_handle_t definition
+
 namespace esphome {
 namespace opnpool {
 
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+#ifndef ALIGN
+# define ALIGN(type) __attribute__((aligned( __alignof__(type)) ))
+#endif
+#ifndef PACK
+# define PACK(type)  __attribute__((aligned( __alignof__(type)), packed))
+# define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
 
 // 0x10 = suntouch ctrl system
@@ -110,7 +113,12 @@ typedef union datalink_tail_t {
 } datalink_tail_t;
 #define DATALINK_MAX_TAIL_SIZE (sizeof(datalink_tail_t))
 
-/* datalink.c */
+
+    // forward declarations
+enum class datalink_prot_t : uint8_t;
+struct datalink_pkt_t;
+
+    // datalink.cpp
 datalink_addrgroup_t datalink_groupaddr(uint16_t const addr);
 uint8_t datalink_devaddr(datalink_addrgroup_t group, uint8_t const id);
 uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
@@ -118,13 +126,13 @@ extern datalink_preamble_a5_t datalink_preamble_a5;
 extern datalink_preamble_ic_t datalink_preamble_ic;
 extern datalink_postamble_ic_t datalink_postamble_ic;
 
-/* datalink_rx.c */
+    // datalink_rx.cpp
 esp_err_t datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt);
 
-/* datalink_tx.c */
+    // datalink_tx.cpp
 void datalink_tx_pkt_queue(rs485_handle_t const rs485_handle, datalink_pkt_t const * const pkt);
 
-/* datalink_str.c */
+    // datalink_str.cpp
 char const * datalink_prot_str(datalink_prot_t const prot);
 
 } // namespace opnpool

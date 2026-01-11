@@ -1,5 +1,5 @@
 /**
- * @brief OPNpool - Inter Process Communication: mailbox messages exchanged between the tasks
+ * @brief OPNpool - Inter Process Communication: mailboxes used to exchange messages between tasks
  *
  * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
@@ -33,7 +33,10 @@ namespace opnpool {
 static char const * const TAG = "ipc";
 
 /**
- * IPC send network_msg to main_task
+ * @brief              Send a network message to the main task
+ *
+ * @param network_msg  Pointer to the network message to send
+ * @param ipc          Pointer to the IPC structure containing the queue handles
  */
 
 void
@@ -46,7 +49,10 @@ ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t
 }
 
 /**
- * IPC send network_msg to pool_task
+ * @brief              Send a network message to the pool task
+ *
+ * @param network_msg  Pointer to the network message to send
+ * @param ipc          Pointer to the IPC structure containing the queue handles
  **/
 
 void

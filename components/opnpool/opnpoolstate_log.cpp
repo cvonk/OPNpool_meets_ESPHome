@@ -154,8 +154,8 @@ opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_
 {
     if (showSched) {
         cJSON * const item = _create_item(obj, key);
-        for (uint8_t ii = 0; ii < network_circuit_count(); ii++, scheds++) {
-            _add_schedule(item, network_circuit_str(static_cast<network_circuit_t>(ii)), scheds);
+        for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, scheds++) {
+            _add_schedule(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), scheds);
         }
     }
 }
@@ -193,8 +193,8 @@ _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const 
     cJSON * const item = _create_item(obj, key);
 
     bool const * set = modes->set;
-    for (uint8_t ii = 0; ii < network_mode_count(); ii++, set++) {
-        cJSON_AddBoolToObject(item, network_mode_str(static_cast<network_mode_t>(ii)), *set);
+    for (uint8_t ii = 0; ii < network_pool_mode_count(); ii++, set++) {
+        cJSON_AddBoolToObject(item, network_pool_mode_str(static_cast<network_pool_mode_t>(ii)), *set);
     }
 }
 
@@ -206,8 +206,8 @@ static void
 _add_circuit_detail(cJSON * const obj, char const * const key, bool const * active)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint8_t ii = 0; ii < network_circuit_count(); ii++, active++) {
-        cJSON_AddBoolToObject(item, network_circuit_str(static_cast<network_circuit_t>(ii)), *active);
+    for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, active++) {
+        cJSON_AddBoolToObject(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), *active);
     }
 }
 

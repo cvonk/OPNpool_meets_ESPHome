@@ -5,7 +5,9 @@
 
 #include <esp_system.h>
 #include <strings.h>
+#include <stdio.h>
 
+#include "datalink.h"
 #include "datalink_pkt.h"
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
@@ -14,71 +16,64 @@
 namespace esphome {
 namespace opnpool {
 
-#ifndef ARRAY_SIZE
-# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8         __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-
 
 /**
- * @brief Controller operation modes
+ * @brief Pool controller operation modes
  */
 
-enum class network_mode_t : uint8_t {
-    SERVICE = 0,
-    UNKOWN_01 = 1,
-    TEMP_INC = 2,
+enum class network_pool_mode_t : uint8_t {
+    SERVICE     = 0,
+    UNKOWN_01   = 1,
+    TEMP_INC    = 2,
     FREEZE_PROT = 3,
-    TIMEOUT = 4
+    TIMEOUT     = 4
 };
 
 inline const char *
-network_mode_str(network_mode_t const mode)
+network_pool_mode_str(network_pool_mode_t const mode)
 {
     auto name = magic_enum::enum_name(mode);
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(mode));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
 
-constexpr size_t network_mode_count() {
-    return magic_enum::enum_count<network_mode_t>();
+constexpr size_t network_pool_mode_count() {
+    return magic_enum::enum_count<network_pool_mode_t>();
 }
 
 /**
- * @brief Controller circuits and features
+ * @brief Pool controller circuits and features
  */
 
-enum class network_circuit_t : uint8_t {
-    SPA = 0,
+enum class network_pool_circuit_t : uint8_t {
+    SPA  = 0,
     AUX1 = 1,
     AUX2 = 2,
     AUX3 = 3,
-    FT1 = 4,
+    FT1  = 4,
     POOL = 5,
-    FT2 = 6,
-    FT3 = 7,
-    FT4 = 8
+    FT2  = 6,
+    FT3  = 7,
+    FT4  = 8
 };
   
-constexpr size_t network_circuit_count() {
-    return magic_enum::enum_count<network_circuit_t>();
+constexpr size_t network_pool_circuit_count() {
+    return magic_enum::enum_count<network_pool_circuit_t>();
 }
 
 inline const char *
-network_circuit_str(network_circuit_t const circuit)
+network_pool_circuit_str(network_pool_circuit_t const circuit)
 {
     auto name = magic_enum::enum_name(circuit);
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(circuit));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(circuit));
     return buf;
 }
 
@@ -88,18 +83,18 @@ network_circuit_str(network_circuit_t const circuit)
 
 enum class network_pump_mode_t : uint8_t {
     FILTER = 0,
-    MAN = 1,
+    MAN    = 1,
     BKWASH = 2,
-    X03 = 3,
-    X04 = 4,
-    X05 = 5,
-    FT1 = 6,
-    X07 = 7,
-    X08 = 8,
-    EP1 = 9,
-    EP2 = 10,
-    EP3 = 11,
-    EP4 = 12
+    X03    = 3,
+    X04    = 4,
+    X05    = 5,
+    FT1    = 6,
+    X07    = 7,
+    X08    = 8,
+    EP1    = 9,
+    EP2    = 10,
+    EP3    = 11,
+    EP4    = 12
 };
 
 inline const char *
@@ -109,9 +104,8 @@ network_pump_mode_str(network_pump_mode_t const mode)
     if (!name.empty()) {
         return name.data();
     }
-    // fallback for unknown values
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(mode));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
 
@@ -120,10 +114,10 @@ network_pump_mode_str(network_pump_mode_t const mode)
  */
 
 enum class network_pump_state_t : uint8_t {
-    OK = 0,
-    PRIMING = 1,
-    RUNNING = 2,
-    X03 = 3,
+    OK         = 0,
+    PRIMING    = 1,
+    RUNNING    = 2,
+    X03        = 3,
     SYSPRIMING = 4
 };
 
@@ -133,8 +127,9 @@ network_pump_state_str(network_pump_state_t const pump_state)
     auto name = magic_enum::enum_name(pump_state);
     if (!name.empty()) {
         return name.data();
-    }    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(pump_state));
+    }
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump_state));
     return buf;
 }
 
@@ -156,9 +151,8 @@ network_heat_src_str(network_heat_src_t const heat_src)
     if (!name.empty()) {
         return name.data();
     }
-    // fallback for unknown values
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(heat_src));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(heat_src));
     return buf;
 }
 
@@ -167,7 +161,7 @@ network_heat_src_str(network_heat_src_t const heat_src)
  */
 
 typedef struct network_msg_ctrl_set_ack_t {
-    uint8_t typ;  // datalink_typ_ctrl_t::*  type that it is ACK'íng
+    uint8_t typ;  // datalink_typ_ctrl_t::*  type that it is ACK'ing
 } PACK8 network_msg_ctrl_set_ack_t;
 
 typedef struct network_msg_ctrl_circuit_set_t {
@@ -701,12 +695,12 @@ constexpr network_msg_typ_info_t network_msg_typ_info[network_msg_typ_count()] =
     {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::RUN},              // 21: PUMP_RUN_RESP
     {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 22: PUMP_STATUS_REQ
     {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 23: PUMP_STATUS_RESP
-    {datalink_prot_t::IC, datalink_typ_chlor_t::PING_REQ},             // 24: CHLOR_PING_REQ
-    {datalink_prot_t::IC, datalink_typ_chlor_t::PING_RESP},            // 25: CHLOR_PING_RESP
-    {datalink_prot_t::IC, datalink_typ_chlor_t::NAME_RESP},            // 26: CHLOR_NAME_RESP
-    {datalink_prot_t::IC, datalink_typ_chlor_t::LEVEL_SET},            // 27: CHLOR_LEVEL_SET
-    {datalink_prot_t::IC, datalink_typ_chlor_t::LEVEL_RESP},           // 28: CHLOR_LEVEL_RESP
-    {datalink_prot_t::IC, datalink_typ_chlor_t::NAME_REQ},             // 29: CHLOR_NAME_REQ
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_REQ},        // 24: CHLOR_PING_REQ
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_RESP},       // 25: CHLOR_PING_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_RESP},       // 26: CHLOR_NAME_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_SET},       // 27: CHLOR_LEVEL_SET
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_RESP},      // 28: CHLOR_LEVEL_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_REQ},        // 29: CHLOR_NAME_REQ
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_REQ},        // 30: CTRL_VALVE_REQ
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_RESP},       // 31: CTRL_VALVE_RESP
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VERSION_REQ},      // 32: CTRL_VERSION_REQ
@@ -733,8 +727,8 @@ network_msg_typ_str(network_msg_typ_t const typ)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[8];
-    snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(typ));
+    thread_local static char buf[6];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
     return buf;
 }
 
@@ -760,7 +754,7 @@ network_msg_typ_nr(char const * const msg_typ_str)
     return -1;
 }
 
-  // helper to get protocol info for a message type
+  // helper to get datalink proto and type info for a network message type
 inline const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {

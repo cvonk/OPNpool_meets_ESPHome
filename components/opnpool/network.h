@@ -5,12 +5,9 @@
 
 #include <esp_system.h>
 
-#include "network_msg.h"
+#include "datalink.h"
 #include "datalink_pkt.h"
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {
@@ -27,20 +24,20 @@ enum class network_pump_prg_addr_t : uint16_t {
     ERPM3        = 0x032A   // program ext program RPM3
 };
 
-/* network.c */
+/* from network.cpp */
 uint8_t network_ic_len(uint8_t const ic_typ);
 
-/* network_rx.c */
+/* from network_rx.cpp */
 esp_err_t network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity);
 
-/* network_create.c */
+/* from network_create.cpp */
 esp_err_t network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt);
 
-/* network_str.c */
+/* from network_str.cpp */
 char const * network_date_str(uint8_t const year, uint8_t const month, uint8_t const day);
 char const * network_time_str(uint8_t const hours, uint8_t const minutes);
 char const * network_version_str(uint8_t const major, uint8_t const minor);
-const char * network_mode_str(network_mode_t const mode);
+const char * network_pool_mode_str(network_pool_mode_t const mode);
 const char * network_pump_mode_str(network_pump_mode_t const pump_mode);
 const char * network_pump_state_str(network_pump_state_t const pump_state);
 char const * network_pump_prg_str(uint16_t const address);
@@ -49,8 +46,6 @@ char const * datalink_typ_pump_str(datalink_typ_pump_t typ);
 char const * datalink_typ_ctrl_str(datalink_typ_ctrl_t typ);
 char const * datalink_typ_chlor_str(datalink_typ_chlor_t typ);
 const char * network_msg_typ_str(network_msg_typ_t const typ);
-int network_heat_src_nr(char const * const heat_src_str);
-int network_circuit_nr(char const * const circuit_str);
 int network_msg_typ_nr(char const * const msg_typ_str);
 
 }  // namespace opnpool

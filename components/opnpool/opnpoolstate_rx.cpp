@@ -111,7 +111,7 @@ OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_se
         {
             int idx = static_cast<int>(msg->circuit) - 1;
             if (idx >= 0) {
-                cJSON_AddNumberToObject(dbg, network_circuit_str(static_cast<network_circuit_t>(idx)), msg->value);
+                cJSON_AddNumberToObject(dbg, network_pool_circuit_str(static_cast<network_pool_circuit_t>(idx)), msg->value);
             } else {
                 cJSON_AddNumberToObject(dbg, "circuit_invalid", msg->value);
             }
@@ -123,7 +123,7 @@ void
 OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
 {
     poolstate_sched_t * state_scheds = state->scheds;    
-    memset(state_scheds, 0, sizeof(poolstate_sched_t) * network_circuit_count() );
+    memset(state_scheds, 0, sizeof(poolstate_sched_t) * network_pool_circuit_count() );
 
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
 
@@ -147,19 +147,19 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     bool * state_active = state->circuits.active;
     uint16_t msg_mask = 0x00001;
     uint16_t const msg_active = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
-    for (uint8_t ii = 0; ii < network_circuit_count(); ii++, state_active++) {
+    for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, state_active++) {
         *state_active = msg_active & msg_mask;
         msg_mask <<= 1;
     }
     // if both SPA and POOL bits are set, only SPA runs
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::SPA)]) {
-        state->circuits.active[static_cast<uint8_t>(network_circuit_t::POOL)] = false;
+    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::SPA)]) {
+        state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = false;
     }
 
     // update state->circuits.delay
     bool * state_delay = state->circuits.delay;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < network_circuit_count(); ii++, state_delay++) {
+    for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, state_delay++) {
         *state_delay = msg->delay & msg_mask;
         msg_mask <<= 1;
     }
@@ -168,10 +168,10 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
     uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
 
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::SPA)]) {
+    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::SPA)]) {
         state->thermos[spa_idx].temp = msg->poolTemp;
     }
-    if (state->circuits.active[static_cast<uint8_t>(network_circuit_t::POOL)]) {
+    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::POOL)]) {
         state->thermos[pool_idx].temp = msg->poolTemp;
     }
     state->thermos[pool_idx].heating = msg->heatStatus & 0x04;
@@ -182,7 +182,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     // update state->modes.set
     bool * state_mode = state->modes.set;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < network_mode_count(); ii++, state_mode++) {
+    for (uint8_t ii = 0; ii < network_pool_mode_count(); ii++, state_mode++) {
         *state_mode = msg->modes & msg_mask;
         msg_mask <<= 1;
     }
