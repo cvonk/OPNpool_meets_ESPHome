@@ -728,7 +728,7 @@ static constexpr size_t network_msg_typ_sizes[network_msg_typ_count()] = {
     sizeof(network_msg_pump_mode_t),                                     // 19: PUMP_MODE_RESP
     sizeof(network_msg_pump_run_t),                                      // 20: PUMP_RUN_SET
     sizeof(network_msg_pump_run_t),                                      // 21: PUMP_RUN_RESP
-    sizeof(network_msg_pump_status_req_t),                               // 22: PUMP_STATUS_REQ
+    0 /* sizeof(network_msg_pump_status_req_t) returns 1, not 0 */,      // 22: PUMP_STATUS_REQ
     sizeof(network_msg_pump_status_resp_t),                              // 23: PUMP_STATUS_RESP
     sizeof(network_msg_chlor_ping_req_t),                                // 24: CHLOR_PING_REQ
     sizeof(network_msg_chlor_ping_resp_t),                               // 25: CHLOR_PING_RESP
