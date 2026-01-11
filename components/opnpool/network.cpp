@@ -33,20 +33,20 @@ namespace opnpool {
 uint8_t
 network_ic_len(uint8_t const ic_typ)
 {
-    auto typ = static_cast<network_typ_chlor_t>(ic_typ);
+    auto typ = static_cast<datalink_typ_chlor_t>(ic_typ);
 
     switch (typ) {
-        case network_typ_chlor_t::PING_REQ:
+        case datalink_typ_chlor_t::PING_REQ:
             return sizeof(network_msg_chlor_ping_req_t);
-        case network_typ_chlor_t::PING_RESP:
+        case datalink_typ_chlor_t::PING_RESP:
             return sizeof(network_msg_chlor_ping_resp_t);
-        case network_typ_chlor_t::NAME_RESP:
+        case datalink_typ_chlor_t::NAME_RESP:
             return sizeof(network_msg_chlor_name_resp_t);
-        case network_typ_chlor_t::LEVEL_SET:
+        case datalink_typ_chlor_t::LEVEL_SET:
             return sizeof(network_msg_chlor_level_set_t);
-        case network_typ_chlor_t::LEVEL_RESP:
+        case datalink_typ_chlor_t::LEVEL_RESP:
             return sizeof(network_msg_chlor_level_resp_t);  // was ..ping_resp_t
-        case network_typ_chlor_t::NAME_REQ:
+        case datalink_typ_chlor_t::NAME_REQ:
             return sizeof(network_msg_chlor_name_req_t);
         default:
             return 0;

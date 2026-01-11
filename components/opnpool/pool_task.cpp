@@ -98,7 +98,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 {
     datalink_pkt_t const * const pkt = rs485->dequeue(rs485);
     if (pkt) {
-        ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", network_typ_ctrl_str(static_cast<network_typ_ctrl_t>(pkt->prot_typ)));
+        ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", datalink_typ_ctrl_str(static_cast<datalink_typ_ctrl_t>(pkt->typ)));
 
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
               size_t const dbg_size = 128;
@@ -116,7 +116,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         bool txOpportunity = false;
         network_msg_t msg;
 
-        ESP_LOGVV(TAG, "pretent rx: pkt typ=%s", network_typ_ctrl_str(static_cast<network_typ_ctrl_t>(pkt->prot_typ)));
+        ESP_LOGVV(TAG, "pretent rx: pkt typ=%s", datalink_typ_ctrl_str(static_cast<datalink_typ_ctrl_t>(pkt->typ)));
 
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
 

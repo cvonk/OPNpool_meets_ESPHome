@@ -32,14 +32,14 @@ namespace opnpool {
 static char const * const TAG = "datalink_tx";
 
 static void
-_enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, uint8_t const prot_typ)
+_enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, datalink_typ_t const typ)
 {
     head->ff = 0xFF;
     for (uint_least8_t ii = 0; ii < sizeof(datalink_preamble_ic); ii++) {
         head->preamble[ii] = datalink_preamble_ic[ii];
     }
     head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
-    head->hdr.typ = prot_typ;
+    head->hdr.typ = typ.raw;
 }
 
 static void
@@ -49,7 +49,7 @@ _enter_ic_tail(datalink_tail_ic_t * const tail, uint8_t const * const start, uin
 }
 
 static void
-_enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, uint8_t const prot_typ, size_t const data_len)
+_enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, datalink_typ_t const typ, size_t const data_len)
 {
     head->ff = 0xFF;
     for (uint_least8_t ii = 0; ii < sizeof(datalink_preamble_a5); ii++) {
@@ -58,11 +58,12 @@ _enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, uint8_t 
     head->hdr.ver = 0x01;
     head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
     head->hdr.src = datalink_devaddr(datalink_addrgroup_t::REMOTE, 2);  // 2BD 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
-    head->hdr.typ = prot_typ;
+    head->hdr.typ = typ.raw;
     head->hdr.len = data_len;
 }
 
 static void
+
 _enter_a5_tail(datalink_tail_a5_t * const tail, uint8_t const * const start, uint8_t const * const stop)
 {
     uint16_t crcVal = datalink_calc_crc(start, stop);
@@ -83,7 +84,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
     switch (pkt->prot) {
         case datalink_prot_t::IC: {
             datalink_head_ic_t * const head = (datalink_head_ic_t *) skb_push(skb, sizeof(datalink_head_ic_t));
-            _enter_ic_head(head, skb, pkt->prot_typ);
+            _enter_ic_head(head, skb, pkt->typ);
 
             uint8_t * crc_start = head->preamble;
             uint8_t * crc_stop = skb->priv.tail;
@@ -94,7 +95,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
         case datalink_prot_t::A5_CTRL:
         case datalink_prot_t::A5_PUMP: {
             datalink_head_a5_t * const head = (datalink_head_a5_t *) skb_push(skb, sizeof(datalink_head_a5_t));
-            _enter_a5_head(head, skb, pkt->prot_typ, pkt->data_len);
+            _enter_a5_head(head, skb, pkt->typ, pkt->data_len);
 
             uint8_t * crc_start = head->preamble + sizeof(datalink_preamble_a5_t) - 1;
             uint8_t * crc_stop = skb->priv.tail;
