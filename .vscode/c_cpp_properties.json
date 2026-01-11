@@ -18,7 +18,7 @@
             ],
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "gcc-arm"
+            "intelliSenseMode": "linux-gcc-x64"  // for ESP32 Xtensa toolchain
         }
     ],
     "version": 4
