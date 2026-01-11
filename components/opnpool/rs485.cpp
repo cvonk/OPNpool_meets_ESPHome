@@ -55,14 +55,6 @@ _read_bytes(uint8_t * dst, uint32_t len)
     return uart_read_bytes(_uart_port, dst, len, _rxTimeout);
 }
 
-#if 0
-static int
-_write(uint8_t src)
-{
-    return uart_write_bytes(_uart_port, (char *) &src, 1);
-}
-#endif
-
 static int
 _write_bytes(uint8_t * src, size_t len)
 {

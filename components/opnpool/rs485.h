@@ -3,6 +3,7 @@
 # error "Requires C++ compilation"
 #endif
 
+#include <cstddef>
 #include <esp_system.h>
 #include <esp_types.h>
 #include <driver/uart.h>

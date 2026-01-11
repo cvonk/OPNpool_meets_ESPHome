@@ -6,6 +6,7 @@
 #include <esp_system.h>
 #include <strings.h>
 #include <stdio.h>
+#include <cstddef>
 
 #include "datalink.h"
 #include "datalink_pkt.h"
@@ -587,7 +588,7 @@ enum class network_msg_typ_t : uint8_t {
     CTRL_CHEM_REQ = 44
 };
 
-consteval size_t network_msg_typ_count() {
+constexpr size_t network_msg_typ_count() {
     return magic_enum::enum_count<network_msg_typ_t>();
 }
 
