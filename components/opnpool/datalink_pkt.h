@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __cplusplus
-# error "This header requires C++ compilation"
+# error "Requires C++ compilation"
 #endif
 
 #include <esp_system.h>
@@ -12,14 +12,6 @@
 
 namespace esphome {
 namespace opnpool {
-
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-
-#ifndef ARRAY_SIZE
-# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
 
 enum class datalink_prot_t : uint8_t {
   IC = 0x00,
@@ -52,7 +44,6 @@ datalink_prot_str(datalink_prot_t const prot)
     if (!name.empty()) {
         return name.data();
     }
-    // fallback for unknown values
     static char buf[8];
     snprintf(buf, sizeof(buf), "0x%02X", static_cast<uint8_t>(prot));
     return buf;
@@ -65,21 +56,20 @@ datalink_prot_nr(char const * const prot_str)
         return -1;
     }
     
-    // Try magic_enum first for efficient lookup
+        // try magic_enum first for efficient lookup
     auto value = magic_enum::enum_cast<datalink_prot_t>(std::string_view(prot_str), magic_enum::case_insensitive);
     if (value.has_value()) {
         return static_cast<int>(value.value());
     }
     
-    // Search through entire uint8_t range (0-255) if not found in enum
-    for (uint16_t i = 0; i <= 0xFF; i++) {
-        auto candidate = static_cast<datalink_prot_t>(i);
+        // search through entire uint8_t range (0-255) if not found in enum
+    for (uint16_t ii = 0; ii <= 0xFF; ii++) {
+        auto candidate = static_cast<datalink_prot_t>(ii);
         auto name = magic_enum::enum_name(candidate);
         if (!name.empty() && strcasecmp(prot_str, name.data()) == 0) {
-            return i;
+            return ii;
         }
-    }
-    
+    }    
     return -1;
 }
 

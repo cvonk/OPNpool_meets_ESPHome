@@ -118,7 +118,7 @@ OpnPool::service_requests_from_pool(ipc_t const * const ipc)
 {
     network_msg_t msg;
 
-    if (xQueueReceive(ipc->to_main_q, &msg, (TickType_t)(1000L / portTICK_PERIOD_MS)) == pdPASS) {
+    if (xQueueReceive(ipc->to_main_q, &msg, 0) == pdPASS) {  // don't block, just check if a message is available
 
         //ESP_LOGV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(queued_msg.typ));
 
@@ -127,17 +127,17 @@ OpnPool::service_requests_from_pool(ipc_t const * const ipc)
             ESP_LOGVV(TAG, "Poolstate changed");
 
             // 2BD: publish this as an update to the HA sensors 
-            // Maybe this should be inside poolstate_rx_update(). If the sensors
-            //   keep track of their previous state, then only publish changes.
-            // Maybe2, poolstate should be a class that encapsulates the state and the sensors.
-            // Maybe3, that is where the OpnPoolSwitch, OpnPoolClimate et al classes are for.
+            // Maybe2, that is where the OpnPoolSwitch, OpnPoolClimate et al classes are for.
         }
     }
 }
 
-void OpnPool::loop() {
+void OpnPool::loop() {  //  this will be called repeatedly by the main ESPHome loop
 
-  service_requests_from_pool(&this->ipc_);
+    // don't do any blocking operations here
+    // don't call vTaskDelay() or blocking queue operations
+
+    this->service_requests_from_pool(&this->ipc_);
 
 #if 0
   while (this->available()) {    

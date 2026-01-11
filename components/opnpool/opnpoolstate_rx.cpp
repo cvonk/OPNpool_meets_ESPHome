@@ -90,13 +90,14 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t co
 static void
 _rx_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
 {
-    char const * str[nrBytes];
-
-    for (uint8_t ii = 0; ii < nrBytes; ii++) {
-        str[ii] = hex8_str(bytes[ii]);
-    }
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON * const array = cJSON_CreateStringArray(str, nrBytes);
+        cJSON * const array = cJSON_CreateArray();
+        
+        for (uint_least8_t ii = 0; ii < nrBytes; ii++) {
+            char hex_str[3];  // "XX\0"
+            snprintf(hex_str, sizeof(hex_str), "%02X", bytes[ii]);
+            cJSON_AddItemToArray(array, cJSON_CreateString(hex_str));
+        }
         cJSON_AddItemToObject(dbg, "raw", array);
     }
 }
@@ -479,8 +480,6 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         case network_msg_typ_t::CHLOR_LEVEL_RESP:
             rx_chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
             break;
-        case network_msg_typ_t::NONE:  // to please gcc
-            break;  //
     }
 
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||

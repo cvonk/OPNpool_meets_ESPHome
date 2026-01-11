@@ -251,9 +251,18 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
 {
     char const * str;
     switch (ctrl) {
-        case 0x00: str = "local"; break;
-        case 0xFF: str = "remote"; break;
-        default: str = hex8_str(ctrl);
+        case 0x00: 
+            str = "local"; 
+            break;
+        case 0xFF: 
+            str = "remote"; 
+            break;
+        default: {
+            static char hex_buffer[5];  // "0xXX\0"
+            snprintf(hex_buffer, sizeof(hex_buffer), "0x%02x", ctrl);
+            str = hex_buffer;
+            break;
+        }
     }
     cJSON_AddStringToObject(obj, key, str);
 }

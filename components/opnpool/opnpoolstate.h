@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __cplusplus
-# error "This header requires C++ compilation"
+# error "Requires C++ compilation"
 #endif
 
 #include <esp_system.h>
@@ -171,15 +171,15 @@ enum class poolstate_elem_circuits_typ_t : uint8_t {
 
 typedef struct {
     poolstate_time_t time;
-    uint8_t  mode;
-    bool     running;
-    uint8_t  state;
-    uint16_t pwr;
-    uint16_t gpm;
-    uint16_t rpm;
-    uint16_t pct;
-    uint8_t  err;
-    uint8_t  timer;
+    uint8_t          mode;
+    bool             running;
+    uint8_t          state;
+    uint16_t         pwr;
+    uint16_t         gpm;
+    uint16_t         rpm;
+    uint16_t         pct;
+    uint8_t          err;
+    uint8_t          timer;
 } poolstate_pump_t;
 
 enum class poolstate_elem_pump_typ_t : uint8_t {
@@ -220,10 +220,10 @@ inline int poolstate_str_chlor_status_nr(char const * const chlor_status_str) {
 }
 
 typedef struct poolstate_chlor_t {
-    char                   name[sizeof(network_msg_chlor_name_str_t) + 1];
-    uint8_t                pct;
-    uint16_t               salt;
-    poolstate_chlor_status_t    status;
+    char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
+    uint8_t                   pct;
+    uint16_t                  salt;
+    poolstate_chlor_status_t  status;
 } poolstate_chlor_t;
 
 enum class poolstate_elem_chlor_typ_t : uint8_t {

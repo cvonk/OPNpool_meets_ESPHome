@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __cplusplus
-# error "This header requires C++ compilation"
+# error "Requires C++ compilation"
 #endif
 
 #include <esp_system.h>

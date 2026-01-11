@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __cplusplus
-# error "This header requires C++ compilation"
+# error "Requires C++ compilation"
 #endif
 
 #include <esp_types.h>
@@ -11,19 +11,6 @@
 
 namespace esphome {
 namespace opnpool {
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-#define ALIGN( type ) __attribute__((aligned( __alignof__( type ) )))
-#define PACK( type )  __attribute__((aligned( __alignof__( type ) ), packed ))
-#define PACK8  __attribute__((aligned( __alignof__( uint8_t ) ), packed ))
-#ifndef MIN
-#define MIN(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a < _b ? _a : _b; })
-#endif
-#ifndef MAX
-#define MAX(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
-#endif
 
     // ipc_t passed to tasks
 

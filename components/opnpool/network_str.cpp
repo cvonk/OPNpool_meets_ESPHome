@@ -97,19 +97,23 @@ network_version_str(uint8_t const major, uint8_t const minor)
 char const *
 network_pump_prg_str(uint16_t const address)
 {
-    char const * s;
-    switch (address) {
-        case 0x2BF0: s = "?"; break;
-        case 0x02E4: s = "pgm"; break;   // program GPM
-        case 0x02C4: s = "rpm"; break;   // program RPM
-        case 0x0321: s = "eprg"; break;  // select ext prog, 0x0000=P0, 0x0008=P1, 0x0010=P2, 0x0080=P3, 0x0020=P4
-        case 0x0327: s = "eRpm0"; break; // program ext program RPM0
-        case 0x0328: s = "eRpm1"; break; // program ext program RPM1
-        case 0x0329: s = "eRpm2"; break; // program ext program RPM2
-        case 0x032A: s = "eRpm3"; break; // program ext program RPM3
-        default: s = hex16_str(address);
+    auto prg_addr = static_cast<network_pump_prg_addr_t>(address);
+    
+    switch (prg_addr) {
+        case network_pump_prg_addr_t::UNKNOWN:  return "?";
+        case network_pump_prg_addr_t::PGM:      return "pgm";
+        case network_pump_prg_addr_t::RPM:      return "rpm";
+        case network_pump_prg_addr_t::EPRG:     return "eprg";
+        case network_pump_prg_addr_t::ERPM0:    return "erpm0";
+        case network_pump_prg_addr_t::ERPM1:    return "erpm1";
+        case network_pump_prg_addr_t::ERPM2:    return "erpm2";
+        case network_pump_prg_addr_t::ERPM3:    return "erpm3";
+        default: {
+            static char hex_buffer[7];  // "0xXXXX\0"
+            snprintf(hex_buffer, sizeof(hex_buffer), "0x%04x", address);
+            return hex_buffer;
+        }
     }
-    return s;
 }
 
 } // namespace opnpool

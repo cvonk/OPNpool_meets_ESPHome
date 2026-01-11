@@ -23,6 +23,10 @@
 
 #include "utils.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+
 namespace esphome {
 namespace opnpool {
 
@@ -71,7 +75,7 @@ bool_str(bool const value)
 }
 
 char const *
-hex8_str(uint8_t const value)
+uint8_str(uint8_t const value)
 {
     uint_least8_t const nrdigits = sizeof(value) << 1;
 
@@ -87,7 +91,7 @@ hex8_str(uint8_t const value)
 }
 
 char const *
-hex16_str(uint16_t const value)
+uint16_str(uint16_t const value)
 {
     uint_least8_t const nrdigits = sizeof(value) << 1;
 

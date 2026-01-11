@@ -38,10 +38,6 @@
 namespace esphome {
 namespace opnpool {
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
 static char const * const TAG = "pool_task";
 
 static bool
@@ -177,7 +173,7 @@ pool_task(void * ipc_void)
 
             _forward_queued_pkt_to_rs485(rs485, ipc);
         }
-        vTaskDelay(1);
+         vTaskDelay((TickType_t)100 / portTICK_PERIOD_MS);
     }
 }
 

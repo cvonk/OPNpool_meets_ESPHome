@@ -1,6 +1,6 @@
 #pragma once
 #ifndef __cplusplus
-# error "This header requires C++ compilation"
+# error "Requires C++ compilation"
 #endif
 
 #include "esphome/core/component.h"
@@ -131,9 +131,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     ipc_t ipc_{};  // interprocess communication structure and RS485-pins
 
     OpnPoolState * opnPoolState_{nullptr};
-
     void service_requests_from_pool(ipc_t const * const ipc);
-
 
     void parse_packet_(const std::vector<uint8_t> &data);
     std::vector<uint8_t> rx_buffer_;

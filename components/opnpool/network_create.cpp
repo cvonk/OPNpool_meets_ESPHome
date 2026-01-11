@@ -40,68 +40,6 @@ _skb_alloc_a5(size_t const msg_size)
     return txb;
 }
 
-    // size lookup table for message types (MUST MATCH TO THE enum network_typ_ctrl_t)
-static constexpr size_t network_msg_typ_sizes[] = {
-    0,                                                                   // 0: NONE
-    sizeof(network_msg_ctrl_set_ack_t),                                  // 1: CTRL_SET_ACK
-    sizeof(network_msg_ctrl_circuit_set_t),                              // 2: CTRL_CIRCUIT_SET
-    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       // 3: CTRL_SCHED_REQ
-    sizeof(network_msg_ctrl_sched_resp_t),                               // 4: CTRL_SCHED_RESP
-    sizeof(network_msg_ctrl_state_bcast_t),                              // 5: CTRL_STATE_BCAST
-    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        // 6: CTRL_TIME_REQ
-    sizeof(network_msg_ctrl_time_resp_t),                                // 7: CTRL_TIME_RESP
-    sizeof(network_msg_ctrl_time_set_t),                                 // 8: CTRL_TIME_SET
-    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        // 9: CTRL_HEAT_REQ
-    sizeof(network_msg_ctrl_heat_resp_t),                                // 10: CTRL_HEAT_RESP
-    sizeof(network_msg_ctrl_heat_set_t),                                 // 11: CTRL_HEAT_SET
-    0 /* sizeof(network_msg_ctrl_layout_req_t) returns 1, not 0 */,      // 12: CTRL_LAYOUT_REQ
-    sizeof(network_msg_ctrl_layout_resp_t),                              // 13: CTRL_LAYOUT_RESP
-    sizeof(network_msg_ctrl_layout_set_t),                               // 14: CTRL_LAYOUT_SET
-    sizeof(network_msg_pump_reg_set_t),                                  // 15: PUMP_REG_SET
-    sizeof(network_msg_pump_reg_resp_t),                                 // 16: PUMP_REG_RESP
-    sizeof(network_msg_pump_ctrl_t),                                     // 17: PUMP_CTRL_SET
-    sizeof(network_msg_pump_ctrl_t),                                     // 18: PUMP_CTRL_RESP
-    sizeof(network_msg_pump_mode_t),                                     // 19: PUMP_MODE_SET
-    sizeof(network_msg_pump_mode_t),                                     // 20: PUMP_MODE_RESP
-    sizeof(network_msg_pump_run_t),                                      // 21: PUMP_RUN_SET
-    sizeof(network_msg_pump_run_t),                                      // 22: PUMP_RUN_RESP
-    sizeof(network_msg_pump_status_req_t),                               // 23: PUMP_STATUS_REQ
-    sizeof(network_msg_pump_status_resp_t),                              // 24: PUMP_STATUS_RESP
-    sizeof(network_msg_chlor_ping_req_t),                                // 25: CHLOR_PING_REQ
-    sizeof(network_msg_chlor_ping_resp_t),                               // 26: CHLOR_PING_RESP
-    sizeof(network_msg_chlor_name_resp_t),                               // 27: CHLOR_NAME_RESP
-    sizeof(network_msg_chlor_level_set_t),                               // 28: CHLOR_LEVEL_SET
-    sizeof(network_msg_chlor_level_resp_t),                              // 29: CHLOR_LEVEL_RESP
-    sizeof(network_msg_chlor_name_req_t),                                // 30: CHLOR_NAME_REQ
-    0 /* sizeof(network_msg_ctrl_valve_req_t) returns 1, not 0 */,       // 31: CTRL_VALVE_REQ
-    sizeof(network_msg_ctrl_valve_resp_t),                               // 32: CTRL_VALVE_RESP
-    0 /* sizeof(network_msg_ctrl_version_req_t) returns 1, not 0 */,     // 33: CTRL_VERSION_REQ
-    sizeof(network_msg_ctrl_version_resp_t),                             // 34: CTRL_VERSION_RESP
-    0 /* sizeof(network_msg_ctrl_solarpump_req_t) returns 1, not 0 */,   // 35: CTRL_SOLARPUMP_REQ
-    sizeof(network_msg_ctrl_solarpump_resp_t),                           // 36: CTRL_SOLARPUMP_RESP
-    0 /* sizeof(network_msg_ctrl_delay_req_t) returns 1, not 0 */,       // 37: CTRL_DELAY_REQ
-    sizeof(network_msg_ctrl_delay_resp_t),                               // 38: CTRL_DELAY_RESP
-    0 /* sizeof(network_msg_ctrl_heat_setpt_req_t) returns 1, not 0 */,  // 39: CTRL_HEAT_SETPT_REQ
-    sizeof(network_msg_ctrl_heat_setpt_resp_t),                          // 40: CTRL_HEAT_SETPT_RESP
-    sizeof(network_msg_ctrl_circ_names_req_t),                           // 41: CTRL_CIRC_NAMES_REQ
-    sizeof(network_msg_ctrl_circ_names_resp_t),                          // 42: CTRL_CIRC_NAMES_RESP
-    sizeof(network_msg_ctrl_scheds_req_t),                               // 43: CTRL_SCHEDS_REQ
-    sizeof(network_msg_ctrl_scheds_resp_t),                              // 44: CTRL_SCHEDS_RESP
-    sizeof(network_msg_ctrl_chem_req_t),                                 // 45: CTRL_CHEM_REQ
-};
-
-// Helper to get message size
-inline esp_err_t
-network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
-{
-    uint8_t idx = static_cast<uint8_t>(typ);
-    if (idx < ARRAY_SIZE(network_msg_typ_sizes)) {
-        *size = network_msg_typ_sizes[idx];
-        return ESP_OK;
-    }
-    return ESP_FAIL;
-}
-
 /*
  * Create datalink_pkt from network_msg.
  */
@@ -120,7 +58,7 @@ network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
     }
 
     pkt->prot = info.proto;
-    pkt->prot_typ = info.prot_typ;
+    pkt->prot_typ = info.prot_typ.raw;
     pkt->data_len = data_len;
     pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
     skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
