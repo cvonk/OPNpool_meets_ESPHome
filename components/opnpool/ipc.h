@@ -4,9 +4,10 @@
 #endif
 
 #include <esp_types.h>
+#include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "skb.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {

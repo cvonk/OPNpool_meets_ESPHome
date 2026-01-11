@@ -21,6 +21,7 @@
 #include <esp_system.h>
 #include <driver/uart.h>
 #include <driver/gpio.h>
+#include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <esphome/core/log.h>
 

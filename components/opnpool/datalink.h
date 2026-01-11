@@ -9,10 +9,14 @@
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-#include "rs485.h"
 
 namespace esphome {
 namespace opnpool {
+
+// Forward declarations to break circular dependency
+struct rs485_instance_t;
+typedef rs485_instance_t * rs485_handle_t;
+struct datalink_pkt_t;
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -96,6 +100,7 @@ size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
 
     // using #define instead of a `const` prevents circular dependency
 #define DATALINK_MAX_DATA_SIZE (NETWORK_DATA_MAX_SIZE)
+
 
 /**
  * @brief Data link tail structure
