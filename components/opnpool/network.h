@@ -16,15 +16,15 @@ namespace esphome {
 namespace opnpool {
 
 enum class network_pump_prg_addr_t : uint16_t {
-    UNKN_2BF0   = 0x2BF0,
-    UNKN_02BF   = 0x02BF,   
-    PGM         = 0x02E4,  // program GPM
-    RPM         = 0x02C4,  // program RPM
-    EPRG        = 0x0321,  // select ext prog, 0x0000=P0, 0x0008=P1, 0x0010=P2, 0x0080=P3, 0x0020=P4
-    ERPM0       = 0x0327,  // program ext program RPM0
-    ERPM1       = 0x0328,  // program ext program RPM1
-    ERPM2       = 0x0329,  // program ext program RPM2
-    ERPM3       = 0x032A   // program ext program RPM3
+    UNKNOWN_2BF0 = 0x2BF0,
+    UNKNOWN_02BF = 0x02BF,   
+    PGM          = 0x02E4,  // program GPM
+    RPM          = 0x02C4,  // program RPM
+    EPRG         = 0x0321,  // select ext prog, 0x0000=P0, 0x0008=P1, 0x0010=P2, 0x0080=P3, 0x0020=P4
+    ERPM0        = 0x0327,  // program ext program RPM0
+    ERPM1        = 0x0328,  // program ext program RPM1
+    ERPM2        = 0x0329,  // program ext program RPM2
+    ERPM3        = 0x032A   // program ext program RPM3
 };
 
 /* network.c */

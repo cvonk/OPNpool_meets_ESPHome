@@ -100,14 +100,15 @@ network_pump_prg_str(uint16_t const address)
     auto prg_addr = static_cast<network_pump_prg_addr_t>(address);
     
     switch (prg_addr) {
-        case network_pump_prg_addr_t::UNKNOWN:  return "?";
-        case network_pump_prg_addr_t::PGM:      return "pgm";
-        case network_pump_prg_addr_t::RPM:      return "rpm";
-        case network_pump_prg_addr_t::EPRG:     return "eprg";
-        case network_pump_prg_addr_t::ERPM0:    return "erpm0";
-        case network_pump_prg_addr_t::ERPM1:    return "erpm1";
-        case network_pump_prg_addr_t::ERPM2:    return "erpm2";
-        case network_pump_prg_addr_t::ERPM3:    return "erpm3";
+        case network_pump_prg_addr_t::UNKNOWN_2BF0:  return "?";
+        case network_pump_prg_addr_t::UNKNOWN_02BF:  return "?";
+        case network_pump_prg_addr_t::PGM:           return "pgm";
+        case network_pump_prg_addr_t::RPM:           return "rpm";
+        case network_pump_prg_addr_t::EPRG:          return "eprg";
+        case network_pump_prg_addr_t::ERPM0:         return "erpm0";
+        case network_pump_prg_addr_t::ERPM1:         return "erpm1";
+        case network_pump_prg_addr_t::ERPM2:         return "erpm2";
+        case network_pump_prg_addr_t::ERPM3:         return "erpm3";
         default: {
             static char hex_buffer[7];  // "0xXXXX\0"
             snprintf(hex_buffer, sizeof(hex_buffer), "0x%04x", address);

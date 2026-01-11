@@ -537,6 +537,7 @@ typedef struct network_msg_pump_run_t {
 // PUMP STATUS
 
 typedef struct network_msg_pump_status_req_t {
+    // be aware: sizeof(network_msg_pump_status_req_t) == 1, not 0
 } network_msg_pump_status_req_t;
 
 typedef struct network_msg_pump_status_resp_t {
