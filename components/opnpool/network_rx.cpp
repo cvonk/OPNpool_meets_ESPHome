@@ -328,7 +328,7 @@ esp_err_t
 network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity)
 {
         // reset mechanism that converts various formats to string
-	  name_reset_idx();
+    name_reset_idx();
 
         // silently ignore packets that we can't decode
     datalink_addrgroup_t const dst = datalink_groupaddr(pkt->dst);

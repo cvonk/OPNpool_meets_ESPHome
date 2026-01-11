@@ -9,10 +9,10 @@
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-#include "network.h"
 #include "ipc.h"
-#include "opnpool.h"
+#include "network.h"
 #include "network_msg.h"
+#include "opnpool.h"
 
 namespace esphome {
 namespace opnpool {
@@ -64,7 +64,13 @@ enum class poolstate_thermo_typ_t : uint8_t {
     SPA  = 1
 };
 
-constexpr size_t poolstate_thermo_typ_count() {
+#ifdef __INTELLISENSE__
+#define POOLSTATE_THERMO_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#else
+#define POOLSTATE_THERMO_TYP_COUNT (poolstate_thermo_type_count())
+#endif
+
+constexpr size_t poolstate_thermo_type_count() {
     return magic_enum::enum_count<poolstate_thermo_typ_t>();
 }
 
@@ -80,6 +86,7 @@ inline int poolstate_str_thermo_nr(char const * const thermostat_str) {
 
 typedef struct poolstate_thermo_t {
     uint8_t  temp;
+
     uint8_t  set_point;
     uint8_t  heat_src;
     bool     heating;
@@ -118,6 +125,12 @@ enum class poolstate_temp_typ_t : uint8_t {
     SOLAR = 1
 };
 
+#ifdef __INTELLISENSE__
+#define POOLSTATE_TEMP_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#else
+#define POOLSTATE_TEMP_TYP_COUNT (poolstate_temp_typ_count())
+#endif
+
 constexpr size_t poolstate_temp_typ_count() {
     return magic_enum::enum_count<poolstate_temp_typ_t>();
 }
@@ -146,7 +159,7 @@ enum class PoolstateElemTempTyp : uint8_t {
  **/
 
 typedef struct poolstate_modes_t {
-    bool  set[network_pool_mode_count()];
+    bool  set[NETWORK_POOL_MODE_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
 } poolstate_modes_t;
 
 enum class poolstate_elem_modes_typ_t : uint8_t {
@@ -162,8 +175,8 @@ enum class poolstate_elem_modes_typ_t : uint8_t {
  **/
 
 typedef struct poolstate_circuits_t {
-    bool     active[network_pool_circuit_count()];
-    bool     delay[network_pool_circuit_count()];
+    bool     active[NETWORK_POOL_MODE_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
+    bool     delay[NETWORK_POOL_MODE_COUNT];   // IntelliSense flags this incorrectly - it compiles fine
 } poolstate_circuits_t;
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
@@ -248,9 +261,9 @@ enum class poolstate_elem_chlor_typ_t : uint8_t {
 
 typedef struct poolstate_t {
     poolstate_system_t    system;
-    poolstate_temp_t      temps[poolstate_temp_typ_count()];
-    poolstate_thermo_t    thermos[poolstate_thermo_typ_count()];
-    poolstate_sched_t     scheds[network_pool_circuit_count()];
+    poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
+    poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
+    poolstate_sched_t     scheds[NETWORK_POOL_MODE_COUNT];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;

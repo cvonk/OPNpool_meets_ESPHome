@@ -24,6 +24,7 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <esphome/core/log.h>
+#include <esp_rom_sys.h>
 
 #include "rs485.h"
 #include "datalink.h"

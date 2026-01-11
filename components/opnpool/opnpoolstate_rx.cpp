@@ -27,6 +27,7 @@
 
 #include "utils.h"
 #include "network.h"
+#include "network_msg.h"
 #include "ipc.h"
 #include "opnpoolstate.h"
 
@@ -123,7 +124,7 @@ void
 OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
 {
     poolstate_sched_t * state_scheds = state->scheds;    
-    memset(state_scheds, 0, sizeof(poolstate_sched_t) * network_pool_circuit_count() );
+    memset(state_scheds, 0, sizeof(poolstate_sched_t) * NETWORK_POOL_MODE_COUNT );
 
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
 
@@ -147,7 +148,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     bool * state_active = state->circuits.active;
     uint16_t msg_mask = 0x00001;
     uint16_t const msg_active = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
-    for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, state_active++) {
+    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_active++) {
         *state_active = msg_active & msg_mask;
         msg_mask <<= 1;
     }
@@ -159,7 +160,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     // update state->circuits.delay
     bool * state_delay = state->circuits.delay;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < network_pool_circuit_count(); ii++, state_delay++) {
+    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_delay++) {
         *state_delay = msg->delay & msg_mask;
         msg_mask <<= 1;
     }
@@ -182,7 +183,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     // update state->modes.set
     bool * state_mode = state->modes.set;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < network_pool_mode_count(); ii++, state_mode++) {
+    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_mode++) {
         *state_mode = msg->modes & msg_mask;
         msg_mask <<= 1;
     }

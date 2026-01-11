@@ -30,6 +30,16 @@ enum class network_pool_mode_t : uint8_t {
     TIMEOUT     = 4
 };
 
+#ifdef __INTELLISENSE__
+#define NETWORK_POOL_MODE_COUNT (5)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#else
+#define NETWORK_POOL_MODE_COUNT (network_pool_mode_count())
+#endif
+
+constexpr size_t network_pool_mode_count() {
+    return magic_enum::enum_count<network_pool_mode_t>();
+}
+
 inline const char *
 network_pool_mode_str(network_pool_mode_t const mode)
 {
@@ -40,10 +50,6 @@ network_pool_mode_str(network_pool_mode_t const mode)
     thread_local char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
-}
-
-constexpr size_t network_pool_mode_count() {
-    return magic_enum::enum_count<network_pool_mode_t>();
 }
 
 /**
@@ -62,6 +68,12 @@ enum class network_pool_circuit_t : uint8_t {
     FT4  = 8
 };
   
+#ifdef __INTELLISENSE__
+#define NETWORK_POOL_CIRCUIT_COUNT (9)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#else
+#define NETWORK_POOL_CIRCUIT_COUNT (network_pool_circuit_count())
+#endif
+
 constexpr size_t network_pool_circuit_count() {
     return magic_enum::enum_count<network_pool_circuit_t>();
 }
@@ -594,7 +606,7 @@ constexpr size_t network_msg_typ_count() {
 
     // size lookup table for message types 
     // MUST MATCH enum network_msg_typ_t
-static constexpr size_t network_msg_typ_sizes[network_msg_typ_count()] = {
+static constexpr size_t network_msg_typ_sizes[] = {
     sizeof(network_msg_ctrl_set_ack_t),                                  // 0: CTRL_SET_ACK
     sizeof(network_msg_ctrl_circuit_set_t),                              // 1: CTRL_CIRCUIT_SET
     0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       // 2: CTRL_SCHED_REQ
@@ -642,6 +654,8 @@ static constexpr size_t network_msg_typ_sizes[network_msg_typ_count()] = {
     sizeof(network_msg_ctrl_chem_req_t)                                  // 44: CTRL_CHEM_REQ
 };
 
+    // helper functions
+
 inline esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
 {
@@ -673,7 +687,7 @@ struct network_msg_typ_info_t {
 
     // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
     // MUST MATCH network_msg_typ_t
-constexpr network_msg_typ_info_t network_msg_typ_info[network_msg_typ_count()] = {
+constexpr network_msg_typ_info_t network_msg_typ_info[] = {
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          // 0: CTRL_SET_ACK
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRCUIT_SET},      // 1: CTRL_CIRCUIT_SET
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_REQ},        // 2: CTRL_SCHED_REQ
@@ -722,6 +736,14 @@ constexpr network_msg_typ_info_t network_msg_typ_info[network_msg_typ_count()] =
 };
 
     // helper functions
+
+constexpr size_t NETWORK_MSG_TYP_SIZES_COUNT = std::size(network_msg_typ_sizes);
+constexpr size_t NETWORK_MSG_TYP_INFO_COUNT = std::size(network_msg_typ_info);
+
+#ifndef __INTELLISENSE__
+static_assert(NETWORK_MSG_TYP_SIZES_COUNT == network_msg_typ_count());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+static_assert(NETWORK_MSG_TYP_INFO_COUNT == network_msg_typ_count());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#endif
 
 inline const char *
 network_msg_typ_str(network_msg_typ_t const typ)

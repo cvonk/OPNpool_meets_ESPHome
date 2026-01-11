@@ -4,16 +4,28 @@
 #endif
 
 #include <esphome/core/component.h>
-#include <esphome/components/uart/uart.h>
-#include <esphome/components/climate/climate.h>
-#include <esphome/components/switch/switch.h>
-#include <esphome/components/sensor/sensor.h>
-#include <esphome/components/binary_sensor/binary_sensor.h>
-#include <esphome/components/text_sensor/text_sensor.h>
+#include <esphome/components/uart/uart.h>                    // esphome::uart::UARTDevice
+#include <esphome/components/climate/climate.h>              // esphome::climate::Climate
+#include <esphome/components/switch/switch.h>                // esphome::switch_::Switch
+#include <esphome/components/sensor/sensor.h>                // esphome::sensor::Sensor
+#include <esphome/components/binary_sensor/binary_sensor.h>  // esphome::binary_sensor::BinarySensor
+#include <esphome/components/text_sensor/text_sensor.h>      // esphome::text_sensor::TextSensor
 #include <vector>
 #include <string>
 
 #include "ipc.h"
+
+    // help IntelliSense with ESPHome namespaces
+#ifdef __INTELLISENSE__
+namespace esphome {
+    namespace sensor { class Sensor; }
+    namespace binary_sensor { class BinarySensor; }
+    namespace text_sensor { class TextSensor; }
+    namespace switch_ { class Switch; }
+    namespace climate { class Climate; }
+    namespace uart { class UARTDevice; }
+}
+#endif
 
 namespace esphome {
 namespace opnpool {
@@ -23,12 +35,11 @@ class OpnPool;
 class OpnPoolState; 
 
 // climate entity
-
-class OpnPoolClimate : public esphome::climate::Climate {
+class OpnPoolClimate : public climate::Climate {  // ✅ Changed from esphome::climate::Climate
 
   public:
-    esphome::climate::ClimateTraits traits() override;
-    void control(const esphome::climate::ClimateCall &call) override;  
+    climate::ClimateTraits traits() override;  // ✅ Changed from esphome::climate::ClimateTraits
+    void control(const climate::ClimateCall &call) override;  // ✅ Changed from esphome::climate::ClimateCall
     void set_parent(OpnPool *parent) { this->parent_ = parent; }
 
   protected:
@@ -36,8 +47,7 @@ class OpnPoolClimate : public esphome::climate::Climate {
 };
 
 // switch entity
-
-class OpnPoolSwitch : public esphome::switch_::Switch {
+class OpnPoolSwitch : public switch_::Switch {  // ✅ Changed from esphome::switch_::Switch
   public:
     void set_parent(OpnPool *parent) { this->parent_ = parent; }
     void set_circuit_id(uint8_t circuit_id) { this->circuit_id_ = circuit_id; }
@@ -48,22 +58,22 @@ class OpnPoolSwitch : public esphome::switch_::Switch {
     uint8_t circuit_id_{0};
 };
 
-class OpnPoolSensor : public esphome::sensor::Sensor {
+// sensor entities
+class OpnPoolSensor : public sensor::Sensor {  // ✅ Changed from esphome::sensor::Sensor
   protected:
     // The base class sensor::Sensor already provides publish_state(float state)
 };
 
-class OpnPoolBinarySensor : public esphome::binary_sensor::BinarySensor {
+class OpnPoolBinarySensor : public binary_sensor::BinarySensor {  // ✅ Changed
    protected:
 };
 
-class OpnPoolTextSensor : public esphome::text_sensor::TextSensor {
+class OpnPoolTextSensor : public text_sensor::TextSensor {  // ✅ Changed
    protected:
 };
 
 // main component
-
-class OpnPool : public Component, public uart::UARTDevice {
+class OpnPool : public Component, public uart::UARTDevice {  // ✅ No change needed here
 
   public:
     OpnPool();
@@ -82,7 +92,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; if (c) c->set_parent(this); }
     void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; if (c) c->set_parent(this); }
 
-    // switch setters
+    // switch setters - ✅ Keep these as switch_::Switch (correct)
     void set_pool_switch(switch_::Switch *s) { pool_sw_ = s; }
     void set_spa_switch(switch_::Switch *s) { spa_sw_ = s; }
     void set_aux1_switch(switch_::Switch *s) { aux1_sw_ = s; }
@@ -92,7 +102,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_feature3_switch(switch_::Switch *s) { feature3_sw_ = s; }
     void set_feature4_switch(switch_::Switch *s) { feature4_sw_ = s; }
 
-    // analog sensor setters
+    // analog sensor setters - ✅ Keep these as sensor::Sensor (correct)
     void set_air_temperature_sensor(sensor::Sensor *s) { air_temp_s_ = s; }
     void set_water_temperature_sensor(sensor::Sensor *s) { water_temp_s_ = s; }
     void set_pump_power_sensor(sensor::Sensor *s) { pump_power_s_ = s; }
@@ -104,7 +114,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_pump_state_sensor(sensor::Sensor *s) { pump_state_s_ = s; }
     void set_pump_error_sensor(sensor::Sensor *s) { pump_error_s_ = s; }
 
-    // text sensor setters
+    // text sensor setters - ✅ Keep these as text_sensor::TextSensor (correct)
     void set_pool_sched_text_sensor(text_sensor::TextSensor *s) { pool_sched_ts_ = s; }
     void set_spa_sched_text_sensor(text_sensor::TextSensor *s) { spa_sched_ts_ = s; }
     void set_aux1_sched_text_sensor(text_sensor::TextSensor *s) { aux1_sched_ts_ = s; }
@@ -116,7 +126,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_chlorinator_name_text_sensor(text_sensor::TextSensor *s) { chlor_name_ts_ = s; }
     void set_chlorinator_status_text_sensor(text_sensor::TextSensor *s) { chlor_status_ts_ = s; }
 
-    // binary sensor setters
+    // binary sensor setters - ✅ Keep these as binary_sensor::BinarySensor (correct)
     void set_pump_running_binary_sensor(binary_sensor::BinarySensor *s) { pump_running_bs_ = s; }
     void set_mode_service_binary_sensor(binary_sensor::BinarySensor *s) { mode_service_bs_ = s; }
     void set_mode_temperature_inc_binary_sensor(binary_sensor::BinarySensor *s) { mode_temp_inc_bs_ = s; }
@@ -136,7 +146,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void parse_packet_(const std::vector<uint8_t> &data);
     std::vector<uint8_t> rx_buffer_;
 
-    // member pointers
+    // member pointers - ✅ Keep these consistent
     OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};
     switch_::Switch *pool_sw_{nullptr}, *spa_sw_{nullptr}, *aux1_sw_{nullptr}, *aux2_sw_{nullptr};
     switch_::Switch *feature1_sw_{nullptr}, *feature2_sw_{nullptr}, *feature3_sw_{nullptr}, *feature4_sw_{nullptr};
