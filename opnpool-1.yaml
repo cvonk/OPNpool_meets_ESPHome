@@ -17,13 +17,13 @@ esphome:
   name: ${device_name}
   comment: ${description}
   friendly_name: ${friendly_name}
-  platformio_options:
-    monitor_filters:
-      - esp32_exception_decoder
-    build_flags:
-      - -fmax-errors=5
-      - -DMAGIC_ENUM_RANGE_MIN=0
-      - -DMAGIC_ENUM_RANGE_MAX=256      
+  #platformio_options:
+  #  monitor_filters:
+  #    - esp32_exception_decoder
+  #  build_flags:
+  #    - -fmax-errors=5
+  #    - -DMAGIC_ENUM_RANGE_MIN=0
+  #    - -DMAGIC_ENUM_RANGE_MAX=256      
 
 esp32:
   variant: ESP32
@@ -45,6 +45,9 @@ logger:
     datalink_tx: WARN
     network_rx: WARN
     network_create: WARN
+
+debug:
+  update_interval: 5s  # for exception decoding in logs
 
 wifi:
   domain: !secret domain_name

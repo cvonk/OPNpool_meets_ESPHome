@@ -97,6 +97,11 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
+    # Tell ESPHome to link against ESP-IDF's cJSON component
+    cg.add_build_flag("-fmax-errors=5")
+    cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
+    cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
+
     # pass each RS485-setting to the C++ OpnPool instance
     if CONF_RS485 in config:
         rs485_conf = config[CONF_RS485]
@@ -124,14 +129,14 @@ async def to_code(config):
             
             # Circuit ID mapping (0-based): spa=0, aux1=1, aux2=2, ft1=4, pool=5, ft2=6, ft3=7, ft4=8
             circuit_map = {
-                "spa": 0,
-                "aux1": 1,
-                "aux2": 2,
-                "feature1": 4,  # ft1
-                "pool": 5,
-                "feature2": 6,  # ft2
-                "feature3": 7,  # ft3
-                "feature4": 8   # ft4
+                "spa":      0,
+                "aux1":     1,
+                "aux2":     2,
+                "feature1": 4,
+                "pool":     5,
+                "feature2": 6,
+                "feature3": 7,
+                "feature4": 8
             }
             cg.add(obj.set_circuit_id(circuit_map[key]))
 
