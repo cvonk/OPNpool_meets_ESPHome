@@ -185,17 +185,17 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 if ( (datalink_groupaddr(hdr->src) == datalink_addrgroup_t::PUMP) || (datalink_groupaddr(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
                     pkt->prot = datalink_prot_t::A5_PUMP;
                 }
-                pkt->typ.raw = hdr->typ;
-                pkt->src = hdr->src;
-                pkt->dst = hdr->dst;
+                pkt->typ.raw  = hdr->typ;
+                pkt->src      = hdr->src;
+                pkt->dst      = hdr->dst;
                 pkt->data_len = hdr->len;
                 if (pkt->data_len > sizeof(network_msg_data_a5_t)) {
                     return ESP_FAIL;
                 }
-
                 return ESP_OK;
             }
             break;
+
 
         }
         case datalink_prot_t::IC: {
@@ -203,10 +203,10 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_ic_t)) == sizeof(datalink_hdr_ic_t)) {
                 ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst, hdr->typ);
-                
-                pkt->typ.raw = hdr->typ;
-                pkt->src = 0;
-                pkt->dst = hdr->dst;
+
+                pkt->typ.raw  = hdr->typ;
+                pkt->src      = 0;
+                pkt->dst      = hdr->dst;
                 pkt->data_len = network_ic_len(hdr->typ);
                 return ESP_OK;
             }

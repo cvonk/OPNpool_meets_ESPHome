@@ -674,7 +674,7 @@ struct network_msg_typ_info_t {
         : proto(p), typ{.chlor = ct} {}
 };
 
-    // maps datalink_prot_t to network_typ_*_t
+    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
     // MUST MATCH network_msg_typ_t
 constexpr network_msg_typ_info_t network_msg_typ_info[network_msg_typ_count()] = {
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          // 0: CTRL_SET_ACK
@@ -757,19 +757,18 @@ network_msg_typ_nr(char const * const msg_typ_str)
             return i;
         }
     }
-    
     return -1;
 }
 
   // helper to get protocol info for a message type
-inline const network_msg_typ_info_t& 
+inline const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
     if (idx < ARRAY_SIZE(network_msg_typ_info)) {
-        return network_msg_typ_info[idx];
+        return &network_msg_typ_info[idx];
     }
-    return network_msg_typ_info[0];  // Return NONE info for invalid types
+    return nullptr;
 }
 
 typedef struct network_msg_t {

@@ -138,10 +138,11 @@ typedef union datalink_typ_t {
     datalink_typ_ctrl_t  ctrl;
     datalink_typ_pump_t  pump;
     datalink_typ_chlor_t chlor;
-    uint8_t raw;
+    uint8_t              raw;
 } PACK8 datalink_typ_t;
 
 
+typedef uint8_t datalink_address;
 typedef uint8_t datalink_data_t;
 
 /**
@@ -151,8 +152,8 @@ typedef uint8_t datalink_data_t;
 typedef struct datalink_pkt_t {
     datalink_prot_t    prot;      // datalink_prot as detected by `_read_head`
     datalink_typ_t     typ;       // from datalink_hdr_a5->typ
-    uint8_t            src;       // from datalink_hdr_a5->src
-    uint8_t            dst;       // from datalink_hdr_a5->dst
+    datalink_address   src;       // from datalink_hdr_a5->src
+    datalink_address   dst;       // from datalink_hdr_a5->dst
     datalink_data_t *  data;
     size_t             data_len;
     skb_handle_t       skb;

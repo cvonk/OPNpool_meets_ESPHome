@@ -47,18 +47,22 @@ _skb_alloc_a5(size_t const msg_size)
 esp_err_t
 network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 {
-        // get protocol info from the lookup table in network_msg.h
-    const network_msg_typ_info_t& info = network_msg_typ_get_info(msg->typ);
-    
-        // get message size from local lookup table
+        // get protocol info from the lookup table network_msg_typ_info[] in network_msg.h
+    const network_msg_typ_info_t * info = network_msg_typ_get_info(msg->typ);
+    if (info == nullptr) {
+        ESP_LOGE(TAG, "unknown msg typ(%s)", network_msg_typ_str(msg->typ));
+        return ESP_FAIL;
+    }
+
+        // get message size from the lookup table network_msg_typ_sizes[] in network_msg.h
     size_t data_len;
     if (network_msg_typ_get_size(msg->typ, &data_len) != ESP_OK) {
         ESP_LOGE(TAG, "unknown msg typ(%s)", network_msg_typ_str(msg->typ));
         return ESP_FAIL;
     }
 
-    pkt->prot = info.proto;
-    pkt->typ = info.typ;
+    pkt->prot = info->proto;
+    pkt->typ = info->typ;
     pkt->data_len = data_len;
     pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
     skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
