@@ -155,8 +155,8 @@ _pump(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poo
     poolstate_elem_pump_typ_t const elem_pump_typ = static_cast<poolstate_elem_pump_typ_t>(typ);
 
     switch (elem_pump_typ) {
-        case poolstate_elem_pump_typ_t::MODE:
-            _alloc_str(value, network_pump_mode_str(static_cast<network_pump_mode_t>(pump->mode)));
+        case poolstate_elem_pump_typ_t::OPERATION_MODE:
+            _alloc_str(value, network_pump_operation_mode_str(static_cast<network_pump_operation_mode_t>(pump->mode)));
             break;
         case poolstate_elem_pump_typ_t::RUNNING:
             _alloc_bool(value, pump->running);

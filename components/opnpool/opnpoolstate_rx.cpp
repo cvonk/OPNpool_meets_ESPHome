@@ -48,7 +48,7 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * co
     state->system.tod.time.hour = msg->hour;
     state->system.tod.date.day = msg->day;
     state->system.tod.date.month = msg->month;
-    state->system.tod.date.year = msg->year;
+    state->system.tod.date.year = (uint16_t)(2000) + msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_tod(dbg, "tod", &state->system.tod);
@@ -256,11 +256,10 @@ OpnPoolState::rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * co
 void
 OpnPoolState::rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state)
 {
-    state->pump.mode = msg->mode;
-
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_mode(dbg, "mode", msg->mode);
+        opnpoolstate_log_add_pump_operation_mode(dbg, "mode", msg->mode);
     }
+    state->pump.mode = msg->mode;
 }
 
 void

@@ -28,9 +28,9 @@ typedef struct poolstate_time_t {
 } poolstate_time_t;
 
 typedef struct poolstate_date_t {
-    uint8_t  day;
-    uint8_t  month;
-    uint8_t  year;
+    uint8_t   day;
+    uint8_t   month;
+    uint16_t  year;
 } poolstate_date_t;
 
 typedef struct poolstate_tod_t {
@@ -204,7 +204,7 @@ typedef struct poolstate_pump_t {
 
 enum class poolstate_elem_pump_typ_t : uint8_t {
     TIME = 0,
-    MODE = 1,
+    OPERATION_MODE = 1,
     RUNNING = 2,
     STATE = 3,
     POWER = 4,
@@ -349,7 +349,7 @@ void opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, pools
 void opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
 void opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
-void opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode);
+void opnpoolstate_log_add_pump_operation_mode(cJSON * const obj, char const * const key, uint8_t const mode);
 void opnpoolstate_log_add_pump_running(cJSON * const obj, char const * const key, bool const running);
 void opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);

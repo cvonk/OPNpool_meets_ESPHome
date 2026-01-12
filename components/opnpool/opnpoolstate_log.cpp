@@ -264,9 +264,9 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
 }
 
 void
-opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode)
+opnpoolstate_log_add_pump_operation_mode(cJSON * const obj, char const * const key, uint8_t const mode)
 {
-    cJSON_AddStringToObject(obj, key, network_pump_mode_str(static_cast<network_pump_mode_t>(mode)));
+    cJSON_AddStringToObject(obj, key, network_pump_operation_mode_str(static_cast<network_pump_operation_mode_t>(mode)));
 }
 
 static void
@@ -287,7 +287,7 @@ cJSON_AddPumpStatusToObject(cJSON * const obj, char const * const key, poolstate
 {
     cJSON * const item = _create_item(obj, key);
     opnpoolstate_log_add_pump_running(item, "running", pump->running);
-    opnpoolstate_log_add_pump_mode(item, "mode", pump->mode);
+    opnpoolstate_log_add_pump_operation_mode(item, "mode", pump->mode);
     _addPumpStateToObject(item, "state", pump->state);
 }
 #endif
@@ -298,7 +298,7 @@ _add_pump(cJSON * const obj, char const * const key, poolstate_t const * const s
     poolstate_pump_t const * const pump = &state->pump;
     cJSON * const item = _create_item(obj, key);
     _add_time(item, "time", &pump->time);
-    opnpoolstate_log_add_pump_mode(item, "mode", pump->mode);
+    opnpoolstate_log_add_pump_operation_mode(item, "mode", pump->mode);
     opnpoolstate_log_add_pump_running(item, "running", pump->running);
     _addPumpStateToObject(item, "state", pump->state);
     cJSON_AddNumberToObject(item, "power", pump->power);

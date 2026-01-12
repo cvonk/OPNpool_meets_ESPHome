@@ -231,7 +231,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     struct pending_switch_t {
         OpnPoolSwitch *  sw;
         bool             target_state;
-        uint32_t         timestamp;  // for timeout handling
+        uint32_t         timestamp;
     };
     std::vector<pending_switch_t> pending_switches_;
     
@@ -239,9 +239,9 @@ class OpnPool : public Component, public uart::UARTDevice {
         OpnPoolClimate *  climate;
         float             target_setpoint_celsius;
         uint8_t           target_heat_src;
-        uint32_t          timestamp;
         bool              has_setpoint_change;
         bool              has_heat_src_change;
+        uint32_t          timestamp;
     };
     std::vector<pending_climate_t> pending_climates_;
 };

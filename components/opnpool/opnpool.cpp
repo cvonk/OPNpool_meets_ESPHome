@@ -135,7 +135,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
             },
         };
 
-        ESP_LOGV(TAG, "Sending HEAT_SET: pool_SP=%u°F, spa_SP=%u°F, heat_src=%u", 
+        ESP_LOGV(TAG, "Sending HEAT_SET: pool_SP=%u°F, spa_SP=%u°F, heat_src=0x%02X", 
                   msg.u.ctrl_heat_set.poolSetpoint, 
                   msg.u.ctrl_heat_set.spaSetpoint,
                   msg.u.ctrl_heat_set.heatSrc);
@@ -489,7 +489,7 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
     }
     
     if (this->interface_fw_ts_ != nullptr) {
-        this->interface_fw_ts_->publish_state("N/A at least not yet");
+        this->interface_fw_ts_->publish_state("N/A");
     }
 }
 
@@ -497,14 +497,14 @@ void OpnPool::update_analog_sensors(const poolstate_t *new_state) {
 
     if (this->air_temp_s_ != nullptr) {
         float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
-        float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
-        this->air_temp_s_->publish_state(air_temp_c);
+        //float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
+        this->air_temp_s_->publish_state(air_temp_f);
     }
     
     if (this->water_temp_s_ != nullptr) {
         float water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-        float water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
-        this->water_temp_s_->publish_state(water_temp_c);
+        //float water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
+        this->water_temp_s_->publish_state(water_temp_f);
     }
     
     if (this->pump_power_s_ != nullptr) {
@@ -561,13 +561,13 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
-    // First check pending climate changes
+        // first check pending climate changes
     check_pending_climates(new_state);
     
     uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
     float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;
 
-    // Update all heaters in a loop
+        // update all thermostats
     for (uint8_t idx = 0; idx < POOLSTATE_THERMO_TYP_COUNT; idx++) {
         
         OpnPoolClimate *heater = this->heaters_[idx];
@@ -577,11 +577,11 @@ void OpnPool::update_climates(const poolstate_t *new_state) {
         
         poolstate_thermo_t const * const thermo = &new_state->thermos[idx];
 
-        // Update temperatures (convert F to C)
+            // update temperatures
         heater->current_temperature = water_temp_in_celsius;
         heater->target_temperature = (thermo->set_point - 32.0f) * 5.0f / 9.0f;
         
-        // Update mode based on {circuit state, heating status}
+            // update mode based on {circuit state, heating status}
         if (new_state->circuits.active[idx]) {
             if (thermo->heating) {
                 heater->mode = climate::CLIMATE_MODE_HEAT;
@@ -592,7 +592,7 @@ void OpnPool::update_climates(const poolstate_t *new_state) {
             heater->mode = climate::CLIMATE_MODE_OFF;
         }
         
-        // Update action
+            // update action
         if (thermo->heating) {
             heater->action = climate::CLIMATE_ACTION_HEATING;
         } else if (new_state->circuits.active[idx]) {
@@ -617,16 +617,16 @@ void OpnPool::add_pending_climate(OpnPoolClimate *climate, bool has_setpoint, fl
     
         // add new pending
     uint8_t idx = get_climate_index(climate);
-    ESP_LOGVV(TAG, "Adding pending climate: circuit=%u, has_setpoint=%d (%.1f°C), has_heat_src=%d (%u)", 
+    ESP_LOGVV(TAG, "Adding pending climate: circuit=%u, has_setpoint=%d (%.1f°C), has_heat_src=%d (0x%02X)", 
               idx, has_setpoint, setpoint_celsius, has_heat_src, heat_src);
     
     pending_climates_.push_back({
         .climate = climate,
         .target_setpoint_celsius = setpoint_celsius,
         .target_heat_src = heat_src,
-        .timestamp = millis(),
         .has_setpoint_change = has_setpoint,
-        .has_heat_src_change = has_heat_src
+        .has_heat_src_change = has_heat_src,
+        .timestamp = millis()
     });
 }
 

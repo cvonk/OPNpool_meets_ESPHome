@@ -94,7 +94,7 @@ network_pool_circuit_str(network_pool_circuit_t const circuit)
  * @brief Pump operation modes
  */
 
-enum class network_pump_mode_t : uint8_t {
+enum class network_pump_operation_mode_t : uint8_t {
     FILTER = 0,
     MAN    = 1,
     BKWASH = 2,
@@ -111,7 +111,7 @@ enum class network_pump_mode_t : uint8_t {
 };
 
 inline const char *
-network_pump_mode_str(network_pump_mode_t const mode)
+network_pump_operation_mode_str(network_pump_operation_mode_t const mode)
 {
     auto name = magic_enum::enum_name(mode);
     if (!name.empty()) {

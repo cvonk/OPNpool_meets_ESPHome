@@ -193,16 +193,16 @@ opnpool:
   chlorinator_status:
     name: "Chlorinator status"
   system_time:
-    name: "Controller System Time"
+    name: "Controller system time"
   controller_firmware_version:
-    name: "Main Board Firmware"
+    name: "Controller firmware"
   interface_firmware_version:
-    name: "Interface Board Firmware"
+    name: "Interface firmware"
 
   # number sensors
   pump_status:
-    name: "Pump Status"
+    name: "Pump status"
   pump_state:
-    name: "Pump State"
+    name: "Pump state"
   pump_error:
-    name: "Pump Error"
+    name: "Pump error"
