@@ -37,6 +37,7 @@ climate::ClimateTraits OpnPoolClimate::traits() {
     traits.set_visual_max_temperature(110);
     traits.set_visual_temperature_step(1);
     traits.set_supported_custom_presets({"None", "Heat", "Solar Preferred", "Solar"});
+    traits.set_visual_temperature_unit(climate::TEMPERATURE_UNIT_FAHRENHEIT);
     
     return traits;
 }
