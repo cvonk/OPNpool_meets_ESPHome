@@ -65,19 +65,24 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
 }
 
 void OpnPoolSwitch::write_state(bool state) {
-  this->publish_state(state);
-  if (this->parent_ != nullptr) {
+
+  if (this->parent_) {
+    
+        // send command but DON'T publish yet
     this->parent_->on_switch_command(this->circuit_id_, state);
+    
+       // store as pending
+    this->parent_->add_pending_switch(this, state);
   }
 }
 
-void OpnPool::on_switch_command(uint8_t circuit, bool state) {
+void OpnPool::on_switch_command(uint8_t const circuit_id, bool const state) {
 
     network_msg_t msg = {
         .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {
-              .circuit = static_cast<uint8_t>(circuit + 1),  // convert 0-based to 1-based
+              .circuit = static_cast<uint8_t>(circuit_id + 1),
               .value = state ? (uint8_t)1 : (uint8_t)0,          
             },
         },
@@ -229,8 +234,6 @@ void OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
 
-#if 0
-
     // climate entities
     LOG_CLIMATE("  ", "Pool Heater", this->pool_heater_);
     LOG_CLIMATE("  ", "Spa Heater", this->spa_heater_);
@@ -292,8 +295,52 @@ void OpnPool::dump_config() {
         }
     };
 #endif
+}
 
-#endif    
+void OpnPool::add_pending_switch(OpnPoolSwitch *sw, bool target_state) {
+
+        // remove any existing pending for this switch
+    pending_switches_.erase(
+        std::remove_if(pending_switches_.begin(), pending_switches_.end(),
+        [sw](const pending_switch_t &p) { return p.sw == sw; }),
+        pending_switches_.end()
+    );
+
+        // add new pending
+    ESP_LOGVV(TAG, "Adding pending switch: circuit=%u, requested=%u", sw->get_circuit_id(), target_state);
+    pending_switches_.push_back({
+        .sw = sw,
+        .target_state = target_state,
+        .timestamp = millis()
+    });
+}
+
+void OpnPool::check_pending_switches(const poolstate_t *new_state) {
+
+    auto it = pending_switches_.begin();
+
+    while (it != pending_switches_.end()) {
+
+        uint8_t circuit_idx = it->sw->get_circuit_id();
+        bool requested_state = it->target_state;
+        bool actual_state = new_state->circuits.active[circuit_idx];
+
+            // check if state matches what we requested
+        if (actual_state == requested_state) {
+                // confirmed => publish the state
+            ESP_LOGVV(TAG, "Switch confirmed: switch[%u], requested=%u > actual=%u", circuit_idx, requested_state, actual_state);
+            it->sw->publish_state(it->target_state);
+            it = pending_switches_.erase(it);
+        } 
+            // check for timeout (e.g., 15 seconds)
+        else if (millis() - it->timestamp > 15000) {
+            ESP_LOGW(TAG, "Switch confirmation timeout, switch[%u]: requested=%u > actual=%u", circuit_idx, requested_state, actual_state);
+            it->sw->publish_state(it->target_state);
+            it = pending_switches_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 } // namespace opnpool

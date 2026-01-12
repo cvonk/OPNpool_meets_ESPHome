@@ -3,13 +3,14 @@
         {
             "name": "ESPHome",
             "compileCommands": "${workspaceFolder}/.esphome/build/opnpool-1/.pioenvs/opnpool-1/compile_commands.json",
-            "compilerPath": "${userHome}\\.platformio\\packages\\toolchain-xtensa-esp-elf\\bin\\xtensa-esp32-elf-gcc.exe",
+            "compilerPath": "C:/Users/Coert/.platformio/packages/toolchain-xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe",
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/components/opnpool",
                 "${workspaceFolder}/.esphome/**",
-                "${userHome}/.platformio/packages/framework-espidf**/components/**",
-                "${userHome}/.platformio/packages/framework-espidf**/tools/cmake/**"
+                "C:/Users/Coert/AppData/Local/Programs/Python/Python313/Lib/site-packages/esphome",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/**",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/tools/cmake/**"
             ],
             "defines": [
                 "_DEBUG",

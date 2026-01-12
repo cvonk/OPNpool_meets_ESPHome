@@ -505,8 +505,18 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
     cJSON_Delete(dbg);
 
     bool const state_changed = memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
+
+    ESP_LOGVV(TAG, "State comparison: AUX2(%u) old_state=%u new_state=%u => state_changed=%u", 
+        static_cast<uint8_t>(network_pool_circuit_t::AUX2),
+        old_state.circuits.active[static_cast<uint8_t>(network_pool_circuit_t::AUX2)],
+        new_state.circuits.active[static_cast<uint8_t>(network_pool_circuit_t::AUX2)],
+        state_changed);
+
     if (state_changed) {
         set(&new_state);
+        
+        // update state in HA
+        parent_->check_pending_switches(&new_state);
     }
     return state_changed ? ESP_OK : ESP_FAIL;
 }

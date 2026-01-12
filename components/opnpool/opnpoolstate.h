@@ -175,8 +175,8 @@ enum class poolstate_elem_modes_typ_t : uint8_t {
  **/
 
 typedef struct poolstate_circuits_t {
-    bool     active[NETWORK_POOL_MODE_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
-    bool     delay[NETWORK_POOL_MODE_COUNT];   // IntelliSense flags this incorrectly - it compiles fine
+    bool     active[NETWORK_POOL_CIRCUIT_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
+    bool     delay[NETWORK_POOL_CIRCUIT_COUNT];   // IntelliSense flags this incorrectly - it compiles fine
 } poolstate_circuits_t;
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
@@ -263,7 +263,7 @@ typedef struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
     poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
-    poolstate_sched_t     scheds[NETWORK_POOL_MODE_COUNT];
+    poolstate_sched_t     scheds[NETWORK_POOL_CIRCUIT_COUNT];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;

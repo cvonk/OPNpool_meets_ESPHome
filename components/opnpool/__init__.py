@@ -29,11 +29,12 @@ CONF_CLIMATES = [
     "spa_heater"
 ]
 CONF_SWITCHES = [
-    "pool",
     "spa",
     "aux1",
     "aux2",
+    "aux3",
     "feature1",
+    "pool",
     "feature2",
     "feature3",
     "feature4" 
@@ -127,11 +128,12 @@ async def to_code(config):
             # Wire up parent and circuit_id based on network_msg.h mapping
             cg.add(obj.set_parent(var))
             
-            # Circuit ID mapping (0-based): spa=0, aux1=1, aux2=2, ft1=4, pool=5, ft2=6, ft3=7, ft4=8
+            # Circuit ID mapping (0-based): spa=0, aux1=1, aux2=2, aux3=3, ft1=4, pool=5, ft2=6, ft3=7, ft4=8
             circuit_map = {
                 "spa":      0,
                 "aux1":     1,
                 "aux2":     2,
+                "aux3":     3,
                 "feature1": 4,
                 "pool":     5,
                 "feature2": 6,
