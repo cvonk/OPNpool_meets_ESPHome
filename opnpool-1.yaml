@@ -25,6 +25,7 @@ esphome:
   #    - -DMAGIC_ENUM_RANGE_MIN=0
   #    - -DMAGIC_ENUM_RANGE_MAX=256      
 
+
 esp32:
   variant: ESP32
   board: esp32dev

@@ -37,14 +37,13 @@ climate::ClimateTraits OpnPoolClimate::traits() {
     traits.set_visual_max_temperature(110);
     traits.set_visual_temperature_step(1);
     traits.set_supported_custom_presets({"None", "Heat", "Solar Preferred", "Solar"});
-    traits.set_visual_temperature_unit(climate::TEMPERATURE_UNIT_FAHRENHEIT);
     
     return traits;
 }
 
 void OpnPoolClimate::control(const climate::ClimateCall &call) {
 
-    uint8_t const idx = this->parent_->get_climate_index(this);  // 2BD returns 5 for POOL ???
+    uint8_t const idx = this->parent_->get_climate_index(this);
 
        // get thermostat settings (we need the current settings, as we may only change one of them)
 
@@ -60,12 +59,14 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
         // handle target temperature changes
 
     if (call.get_target_temperature().has_value()) {
-        float target_temp = *call.get_target_temperature();
-        this->target_temperature = target_temp;
+        float target_temp_celsius = *call.get_target_temperature();
+        
+            // convert to Fahrenheit (ESPHome uses Celsius internally)
+        float target_temp_fahrenheit = target_temp_celsius * 9.0f / 5.0f + 32.0f;
+        
+        ESP_LOGV(TAG, "Target temperature changed: idx=%u to %.1f°F", idx, target_temp_fahrenheit);
 
-        ESP_LOGV(TAG, "Target temperature changed: idx=%u to %u°F", idx, static_cast<uint8_t>(target_temp));
-
-        thermos_new[idx].set_point = static_cast<uint8_t>(target_temp);
+        thermos_new[idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
     }
 
         // handle heat source changes
@@ -85,25 +86,6 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
             thermos_new[idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR);
         }
     }
-
-#if 0        /* OPNpool doesn't have that concept*/
-        // handle mode changes
-    if (call.get_mode().has_value()) {
-        climate::ClimateMode mode = *call.get_mode();
-            // send circuit on/off command
-        switch (mode) {
-            case climate::CLIMATE_MODE_OFF:
-                this->parent_->on_switch_command(idx, false);   // ERR: this is for switches !
-                break;
-            case climate::CLIMATE_MODE_HEAT:
-            case climate::CLIMATE_MODE_AUTO:
-                this->parent_->on_switch_command(idx, true);   // ERR: this is for switches !
-                break;
-            default:
-                break;
-        }
-    }
-#endif
 
     uint8_t const pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
     uint8_t const spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
@@ -126,17 +108,16 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
             },
         };
 
-        ESP_LOGV(TAG, "Sending HEAT_SET: pool_sp=%u°F, spa_sp=%u°F, heat_src=%02X", 
+        ESP_LOGV(TAG, "Sending HEAT_SET: pool_SP=%u°F, spa_SP=%u°F, heat_src=%u", 
                   msg.u.ctrl_heat_set.poolSetpoint, 
                   msg.u.ctrl_heat_set.spaSetpoint,
                   msg.u.ctrl_heat_set.heatSrc);
         ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());
     }
     
-        // publish the state (optimistically)
-    //this->publish_state();
+        // DON'T publish state here - wait for pool controller confirmation
+        // State will be published by update_climates() when pool responds
 }
-
 
 void OpnPoolSwitch::write_state(bool state) {
 
@@ -402,7 +383,8 @@ void OpnPool::check_pending_switches(const poolstate_t *new_state) {
 
 void OpnPool::update_text_sensors(const poolstate_t *new_state) {
     
-    // update schedule text sensors
+        // update schedule text sensors
+
     if (this->pool_sched_ts_ != nullptr) {
         char sched_str[64];
         uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
@@ -439,12 +421,14 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         this->aux2_sched_ts_->publish_state(sched_str);
     }
     
-    // update pump mode text sensor
+        // update pump mode text sensor
+
     if (this->pump_mode_ts_ != nullptr) {
         this->pump_mode_ts_->publish_state(std::to_string(new_state->pump.mode));
     }
+
+        // update chlorinator text sensors
     
-    // update chlorinator text sensors
     if (this->chlor_name_ts_ != nullptr) {
         this->chlor_name_ts_->publish_state(new_state->chlor.name);
     }
@@ -463,7 +447,8 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         this->chlor_status_ts_->publish_state(status_str);
     }
     
-    // update system time text sensor
+        // update system time text sensor
+
     if (this->system_time_ts_ != nullptr) {
         char time_str[32];
         snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
@@ -472,7 +457,8 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         this->system_time_ts_->publish_state(time_str);
     }
     
-    // update firmware version text sensors
+        // update firmware version text sensors
+
     if (this->controller_fw_ts_ != nullptr) {
         char fw_str[16];
         snprintf(fw_str, sizeof(fw_str), "%d.%d", new_state->system.version.major, new_state->system.version.minor);
@@ -480,18 +466,22 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
     }
     
     if (this->interface_fw_ts_ != nullptr) {
-        this->interface_fw_ts_->publish_state("N/A");
+        this->interface_fw_ts_->publish_state("N/A at least not yet");
     }
 }
 
 void OpnPool::update_analog_sensors(const poolstate_t *new_state) {
 
     if (this->air_temp_s_ != nullptr) {
-        this->air_temp_s_->publish_state(new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp);
+        float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
+        float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
+        this->air_temp_s_->publish_state(air_temp_c);
     }
     
     if (this->water_temp_s_ != nullptr) {
-        this->water_temp_s_->publish_state(new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp);
+        float water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+        float water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
+        this->water_temp_s_->publish_state(water_temp_c);
     }
     
     if (this->pump_power_s_ != nullptr) {
@@ -548,17 +538,19 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
-    uint8_t const water_temp = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+    uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+    float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;  // for ESPHome
 
         // update pool heater climate
+
     if (this->pool_heater_ != nullptr) {
         uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
 
         poolstate_thermo_t const * const pool_thermo = &new_state->thermos[pool_idx];
 
-            // update temperatures
-        this->pool_heater_->current_temperature = water_temp;
-        this->pool_heater_->target_temperature = pool_thermo->set_point;
+            // update temperatures (convert F to C)
+        this->pool_heater_->current_temperature = water_temp_in_celsius;
+        this->pool_heater_->target_temperature = (pool_thermo->set_point - 32.0f) * 5.0f / 9.0f;
         
             // update mode based on {circuit state, heating status}
         if (new_state->circuits.active[pool_idx]) {
@@ -572,6 +564,7 @@ void OpnPool::update_climates(const poolstate_t *new_state) {
         }
         
             // update action
+            
         if (pool_thermo->heating) {
             this->pool_heater_->action = climate::CLIMATE_ACTION_HEATING;
         } else if (new_state->circuits.active[pool_idx]) {
@@ -584,14 +577,15 @@ void OpnPool::update_climates(const poolstate_t *new_state) {
     }
     
         // update spa heater climate
+
     if (this->spa_heater_ != nullptr) {
         uint8_t spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
 
         poolstate_thermo_t const * const spa_thermo = &new_state->thermos[spa_idx];
 
-            // update temperatures
-        this->spa_heater_->current_temperature = water_temp;
-        this->spa_heater_->target_temperature = spa_thermo->set_point;
+            // update temperatures (convert F to C)
+        this->spa_heater_->current_temperature = water_temp_in_celsius;
+        this->spa_heater_->target_temperature = (spa_thermo->set_point - 32.0f) * 5.0f / 9.0f;
         
             // update mode based on {circuit state, heating status}
         if (new_state->circuits.active[spa_idx]) {
