@@ -28,8 +28,8 @@ CONF_CLIMATES = [
     "pool_heater",
     "spa_heater"
 ]
-CONF_SWITCHES = [
-    "spa",
+CONF_SWITCHES = [  # MUST MATCH network_pool_circuit_t
+    "spa", 
     "aux1",
     "aux2",
     "aux3",
@@ -37,7 +37,7 @@ CONF_SWITCHES = [
     "pool",
     "feature2",
     "feature3",
-    "feature4" 
+    "feature4"
 ]
 CONF_ANALOG_SENSORS = [
     "air_temperature",
@@ -98,67 +98,47 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    # Tell ESPHome to link against ESP-IDF's cJSON component
+    # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
 
-    # pass each RS485-setting to the C++ OpnPool instance
+    # pass the RS485-setting to the OpnPool instance
     if CONF_RS485 in config:
-        rs485_conf = config[CONF_RS485]
-        if CONF_RS485_RX_PIN in rs485_conf:
-            cg.add(var.set_rs485_rx_pin(rs485_conf[CONF_RS485_RX_PIN]))
-        if CONF_RS485_TX_PIN in rs485_conf:
-            cg.add(var.set_rs485_tx_pin(rs485_conf[CONF_RS485_TX_PIN]))
-        if CONF_RS485_FLOW_CONTROL_PIN in rs485_conf:
-            cg.add(var.set_rs485_flow_control_pin(rs485_conf[CONF_RS485_FLOW_CONTROL_PIN]))
+        rs485_config = config[CONF_RS485]
+        if CONF_RS485_RX_PIN in rs485_config:
+            cg.add(var.set_rs485_rx_pin(rs485_config[CONF_RS485_RX_PIN]))
+        if CONF_RS485_TX_PIN in rs485_config:
+            cg.add(var.set_rs485_tx_pin(rs485_config[CONF_RS485_TX_PIN]))
+        if CONF_RS485_FLOW_CONTROL_PIN in rs485_config:
+            cg.add(var.set_rs485_flow_control_pin(rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
-    for heater in CONF_CLIMATES:
-        if heater in config:
-            obj = cg.new_Pvariable(config[heater][CONF_ID])
-            await climate.register_climate(obj, config[heater])
-            cg.add(getattr(var, f"set_{heater}")(obj))
+    # register climate entities
+    for climate_key in CONF_CLIMATES:
+        if climate_key in config:
+            climate_entity = await climate.new_climate(config[climate_key])
+            cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
 
-    for key in CONF_SWITCHES:
-        if key in config:
-            obj = cg.new_Pvariable(config[key][CONF_ID])
-            await switch.register_switch(obj, config[key])
-            cg.add(getattr(var, f"set_{key}_switch")(obj))
-            
-            # Wire up parent and circuit_id based on network_msg.h mapping
-            cg.add(obj.set_parent(var))
-            
-            # Circuit ID mapping (0-based): spa=0, aux1=1, aux2=2, aux3=3, ft1=4, pool=5, ft2=6, ft3=7, ft4=8
-            circuit_map = {
-                "spa":      0,
-                "aux1":     1,
-                "aux2":     2,
-                "aux3":     3,
-                "feature1": 4,
-                "pool":     5,
-                "feature2": 6,
-                "feature3": 7,
-                "feature4": 8
-            }
-            cg.add(obj.set_circuit_id(circuit_map[key]))
+    # register switches
+    for switch_key in CONF_SWITCHES:
+        if switch_key in config:
+            switch_entity = await switch.new_switch(config[switch_key])
+            cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
 
-    for key in CONF_ANALOG_SENSORS:
-        if key in config:
-            conf = config[key]
-            # if "force_update" not in conf:
-            #     conf["force_update"] = False
-            obj = await sensor.new_sensor(conf)
-            await sensor.register_sensor(obj, conf)
-            cg.add(getattr(var, f"set_{key}_sensor")(obj))
+    # Register analog sensors
+    for sensor_key in CONF_ANALOG_SENSORS:
+        if sensor_key in config:
+            sensor_entity = await sensor.new_sensor(config[sensor_key])
+            cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
+    
+    # register binary sensors
+    for binary_sensor_key in CONF_BINARY_SENSORS:
+        if binary_sensor_key in config:
+            bs_entity = await binary_sensor.new_binary_sensor(config[binary_sensor_key])
+            cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
-    for key in CONF_BINARY_SENSORS:
-        if key in config:
-            obj = await binary_sensor.new_binary_sensor(config[key])
-            await binary_sensor.register_binary_sensor(obj, config[key])
-            cg.add(getattr(var, f"set_{key}_binary_sensor")(obj))
-
-    for key in CONF_TEXT_SENSORS:
-        if key in config:
-            obj = await text_sensor.new_text_sensor(config[key])
-            await text_sensor.register_text_sensor(obj, config[key])
-            cg.add(getattr(var, f"set_{key}_text_sensor")(obj))
+    # register text sensors
+    for text_sensor_key in CONF_TEXT_SENSORS:
+        if text_sensor_key in config:
+            ts_entity = await text_sensor.new_text_sensor(config[text_sensor_key])
+            cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))

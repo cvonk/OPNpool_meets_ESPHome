@@ -315,20 +315,21 @@ void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
 void OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
+    
+    // Log climates
+    LOG_CLIMATE("  ", "Pool heater", this->heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::POOL)]);
+    LOG_CLIMATE("  ", "Spa heater", this->heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::SPA)]);
 
-    // climate entities
-    LOG_CLIMATE("  ", "Pool Heater", this->pool_heater_);
-    LOG_CLIMATE("  ", "Spa Heater", this->spa_heater_);
-
-    // switches
-    LOG_SWITCH("  ", "Pool switch", this->pool_sw_);
-    LOG_SWITCH("  ", "Spa switch", this->spa_sw_);
-    LOG_SWITCH("  ", "Aux1 switch", this->aux1_sw_);
-    LOG_SWITCH("  ", "Aux2 switch", this->aux2_sw_);
-    LOG_SWITCH("  ", "Feature1 switch", this->feature1_sw_);
-    LOG_SWITCH("  ", "Feature2 switch", this->feature2_sw_);
-    LOG_SWITCH("  ", "Feature3 switch", this->feature3_sw_);
-    LOG_SWITCH("  ", "Feature4 switch", this->feature4_sw_);
+    // switches - using array
+    LOG_SWITCH("  ", "Pool switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::POOL)]);
+    LOG_SWITCH("  ", "Spa switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::SPA)]);
+    LOG_SWITCH("  ", "Aux1 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX1)]);
+    LOG_SWITCH("  ", "Aux2 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX2)]);
+    LOG_SWITCH("  ", "Aux3 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX3)]);
+    LOG_SWITCH("  ", "Feature1 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)]);
+    LOG_SWITCH("  ", "Feature2 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)]);
+    LOG_SWITCH("  ", "Feature3 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)]);
+    LOG_SWITCH("  ", "Feature4 switch", this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)]);
 
     // sensors
     LOG_SENSOR("  ", "Water temperature", this->water_temp_s_);
@@ -381,26 +382,21 @@ void OpnPool::add_pending_switch(OpnPoolSwitch *sw, bool target_state) {
 }
 
 void OpnPool::check_pending_switches(const poolstate_t *new_state) {
-
+    
     auto it = pending_switches_.begin();
-
+    
     while (it != pending_switches_.end()) {
-
-        uint8_t circuit_idx = it->sw->get_circuit_id();
-        bool requested_state = it->target_state;
-        bool actual_state = new_state->circuits.active[circuit_idx];
-
-            // check if state matches what we requested
-        if (actual_state == requested_state) {
-                // confirmed => publish the state
-            ESP_LOGVV(TAG, "Switch confirmed: switch[%u], requested=%u > actual=%u", circuit_idx, requested_state, actual_state);
-            it->sw->publish_state(it->target_state);
+        
+        uint8_t circuit_id = it->sw->get_circuit_id();
+        bool actual_state = new_state->circuits.active[circuit_id];
+        
+        if (actual_state == it->target_state) {
+            ESP_LOGVV(TAG, "Switch confirmed: circuit=%u, state=%d", circuit_id, actual_state);
+            it->sw->publish_state(actual_state);
             it = pending_switches_.erase(it);
-        } 
-            // check for timeout (e.g., 15 seconds)
-        else if (millis() - it->timestamp > 15000) {
-            ESP_LOGW(TAG, "Switch confirmation timeout, switch[%u]: requested=%u > actual=%u", circuit_idx, requested_state, actual_state);
-            it->sw->publish_state(it->target_state);
+        } else if (millis() - it->timestamp > 5000) {  // 5 second timeout
+            ESP_LOGW(TAG, "Switch confirmation timeout, circuit=%u", circuit_id);
+            it->sw->publish_state(actual_state);  // Publish actual state
             it = pending_switches_.erase(it);
         } else {
             ++it;
@@ -565,79 +561,47 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
-        // first check pending climate changes
+    // First check pending climate changes
     check_pending_climates(new_state);
     
     uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-    float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;  // for ESPHome
+    float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;
 
-        // update pool heater climate (if not pending)
-
-    if (this->pool_heater_ != nullptr) {
-        uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
-
-        poolstate_thermo_t const * const pool_thermo = &new_state->thermos[pool_idx];
-
-            // update temperatures (convert F to C)
-        this->pool_heater_->current_temperature = water_temp_in_celsius;
-        this->pool_heater_->target_temperature = (pool_thermo->set_point - 32.0f) * 5.0f / 9.0f;
+    // Update all heaters in a loop
+    for (uint8_t idx = 0; idx < POOLSTATE_THERMO_TYP_COUNT; idx++) {
         
-            // update mode based on {circuit state, heating status}
-        if (new_state->circuits.active[pool_idx]) {
-            if (pool_thermo->heating) {
-                this->pool_heater_->mode = climate::CLIMATE_MODE_HEAT;
+        OpnPoolClimate *heater = this->heaters_[idx];
+        if (heater == nullptr) {
+            continue;
+        }
+        
+        poolstate_thermo_t const * const thermo = &new_state->thermos[idx];
+
+        // Update temperatures (convert F to C)
+        heater->current_temperature = water_temp_in_celsius;
+        heater->target_temperature = (thermo->set_point - 32.0f) * 5.0f / 9.0f;
+        
+        // Update mode based on {circuit state, heating status}
+        if (new_state->circuits.active[idx]) {
+            if (thermo->heating) {
+                heater->mode = climate::CLIMATE_MODE_HEAT;
             } else {
-                this->pool_heater_->mode = climate::CLIMATE_MODE_AUTO;
+                heater->mode = climate::CLIMATE_MODE_AUTO;
             }
         } else {
-            this->pool_heater_->mode = climate::CLIMATE_MODE_OFF;
+            heater->mode = climate::CLIMATE_MODE_OFF;
         }
         
-            // update action
-            
-        if (pool_thermo->heating) {
-            this->pool_heater_->action = climate::CLIMATE_ACTION_HEATING;
-        } else if (new_state->circuits.active[pool_idx]) {
-            this->pool_heater_->action = climate::CLIMATE_ACTION_IDLE;
+        // Update action
+        if (thermo->heating) {
+            heater->action = climate::CLIMATE_ACTION_HEATING;
+        } else if (new_state->circuits.active[idx]) {
+            heater->action = climate::CLIMATE_ACTION_IDLE;
         } else {
-            this->pool_heater_->action = climate::CLIMATE_ACTION_OFF;
+            heater->action = climate::CLIMATE_ACTION_OFF;
         }
         
-        this->pool_heater_->publish_state();
-    }
-    
-        // update spa heater climate
-
-    if (this->spa_heater_ != nullptr) {
-        uint8_t spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
-
-        poolstate_thermo_t const * const spa_thermo = &new_state->thermos[spa_idx];
-
-            // update temperatures (convert F to C)
-        this->spa_heater_->current_temperature = water_temp_in_celsius;
-        this->spa_heater_->target_temperature = (spa_thermo->set_point - 32.0f) * 5.0f / 9.0f;
-        
-            // update mode based on {circuit state, heating status}
-        if (new_state->circuits.active[spa_idx]) {
-            if (spa_thermo->heating) {
-                this->spa_heater_->mode = climate::CLIMATE_MODE_HEAT;
-            } else {
-                this->spa_heater_->mode = climate::CLIMATE_MODE_AUTO;
-            }
-        } else {
-            this->spa_heater_->mode = climate::CLIMATE_MODE_OFF;
-        }
-        
-            // update action
-        if (spa_thermo->heating) {
-            this->spa_heater_->action = climate::CLIMATE_ACTION_HEATING;
-        } else if (new_state->circuits.active[spa_idx]) {
-            this->spa_heater_->action = climate::CLIMATE_ACTION_IDLE;
-        } else {
-            this->spa_heater_->action = climate::CLIMATE_ACTION_OFF;
-        }
-        
-        this->spa_heater_->publish_state();
+        heater->publish_state();
     }
 }
 

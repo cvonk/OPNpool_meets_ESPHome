@@ -57,15 +57,15 @@ network_pool_mode_str(network_pool_mode_t const mode)
  */
 
 enum class network_pool_circuit_t : uint8_t {
-    SPA  = 0,
-    AUX1 = 1,
-    AUX2 = 2,
-    AUX3 = 3,
-    FT1  = 4,
-    POOL = 5,
-    FT2  = 6,
-    FT3  = 7,
-    FT4  = 8
+    SPA      = 0,
+    AUX1     = 1,
+    AUX2     = 2,
+    AUX3     = 3,
+    FEATURE1 = 4,
+    POOL     = 5,
+    FEATURE2 = 6,
+    FEATURE3 = 7,
+    FEATURE4 = 8
 };
   
 #ifdef __INTELLISENSE__

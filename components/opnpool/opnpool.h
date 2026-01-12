@@ -91,19 +91,53 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_rs485_config(const rs485_pins_t &cfg) { ipc_.config.rs485_pins = cfg; }    
     const rs485_pins_t &get_rs485_config() const { return ipc_.config.rs485_pins; }
 
-    // climate setters
-    void set_pool_heater(OpnPoolClimate *c) { pool_heater_ = c; if (c) c->set_parent(this); }
-    void set_spa_heater(OpnPoolClimate *c) { spa_heater_ = c; if (c) c->set_parent(this); }
+    // climate setters - using array indexing
+    void set_pool_heater(OpnPoolClimate *c) { 
+        heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::POOL)] = c; 
+        if (c) c->set_parent(this); 
+    }
+    void set_spa_heater(OpnPoolClimate *c) { 
+        heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::SPA)] = c; 
+        if (c) c->set_parent(this); 
+    }
 
-    // switch setters
-    void set_pool_switch(OpnPoolSwitch *s) { pool_sw_ = s; if (s) s->set_parent(this);}
-    void set_spa_switch(OpnPoolSwitch *s) { spa_sw_ = s; if (s) s->set_parent(this);}
-    void set_aux1_switch(OpnPoolSwitch *s) { aux1_sw_ = s; if (s) s->set_parent(this);}
-    void set_aux2_switch(OpnPoolSwitch *s) { aux2_sw_ = s; if (s) s->set_parent(this);}
-    void set_feature1_switch(OpnPoolSwitch *s) { feature1_sw_ = s; if (s) s->set_parent(this);}
-    void set_feature2_switch(OpnPoolSwitch *s) { feature2_sw_ = s; if (s) s->set_parent(this);}
-    void set_feature3_switch(OpnPoolSwitch *s) { feature3_sw_ = s; if (s) s->set_parent(this);}
-    void set_feature4_switch(OpnPoolSwitch *s) { feature4_sw_ = s; if (s) s->set_parent(this);}
+    // switch setters - using array indexing
+    void set_pool_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::POOL)); s->set_parent(this); }
+    }
+    void set_spa_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::SPA)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::SPA)); s->set_parent(this); }
+    }
+    void set_aux1_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX1)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX1)); s->set_parent(this); }
+    }
+    void set_aux2_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX2)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX2)); s->set_parent(this); }
+    }
+    void set_aux3_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX3)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX3)); s->set_parent(this); }
+    }
+    void set_feature1_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)); s->set_parent(this); }
+    }
+    void set_feature2_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)); s->set_parent(this); }
+    }
+    void set_feature3_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)); s->set_parent(this); }
+    }
+    void set_feature4_switch(OpnPoolSwitch *s) { 
+        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)] = s; 
+        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)); s->set_parent(this); }
+    }
 
     // analog sensor setters
     void set_air_temperature_sensor(OpnPoolSensor *s) { air_temp_s_ = s; if (s) s->set_parent(this); }
@@ -157,10 +191,10 @@ class OpnPool : public Component, public uart::UARTDevice {
     
         // helper to get climate index
     uint8_t get_climate_index(OpnPoolClimate *climate) {
-        if (climate == this->pool_heater_) {
-            return static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
-        } else if (climate == this->spa_heater_) {
-            return static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+        for (uint8_t i = 0; i < POOLSTATE_THERMO_TYP_COUNT; i++) {
+            if (climate == this->heaters_[i]) {
+                return i;
+            }
         }
         return 0;
     }
@@ -179,10 +213,10 @@ class OpnPool : public Component, public uart::UARTDevice {
     void parse_packet_(const std::vector<uint8_t> &data);
     std::vector<uint8_t> rx_buffer_;
 
-    // member pointers
-    OpnPoolClimate *pool_heater_{nullptr}, *spa_heater_{nullptr};
-    OpnPoolSwitch *pool_sw_{nullptr}, *spa_sw_{nullptr}, *aux1_sw_{nullptr}, *aux2_sw_{nullptr};
-    OpnPoolSwitch *feature1_sw_{nullptr}, *feature2_sw_{nullptr}, *feature3_sw_{nullptr}, *feature4_sw_{nullptr};
+    // member pointers - organized in arrays
+    OpnPoolClimate *heaters_[POOLSTATE_THERMO_TYP_COUNT]{nullptr};
+    OpnPoolSwitch *switches_[NETWORK_POOL_CIRCUIT_COUNT]{nullptr};
+    
     OpnPoolSensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
     OpnPoolSensor *pump_speed_s_{nullptr}, *chlor_level_s_{nullptr}, *chlor_salt_s_{nullptr};
     OpnPoolSensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr};
