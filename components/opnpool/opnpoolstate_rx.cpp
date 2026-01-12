@@ -194,10 +194,10 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
 
     // update state->temps
     uint8_t const air_idx = static_cast<uint8_t>(poolstate_temp_typ_t::AIR);
-    uint8_t const solar_idx = static_cast<uint8_t>(poolstate_temp_typ_t::SOLAR);
+    uint8_t const water_idx = static_cast<uint8_t>(poolstate_temp_typ_t::WATER);
 
     state->temps[air_idx].temp = msg->airTemp;
-    state->temps[solar_idx].temp = msg->solarTemp;
+    state->temps[water_idx].temp = msg->waterTemp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_state(dbg, "state", state);
@@ -287,11 +287,11 @@ OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t c
     state->pump.running = running;
     state->pump.mode = msg->mode;
     state->pump.state = msg->state;
-    state->pump.pwr = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
-    state->pump.rpm = ((uint16_t)msg->rpmHi << 8) | msg->rpmLo;
-    state->pump.gpm = msg->gpm;
-    state->pump.pct = msg->pct;
-    state->pump.err = msg->err;
+    state->pump.power = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
+    state->pump.speed = ((uint16_t)msg->speedHi << 8) | msg->speedLo;
+    state->pump.flow = msg->flow;
+    state->pump.level = msg->level;
+    state->pump.error = msg->error;
     state->pump.timer = msg->remainingMin;
     state->pump.time.hour = msg->clockHr;
     state->pump.time.minute = msg->clockMin;
@@ -331,10 +331,10 @@ OpnPoolState::rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_
 void
 OpnPoolState::rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state)
 {
-    state->chlor.pct = msg->pct;
+    state->chlor.level = msg->level;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddNumberToObject(dbg, "pct", state->chlor.pct);
+        cJSON_AddNumberToObject(dbg, "level", state->chlor.level);
     }
 }
 
@@ -342,17 +342,17 @@ void
 OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state)
 {
     state->chlor.salt = (uint16_t)msg->salt * 50;
-    if (msg->err & 0x01) {
+    if (msg->error & 0x01) {
         state->chlor.status = poolstate_chlor_status_t::LOW_FLOW;
-    } else if (msg->err & 0x02) {
+    } else if (msg->error & 0x02) {
         state->chlor.status = poolstate_chlor_status_t::LOW_SALT;
-    } else if (msg->err & 0x04) {
+    } else if (msg->error & 0x04) {
         state->chlor.status = poolstate_chlor_status_t::HIGH_SALT;
-    } else if (msg->err & 0x10) {
+    } else if (msg->error & 0x10) {
         state->chlor.status = poolstate_chlor_status_t::CLEAN_CELL;
-    } else if (msg->err & 0x40) {
+    } else if (msg->error & 0x40) {
         state->chlor.status = poolstate_chlor_status_t::COLD;
-    } else if (msg->err & 0x80) {
+    } else if (msg->error & 0x80) {
         state->chlor.status = poolstate_chlor_status_t::OK;
     } else {
         state->chlor.status = poolstate_chlor_status_t::OTHER;
@@ -517,9 +517,12 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         
         // update state in HA
         parent_->check_pending_switches(&new_state);
+        parent_->update_text_sensors(&new_state);
+        parent_->update_analog_sensors(&new_state);
+        parent_->update_binary_sensors(&new_state);
     }
     return state_changed ? ESP_OK : ESP_FAIL;
 }
 
 } // namespace opnpool
-} // namespace esphome
+} // namespace esphome  

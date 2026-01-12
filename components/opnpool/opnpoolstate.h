@@ -122,7 +122,7 @@ typedef struct poolstate_sched_t {
 
 enum class poolstate_temp_typ_t : uint8_t {
     AIR = 0,
-    SOLAR = 1
+    WATER = 1
 };
 
 #ifdef __INTELLISENSE__
@@ -163,10 +163,11 @@ typedef struct poolstate_modes_t {
 } poolstate_modes_t;
 
 enum class poolstate_elem_modes_typ_t : uint8_t {
-    SERVICE = 0,
-    TEMP_INC = 1,
-    FREEZE_PROT = 2,
-    TIMEOUT = 3
+    SERVICE     = 0,
+    UNKOWN_01   = 1,    
+    TEMP_INC    = 2,
+    FREEZE_PROT = 3,
+    TIMEOUT     = 4
 };
 
 
@@ -189,16 +190,16 @@ enum class poolstate_elem_circuits_typ_t : uint8_t {
  * @brief Pool state pump
  **/
 
-typedef struct {
+typedef struct poolstate_pump_t {
     poolstate_time_t time;
     uint8_t          mode;
     bool             running;
     uint8_t          state;
-    uint16_t         pwr;
-    uint16_t         gpm;
-    uint16_t         rpm;
-    uint16_t         pct;
-    uint8_t          err;
+    uint16_t         power;
+    uint16_t         flow;
+    uint16_t         speed;
+    uint16_t         level;
+    uint8_t          error;
     uint8_t          timer;
 } poolstate_pump_t;
 
@@ -207,11 +208,11 @@ enum class poolstate_elem_pump_typ_t : uint8_t {
     MODE = 1,
     RUNNING = 2,
     STATE = 3,
-    PWR = 4,
-    GPM = 5,
-    RPM = 6,
-    PCT = 7,
-    ERR = 8,
+    POWER = 4,
+    FLOW = 5,
+    SPEED = 6,
+    LEVEL = 7,
+    ERROR = 8,
     TIMER = 9
 };
 
@@ -242,15 +243,15 @@ inline int poolstate_str_chlor_status_nr(char const * const chlor_status_str) {
 
 typedef struct poolstate_chlor_t {
     char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
-    uint8_t                   pct;
+    uint8_t                   level;
     uint16_t                  salt;
     poolstate_chlor_status_t  status;
 } poolstate_chlor_t;
 
 enum class poolstate_elem_chlor_typ_t : uint8_t {
-    NAME = 0,
-    PCT = 1,
-    SALT = 2,
+    NAME   = 0,
+    LEVEL  = 1,
+    SALT   = 2,
     STATUS = 3
 };
 

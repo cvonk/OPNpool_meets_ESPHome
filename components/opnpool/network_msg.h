@@ -217,9 +217,9 @@ typedef struct network_msg_ctrl_state_bcast_t {
     uint8_t poolTemp;           // 14 water sensor 1
     uint8_t spaTemp;            // 15 water sensor 2
     uint8_t UNKNOWN_16;         // 16 unknown          (was major)
-    uint8_t solarTemp;          // 17 solar sensor 1   (was minor)
+    uint8_t waterTemp;          // 17 solar sensor 1   (was minor)
     uint8_t airTemp;            // 18 air sensor
-    uint8_t solarTemp2;         // 19 solar sensor 2
+    uint8_t waterTemp2;         // 19 solar sensor 2
     uint8_t UNKNOWN_20tp21[2];  // 20..21 more water sensors?
     uint8_t heatSrc;            // 22 
     uint8_t UNKNOWN_23to28[6];  // 23..28
@@ -444,12 +444,12 @@ typedef struct network_msg_pump_status_resp_t {
     uint8_t state;        // 2
     uint8_t powerHi;      // 3
     uint8_t powerLo;      // 4 [Watt]
-    uint8_t rpmHi;        // 5
-    uint8_t rpmLo;        // 6 [rpm]
-    uint8_t gpm;          // 7 [G/min]
-    uint8_t pct;          // 8 [%]
+    uint8_t speedHi;      // 5
+    uint8_t speedLo;      // 6 [rpm]
+    uint8_t flow;         // 7 [G/min]
+    uint8_t level;        // 8 [%]
     uint8_t UNKNOWN_9;    // 9
-    uint8_t err;          // 10
+    uint8_t error;        // 10
     uint8_t remainingHr;  // 11
     uint8_t remainingMin; // 12
     uint8_t clockHr;      // 13
@@ -487,12 +487,12 @@ typedef struct network_msg_chlor_name_resp_t {
 // CHLOR_LEVEL_SET
 
 typedef struct network_msg_chlor_level_set_t {
-    uint8_t  pct;
+    uint8_t  level;
 } PACK8 network_msg_chlor_level_set_t;
 
 typedef struct network_msg_chlor_level_resp_t {
-    uint8_t  salt;  // ppm/50
-    uint8_t  err;   // error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
+    uint8_t  salt;   // ppm/50
+    uint8_t  error;  // error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
 } PACK8 network_msg_chlor_level_resp_t;
 
 typedef union network_msg_data_a5_t {

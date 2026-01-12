@@ -142,6 +142,11 @@ class OpnPool : public Component, public uart::UARTDevice {
     void add_pending_switch(OpnPoolSwitch *sw, bool target_state);
     void check_pending_switches(const poolstate_t *new_state);
 
+    // update sensors
+    void update_text_sensors(const poolstate_t *new_state);
+    void update_analog_sensors(const poolstate_t *new_state);
+    void update_binary_sensors(const poolstate_t *new_state);
+
   protected:
 
     ipc_t ipc_{};  // interprocess communication structure and RS485-pins

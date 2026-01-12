@@ -301,16 +301,16 @@ _add_pump(cJSON * const obj, char const * const key, poolstate_t const * const s
     opnpoolstate_log_add_pump_mode(item, "mode", pump->mode);
     opnpoolstate_log_add_pump_running(item, "running", pump->running);
     _addPumpStateToObject(item, "state", pump->state);
-    cJSON_AddNumberToObject(item, "pwr", pump->pwr);
-    cJSON_AddNumberToObject(item, "rpm", pump->rpm);
-    if (pump->gpm) {
-        cJSON_AddNumberToObject(item, "gpm", pump->gpm);
+    cJSON_AddNumberToObject(item, "power", pump->power);
+    cJSON_AddNumberToObject(item, "speed", pump->speed);
+    if (pump->flow) {
+        cJSON_AddNumberToObject(item, "flow", pump->flow);
     }
-    if (pump->pct) {
-        cJSON_AddNumberToObject(item, "pct", pump->pct);
+    if (pump->level) {
+        cJSON_AddNumberToObject(item, "level", pump->level);
     }
-    cJSON_AddNumberToObject(item, "err", pump->mode);
-    cJSON_AddNumberToObject(item, "timer", pump->mode);
+    cJSON_AddNumberToObject(item, "error", pump->error);
+    cJSON_AddNumberToObject(item, "timer", pump->timer);
 }
 
 void
@@ -337,7 +337,7 @@ _add_chlor(cJSON * const obj, char const * const key, poolstate_t const * const 
     poolstate_chlor_t const * const chlor = &state->chlor;
     cJSON * const item = _create_item(obj, key);
     cJSON_AddStringToObject(item, "name", chlor->name);
-    cJSON_AddNumberToObject(item, "pct", chlor->pct);
+    cJSON_AddNumberToObject(item, "level", chlor->level);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
     cJSON_AddStringToObject(item, "status", poolstate_str_chlor_status_str(chlor->status));
 }

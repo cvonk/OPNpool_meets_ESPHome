@@ -278,23 +278,6 @@ void OpnPool::dump_config() {
     LOG_TEXT_SENSOR("  ", "System time", this->system_time_ts_);
     LOG_TEXT_SENSOR("  ", "Controller f/w version", this->controller_fw_ts_);
     LOG_TEXT_SENSOR("  ", "Interface f/w version", this->interface_fw_ts_);
-
-#if 0
-    // log levels
-    auto log_level_to_str = [](int level) -> const char* {
-        switch (level) {
-            case ESPHOME_LOG_LEVEL_NONE:         return "NONE";
-            case ESPHOME_LOG_LEVEL_ERROR:        return "ERROR";
-            case ESPHOME_LOG_LEVEL_WARN:         return "WARN";
-            case ESPHOME_LOG_LEVEL_INFO:         return "INFO";
-            case ESPHOME_LOG_LEVEL_CONFIG:       return "CONFIG";
-            case ESPHOME_LOG_LEVEL_DEBUG:        return "DEBUG";
-            case ESPHOME_LOG_LEVEL_VERBOSE:      return "VERBOSE";
-            case ESPHOME_LOG_LEVEL_VERY_VERBOSE: return "VERY_VERBOSE";
-            default:                     return "UNKNOWN";
-        }
-    };
-#endif
 }
 
 void OpnPool::add_pending_switch(OpnPoolSwitch *sw, bool target_state) {
@@ -343,5 +326,151 @@ void OpnPool::check_pending_switches(const poolstate_t *new_state) {
     }
 }
 
-} // namespace opnpool
-} // namespace esphome
+void OpnPool::update_text_sensors(const poolstate_t *new_state) {
+    
+    // update schedule text sensors
+    if (this->pool_sched_ts_ != nullptr) {
+        char sched_str[64];
+        uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
+        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
+            new_state->scheds[pool_idx].start / 60, new_state->scheds[pool_idx].start % 60,
+            new_state->scheds[pool_idx].stop / 60, new_state->scheds[pool_idx].stop % 60);
+        this->pool_sched_ts_->publish_state(sched_str);
+    }
+    
+    if (this->spa_sched_ts_ != nullptr) {
+        char sched_str[64];
+        uint8_t spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
+        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
+            new_state->scheds[spa_idx].start / 60, new_state->scheds[spa_idx].start % 60,
+            new_state->scheds[spa_idx].stop / 60, new_state->scheds[spa_idx].stop % 60);
+        this->spa_sched_ts_->publish_state(sched_str);
+    }
+    
+    if (this->aux1_sched_ts_ != nullptr) {
+        char sched_str[64];
+        uint8_t aux1_idx = static_cast<uint8_t>(network_pool_circuit_t::AUX1);
+        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
+            new_state->scheds[aux1_idx].start / 60, new_state->scheds[aux1_idx].start % 60,
+            new_state->scheds[aux1_idx].stop / 60, new_state->scheds[aux1_idx].stop % 60);
+        this->aux1_sched_ts_->publish_state(sched_str);
+    }
+    
+    if (this->aux2_sched_ts_ != nullptr) {
+        char sched_str[64];
+        uint8_t aux2_idx = static_cast<uint8_t>(network_pool_circuit_t::AUX2);
+        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
+            new_state->scheds[aux2_idx].start / 60, new_state->scheds[aux2_idx].start % 60,
+            new_state->scheds[aux2_idx].stop / 60, new_state->scheds[aux2_idx].stop % 60);
+        this->aux2_sched_ts_->publish_state(sched_str);
+    }
+    
+    // update pump mode text sensor
+    if (this->pump_mode_ts_ != nullptr) {
+        this->pump_mode_ts_->publish_state(std::to_string(new_state->pump.mode));
+    }
+    
+    // update chlorinator text sensors
+    if (this->chlor_name_ts_ != nullptr) {
+        this->chlor_name_ts_->publish_state(new_state->chlor.name);
+    }
+    
+    if (this->chlor_status_ts_ != nullptr) {
+        const char* status_str = "Unknown";
+        switch (new_state->chlor.status) {
+            case poolstate_chlor_status_t::OK: status_str = "OK"; break;
+            case poolstate_chlor_status_t::LOW_FLOW: status_str = "Low Flow"; break;
+            case poolstate_chlor_status_t::LOW_SALT: status_str = "Low Salt"; break;
+            case poolstate_chlor_status_t::HIGH_SALT: status_str = "High Salt"; break;
+            case poolstate_chlor_status_t::CLEAN_CELL: status_str = "Clean Cell"; break;
+            case poolstate_chlor_status_t::COLD: status_str = "Cold"; break;
+            case poolstate_chlor_status_t::OTHER: status_str = "Other"; break;
+        }
+        this->chlor_status_ts_->publish_state(status_str);
+    }
+    
+    // update system time text sensor
+    if (this->system_time_ts_ != nullptr) {
+        char time_str[32];
+        snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
+            new_state->system.tod.date.year, new_state->system.tod.date.month, new_state->system.tod.date.day,
+            new_state->system.tod.time.hour, new_state->system.tod.time.minute);
+        this->system_time_ts_->publish_state(time_str);
+    }
+    
+    // update firmware version text sensors
+    if (this->controller_fw_ts_ != nullptr) {
+        char fw_str[16];
+        snprintf(fw_str, sizeof(fw_str), "%d.%d", new_state->system.version.major, new_state->system.version.minor);
+        this->controller_fw_ts_->publish_state(fw_str);
+    }
+    
+    if (this->interface_fw_ts_ != nullptr) {
+        this->interface_fw_ts_->publish_state("N/A");
+    }
+}
+
+void OpnPool::update_analog_sensors(const poolstate_t *new_state) {
+
+    if (this->air_temp_s_ != nullptr) {
+        this->air_temp_s_->publish_state(new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp);
+    }
+    
+    if (this->water_temp_s_ != nullptr) {
+        this->water_temp_s_->publish_state(new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp);
+    }
+    
+    if (this->pump_power_s_ != nullptr) {
+        this->pump_power_s_->publish_state(new_state->pump.power);
+    }
+    
+    if (this->pump_flow_s_ != nullptr) {
+        this->pump_flow_s_->publish_state(new_state->pump.flow);
+    }
+    
+    if (this->pump_speed_s_ != nullptr) {
+        this->pump_speed_s_->publish_state(new_state->pump.speed);
+    }
+    
+    if (this->pump_state_s_ != nullptr) {
+        this->pump_state_s_->publish_state(new_state->pump.state);
+    }
+
+    if (this->pump_error_s_ != nullptr) {
+        this->pump_error_s_->publish_state(new_state->pump.error);
+    }
+
+    if (this->chlor_level_s_ != nullptr) {
+        this->chlor_level_s_->publish_state(new_state->chlor.level);
+    }
+
+    if (this->chlor_salt_s_ != nullptr) {
+        this->chlor_salt_s_->publish_state(new_state->chlor.salt);
+    }
+}
+
+void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
+
+    if (this->pump_running_bs_ != nullptr) {
+        this->pump_running_bs_->publish_state(new_state->pump.running);
+    }
+    
+    if (this->mode_service_bs_ != nullptr) {
+        this->mode_service_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::SERVICE)]);
+    }
+    
+    if (this->mode_temp_inc_bs_ != nullptr) {
+        this->mode_temp_inc_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::TEMP_INC)]);
+    }
+    
+    if (this->mode_freeze_bs_ != nullptr) {
+        this->mode_freeze_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::FREEZE_PROT)]);
+    }
+    
+    if (this->mode_timeout_bs_ != nullptr) {
+        this->mode_timeout_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::TIMEOUT)]);
+    }
+}
+
+}  // namespace opnpool
+}  // namespace esphome

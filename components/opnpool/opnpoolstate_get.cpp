@@ -164,20 +164,20 @@ _pump(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, poo
         case poolstate_elem_pump_typ_t::STATE:
             _alloc_str(value, network_pump_state_str(static_cast<network_pump_state_t>(pump->state)));
             break;
-        case poolstate_elem_pump_typ_t::PWR:
-            _alloc_uint(value, pump->pwr);
+        case poolstate_elem_pump_typ_t::POWER:
+            _alloc_uint(value, pump->power);
             break;
-        case poolstate_elem_pump_typ_t::GPM:
-            _alloc_uint(value, pump->gpm);
+        case poolstate_elem_pump_typ_t::FLOW:
+            _alloc_uint(value, pump->flow);
             break;
-        case poolstate_elem_pump_typ_t::RPM:
-            _alloc_uint(value, pump->rpm);
+        case poolstate_elem_pump_typ_t::SPEED:
+            _alloc_uint(value, pump->speed);
             break;
-        case poolstate_elem_pump_typ_t::PCT:
-            _alloc_uint(value, pump->pct);
+        case poolstate_elem_pump_typ_t::LEVEL:
+            _alloc_uint(value, pump->level);
             break;
-        case poolstate_elem_pump_typ_t::ERR:
-            _alloc_uint(value, pump->err);
+        case poolstate_elem_pump_typ_t::ERROR:
+            _alloc_uint(value, pump->error);
             break;
         case poolstate_elem_pump_typ_t::TIMER:
             _alloc_uint(value, pump->timer);
@@ -203,8 +203,8 @@ _chlor(poolstate_t const * const state, uint8_t const typ, uint8_t const idx, po
         case poolstate_elem_chlor_typ_t::NAME:
             _alloc_str(value, chlor->name);
             break;
-        case poolstate_elem_chlor_typ_t::PCT:
-            _alloc_uint(value, chlor->pct);
+        case poolstate_elem_chlor_typ_t::LEVEL:
+            _alloc_uint(value, chlor->level);
             break;
         case poolstate_elem_chlor_typ_t::SALT:
             _alloc_uint(value, chlor->salt);
