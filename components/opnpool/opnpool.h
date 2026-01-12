@@ -136,16 +136,19 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_mode_timeout_binary_sensor(OpnPoolBinarySensor *s) { mode_timeout_bs_ = s; if (s) s->set_parent(this); }
 
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
-    void on_switch_command(uint8_t circuit, bool state);
     
-    // pending switch management
+        // switch management
+    void on_switch_command(uint8_t circuit, bool state);    
     void add_pending_switch(OpnPoolSwitch *sw, bool target_state);
     void check_pending_switches(const poolstate_t *new_state);
 
-    // update sensors
+        // update sensors
     void update_text_sensors(const poolstate_t *new_state);
     void update_analog_sensors(const poolstate_t *new_state);
     void update_binary_sensors(const poolstate_t *new_state);
+
+        // climate management
+    void update_climates(const poolstate_t *new_state);
 
   protected:
 

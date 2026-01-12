@@ -88,7 +88,7 @@ void OpnPool::on_switch_command(uint8_t const circuit_id, bool const state) {
         },
     };
 
-    ESP_LOGV(TAG, "Sending CIRCUIT_SET command: circuit=%u to %u", msg.u.ctrl_circuit_set.circuit, msg.u.ctrl_circuit_set.value);
+    ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit=%u to %u", msg.u.ctrl_circuit_set.circuit, msg.u.ctrl_circuit_set.value);
     ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
@@ -469,6 +469,77 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
     
     if (this->mode_timeout_bs_ != nullptr) {
         this->mode_timeout_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::TIMEOUT)]);
+    }
+}
+
+void OpnPool::update_climates(const poolstate_t *new_state) {
+    
+    uint8_t const water_temp = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+
+        // update pool heater climate
+    if (this->pool_heater_ != nullptr) {
+        uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
+
+        poolstate_thermo_t const * const pool_thermo = &new_state->thermos[pool_idx];
+
+            // update temperatures
+        this->pool_heater_->current_temperature = water_temp;
+        this->pool_heater_->target_temperature = pool_thermo->set_point;
+        
+            // update mode based on {circuit state, heating status}
+        if (new_state->circuits.active[pool_idx]) {
+            if (pool_thermo->heating) {
+                this->pool_heater_->mode = climate::CLIMATE_MODE_HEAT;
+            } else {
+                this->pool_heater_->mode = climate::CLIMATE_MODE_AUTO;
+            }
+        } else {
+            this->pool_heater_->mode = climate::CLIMATE_MODE_OFF;
+        }
+        
+            // update action
+        if (pool_thermo->heating) {
+            this->pool_heater_->action = climate::CLIMATE_ACTION_HEATING;
+        } else if (new_state->circuits.active[pool_idx]) {
+            this->pool_heater_->action = climate::CLIMATE_ACTION_IDLE;
+        } else {
+            this->pool_heater_->action = climate::CLIMATE_ACTION_OFF;
+        }
+        
+        this->pool_heater_->publish_state();
+    }
+    
+        // update spa heater climate
+    if (this->spa_heater_ != nullptr) {
+        uint8_t spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
+
+        poolstate_thermo_t const * const spa_thermo = &new_state->thermos[spa_idx];
+
+            // update temperatures
+        this->spa_heater_->current_temperature = water_temp;
+        this->spa_heater_->target_temperature = spa_thermo->set_point;
+        
+            // update mode based on {circuit state, heating status}
+        if (new_state->circuits.active[spa_idx]) {
+            if (spa_thermo->heating) {
+                this->spa_heater_->mode = climate::CLIMATE_MODE_HEAT;
+            } else {
+                this->spa_heater_->mode = climate::CLIMATE_MODE_AUTO;
+            }
+        } else {
+            this->spa_heater_->mode = climate::CLIMATE_MODE_OFF;
+        }
+        
+            // update action
+        if (spa_thermo->heating) {
+            this->spa_heater_->action = climate::CLIMATE_ACTION_HEATING;
+        } else if (new_state->circuits.active[spa_idx]) {
+            this->spa_heater_->action = climate::CLIMATE_ACTION_IDLE;
+        } else {
+            this->spa_heater_->action = climate::CLIMATE_ACTION_OFF;
+        }
+        
+        this->spa_heater_->publish_state();
     }
 }
 

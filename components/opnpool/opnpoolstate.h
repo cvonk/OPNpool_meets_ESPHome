@@ -86,7 +86,6 @@ inline int poolstate_str_thermo_nr(char const * const thermostat_str) {
 
 typedef struct poolstate_thermo_t {
     uint8_t  temp;
-
     uint8_t  set_point;
     uint8_t  heat_src;
     bool     heating;
