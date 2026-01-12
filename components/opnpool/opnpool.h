@@ -14,6 +14,7 @@
 #include "esphome/components/text_sensor/text_sensor.h"      // esphome::text_sensor::TextSensor
 
 #include "ipc.h"
+#include "opnpoolstate.h"
 
 namespace esphome {
 namespace opnpool {
@@ -149,12 +150,26 @@ class OpnPool : public Component, public uart::UARTDevice {
 
         // climate management
     void update_climates(const poolstate_t *new_state);
+    
+        // helper to get climate index
+    uint8_t get_climate_index(OpnPoolClimate *climate) {
+        if (climate == this->pool_heater_) {
+            return static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
+        } else if (climate == this->spa_heater_) {
+            return static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+        }
+        return 0;
+    }
+
+    OpnPoolState * get_opnpool_state() { return opnPoolState_; }
+    ipc_t * get_ipc() { return &ipc_; }
 
   protected:
 
+    OpnPoolState * opnPoolState_{nullptr};
+
     ipc_t ipc_{};  // interprocess communication structure and RS485-pins
 
-    OpnPoolState * opnPoolState_{nullptr};
     void service_requests_from_pool(ipc_t const * const ipc);
 
     void parse_packet_(const std::vector<uint8_t> &data);

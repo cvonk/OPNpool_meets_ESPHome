@@ -30,6 +30,7 @@
 #include "network_msg.h"
 #include "ipc.h"
 #include "opnpoolstate.h"
+#include "opnpool.h"
 
 namespace esphome {
 namespace opnpool {

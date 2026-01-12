@@ -12,7 +12,7 @@
 #include "ipc.h"
 #include "network.h"
 #include "network_msg.h"
-#include "opnpool.h"
+//#include "opnpool.h"
 
 namespace esphome {
 namespace opnpool {

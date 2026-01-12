@@ -43,26 +43,99 @@ climate::ClimateTraits OpnPoolClimate::traits() {
 
 void OpnPoolClimate::control(const climate::ClimateCall &call) {
 
-  if (call.get_target_temperature().has_value()) {
-    this->target_temperature = *call.get_target_temperature();
-    // Example: Send target temp as a 1-byte payload
-    uint8_t target = (uint8_t)this->target_temperature;
-    this->parent_->write_packet(0x02, {target}); 
-  }
+    uint8_t const idx = this->parent_->get_climate_index(this);  // 2BD returns 5 for POOL ???
 
-  if (call.get_custom_preset() != nullptr) {
-    const char* preset_ptr = call.get_custom_preset();
-    std::string preset_str = preset_ptr; 
-    this->set_custom_preset_(preset_ptr);
+       // get thermostat settings (we need the current settings, as we may only change one of them)
 
-    if (preset_str == "Heat") {
-      this->parent_->write_packet(0x03, {0x01}); // Command 0x03, Data 0x01 (On)
-    } else if (preset_str == "None") {
-      this->parent_->write_packet(0x03, {0x00}); // Command 0x03, Data 0x00 (Off)
+    poolstate_thermo_t thermos_old[POOLSTATE_THERMO_TYP_COUNT];
+    poolstate_thermo_t thermos_new[POOLSTATE_THERMO_TYP_COUNT];
+    {
+        poolstate_t state;
+        parent_->get_opnpool_state()->get(&state);
+        memcpy(thermos_old, state.thermos, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT);
+        memcpy(thermos_new, state.thermos, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT);
     }
-  }
-  this->publish_state();
+
+        // handle target temperature changes
+
+    if (call.get_target_temperature().has_value()) {
+        float target_temp = *call.get_target_temperature();
+        this->target_temperature = target_temp;
+
+        ESP_LOGV(TAG, "Target temperature changed: idx=%u to %u°F", idx, static_cast<uint8_t>(target_temp));
+
+        thermos_new[idx].set_point = static_cast<uint8_t>(target_temp);
+    }
+
+        // handle heat source changes
+
+    const char* preset_str = call.get_custom_preset();
+    if (preset_str != nullptr) {
+
+        ESP_LOGV(TAG, "Heat source changed: idx=%u to %s", idx, preset_str);
+
+        if (strcasecmp(preset_str, "None") == 0) {
+            thermos_new[idx].heat_src = static_cast<uint8_t>(network_heat_src_t::NONE);
+        } else if (strcasecmp(preset_str, "Heat") == 0) {
+            thermos_new[idx].heat_src = static_cast<uint8_t>(network_heat_src_t::HEATER);
+        } else if (strcasecmp(preset_str, "Solar Preferred") == 0) {
+            thermos_new[idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR_PREF);
+        } else if (strcasecmp(preset_str, "Solar") == 0) {
+            thermos_new[idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR);
+        }
+    }
+
+#if 0        /* OPNpool doesn't have that concept*/
+        // handle mode changes
+    if (call.get_mode().has_value()) {
+        climate::ClimateMode mode = *call.get_mode();
+            // send circuit on/off command
+        switch (mode) {
+            case climate::CLIMATE_MODE_OFF:
+                this->parent_->on_switch_command(idx, false);   // ERR: this is for switches !
+                break;
+            case climate::CLIMATE_MODE_HEAT:
+            case climate::CLIMATE_MODE_AUTO:
+                this->parent_->on_switch_command(idx, true);   // ERR: this is for switches !
+                break;
+            default:
+                break;
+        }
+    }
+#endif
+
+    uint8_t const pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
+    uint8_t const spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
+    uint8_t const pool_heat_src = thermos_new[pool_idx].heat_src;
+    uint8_t const spa_heat_src = thermos_new[spa_idx].heat_src;
+    bool const thermos_changed = memcmp(thermos_old, thermos_new, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT) != 0;
+
+        // actuate changes if necessary
+
+    if (thermos_changed) {
+
+        network_msg_t msg = {
+            .typ = network_msg_typ_t::CTRL_HEAT_SET,
+            .u = {
+                .ctrl_heat_set = {
+                    .poolSetpoint = thermos_new[pool_idx].set_point,
+                    .spaSetpoint = thermos_new[spa_idx].set_point,
+                    .heatSrc = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
+                },
+            },
+        };
+
+        ESP_LOGV(TAG, "Sending HEAT_SET: pool_sp=%u°F, spa_sp=%u°F, heat_src=%02X", 
+                  msg.u.ctrl_heat_set.poolSetpoint, 
+                  msg.u.ctrl_heat_set.spaSetpoint,
+                  msg.u.ctrl_heat_set.heatSrc);
+        ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());
+    }
+    
+        // publish the state (optimistically)
+    //this->publish_state();
 }
+
 
 void OpnPoolSwitch::write_state(bool state) {
 
@@ -101,7 +174,7 @@ void OpnPool::setup() {
     ESP_LOGV(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
     if (!opnPoolState_->is_valid()) {
-        ESP_LOGE(TAG, "Failed to initialize pool state");
+        ESP_LOGE(TAG, "Failed to initialize opnPoolState_");
         return;
     }
 
