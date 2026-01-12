@@ -45,6 +45,9 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
 
     uint8_t const idx = this->parent_->get_climate_index(this);
 
+    uint8_t const pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
+    uint8_t const spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
+
        // get thermostat settings (we need the current settings, as we may only change one of them)
 
     poolstate_thermo_t thermos_old[POOLSTATE_THERMO_TYP_COUNT];
@@ -54,6 +57,32 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
         parent_->get_opnpool_state()->get(&state);
         memcpy(thermos_old, state.thermos, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT);
         memcpy(thermos_new, state.thermos, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT);
+    }
+
+        // handle mode changes (OFF, HEAT, AUTO)
+
+    if (call.get_mode().has_value()) {
+        climate::ClimateMode mode = *call.get_mode();
+        
+        ESP_LOGV(TAG, "Climate mode changed: idx=%u to mode=%d", idx, static_cast<int>(mode));
+        
+            // map climate index to circuit index
+        uint8_t circuit_idx = idx == pool_idx ? static_cast<uint8_t>(network_pool_circuit_t::POOL) : static_cast<uint8_t>(network_pool_circuit_t::SPA);
+        
+        switch (mode) {
+            case climate::CLIMATE_MODE_OFF:
+                this->parent_->on_switch_command(circuit_idx, false);
+                break;
+                
+            case climate::CLIMATE_MODE_HEAT:
+            case climate::CLIMATE_MODE_AUTO:
+                this->parent_->on_switch_command(circuit_idx, true);
+                break;
+                
+            default:
+                ESP_LOGW(TAG, "Unsupported climate mode: %d", static_cast<int>(mode));
+                break;
+        }
     }
 
         // handle target temperature changes
@@ -87,13 +116,11 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
         }
     }
 
-    uint8_t const pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
-    uint8_t const spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
     uint8_t const pool_heat_src = thermos_new[pool_idx].heat_src;
     uint8_t const spa_heat_src = thermos_new[spa_idx].heat_src;
     bool const thermos_changed = memcmp(thermos_old, thermos_new, sizeof(poolstate_thermo_t) * POOLSTATE_THERMO_TYP_COUNT) != 0;
 
-        // actuate changes if necessary
+        // actuate thermostat changes if necessary
 
     if (thermos_changed) {
 
@@ -538,10 +565,13 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
+        // first check pending climate changes
+    check_pending_climates(new_state);
+    
     uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
     float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;  // for ESPHome
 
-        // update pool heater climate
+        // update pool heater climate (if not pending)
 
     if (this->pool_heater_ != nullptr) {
         uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
@@ -608,6 +638,110 @@ void OpnPool::update_climates(const poolstate_t *new_state) {
         }
         
         this->spa_heater_->publish_state();
+    }
+}
+
+void OpnPool::add_pending_climate(OpnPoolClimate *climate, bool has_setpoint, float setpoint_celsius,
+                                  bool has_heat_src, uint8_t heat_src) {
+    
+        // remove any existing pending for this climate
+    pending_climates_.erase(
+        std::remove_if(pending_climates_.begin(), pending_climates_.end(),
+        [climate](const pending_climate_t &p) { return p.climate == climate; }),
+        pending_climates_.end()
+    );
+    
+        // add new pending
+    uint8_t idx = get_climate_index(climate);
+    ESP_LOGVV(TAG, "Adding pending climate: circuit=%u, has_setpoint=%d (%.1f°C), has_heat_src=%d (%u)", 
+              idx, has_setpoint, setpoint_celsius, has_heat_src, heat_src);
+    
+    pending_climates_.push_back({
+        .climate = climate,
+        .target_setpoint_celsius = setpoint_celsius,
+        .target_heat_src = heat_src,
+        .timestamp = millis(),
+        .has_setpoint_change = has_setpoint,
+        .has_heat_src_change = has_heat_src
+    });
+}
+
+void OpnPool::check_pending_climates(const poolstate_t *new_state) {
+    
+    auto it = pending_climates_.begin();
+    
+    while (it != pending_climates_.end()) {
+        
+        uint8_t circuit_idx = get_climate_index(it->climate);
+        poolstate_thermo_t const * const thermo = &new_state->thermos[circuit_idx];
+        
+        bool setpoint_matches = true;
+        bool heat_src_matches = true;
+        
+        // Check setpoint if it was changed
+        if (it->has_setpoint_change) {
+            float actual_setpoint_fahrenheit = thermo->set_point;
+            float target_setpoint_fahrenheit = it->target_setpoint_celsius * 9.0f / 5.0f + 32.0f;
+            
+            // Allow 1 degree tolerance due to rounding
+            setpoint_matches = (abs(actual_setpoint_fahrenheit - target_setpoint_fahrenheit) <= 1.0f);
+            
+            ESP_LOGVV(TAG, "Climate setpoint check: circuit=%u, target=%.1f°F, actual=%.1f°F, matches=%d",
+                     circuit_idx, target_setpoint_fahrenheit, actual_setpoint_fahrenheit, setpoint_matches);
+        }
+        
+        // Check heat source if it was changed
+        if (it->has_heat_src_change) {
+            heat_src_matches = (thermo->heat_src == it->target_heat_src);
+            
+            ESP_LOGVV(TAG, "Climate heat_src check: circuit=%u, target=%u, actual=%u, matches=%d",
+                     circuit_idx, it->target_heat_src, thermo->heat_src, heat_src_matches);
+        }
+        
+        // Check if both changes are confirmed
+        if (setpoint_matches && heat_src_matches) {
+            ESP_LOGVV(TAG, "Climate confirmed: circuit=%u", circuit_idx);
+            
+            // Update and publish the climate state
+            float water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+            float water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
+            
+            it->climate->current_temperature = water_temp_c;
+            it->climate->target_temperature = (thermo->set_point - 32.0f) * 5.0f / 9.0f;
+            
+            // Update mode based on circuit state
+            if (new_state->circuits.active[circuit_idx]) {
+                if (thermo->heating) {
+                    it->climate->mode = climate::CLIMATE_MODE_HEAT;
+                } else {
+                    it->climate->mode = climate::CLIMATE_MODE_AUTO;
+                }
+            } else {
+                it->climate->mode = climate::CLIMATE_MODE_OFF;
+            }
+            
+            // Update action
+            if (thermo->heating) {
+                it->climate->action = climate::CLIMATE_ACTION_HEATING;
+            } else if (new_state->circuits.active[circuit_idx]) {
+                it->climate->action = climate::CLIMATE_ACTION_IDLE;
+            } else {
+                it->climate->action = climate::CLIMATE_ACTION_OFF;
+            }
+            
+            it->climate->publish_state();
+            it = pending_climates_.erase(it);
+        }
+        // Check for timeout (e.g., 15 seconds)
+        else if (millis() - it->timestamp > 15000) {
+            ESP_LOGW(TAG, "Climate confirmation timeout, circuit=%u", circuit_idx);
+            
+            // Publish current state anyway
+            it->climate->publish_state();
+            it = pending_climates_.erase(it);
+        } else {
+            ++it;
+        }
     }
 }
 

@@ -142,6 +142,10 @@ class OpnPool : public Component, public uart::UARTDevice {
     void on_switch_command(uint8_t circuit, bool state);    
     void add_pending_switch(OpnPoolSwitch *sw, bool target_state);
     void check_pending_switches(const poolstate_t *new_state);
+    
+        // climate management
+    void add_pending_climate(OpnPoolClimate *climate, bool has_setpoint, float setpoint_celsius, bool has_heat_src, uint8_t heat_src);
+    void check_pending_climates(const poolstate_t *new_state);
 
         // update sensors
     void update_text_sensors(const poolstate_t *new_state);
@@ -191,11 +195,21 @@ class OpnPool : public Component, public uart::UARTDevice {
 
         // track pending switch commands awaiting confirmation
     struct pending_switch_t {
-      OpnPoolSwitch *sw;
-      bool target_state;
-      uint32_t timestamp;  // for timeout handling
+        OpnPoolSwitch *  sw;
+        bool             target_state;
+        uint32_t         timestamp;  // for timeout handling
     };
     std::vector<pending_switch_t> pending_switches_;
+    
+    struct pending_climate_t {
+        OpnPoolClimate *  climate;
+        float             target_setpoint_celsius;
+        uint8_t           target_heat_src;
+        uint32_t          timestamp;
+        bool              has_setpoint_change;
+        bool              has_heat_src_change;
+    };
+    std::vector<pending_climate_t> pending_climates_;
 };
 
 } // namespace opnpool
