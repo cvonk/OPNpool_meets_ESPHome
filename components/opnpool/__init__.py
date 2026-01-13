@@ -1,3 +1,4 @@
+import os
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import climate, switch, sensor, binary_sensor, text_sensor
@@ -12,12 +13,12 @@ AUTO_LOAD = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
 
 # namespace and class definitions
 opnpool_ns = cg.esphome_ns.namespace("opnpool")
-OpnPool = opnpool_ns.class_("OpnPool", cg.Component)  # Remove uart.UARTDevice
-OpnPoolClimate = opnpool_ns.class_("OpnPoolClimate", climate.Climate)
-OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch)
-OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor)
-OpnPoolBinarySensor = opnpool_ns.class_("OpnPoolBinarySensor", binary_sensor.BinarySensor)
-OpnPoolTextSensor = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSensor)
+OpnPool = opnpool_ns.class_("OpnPool", cg.Component)
+OpnPoolClimate = opnpool_ns.class_("OpnPoolClimate", climate.Climate, cg.Component)
+OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch, cg.Component)
+OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor, cg.Component)
+OpnPoolBinarySensor = opnpool_ns.class_("OpnPoolBinarySensor", binary_sensor.BinarySensor, cg.Component)
+OpnPoolTextSensor = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSensor, cg.Component)
 
 CONF_RS485 = "rs485"
 CONF_RS485_RX_PIN = "rx_pin"
@@ -95,8 +96,22 @@ async def to_code(config):
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
-    # Remove: await uart.register_uart_device(var, config)  # Uncomment this line
 
+    # Add all source files to build
+    cg.add_library("ESP32", None, "freertos")
+    
+    # Add component source files
+    component_dir = os.path.dirname(__file__)
+    
+    # C++ entity implementation files
+    cg.add_platformio_option("build_src_filter", [
+        "+<*>",
+        "+<esphome/components/opnpool/*.cpp>",
+    ])
+    
+    # Or explicitly add each file:
+    # This ensures the entity implementation files are compiled
+    
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
@@ -104,7 +119,6 @@ async def to_code(config):
     
     # Add interface firmware version
     import subprocess
-    import os
     
     version = "unknown"
     try:

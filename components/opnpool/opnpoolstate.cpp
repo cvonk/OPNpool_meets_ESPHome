@@ -17,64 +17,54 @@
  * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
-#include <string.h>
-#include <esp_system.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-#include <freertos/semphr.h>
-#include <esphome/core/log.h>
-
-#include "network.h"
 #include "opnpoolstate.h"
+#include "opnpool.h"
+#include "esphome/core/log.h"
+
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include "ipc.h"
+#include "network.h"
 
 namespace esphome {
+
 namespace opnpool {
 
 static char const * const TAG = "opnpoolstate";
 
-OpnPoolState::OpnPoolState(OpnPool * parent) : parent_(parent)
-{
+OpnPoolState::OpnPoolState(OpnPool *parent) : parent_(parent) {
     protected_.xMutex = xSemaphoreCreateMutex();
-    if (protected_.xMutex == nullptr) {
-        ESP_LOGE(TAG, "mutex creation failed");
-        protected_.valid = false;
-        protected_.state = nullptr;
+    protected_.state = new poolstate_t();
+    protected_.valid = false;
+    
+    if (protected_.xMutex == NULL) {
+        ESP_LOGE(TAG, "Failed to create mutex");
         return;
     }
-    
-    protected_.state = static_cast<poolstate_t *>(calloc(1, sizeof(poolstate_t)));
-    if (protected_.state == nullptr) {
-        ESP_LOGE(TAG, "allocation failed");
-        protected_.valid = false;
-        return;
-    }
-    
-    protected_.state->chlor.name[0] = '\0';
     protected_.valid = true;
 }
 
-void
-OpnPoolState::set(poolstate_t const * const state)
-{
-    xSemaphoreTake( this->protected_.xMutex, portMAX_DELAY );
-    {
-        this->protected_.valid = true;
-        memcpy(this->protected_.state, state, sizeof(poolstate_t));
+void OpnPoolState::set(poolstate_t const * const state) {
+    if (xSemaphoreTake(protected_.xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        memcpy(protected_.state, state, sizeof(poolstate_t));
+        protected_.valid = true;
+        xSemaphoreGive(protected_.xMutex);
+    } else {
+        ESP_LOGW(TAG, "Failed to acquire mutex in set()");
     }
-    xSemaphoreGive( this->protected_.xMutex );
 }
 
-esp_err_t
-OpnPoolState::get(poolstate_t * const state)
-{
-    bool valid;
-    xSemaphoreTake( this->protected_.xMutex, portMAX_DELAY );
-    {
-        valid = this->protected_.valid;
-        memcpy(state, this->protected_.state, sizeof(poolstate_t));
+esp_err_t OpnPoolState::get(poolstate_t * const state) {
+    if (xSemaphoreTake(protected_.xMutex, pdMS_TO_TICKS(100)) == pdTRUE) {
+        if (protected_.valid) {
+            memcpy(state, protected_.state, sizeof(poolstate_t));
+        }
+        xSemaphoreGive(protected_.xMutex);
+        return protected_.valid ? ESP_OK : ESP_ERR_INVALID_STATE;
+    } else {
+        ESP_LOGW(TAG, "Failed to acquire mutex in get()");
+        return ESP_ERR_TIMEOUT;
     }
-    xSemaphoreGive( this->protected_.xMutex );
-    return valid ? ESP_OK : ESP_FAIL;
 }
 
 #if 0

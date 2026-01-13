@@ -517,11 +517,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         set(&new_state);
         
         // update state in HA
-        parent_->check_pending_switches(&new_state);
-        parent_->update_climates(&new_state);
-        parent_->update_text_sensors(&new_state);
-        parent_->update_analog_sensors(&new_state);
-        parent_->update_binary_sensors(&new_state);
+        parent_->update_all(&new_state);
     }
     return state_changed ? ESP_OK : ESP_FAIL;
 }

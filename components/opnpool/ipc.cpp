@@ -26,6 +26,7 @@
 #include "utils.h"
 #include "ipc.h"
 #include "skb.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {

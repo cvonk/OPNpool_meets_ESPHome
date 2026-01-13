@@ -4,19 +4,22 @@
 #endif
 
 #include <esp_system.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 #include <cJSON.h>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-#include "ipc.h"
+
 #include "network.h"
 #include "network_msg.h"
-//#include "opnpool.h"
 
 namespace esphome {
 namespace opnpool {
 
+// Forward declarations instead of including ipc.h or FreeRTOS.h
+struct ipc_t;
 
 /**
  * @brief Pool state system information
@@ -282,13 +285,13 @@ typedef struct poolstate_get_params_t {
     uint8_t const    idx;
 } poolstate_get_params_t;
 
-    // forward declaration of OpnPool class
-class OpnPool;
-
 
 /**
  * @brief Class representing the current state of the pool system
  **/    
+
+     // forward declaration of OpnPool class
+class OpnPool;
 
 class OpnPoolState {
 

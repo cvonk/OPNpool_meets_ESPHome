@@ -5,191 +5,152 @@
 
 #include <vector>
 #include <string>
-#include "esphome/core/component.h"
-//#include "esphome/components/uart/uart.h"                    // esphome::uart::UARTDevice
-#include "esphome/components/climate/climate.h"              // esphome::climate::Climate
-#include "esphome/components/switch/switch.h"                // esphome::switch_::Switch
-#include "esphome/components/sensor/sensor.h"                // esphome::sensor::Sensor
-#include "esphome/components/binary_sensor/binary_sensor.h"  // esphome::binary_sensor::BinarySensor
-#include "esphome/components/text_sensor/text_sensor.h"      // esphome::text_sensor::TextSensor
-
-#include "ipc.h"
-#include "opnpoolstate.h"
+#include <esphome/core/component.h>
 
 namespace esphome {
 namespace opnpool {
 
     // forward declarations
+struct ipc_t;
+struct rs485_pins_t;
 struct poolstate_t;
-class OpnPool;
+struct pending_switch_t;
+struct pending_climate_t;
 class OpnPoolState; 
+class OpnPoolClimate;
+class OpnPoolSwitch;
+class OpnPoolSensor;
+class OpnPoolBinarySensor;
+class OpnPoolTextSensor;
 
-    // climate entity
-class OpnPoolClimate : public climate::Climate {
-
-  public:
-    climate::ClimateTraits traits() override;
-    void control(const climate::ClimateCall &call) override;
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-
-  protected:
-    OpnPool *parent_{nullptr};
+// IDs for array indexing
+enum class ClimateId : uint8_t {
+    POOL = 0,
+    SPA,
+    COUNT
+};
+enum class SwitchId : uint8_t {
+    POOL = 0,
+    SPA,
+    AUX1,
+    AUX2,
+    AUX3,
+    FEATURE1,
+    FEATURE2,
+    FEATURE3,
+    FEATURE4,
+    COUNT
+};
+enum class SensorId : uint8_t {
+    AIR_TEMP = 0,
+    WATER_TEMP,
+    PUMP_POWER,
+    PUMP_FLOW,
+    PUMP_SPEED,
+    PUMP_ERROR,
+    CHLOR_LEVEL,
+    CHLOR_SALT,
+    COUNT
+};
+enum class BinarySensorId : uint8_t {
+    PUMP_RUNNING = 0,
+    MODE_SERVICE,
+    MODE_TEMP_INC,
+    MODE_FREEZE,
+    MODE_TIMEOUT,
+    COUNT
+};
+enum class TextSensorId : uint8_t {
+    POOL_SCHED = 0,
+    SPA_SCHED,
+    AUX1_SCHED,
+    AUX2_SCHED,
+    SYSTEM_TIME,
+    CONTROLLER_FW,
+    INTERFACE_FW,
+    PUMP_MODE,
+    PUMP_STATE,
+    CHLOR_NAME,
+    CHLOR_STATUS,
+    COUNT
 };
 
-    // switch entity
-class OpnPoolSwitch : public switch_::Switch {
-  public:
-    void set_circuit_id(uint8_t circuit_id) { this->circuit_id_ = circuit_id; }
-    uint8_t get_circuit_id() const { return this->circuit_id_; }
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-  
-  protected:
-    void write_state(bool state) override;
-    OpnPool *parent_{nullptr};
-    uint8_t circuit_id_{0};
-};
+// main component
 
-    // sensor entities
-class OpnPoolSensor : public sensor::Sensor {
-  public:
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-    // The base class sensor::Sensor already provides publish_state(float state)
-  protected:    
-    OpnPool *parent_{nullptr};
-};
-
-class OpnPoolBinarySensor : public binary_sensor::BinarySensor {
-  public:
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-    // The base class sensor::Sensor already provides publish_state(float state)
-   protected:
-    OpnPool *parent_{nullptr};
-};
-
-class OpnPoolTextSensor : public text_sensor::TextSensor {
-  public:
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-    // The base class sensor::Sensor already provides publish_state(float state)
-   protected:
-    OpnPool *parent_{nullptr};
-};
-
-    // main component
-
-class OpnPool : public Component {  // Remove uart::UARTDevice inheritance
+class OpnPool : public Component {
 
   public:
+    
     void setup() override;
     void loop() override;
     void dump_config() override;
 
         // RS485 configuration
-    void set_rs485_rx_pin(uint8_t pin) { ipc_.config.rs485_pins.rx_pin = pin; }
-    void set_rs485_tx_pin(uint8_t pin) { ipc_.config.rs485_pins.tx_pin = pin; }
-    void set_rs485_flow_control_pin(uint8_t pin) { ipc_.config.rs485_pins.flow_control_pin = pin; }
-    void set_rs485_config(const rs485_pins_t &cfg) { ipc_.config.rs485_pins = cfg; }    
-    const rs485_pins_t &get_rs485_config() const { return ipc_.config.rs485_pins; }
+    void set_rs485_rx_pin(uint8_t pin);
+    void set_rs485_tx_pin(uint8_t pin);
+    void set_rs485_flow_control_pin(uint8_t pin);
+    void set_rs485_config(const rs485_pins_t &cfg);    
 
-        // climate setters
-    void set_pool_heater(OpnPoolClimate *c) { 
-        heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::POOL)] = c; 
-        if (c) c->set_parent(this); 
-    }
-    void set_spa_heater(OpnPoolClimate *c) { 
-        heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::SPA)] = c; 
-        if (c) c->set_parent(this); 
-    }
+    const rs485_pins_t &get_rs485_config() const;
+
+        // climate setters        
+    void set_pool_heater(OpnPoolClimate *climate);
+    void set_spa_heater(OpnPoolClimate *climate);
 
         // switch setters
-    void set_pool_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::POOL)); s->set_parent(this); }
-    }
-    void set_spa_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::SPA)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::SPA)); s->set_parent(this); }
-    }
-    void set_aux1_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX1)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX1)); s->set_parent(this); }
-    }
-    void set_aux2_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX2)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX2)); s->set_parent(this); }
-    }
-    void set_aux3_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX3)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::AUX3)); s->set_parent(this); }
-    }
-    void set_feature1_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)); s->set_parent(this); }
-    }
-    void set_feature2_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)); s->set_parent(this); }
-    }
-    void set_feature3_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)); s->set_parent(this); }
-    }
-    void set_feature4_switch(OpnPoolSwitch *s) { 
-        switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)] = s; 
-        if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)); s->set_parent(this); }
-    }
+    void set_pool_switch(OpnPoolSwitch *sw);
+    void set_spa_switch(OpnPoolSwitch *sw);
+    void set_aux1_switch(OpnPoolSwitch *sw);
+    void set_aux2_switch(OpnPoolSwitch *sw);
+    void set_aux3_switch(OpnPoolSwitch *sw);
+    void set_feature1_switch(OpnPoolSwitch *sw);
+    void set_feature2_switch(OpnPoolSwitch *sw);
+    void set_feature3_switch(OpnPoolSwitch *sw);
+    void set_feature4_switch(OpnPoolSwitch *sw);
 
-        // analog sensor setters
-    void set_air_temperature_sensor(OpnPoolSensor *s) { air_temp_s_ = s; if (s) s->set_parent(this); }
-    void set_water_temperature_sensor(OpnPoolSensor *s) { water_temp_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_power_sensor(OpnPoolSensor *s) { pump_power_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_flow_sensor(OpnPoolSensor *s) { pump_flow_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_speed_sensor(OpnPoolSensor *s) { pump_speed_s_ = s; if (s) s->set_parent(this); }
-    void set_chlorinator_level_sensor(OpnPoolSensor *s) { chlor_level_s_ = s; if (s) s->set_parent(this); }
-    void set_chlorinator_salt_sensor(OpnPoolSensor *s) { chlor_salt_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_error_sensor(OpnPoolSensor *s) { pump_error_s_ = s; if (s) s->set_parent(this); }
-    
-        // text sensor setters
-    void set_pool_sched_text_sensor(OpnPoolTextSensor *s) { pool_sched_ts_ = s; if (s) s->set_parent(this); }
-    void set_spa_sched_text_sensor(OpnPoolTextSensor *s) { spa_sched_ts_ = s; if (s) s->set_parent(this); }
-    void set_aux1_sched_text_sensor(OpnPoolTextSensor *s) { aux1_sched_ts_ = s; if (s) s->set_parent(this); }
-    void set_aux2_sched_text_sensor(OpnPoolTextSensor *s) { aux2_sched_ts_ = s; if (s) s->set_parent(this); }
-    void set_system_time_text_sensor(OpnPoolTextSensor *s) { system_time_ts_ = s; if (s) s->set_parent(this); }
-    void set_controller_firmware_version_text_sensor(OpnPoolTextSensor *s) { controller_fw_ts_ = s; if (s) s->set_parent(this); }
-    void set_interface_firmware_version_text_sensor(OpnPoolTextSensor *s) { interface_fw_ts_ = s; if (s) s->set_parent(this); }
-    void set_pump_mode_text_sensor(OpnPoolTextSensor *s) { pump_mode_ts_ = s; if (s) s->set_parent(this); }
-    void set_pump_state_text_sensor(OpnPoolTextSensor *s) { pump_state_ts_ = s; if (s) s->set_parent(this); }
-    void set_chlorinator_name_text_sensor(OpnPoolTextSensor *s) { chlor_name_ts_ = s; if (s) s->set_parent(this); }
-    void set_chlorinator_status_text_sensor(OpnPoolTextSensor *s) { chlor_status_ts_ = s; if (s) s->set_parent(this); }
+        // sensor setters
+    void set_air_temperature_sensor(OpnPoolSensor *s);
+    void set_water_temperature_sensor(OpnPoolSensor *s);
+    void set_pump_power_sensor(OpnPoolSensor *s);
+    void set_pump_flow_sensor(OpnPoolSensor *s);
+    void set_pump_speed_sensor(OpnPoolSensor *s);
+    void set_pump_error_sensor(OpnPoolSensor *s);
+    void set_chlorinator_level_sensor(OpnPoolSensor *s);
+    void set_chlorinator_salt_sensor(OpnPoolSensor *s);
 
         // binary sensor setters
-    void set_pump_running_binary_sensor(OpnPoolBinarySensor *s) { pump_running_bs_ = s; if (s) s->set_parent(this); }
-    void set_mode_service_binary_sensor(OpnPoolBinarySensor *s) { mode_service_bs_ = s; if (s) s->set_parent(this); }
-    void set_mode_temperature_inc_binary_sensor(OpnPoolBinarySensor *s) { mode_temp_inc_bs_ = s; if (s) s->set_parent(this); }
-    void set_mode_freeze_protection_binary_sensor(OpnPoolBinarySensor *s) { mode_freeze_bs_ = s; if (s) s->set_parent(this); }
-    void set_mode_timeout_binary_sensor(OpnPoolBinarySensor *s) { mode_timeout_bs_ = s; if (s) s->set_parent(this); }
+    void set_pump_running_binary_sensor(OpnPoolBinarySensor *bs);
+    void set_mode_service_binary_sensor(OpnPoolBinarySensor *bs);
+    void set_mode_temperature_inc_binary_sensor(OpnPoolBinarySensor *bs);
+    void set_mode_freeze_protection_binary_sensor(OpnPoolBinarySensor *bs);
+    void set_mode_timeout_binary_sensor(OpnPoolBinarySensor *bs);
+
+        // text sensor setters
+    void set_pool_sched_text_sensor(OpnPoolTextSensor *ts);
+    void set_spa_sched_text_sensor(OpnPoolTextSensor *ts);
+    void set_aux1_sched_text_sensor(OpnPoolTextSensor *ts);
+    void set_aux2_sched_text_sensor(OpnPoolTextSensor *ts);
+    void set_system_time_text_sensor(OpnPoolTextSensor *ts);
+    void set_controller_firmware_version_text_sensor(OpnPoolTextSensor *ts);
+    void set_interface_firmware_version_text_sensor(OpnPoolTextSensor *ts);
+    void set_pump_mode_text_sensor(OpnPoolTextSensor *ts);
+    void set_pump_state_text_sensor(OpnPoolTextSensor *ts);
+    void set_chlorinator_name_text_sensor(OpnPoolTextSensor *ts);
+    void set_chlorinator_status_text_sensor(OpnPoolTextSensor *ts);
 
     void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
-    
-        // switch management
-    void on_switch_command(uint8_t circuit, bool state);    
-    void add_pending_switch(OpnPoolSwitch *sw, bool target_state);
-    void check_pending_switches(const poolstate_t *new_state);
-    
-        // climate management
-    void add_pending_climate(OpnPoolClimate *climate, bool has_setpoint, float setpoint_celsius, bool has_heat_src, uint8_t heat_src);
-    void check_pending_climates(const poolstate_t *new_state);
 
         // update sensors
-    void update_text_sensors(const poolstate_t *new_state);
-    void update_analog_sensors(const poolstate_t *new_state);
-    void update_binary_sensors(const poolstate_t *new_state);
+    void update_climates(const poolstate_t * state);
+    void update_switches(const poolstate_t * state);
+    void update_text_sensors(const poolstate_t * state);
+    void update_analog_sensors(const poolstate_t * state);
+    void update_binary_sensors(const poolstate_t * state);
+    void update_all(const poolstate_t * state);
 
-        // climate management
-    void update_climates(const poolstate_t *new_state);
-    
         // helper to get climate index
     uint8_t get_climate_index(OpnPoolClimate *climate) {
-        for (uint8_t i = 0; i < POOLSTATE_THERMO_TYP_COUNT; i++) {
+        for (uint8_t i = 0; i < static_cast<uint8_t>(ClimateId::COUNT); i++) {
             if (climate == this->heaters_[i]) {
                 return i;
             }
@@ -197,14 +158,14 @@ class OpnPool : public Component {  // Remove uart::UARTDevice inheritance
         return 0;
     }
 
-    OpnPoolState * get_opnpool_state() { return opnPoolState_; }
-    ipc_t * get_ipc() { return &ipc_; }
+    OpnPoolState * get_opnpool_state();
+    ipc_t * get_ipc();
 
   protected:
 
     OpnPoolState * opnPoolState_{nullptr};
 
-    ipc_t ipc_{};  // interprocess communication structure and RS485-pins
+    ipc_t * ipc_{};  // interprocess communication structure and RS485-pins
 
     void service_requests_from_pool(ipc_t const * const ipc);
 
@@ -212,37 +173,12 @@ class OpnPool : public Component {  // Remove uart::UARTDevice inheritance
     std::vector<uint8_t> rx_buffer_;
 
     // member pointers - organized in arrays
-    OpnPoolClimate *heaters_[POOLSTATE_THERMO_TYP_COUNT]{nullptr};
-    OpnPoolSwitch *switches_[NETWORK_POOL_CIRCUIT_COUNT]{nullptr};
+    OpnPoolClimate *heaters_[static_cast<uint8_t>(ClimateId::COUNT)]{nullptr};
+    OpnPoolSwitch *switches_[static_cast<uint8_t>(SwitchId::COUNT)]{nullptr};
     
-    OpnPoolSensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
-    OpnPoolSensor *pump_speed_s_{nullptr}, *chlor_level_s_{nullptr}, *chlor_salt_s_{nullptr};
-    OpnPoolSensor *pump_error_s_{nullptr};
-
-    OpnPoolBinarySensor *pump_running_bs_{nullptr}, *mode_service_bs_{nullptr}, *mode_temp_inc_bs_{nullptr};
-    OpnPoolBinarySensor *mode_freeze_bs_{nullptr}, *mode_timeout_bs_{nullptr};
-
-    OpnPoolTextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
-    OpnPoolTextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
-    OpnPoolTextSensor *pump_mode_ts_{nullptr}, *pump_state_ts_{nullptr}, *chlor_name_ts_{nullptr}, *chlor_status_ts_{nullptr};
-
-        // track pending switch commands awaiting confirmation
-    struct pending_switch_t {
-        OpnPoolSwitch *  sw;
-        bool             target_state;
-        uint32_t         timestamp;
-    };
-    std::vector<pending_switch_t> pending_switches_;
-    
-    struct pending_climate_t {
-        OpnPoolClimate *  climate;
-        float             target_setpoint_celsius;
-        uint8_t           target_heat_src;
-        bool              has_setpoint_change;
-        bool              has_heat_src_change;
-        uint32_t          timestamp;
-    };
-    std::vector<pending_climate_t> pending_climates_;
+    OpnPoolSensor *sensors_[static_cast<uint8_t>(SensorId::COUNT)]{nullptr};
+    OpnPoolBinarySensor *binary_sensors_[static_cast<uint8_t>(BinarySensorId::COUNT)]{nullptr};
+    OpnPoolTextSensor *text_sensors_[static_cast<uint8_t>(TextSensorId::COUNT)]{nullptr};
 };
 
 } // namespace opnpool

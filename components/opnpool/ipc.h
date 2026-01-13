@@ -7,8 +7,6 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "network_msg.h"
-
 namespace esphome {
 namespace opnpool {
 
