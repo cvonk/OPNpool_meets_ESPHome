@@ -84,14 +84,14 @@ class OpnPool : public Component, public uart::UARTDevice {
     void loop() override;
     void dump_config() override;
 
-    // RS485 configuration
+        // RS485 configuration
     void set_rs485_rx_pin(uint8_t pin) { ipc_.config.rs485_pins.rx_pin = pin; }
     void set_rs485_tx_pin(uint8_t pin) { ipc_.config.rs485_pins.tx_pin = pin; }
     void set_rs485_flow_control_pin(uint8_t pin) { ipc_.config.rs485_pins.flow_control_pin = pin; }
     void set_rs485_config(const rs485_pins_t &cfg) { ipc_.config.rs485_pins = cfg; }    
     const rs485_pins_t &get_rs485_config() const { return ipc_.config.rs485_pins; }
 
-    // climate setters - using array indexing
+        // climate setters
     void set_pool_heater(OpnPoolClimate *c) { 
         heaters_[static_cast<uint8_t>(poolstate_thermo_typ_t::POOL)] = c; 
         if (c) c->set_parent(this); 
@@ -101,7 +101,7 @@ class OpnPool : public Component, public uart::UARTDevice {
         if (c) c->set_parent(this); 
     }
 
-    // switch setters - using array indexing
+        // switch setters
     void set_pool_switch(OpnPoolSwitch *s) { 
         switches_[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = s; 
         if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::POOL)); s->set_parent(this); }
@@ -139,7 +139,7 @@ class OpnPool : public Component, public uart::UARTDevice {
         if (s) { s->set_circuit_id(static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)); s->set_parent(this); }
     }
 
-    // analog sensor setters
+        // analog sensor setters
     void set_air_temperature_sensor(OpnPoolSensor *s) { air_temp_s_ = s; if (s) s->set_parent(this); }
     void set_water_temperature_sensor(OpnPoolSensor *s) { water_temp_s_ = s; if (s) s->set_parent(this); }
     void set_pump_power_sensor(OpnPoolSensor *s) { pump_power_s_ = s; if (s) s->set_parent(this); }
@@ -149,7 +149,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_chlorinator_salt_sensor(OpnPoolSensor *s) { chlor_salt_s_ = s; if (s) s->set_parent(this); }
     void set_pump_error_sensor(OpnPoolSensor *s) { pump_error_s_ = s; if (s) s->set_parent(this); }
     
-    // text sensor setters
+        // text sensor setters
     void set_pool_sched_text_sensor(OpnPoolTextSensor *s) { pool_sched_ts_ = s; if (s) s->set_parent(this); }
     void set_spa_sched_text_sensor(OpnPoolTextSensor *s) { spa_sched_ts_ = s; if (s) s->set_parent(this); }
     void set_aux1_sched_text_sensor(OpnPoolTextSensor *s) { aux1_sched_ts_ = s; if (s) s->set_parent(this); }
@@ -162,7 +162,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor *s) { chlor_name_ts_ = s; if (s) s->set_parent(this); }
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor *s) { chlor_status_ts_ = s; if (s) s->set_parent(this); }
 
-    // binary sensor setters
+        // binary sensor setters
     void set_pump_running_binary_sensor(OpnPoolBinarySensor *s) { pump_running_bs_ = s; if (s) s->set_parent(this); }
     void set_mode_service_binary_sensor(OpnPoolBinarySensor *s) { mode_service_bs_ = s; if (s) s->set_parent(this); }
     void set_mode_temperature_inc_binary_sensor(OpnPoolBinarySensor *s) { mode_temp_inc_bs_ = s; if (s) s->set_parent(this); }

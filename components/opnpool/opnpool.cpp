@@ -174,10 +174,23 @@ void OpnPool::on_switch_command(uint8_t const circuit_id, bool const state) {
     ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
+OpnPool::OpnPool() {
+}
+
 void OpnPool::setup() {
 
     ESP_LOGV(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
 
+        // publish interface firmware version immediately
+    if (this->interface_fw_ts_ != nullptr) {
+        #ifdef INTERFACE_FW_VERSION
+            this->interface_fw_ts_->publish_state(INTERFACE_FW_VERSION);
+        #else
+            this->interface_fw_ts_->publish_state("unknown");
+        #endif
+    }
+
+    opnPoolState_ = new OpnPoolState(this);
     if (!opnPoolState_->is_valid()) {
         ESP_LOGE(TAG, "Failed to initialize opnPoolState_");
         return;
@@ -187,13 +200,8 @@ void OpnPool::setup() {
     this->ipc_.to_main_q = xQueueCreate(10, sizeof(network_msg_t));
     assert(this->ipc_.to_main_q && this->ipc_.to_pool_q);
 
-    // spin off a pool_task that handles RS485 and the pool state machine
-    BaseType_t const res = xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
-    if (res != pdPASS) {
-      ESP_LOGE(TAG, "Failed to create pool_task! Error code: %d", res);
-    } else {
-      ESP_LOGI(TAG, "pool_task created successfully.");
-    } 
+        // spin off a pool_task that handles RS485 communication, datalink layer and network layer
+    xTaskCreate(&pool_task, "pool_task", 2*4096, &this->ipc_, 3, NULL);
 }
 
 void
@@ -466,10 +474,6 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         char fw_str[16];
         snprintf(fw_str, sizeof(fw_str), "%d.%d", new_state->system.version.major, new_state->system.version.minor);
         this->controller_fw_ts_->publish_state(fw_str);
-    }
-    
-    if (this->interface_fw_ts_ != nullptr) {
-        this->interface_fw_ts_->publish_state("N/A");
     }
 }
 

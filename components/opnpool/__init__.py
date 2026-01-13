@@ -72,8 +72,8 @@ CONF_TEXT_SENSORS = [
 # Example addition (insert into the CONFIG_SCHEMA mapping):
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
-    # grouped RS485 settings (preferred)
-    cv.Optional(CONF_RS485): cv.Schema({
+    # RS485 settings (required, but with defaults)
+    cv.Optional(CONF_RS485, default={}): cv.Schema({
         cv.Optional(CONF_RS485_RX_PIN, default=25): cv.int_,
         cv.Optional(CONF_RS485_TX_PIN, default=26): cv.int_,
         cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=27): cv.int_,
@@ -88,53 +88,83 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-}).extend(cv.COMPONENT_SCHEMA)
+}).extend(cv.COMPONENT_SCHEMA) #.extend(uart.UART_DEVICE_SCHEMA)
 
 async def to_code(config):
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    #await uart.register_uart_device(var, config)  # Uncomment this line
 
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
+    
+    # Add interface firmware version
+    import subprocess
+    import os
+    
+    version = "unknown"
+    try:
+        component_dir = os.path.dirname(os.path.abspath(__file__))
+        git_hash = subprocess.check_output(
+            ['git', 'rev-parse', '--short', 'HEAD'],
+            cwd=component_dir,
+            stderr=subprocess.DEVNULL
+        ).decode('ascii').strip()
+        
+        try:
+            subprocess.check_output(
+                ['git', 'diff', '--quiet'],
+                cwd=component_dir,
+                stderr=subprocess.DEVNULL
+            )
+            dirty = ""
+        except subprocess.CalledProcessError:
+            dirty = "-dirty"
+        
+        version = f"git-{git_hash}{dirty}"
+    except:
+        try:
+            from esphome.const import __version__ as ESPHOME_VERSION
+            version = f"esphome-{ESPHOME_VERSION}"
+        except:
+            pass
+    
+    cg.add_build_flag(f"-DINTERFACE_FW_VERSION=\\\"{version}\\\"")
+    
+    # RS485 configuration (always set due to default={})
+    rs485_config = config[CONF_RS485]
+    cg.add(var.set_rs485_rx_pin(rs485_config[CONF_RS485_RX_PIN]))
+    cg.add(var.set_rs485_tx_pin(rs485_config[CONF_RS485_TX_PIN]))
+    cg.add(var.set_rs485_flow_control_pin(rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
-    # pass the RS485-setting to the OpnPool instance
-    if CONF_RS485 in config:
-        rs485_config = config[CONF_RS485]
-        if CONF_RS485_RX_PIN in rs485_config:
-            cg.add(var.set_rs485_rx_pin(rs485_config[CONF_RS485_RX_PIN]))
-        if CONF_RS485_TX_PIN in rs485_config:
-            cg.add(var.set_rs485_tx_pin(rs485_config[CONF_RS485_TX_PIN]))
-        if CONF_RS485_FLOW_CONTROL_PIN in rs485_config:
-            cg.add(var.set_rs485_flow_control_pin(rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
-
-    # register climate entities
+    # Register climate entities (only if present)
     for climate_key in CONF_CLIMATES:
         if climate_key in config:
             climate_entity = await climate.new_climate(config[climate_key])
             cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
 
-    # register switches
+    # Register switches (only if present)
     for switch_key in CONF_SWITCHES:
         if switch_key in config:
             switch_entity = await switch.new_switch(config[switch_key])
             cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
 
-    # Register analog sensors
+    # Register analog sensors (only if present)
     for sensor_key in CONF_ANALOG_SENSORS:
         if sensor_key in config:
             sensor_entity = await sensor.new_sensor(config[sensor_key])
             cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
-    
-    # register binary sensors
+
+    # Register binary sensors (only if present)
     for binary_sensor_key in CONF_BINARY_SENSORS:
         if binary_sensor_key in config:
             bs_entity = await binary_sensor.new_binary_sensor(config[binary_sensor_key])
             cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
-    # register text sensors
+    # Register text sensors (only if present)
     for text_sensor_key in CONF_TEXT_SENSORS:
         if text_sensor_key in config:
             ts_entity = await text_sensor.new_text_sensor(config[text_sensor_key])
