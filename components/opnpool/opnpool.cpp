@@ -174,10 +174,6 @@ void OpnPool::on_switch_command(uint8_t const circuit_id, bool const state) {
     ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
-OpnPool::OpnPool() {
-    opnPoolState_ = new OpnPoolState(this);
-}
-
 void OpnPool::setup() {
 
     ESP_LOGV(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
