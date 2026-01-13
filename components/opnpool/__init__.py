@@ -1,17 +1,18 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import uart, climate, switch, sensor, binary_sensor, text_sensor
+from esphome.components import climate, switch, sensor, binary_sensor, text_sensor
 from esphome.const import (
     CONF_ID, CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS,
     UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT,
 )
 
-DEPENDENCIES = ["uart", "climate", "switch", "sensor", "binary_sensor", "text_sensor"]
-AUTO_LOAD = ["uart", "climate", "switch", "sensor", "binary_sensor", "text_sensor"]
+# Remove 'uart' from dependencies
+DEPENDENCIES = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
+AUTO_LOAD = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
 
 # namespace and class definitions
 opnpool_ns = cg.esphome_ns.namespace("opnpool")
-OpnPool = opnpool_ns.class_("OpnPool", cg.Component, uart.UARTDevice)
+OpnPool = opnpool_ns.class_("OpnPool", cg.Component)  # Remove uart.UARTDevice
 OpnPoolClimate = opnpool_ns.class_("OpnPoolClimate", climate.Climate)
 OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch)
 OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor)
@@ -77,7 +78,7 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional(CONF_RS485_RX_PIN, default=25): cv.int_,
         cv.Optional(CONF_RS485_TX_PIN, default=26): cv.int_,
         cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=27): cv.int_,
-     }),
+    }),
     **{cv.Optional(key): climate.climate_schema(OpnPoolClimate) for key in CONF_CLIMATES},
     **{cv.Optional(key): switch.switch_schema(OpnPoolSwitch) for key in CONF_SWITCHES},
     **{
@@ -88,13 +89,13 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
     **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-}).extend(cv.COMPONENT_SCHEMA) #.extend(uart.UART_DEVICE_SCHEMA)
+}).extend(cv.COMPONENT_SCHEMA)  # Remove .extend(uart.UART_DEVICE_SCHEMA)
 
 async def to_code(config):
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
-    #await uart.register_uart_device(var, config)  # Uncomment this line
+    # Remove: await uart.register_uart_device(var, config)  # Uncomment this line
 
     # add build flags
     cg.add_build_flag("-fmax-errors=5")

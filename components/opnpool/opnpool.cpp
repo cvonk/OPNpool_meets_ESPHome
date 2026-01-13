@@ -2,6 +2,7 @@
 #include <esp_system.h>
 #include <cstdlib>
 #include <esphome/core/log.h>
+#include <esphome/core/hal.h>
 
 #include "opnpool.h"
 #include "skb.h"
@@ -16,17 +17,6 @@
 namespace esphome {
 namespace opnpool {
   
-// get base file name at compiler time
-constexpr const char* base_file(const char* path) {
-    const char* file = path;
-    while (*path) {
-        if (*path++ == '/') {
-            file = path;
-        }
-    }
-    return file;
-}
-
 static const char *const TAG = "opnpool";
 
 climate::ClimateTraits OpnPoolClimate::traits() {
@@ -174,9 +164,6 @@ void OpnPool::on_switch_command(uint8_t const circuit_id, bool const state) {
     ipc_send_network_msg_to_pool_task(&msg, &this->ipc_);
 }
 
-OpnPool::OpnPool() {
-}
-
 void OpnPool::setup() {
 
     ESP_LOGV(TAG, "setup ..");  // only viewable on the serial console (WiFi not yet started)
@@ -229,91 +216,6 @@ void OpnPool::loop() {  //  this will be called repeatedly by the main ESPHome l
     // don't call vTaskDelay() or blocking queue operations
 
     this->service_requests_from_pool(&this->ipc_);
-
-#if 0
-  while (this->available()) {    
-    uint8_t byte;
-    this->read_byte(&byte);
-    
-    ESP_LOGV(TAG, "Rx: %02X", byte);
-
-    this->rx_buffer_.push_back(byte);
-
-    // header Sync (0xFF 0xAA)
-    if (this->rx_buffer_.size() > 0 && this->rx_buffer_[0] != 0xFF) {
-      this->rx_buffer_.clear();
-      continue;
-    }
-    if (this->rx_buffer_.size() > 1 && this->rx_buffer_[1] != 0xAA) {
-      this->rx_buffer_.erase(this->rx_buffer_.begin());
-      continue;
-    }
-
-    if (this->rx_buffer_.size() < 4) continue;
-    uint8_t len = this->rx_buffer_[2];
-
-    if (this->rx_buffer_.size() < (size_t)(len + 6)) continue;
-
-    this->parse_packet_(this->rx_buffer_);
-    this->rx_buffer_.clear();
-
-    //if (this->air_temperature_sensor_ != nullptr) {
-    //  this->air_temperature_sensor_->publish_state(new_temp_value);
-    //}
-  }
-#endif
-}
-
-void OpnPool::write_packet(uint8_t command, const std::vector<uint8_t> &payload) {
-
-  std::vector<uint8_t> pkt;
-  pkt.push_back(0xFF); pkt.push_back(0xAA);
-  pkt.push_back((uint8_t)payload.size());
-  pkt.push_back(command);
-  for (uint8_t b : payload) pkt.push_back(b);
-
-  uint16_t crc = pkt[2] + pkt[3];
-  for (uint8_t b : payload) crc += b;
-  pkt.push_back((uint8_t)(crc >> 8));
-  pkt.push_back((uint8_t)(crc & 0xFF));
-
-  // This automatically handles the RS485 Direction/RE/DE pin
-  this->write_array(pkt);
-}
-
-void OpnPool::parse_packet_(const std::vector<uint8_t> &data) {
-
-#ifdef NOT_YET
-    if (should_log_(datalink_level_, ESPHOME_LOG_LEVEL_VERBOSE)) {
-          ESP_LOGV("datalink", "Raw packet received: %s", format_hex_pretty(data).c_str());
-      }
-
-    uint8_t cmd = data[3];
-
-    // Assuming Command 0x01 is the status update containing temperature at index 5
-    if (cmd == 0x01 && data.size() > 5) {
-        float current_temp = data[5];
-
-        // 1. Update the standalone Water Temperature sensor
-        if (this->water_temp_s_ != nullptr) {
-          this->water_temp_s_->publish_state(current_temp);
-        }
-
-        // 2. Feed temperature into Pool Heater climate
-        if (this->pool_heater_ != nullptr) {
-          this->pool_heater_->current_temperature = current_temp;
-          this->pool_heater_->publish_state();
-        }
-
-        // 3. Feed temperature into Spa Heater climate
-        if (this->spa_heater_ != nullptr) {
-          this->spa_heater_->current_temperature = current_temp;
-          this->spa_heater_->publish_state();
-        }
-        
-        ESP_LOGD(TAG, "Updated temperature to: %.1f°C", current_temp);
-    }
-#endif
 }
 
 void OpnPool::dump_config() {
@@ -376,9 +278,9 @@ void OpnPool::add_pending_switch(OpnPoolSwitch *sw, bool target_state) {
         // add new pending
     ESP_LOGVV(TAG, "Adding pending switch: circuit=%u, requested=%u", sw->get_circuit_id(), target_state);
     pending_switches_.push_back({
-        .sw = sw,
-        .target_state = target_state,
-        .timestamp = millis()
+        sw,              // .sw
+        target_state,    // .target_state  
+        millis()         // .timestamp
     });
 }
 

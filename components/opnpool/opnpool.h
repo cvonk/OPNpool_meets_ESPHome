@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 #include "esphome/core/component.h"
-#include "esphome/components/uart/uart.h"                    // esphome::uart::UARTDevice
+//#include "esphome/components/uart/uart.h"                    // esphome::uart::UARTDevice
 #include "esphome/components/climate/climate.h"              // esphome::climate::Climate
 #include "esphome/components/switch/switch.h"                // esphome::switch_::Switch
 #include "esphome/components/sensor/sensor.h"                // esphome::sensor::Sensor
@@ -76,10 +76,9 @@ class OpnPoolTextSensor : public text_sensor::TextSensor {
 
     // main component
 
-class OpnPool : public Component, public uart::UARTDevice {
+class OpnPool : public Component {  // Remove uart::UARTDevice inheritance
 
   public:
-    OpnPool();
     void setup() override;
     void loop() override;
     void dump_config() override;
