@@ -147,8 +147,6 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_pump_speed_sensor(OpnPoolSensor *s) { pump_speed_s_ = s; if (s) s->set_parent(this); }
     void set_chlorinator_level_sensor(OpnPoolSensor *s) { chlor_level_s_ = s; if (s) s->set_parent(this); }
     void set_chlorinator_salt_sensor(OpnPoolSensor *s) { chlor_salt_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_status_sensor(OpnPoolSensor *s) { pump_status_s_ = s; if (s) s->set_parent(this); }
-    void set_pump_state_sensor(OpnPoolSensor *s) { pump_state_s_ = s; if (s) s->set_parent(this); }
     void set_pump_error_sensor(OpnPoolSensor *s) { pump_error_s_ = s; if (s) s->set_parent(this); }
     
     // text sensor setters
@@ -160,6 +158,7 @@ class OpnPool : public Component, public uart::UARTDevice {
     void set_controller_firmware_version_text_sensor(OpnPoolTextSensor *s) { controller_fw_ts_ = s; if (s) s->set_parent(this); }
     void set_interface_firmware_version_text_sensor(OpnPoolTextSensor *s) { interface_fw_ts_ = s; if (s) s->set_parent(this); }
     void set_pump_mode_text_sensor(OpnPoolTextSensor *s) { pump_mode_ts_ = s; if (s) s->set_parent(this); }
+    void set_pump_state_text_sensor(OpnPoolTextSensor *s) { pump_state_ts_ = s; if (s) s->set_parent(this); }
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor *s) { chlor_name_ts_ = s; if (s) s->set_parent(this); }
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor *s) { chlor_status_ts_ = s; if (s) s->set_parent(this); }
 
@@ -219,13 +218,14 @@ class OpnPool : public Component, public uart::UARTDevice {
     
     OpnPoolSensor *air_temp_s_{nullptr}, *water_temp_s_{nullptr}, *pump_power_s_{nullptr}, *pump_flow_s_{nullptr};
     OpnPoolSensor *pump_speed_s_{nullptr}, *chlor_level_s_{nullptr}, *chlor_salt_s_{nullptr};
-    OpnPoolSensor *pump_status_s_{nullptr}, *pump_state_s_{nullptr}, *pump_error_s_{nullptr};
+    OpnPoolSensor *pump_error_s_{nullptr};
+
     OpnPoolBinarySensor *pump_running_bs_{nullptr}, *mode_service_bs_{nullptr}, *mode_temp_inc_bs_{nullptr};
     OpnPoolBinarySensor *mode_freeze_bs_{nullptr}, *mode_timeout_bs_{nullptr};
 
     OpnPoolTextSensor *pool_sched_ts_{nullptr}, *spa_sched_ts_{nullptr}, *aux1_sched_ts_{nullptr}, *aux2_sched_ts_{nullptr};
     OpnPoolTextSensor *system_time_ts_{nullptr}, *controller_fw_ts_{nullptr}, *interface_fw_ts_{nullptr};
-    OpnPoolTextSensor *pump_mode_ts_{nullptr}, *chlor_name_ts_{nullptr}, *chlor_status_ts_{nullptr};
+    OpnPoolTextSensor *pump_mode_ts_{nullptr}, *pump_state_ts_{nullptr}, *chlor_name_ts_{nullptr}, *chlor_status_ts_{nullptr};
 
         // track pending switch commands awaiting confirmation
     struct pending_switch_t {

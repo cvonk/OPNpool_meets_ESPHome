@@ -47,8 +47,6 @@ CONF_ANALOG_SENSORS = [
     "pump_speed",
     "chlorinator_level",
     "chlorinator_salt",
-    "pump_status",
-    "pump_state",
     "pump_error"
 ]
 CONF_BINARY_SENSORS = [
@@ -61,9 +59,8 @@ CONF_BINARY_SENSORS = [
 CONF_TEXT_SENSORS = [
     "pool_sched",
     "spa_sched",
-    "aux1_sched",
-    "aux2_sched", 
     "pump_mode",
+    "pump_state",
     "chlorinator_name",
     "chlorinator_status",
     "system_time",

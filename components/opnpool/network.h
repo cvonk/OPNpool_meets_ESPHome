@@ -30,7 +30,7 @@ char const * network_ctrl_date_str(uint16_t const year, uint8_t const month, uin
 char const * network_ctrl_time_str(uint8_t const hours, uint8_t const minutes);
 char const * network_ctrl_version_str(uint8_t const major, uint8_t const minor);
 const char * network_pool_mode_str(network_pool_mode_t const mode);
-const char * network_pump_operation_mode_str(network_pump_operation_mode_t const pump_mode);
+const char * network_pump_mode_str(network_pump_mode_t const pump_mode);
 const char * network_pump_state_str(network_pump_state_t const pump_state);
 char const * network_pump_program_str(uint16_t const address);
 const char * network_heat_src_str(network_heat_src_t const heat_src);

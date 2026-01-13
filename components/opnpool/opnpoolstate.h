@@ -154,20 +154,13 @@ enum class PoolstateElemTempTyp : uint8_t {
 
 
 /**
- * @brief Pool state modes
+ * @brief Pool state mode bit set
  **/
 
 typedef struct poolstate_modes_t {
-    bool  set[NETWORK_POOL_MODE_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
+    bool  is_set[network_pool_mode_count()];  // IntelliSense flags this incorrectly - it compiles fine
 } poolstate_modes_t;
 
-enum class poolstate_elem_modes_typ_t : uint8_t {
-    SERVICE     = 0,
-    UNKOWN_01   = 1,    
-    TEMP_INC    = 2,
-    FREEZE_PROT = 3,
-    TIMEOUT     = 4
-};
 
 
 /**
@@ -204,7 +197,7 @@ typedef struct poolstate_pump_t {
 
 enum class poolstate_elem_pump_typ_t : uint8_t {
     TIME = 0,
-    OPERATION_MODE = 1,
+    MODE = 1,
     RUNNING = 2,
     STATE = 3,
     POWER = 4,
@@ -263,7 +256,7 @@ typedef struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
     poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
-    poolstate_sched_t     scheds[NETWORK_POOL_CIRCUIT_COUNT];
+    poolstate_sched_t     scheds[NETWORK_MSG_CTRL_SCHED_COUNT];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;
@@ -310,7 +303,10 @@ class OpnPoolState {
         const char * to_json(poolstate_elem_typ_t const typ);
 
         esp_err_t rx_update(network_msg_t const * const msg);
+
+#if 0        
         esp_err_t get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
+#endif
 
     private:
         typedef struct poolstate_prot_t {
@@ -349,7 +345,7 @@ void opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, pools
 void opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
 void opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
-void opnpoolstate_log_add_pump_operation_mode(cJSON * const obj, char const * const key, uint8_t const mode);
+void opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode);
 void opnpoolstate_log_add_pump_running(cJSON * const obj, char const * const key, bool const running);
 void opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);

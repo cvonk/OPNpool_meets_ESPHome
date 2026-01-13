@@ -182,12 +182,12 @@ opnpool:
     name: "Pool schedule"
   spa_sched:
     name: "Spa schedule"
-  aux1_sched:
-    name: "Aux1 schedule"
-  aux2_sched:
-    name: "Aux2 schedule"
   pump_mode:
     name: "Pump mode"
+  pump_state:
+    name: "Pump state"
+  pump_error:
+    name: "Pump error"
   chlorinator_name:
     name: "Chlorinator name"
   chlorinator_status:
@@ -198,11 +198,3 @@ opnpool:
     name: "Controller firmware"
   interface_firmware_version:
     name: "Interface firmware"
-
-  # number sensors
-  pump_status:
-    name: "Pump status"
-  pump_state:
-    name: "Pump state"
-  pump_error:
-    name: "Pump error"

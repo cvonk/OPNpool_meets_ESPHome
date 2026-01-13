@@ -337,8 +337,6 @@ void OpnPool::dump_config() {
     LOG_SENSOR("  ", "Pump power", this->pump_power_s_);
     LOG_SENSOR("  ", "Pump flow", this->pump_flow_s_);
     LOG_SENSOR("  ", "Pump speed", this->pump_speed_s_);
-    LOG_SENSOR("  ", "Pump status", this->pump_status_s_);
-    LOG_SENSOR("  ", "Pump state", this->pump_state_s_);
     LOG_SENSOR("  ", "Pump error", this->pump_error_s_);
     LOG_SENSOR("  ", "Chlorinator level", this->chlor_level_s_);
     LOG_SENSOR("  ", "Chlorinator salt", this->chlor_salt_s_);
@@ -353,9 +351,8 @@ void OpnPool::dump_config() {
     // text sensors
     LOG_TEXT_SENSOR("  ", "Pool schedule", this->pool_sched_ts_);
     LOG_TEXT_SENSOR("  ", "Spa schedule", this->spa_sched_ts_);
-    LOG_TEXT_SENSOR("  ", "AUX1 schedule", this->aux1_sched_ts_);
-    LOG_TEXT_SENSOR("  ", "AUX2 schedule", this->aux2_sched_ts_);
     LOG_TEXT_SENSOR("  ", "Pump mode", this->pump_mode_ts_);
+    LOG_TEXT_SENSOR("  ", "Pump state", this->pump_state_ts_);
     LOG_TEXT_SENSOR("  ", "Chlorinator name", this->chlor_name_ts_);
     LOG_TEXT_SENSOR("  ", "Chlorinator status", this->chlor_status_ts_);
     LOG_TEXT_SENSOR("  ", "System time", this->system_time_ts_);
@@ -426,29 +423,16 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         this->spa_sched_ts_->publish_state(sched_str);
     }
     
-    if (this->aux1_sched_ts_ != nullptr) {
-        char sched_str[64];
-        uint8_t aux1_idx = static_cast<uint8_t>(network_pool_circuit_t::AUX1);
-        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
-            new_state->scheds[aux1_idx].start / 60, new_state->scheds[aux1_idx].start % 60,
-            new_state->scheds[aux1_idx].stop / 60, new_state->scheds[aux1_idx].stop % 60);
-        this->aux1_sched_ts_->publish_state(sched_str);
-    }
-    
-    if (this->aux2_sched_ts_ != nullptr) {
-        char sched_str[64];
-        uint8_t aux2_idx = static_cast<uint8_t>(network_pool_circuit_t::AUX2);
-        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
-            new_state->scheds[aux2_idx].start / 60, new_state->scheds[aux2_idx].start % 60,
-            new_state->scheds[aux2_idx].stop / 60, new_state->scheds[aux2_idx].stop % 60);
-        this->aux2_sched_ts_->publish_state(sched_str);
-    }
-    
-        // update pump mode text sensor
+        // update pump operation mode text sensor
 
     if (this->pump_mode_ts_ != nullptr) {
-        this->pump_mode_ts_->publish_state(std::to_string(new_state->pump.mode));
+        this->pump_mode_ts_->publish_state(network_pump_mode_str(static_cast<network_pump_mode_t>(new_state->pump.mode)));
     }
+
+    if (this->pump_state_ts_ != nullptr) {
+        this->pump_state_ts_->publish_state(network_pump_state_str(static_cast<network_pump_state_t>(new_state->pump.state)));
+    }
+
 
         // update chlorinator text sensors
     
@@ -497,13 +481,11 @@ void OpnPool::update_analog_sensors(const poolstate_t *new_state) {
 
     if (this->air_temp_s_ != nullptr) {
         float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
-        //float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
         this->air_temp_s_->publish_state(air_temp_f);
     }
     
     if (this->water_temp_s_ != nullptr) {
         float water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-        //float water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
         this->water_temp_s_->publish_state(water_temp_f);
     }
     
@@ -519,10 +501,6 @@ void OpnPool::update_analog_sensors(const poolstate_t *new_state) {
         this->pump_speed_s_->publish_state(new_state->pump.speed);
     }
     
-    if (this->pump_state_s_ != nullptr) {
-        this->pump_state_s_->publish_state(new_state->pump.state);
-    }
-
     if (this->pump_error_s_ != nullptr) {
         this->pump_error_s_->publish_state(new_state->pump.error);
     }
@@ -543,25 +521,26 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
     }
     
     if (this->mode_service_bs_ != nullptr) {
-        this->mode_service_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::SERVICE)]);
+        this->mode_service_bs_->publish_state(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
     }
     
     if (this->mode_temp_inc_bs_ != nullptr) {
-        this->mode_temp_inc_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::TEMP_INC)]);
+        this->mode_temp_inc_bs_->publish_state(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
     }
     
     if (this->mode_freeze_bs_ != nullptr) {
-        this->mode_freeze_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::FREEZE_PROT)]);
+        this->mode_freeze_bs_->publish_state(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
     }
     
     if (this->mode_timeout_bs_ != nullptr) {
-        this->mode_timeout_bs_->publish_state(new_state->modes.set[static_cast<uint8_t>(poolstate_elem_modes_typ_t::TIMEOUT)]);
+        this->mode_timeout_bs_->publish_state(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
     }
 }
 
+
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
-        // first check pending climate changes
+        // check for pending climate changes
     check_pending_climates(new_state);
     
     uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
