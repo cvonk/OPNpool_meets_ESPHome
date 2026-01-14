@@ -5,6 +5,12 @@
  * 
  * @copyright Copyright (c) 2026 Coert Vonk
  * 
+ * @details
+ * Implements the climate entity interface for the OPNpool component, allowing ESPHome to
+ * control and monitor pool/spa heating via RS-485. Handles mapping between ESPHome
+ * climate calls and pool controller commands, and updates climate state from pool
+ * controller feedback.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either
@@ -26,7 +32,6 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpool.h"
 #include "opnpool_state.h"
 #include "opnpool_switch.h"
 
@@ -35,13 +40,14 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_climate";
 
-void OpnPoolClimate::setup() {
-    // Nothing to do here - parent handles setup
+inline float fahrenheit_to_celsius(float f) {
+    return (f - 32.0f) * 5.0f / 9.0f;
 }
 
-void OpnPoolClimate::dump_config() {
-    LOG_CLIMATE("  ", "Climate", this);
+inline float celsius_to_fahrenheit(float c) {
+    return c * 9.0f / 5.0f + 32.0f;
 }
+
 
 enum class custom_presets_t {
     NONE,
@@ -51,7 +57,7 @@ enum class custom_presets_t {
 };
 
 inline const char *
-custom_presets_str(custom_presets_t const preset)
+_custom_presets_str(custom_presets_t const preset)
 {
     auto name = magic_enum::enum_name(preset);
     if (!name.empty()) {
@@ -59,10 +65,32 @@ custom_presets_str(custom_presets_t const preset)
     }
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(preset));
+    ESP_LOGW(TAG, "Unknown custom preset: 0x%s", buf);
     return buf;
 }
 
+void OpnPoolClimate::setup() {
+    // Nothing to do here - parent handles setup
+}
 
+void OpnPoolClimate::dump_config() {
+    LOG_CLIMATE("  ", "Climate", this);
+}
+
+
+/**
+ * @brief Get the climate traits for the OPNpool climate entity
+ * 
+ * @details
+ * Defines the supported modes, temperature range, and custom presets for the OPNpool
+ * climate entity. Specifies how the pool/spa heating interface appears to Home Assistant,
+ * including available climate modes, valid temperature range, and selectable heating
+ * sources.
+ * Home Assistant will use the custom presets (Heat/SolarPreferred/Solar), but has to use
+ * the regular preset (NONE) to disable the heating source.
+ * 
+ * @return climate::ClimateTraits 
+ */
 climate::ClimateTraits OpnPoolClimate::traits() {
 
     auto traits = climate::ClimateTraits();  // see climate_traits.h
@@ -75,18 +103,36 @@ climate::ClimateTraits OpnPoolClimate::traits() {
     traits.set_visual_max_temperature(43);  // 110°F in Celsius
     traits.set_visual_temperature_step(1);
 
-        // support for clearing presets
+        // support for disabling the heating source
     traits.add_supported_preset(climate::CLIMATE_PRESET_NONE);
 
-        // custom heating presets
+        // custom heat sources
     traits.set_supported_custom_presets({
-        custom_presets_str(custom_presets_t::Heat),
-        custom_presets_str(custom_presets_t::SolarPreferred),
-        custom_presets_str(custom_presets_t::Solar)
+        _custom_presets_str(custom_presets_t::Heat),
+        _custom_presets_str(custom_presets_t::SolarPreferred),
+        _custom_presets_str(custom_presets_t::Solar)
     });
     return traits;
 }
 
+
+/**
+ * @brief
+ * Handles requests from Home Assistant to change the climate state of the pool or spa.
+ *
+ * @details
+ * Processes incoming commands for target temperature, climate mode (OFF/HEAT), and
+ * heat source (custom preset).
+ * The pool controller doesn't have a concept of climate modes.  Instead we map it to
+ * the pool/spa circuit switch.
+ * Constructs and sends protocol messages to the pool controller if thermostat
+ * settings have changed.
+ * Unsupported climate modes are logged and reported to Home Assistant as OFF.
+ * State is not published immediately; updates are sent after confirmation from the
+ * pool controller.
+ * 
+ * @param call The climate call object containing requested changes from Home Assistant.
+ */
 void OpnPoolClimate::control(const climate::ClimateCall &call) {
     
     uint8_t const climate_idx = this->get_idx();
@@ -107,7 +153,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
     if (call.get_target_temperature().has_value()) {
 
         float const target_temp_celsius = *call.get_target_temperature();
-        float const target_temp_fahrenheit = target_temp_celsius * 9.0f / 5.0f + 32.0f;
+        float const target_temp_fahrenheit = celsius_to_fahrenheit(target_temp_celsius);
         ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", climate_idx, target_temp_fahrenheit);
 
         thermos_new[climate_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
@@ -135,6 +181,9 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
                 break;
             default:
                 ESP_LOGW(TAG, "Unsupported climate mode: %d", static_cast<int>(requested_mode));
+                this->mode = climate::CLIMATE_MODE_OFF;
+                this->action = climate::CLIMATE_ACTION_OFF;
+                this->publish_state();
                 break;
         }
     }
@@ -146,14 +195,15 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
 
         ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", climate_idx, preset_str);
 
-        if (strcasecmp(preset_str, custom_presets_str(custom_presets_t::Heat)) == 0) {
+        if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Heat)) == 0) {
             thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::HEATER);
-        } else if (strcasecmp(preset_str, custom_presets_str(custom_presets_t::SolarPreferred)) == 0) {
+        } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::SolarPreferred)) == 0) {
             thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR_PREF);
-        } else if (strcasecmp(preset_str, custom_presets_str(custom_presets_t::Solar)) == 0) {
+        } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Solar)) == 0) {
             thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR);
         }
     } else if (call.get_preset().has_value()) {
+
         climate::ClimatePreset new_preset = *call.get_preset();
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
@@ -192,6 +242,20 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
     // DON'T publish state here - wait for pool controller confirmation
 }
 
+
+/**
+ * @brief
+ * Updates the climate entity state from the latest pool controller feedback.
+ *
+ * @details
+ * Extracts current and target temperatures, climate mode, heat source, and heating action
+ * from the provided pool state.
+ * Maps pool controller heat source values to custom presets for Home Assistant.
+ * Determines the climate action (heating, idle, or off) based on controller feedback.
+ * Publishes the updated state to Home Assistant only if any relevant value has changed.
+ *
+ * @param new_state Pointer to the latest poolstate_t structure containing updated pool controller data.
+ */
 void
 OpnPoolClimate::update_climate(const poolstate_t * new_state) 
 {    
@@ -204,10 +268,9 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
     poolstate_thermo_t const * const thermo = &new_state->thermos[climate_idx];
 
     float const new_current_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-    float const new_current_temp = (new_current_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;
-
-    float new_target_temp_in_fahrenheit = thermo->set_point;
-    float new_target_temp = (new_target_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;
+    float const new_current_temp = fahrenheit_to_celsius(new_current_temp_in_fahrenheit);
+    float const new_target_temp_in_fahrenheit = thermo->set_point;
+    float new_target_temp = fahrenheit_to_celsius(new_target_temp_in_fahrenheit);
     
         // update mode based on {circuit state, heating status}
 
@@ -227,19 +290,17 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
 
     const char * new_custom_preset = nullptr;
     switch (static_cast<network_heat_src_t>(thermo->heat_src)) {
-        case network_heat_src_t::NONE:
-            new_custom_preset = custom_presets_str(custom_presets_t::NONE);
-            break;
         case network_heat_src_t::HEATER:
-            new_custom_preset = custom_presets_str(custom_presets_t::Heat);
+            new_custom_preset = _custom_presets_str(custom_presets_t::Heat);
             break;
         case network_heat_src_t::SOLAR_PREF:
-            new_custom_preset = custom_presets_str(custom_presets_t::SolarPreferred);
+            new_custom_preset = _custom_presets_str(custom_presets_t::SolarPreferred);
             break;
         case network_heat_src_t::SOLAR:
-            new_custom_preset = custom_presets_str(custom_presets_t::Solar);
+            new_custom_preset = _custom_presets_str(custom_presets_t::Solar);
             break;
         default:
+            new_custom_preset = _custom_presets_str(custom_presets_t::NONE);
             ESP_LOGW(TAG, "Unknown heat source: %u", thermo->heat_src);
             break;
     }
@@ -263,7 +324,23 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
                                   new_mode, new_custom_preset, new_action);
 }
 
-
+/**
+ * @brief
+ * Publishes the climate entity state to Home Assistant if any relevant value has changed.
+ *
+ * @details
+ * Compares the new climate state (current temperature, target temperature, mode, custom preset, 
+ * and action) with the last published state. If any value differs, updates the internal state,
+ * sets the appropriate preset or custom preset, and publishes the new state to Home Assistant.
+ * This avoids redundant updates.
+ *
+ * @param idx                      Index of the climate entity (pool or spa).
+ * @param new_current_temperature  The updated current temperature in Celsius.
+ * @param new_target_temperature   The updated target temperature in Celsius.
+ * @param new_mode                 The updated climate mode (OFF/HEAT).
+ * @param new_custom_preset        The updated custom preset string (heat source).
+ * @param new_action               The updated climate action (heating, idle, or off).
+ */
 void OpnPoolClimate::publish_state_if_changed(uint8_t const idx, float const new_current_temperature, float const new_target_temperature, climate::ClimateMode const new_mode, char const * new_custom_preset, climate::ClimateAction const new_action) {
 
     last_state_t * last = &this->last_state_;
@@ -280,7 +357,7 @@ void OpnPoolClimate::publish_state_if_changed(uint8_t const idx, float const new
         this->mode = new_mode;
         this->action = new_action;
 
-        if (strcasecmp(new_custom_preset, custom_presets_str(custom_presets_t::NONE)) == 0) {
+        if (strcasecmp(new_custom_preset, _custom_presets_str(custom_presets_t::NONE)) == 0) {
             ESP_LOGV(TAG, "Setting climate[%u] preset to NONE", idx);
             set_preset_(climate::CLIMATE_PRESET_NONE);
             clear_custom_preset_();

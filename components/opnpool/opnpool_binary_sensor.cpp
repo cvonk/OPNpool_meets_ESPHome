@@ -38,8 +38,10 @@ void OpnPoolBinarySensor::dump_config() {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
 }
 
-void OpnPoolBinarySensor::publish_state_if_changed(bool state) {
+void OpnPoolBinarySensor::publish_state_if_changed(bool state)
+{
     if (!last_state_valid_ || last_state_ != state) {
+        
         this->publish_state(state);
         last_state_ = state;
         last_state_valid_ = true;

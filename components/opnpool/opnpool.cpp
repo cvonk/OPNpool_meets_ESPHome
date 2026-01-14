@@ -107,7 +107,7 @@ OpnPool::service_requests_from_pool(ipc_t const * const ipc)
 
         if (opnPoolState_->rx_update(&msg) == ESP_OK) {
 
-            ESP_LOGVV(TAG, "Poolstate changed");
+            ESP_LOGVV(TAG, "FYI Poolstate changed");
 
         }
     }

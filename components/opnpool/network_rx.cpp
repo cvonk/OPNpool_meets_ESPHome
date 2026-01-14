@@ -5,6 +5,11 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements the decoding logic for the network layer of the OPNpool component.
+ * It translates lower-level datalink packets (from RS-485) into higher-level network
+ * messages, supporting multiple protocol types (A5/CTRL, A5/PUMP, IC/Chlorinator).
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either
@@ -31,6 +36,30 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "network_rx";
+
+/**
+ * @brief             Helper to validate the data length of a decoded message.
+ * 
+ * @param msg_typ     The network message type.
+ * @param pkt         Pointer to the datalink packet.
+ * @param tag         Protocol tag for logging.
+ * @param typ_str     String representation of the protocol type for logging.
+ * @return esp_err_t  ESP_OK if valid, ESP_FAIL otherwise.
+ */
+static esp_err_t
+_validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pkt, char const * tag, const char * typ_str)
+{
+    size_t expected_size;
+    if (network_msg_typ_get_size(msg_typ, &expected_size) != ESP_OK) {
+        ESP_LOGW(tag, "%s: failed to get expected data_len", typ_str);
+        return ESP_FAIL;
+    }
+    if (pkt->data_len != expected_size) {
+        ESP_LOGW(tag, "%s: expected data_len=%u, got data_len=%u", typ_str, expected_size, pkt->data_len);
+        return ESP_FAIL;
+    }
+    return ESP_OK;
+}
 
 /**
  * @brief             Decode a datalink controller packet (type A5) to form a network message
@@ -163,14 +192,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             return ESP_FAIL;
     }
 
-        // validate data length using the size table network_msg_typ_sizes[]
-    size_t expected_size;
-    if (network_msg_typ_get_size(msg->typ, &expected_size) != ESP_OK) {
-        ESP_LOGW(TAG, "A5_CTRL typ=%s: failed to get expected data_len", datalink_typ_ctrl_str(network_typ_ctrl));
-        return ESP_FAIL;
-    }
-    if (pkt->data_len != expected_size) {
-        ESP_LOGW(TAG, "A5_CTRL typ=%s: expected data_len=%u, got data_len=%u", datalink_typ_ctrl_str(network_typ_ctrl), expected_size, pkt->data_len);
+    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_ctrl_str(network_typ_ctrl)) != ESP_OK) {
         return ESP_FAIL;
     }
 
@@ -242,15 +264,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             return ESP_FAIL;
     }
 
-        // validate data length using the size table network_msg_typ_sizes[]
-    size_t expected_size;
-    if (network_msg_typ_get_size(msg->typ, &expected_size) != ESP_OK) {
-        ESP_LOGW(TAG, "A5_CTRL typ=%s: failed to get expected data_len", datalink_typ_pump_str(network_typ_pump));
-        return ESP_FAIL;
-    }
-    if (pkt->data_len != expected_size) {
-        ESP_LOGW(TAG, "A5_PUMP typ=%s: expected data_len=%u, got data_len=%u", 
-                 datalink_typ_pump_str(network_typ_pump), expected_size, pkt->data_len);
+    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_pump_str(network_typ_pump)) != ESP_OK) {
         return ESP_FAIL;
     }
 
@@ -301,17 +315,10 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
             return ESP_FAIL;
     }
 
-        // validate data length using the size table network_msg_typ_sizes[]
-    size_t expected_size;
-    if (network_msg_typ_get_size(msg->typ, &expected_size) != ESP_OK) {
-        ESP_LOGW(TAG, "A5_CTRL typ=%s: failed to get expected data_len", datalink_typ_chlor_str(network_typ_chlor));
+    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_chlor_str(network_typ_chlor)) != ESP_OK) {
         return ESP_FAIL;
     }
-    if (pkt->data_len != expected_size) {
-        ESP_LOGW(TAG, "IC typ=%s: expected data_len=%u, got data_len=%u", 
-                 datalink_typ_chlor_str(network_typ_chlor), expected_size, pkt->data_len);
-        return ESP_FAIL;
-    }
+
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, network_msg_typ_str(msg->typ));
     return ESP_OK;
 }

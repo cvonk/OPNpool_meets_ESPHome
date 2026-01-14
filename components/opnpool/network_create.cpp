@@ -5,6 +5,11 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements the logic for constructing datalink packets from higher-level network messages
+ * within the OPNpool component. It provides functions to allocate buffers, set protocol headers, and
+ * serialize network message data into the appropriate datalink packet format for transmission over RS-485.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

@@ -5,6 +5,12 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file provides string conversion utilities for the OPNpool network layer. It implements
+ * helper functions to convert various protocol values, enums, and addresses into human-readable
+ * strings for logging, debugging, and display purposes. These functions are used throughout
+ * the OPNpool component to improve traceability and diagnostics.
+ *  
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either
