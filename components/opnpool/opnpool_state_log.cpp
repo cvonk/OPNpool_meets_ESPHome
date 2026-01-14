@@ -1,7 +1,9 @@
 /**
+ * @file opnpool_state_log.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Pool state: log state as a JSON-formatted string
- *
- * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
+ * 
+ * @copyright Copyright (c) 2026 Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -14,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  * 
  * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * SPDX-FileCopyrightText: Copyright 2026 Coert Vonk
  */
 
 #include <string.h>

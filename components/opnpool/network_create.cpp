@@ -1,7 +1,9 @@
 /**
+ * @file network_create.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Network layer: create datalink_pkt from network_msg
- *
- * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
+ * 
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of

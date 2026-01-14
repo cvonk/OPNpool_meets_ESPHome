@@ -1,4 +1,10 @@
-#include <time.h>
+/**
+ * @file opnpool.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @brief Implementation of the OpnPool component for ESPHome.
+ * 
+ * @copyright Copyright (c) 2026, Coert Vonk
+ */
 #include <esp_system.h>
 #include <cstdlib>
 #include <esphome/core/log.h>
@@ -118,27 +124,34 @@ void OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "  RS485 Flow Control Pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
 
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
-
         OpnPoolClimate * const climate = this->climates_[idx];
         if (climate != nullptr) {
             climate->dump_config();
         }
+    }
 
+    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
         OpnPoolSwitch * const sw = this->switches_[idx];
         if (sw != nullptr) {
             sw->dump_config();
         }
+    }
 
+    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SensorId::COUNT); idx++) {
         OpnPoolSensor * const sensor = this->sensors_[idx];
         if (sensor != nullptr) {
             sensor->dump_config();
         }
+    }
 
+    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(BinarySensorId::COUNT); idx++) {
         OpnPoolBinarySensor * const binary_sensor = this->binary_sensors_[idx];
         if (binary_sensor != nullptr) {
             binary_sensor->dump_config();
         }
+    }
 
+    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(TextSensorId::COUNT); idx++) {
         OpnPoolTextSensor * const text_sensor = this->text_sensors_[idx];
         if (text_sensor != nullptr) {
             text_sensor->dump_config();

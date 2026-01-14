@@ -1,7 +1,9 @@
 /**
- * @brief OPNpool - rs485 driver: receive/sent bytes to/from the RS485 tranceiver
- *
- * © Copyright 2014, 2019, 2022, 2026 Coert Vonk
+ * @file rs485.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @brief OPNpool - RS485 driver: receive/sent bytes to/from the RS485 transceiver
+ * 
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of

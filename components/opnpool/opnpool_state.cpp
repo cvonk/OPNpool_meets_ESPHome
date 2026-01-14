@@ -1,7 +1,9 @@
 /**
+ * @file opnpool_state.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - maintains the state information for the pool
- *
- * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
+ * 
+ * @copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of

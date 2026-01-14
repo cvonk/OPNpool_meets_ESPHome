@@ -1,12 +1,14 @@
 /**
- * @brief OPNpool, packet_task: packetizes RS-485 byte stream from bus
- *
+ * @file pool_task.cpp
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @brief OPNpool - pool_task: packetizes RS-485 byte stream from bus
+ * 
+ * @copyright Copyright (c) 2026 Coert Vonk
+ * 
  * The Pool controller uses two different protocols to communicate with its peripherals:
  *   - 	A5 has messages such as 0x00 0xFF <ldb> <sub> <dst> <src> <cfi> <len> [<data>] <chH> <ckL>
  *   -  IC has messages such as 0x10 0x02 <data0> <data1> <data2> .. <dataN> <ch> 0x10 0x03
  *
- * © Copyright 2014, 2019, 2022, 2026, Coert Vonk
- * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either
@@ -18,7 +20,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  * 
  * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * SPDX-FileCopyrightText: Copyright 2026 Coert Vonk
  */
 
 #include <string.h>
