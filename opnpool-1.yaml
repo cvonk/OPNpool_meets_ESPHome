@@ -111,9 +111,9 @@ opnpool:
     flow_control_pin: 27  # default 27 (GPIO27)
 
   # climate thermostats
-  pool_heater:
+  pool_climate:
     name: "Pool Heater"
-  spa_heater:
+  spa_climate:
     name: "Spa Heater"
 
   # circuit/feature switches

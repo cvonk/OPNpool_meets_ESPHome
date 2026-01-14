@@ -25,12 +25,11 @@ CONF_RS485_RX_PIN = "rx_pin"
 CONF_RS485_TX_PIN = "tx_pin"
 CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
 
-# entity definitions
-CONF_CLIMATES = [
-    "pool_heater",
-    "spa_heater"
+CONF_CLIMATES = [  # MUST MATCH ClimateId in opnpool.h
+    "pool_climate",
+    "spa_climate"
 ]
-CONF_SWITCHES = [  # MUST MATCH network_pool_circuit_t
+CONF_SWITCHES = [  # MUST MATCH SwitchId in opnpool.h
     "spa", 
     "aux1",
     "aux2",
@@ -41,7 +40,7 @@ CONF_SWITCHES = [  # MUST MATCH network_pool_circuit_t
     "feature3",
     "feature4"
 ]
-CONF_ANALOG_SENSORS = [
+CONF_ANALOG_SENSORS = [  # MUST MATCH SensorId in opnpool.h
     "air_temperature",
     "water_temperature",
     "pump_power",
@@ -51,14 +50,14 @@ CONF_ANALOG_SENSORS = [
     "chlorinator_salt",
     "pump_error"
 ]
-CONF_BINARY_SENSORS = [
+CONF_BINARY_SENSORS = [  # MUST MATCH BinarySensorId in opnpool.h
     "pump_running",
     "mode_service",
     "mode_temperature_inc", 
     "mode_freeze_protection",
     "mode_timeout"
 ]
-CONF_TEXT_SENSORS = [
+CONF_TEXT_SENSORS = [  # MUST MATCH TextSensorId in opnpool.h
     "pool_sched",
     "spa_sched",
     "pump_mode",
