@@ -86,12 +86,7 @@ class OpnPool : public Component {
     void dump_config() override;
 
         // RS485 configuration
-    void set_rs485_rx_pin(uint8_t pin);
-    void set_rs485_tx_pin(uint8_t pin);
-    void set_rs485_flow_control_pin(uint8_t pin);
-    void set_rs485_config(const rs485_pins_t &cfg);    
-
-    const rs485_pins_t &get_rs485_config() const;
+    void set_rs485_pins(uint8_t rx_pin, uint8_t tx_pin, uint8_t flow_control_pin);
 
         // climate setters        
     void set_pool_heater(OpnPoolClimate *climate);
@@ -160,6 +155,7 @@ class OpnPool : public Component {
 
     OpnPoolState * get_opnpool_state();
     ipc_t * get_ipc();
+    OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }
 
   protected:
 

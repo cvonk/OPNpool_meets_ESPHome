@@ -29,13 +29,13 @@
 #include "network.h"
 #include "network_msg.h"
 #include "ipc.h"
-#include "opnpoolstate.h"
+#include "opnpool_state.h"
 #include "opnpool.h"
 
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "opnpoolstate_rx";
+static char const * const TAG = "opnpool_state_rx";
 
 /**
  * ctrl
@@ -126,16 +126,27 @@ void
 OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
 {
     poolstate_sched_t * state_scheds = state->scheds;    
-    memset(state_scheds, 0, sizeof(poolstate_sched_t) * NETWORK_MSG_CTRL_SCHED_COUNT );
+    memset(state_scheds, 0, sizeof(poolstate_sched_t) * POOLSTATE_THERMO_TYP_COUNT );
 
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
 
     for (uint8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
-        state_scheds[msg_sched->circuit -1] = (poolstate_sched_t) {
-            .active = true,
-            .start = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo)),
-            .stop = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo))
-        };
+
+        if (msg_sched->circuit != 0) {
+
+            uint8_t const circuit_idx = msg_sched->circuit - 1;
+
+            ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u",
+                ii, circuit_idx, network_pool_circuit_str(static_cast<network_pool_circuit_t>(circuit_idx)),
+                (static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo),
+                (static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo));
+
+            state_scheds[circuit_idx] = (poolstate_sched_t) {
+                .active = true,
+                .start = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo)),
+                .stop = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo))
+            };
+        }
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {

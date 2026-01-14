@@ -17,7 +17,7 @@
  * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
-#include "opnpoolstate.h"
+#include "opnpool_state.h"
 #include "opnpool.h"
 #include "esphome/core/log.h"
 
@@ -30,7 +30,7 @@ namespace esphome {
 
 namespace opnpool {
 
-static char const * const TAG = "opnpoolstate";
+static char const * const TAG = "opnpool_state";
 
 OpnPoolState::OpnPoolState(OpnPool *parent) : parent_(parent) {
     protected_.xMutex = xSemaphoreCreateMutex();

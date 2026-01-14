@@ -4,15 +4,16 @@
 #include <esphome/core/log.h>
 #include <esphome/core/hal.h>
 
-#include "opnpool.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network.h"
-#include "opnpoolstate.h"
 #include "ipc.h"
 #include "pool_task.h"
+#include "opnpool.h"
+
+#include "opnpool_state.h"
 #include "opnpool_climate.h"
 #include "opnpool_switch.h"
 #include "opnpool_sensor.h"
@@ -25,38 +26,14 @@ namespace opnpool {
 static const char *const TAG = "opnpool";
 
     // RS485 configuration
+
 void 
-OpnPool::set_rs485_rx_pin(uint8_t pin) {
+OpnPool::set_rs485_pins(uint8_t rx_pin, uint8_t tx_pin, uint8_t flow_control_pin) {
     if (ipc_) {
-        ipc_->config.rs485_pins.rx_pin = pin;
+        ipc_->config.rs485_pins.rx_pin = rx_pin;
+        ipc_->config.rs485_pins.tx_pin = tx_pin;
+        ipc_->config.rs485_pins.flow_control_pin = flow_control_pin;
     }
-}
-
-void
-OpnPool::set_rs485_tx_pin(uint8_t pin) {
-    if (ipc_) {
-        ipc_->config.rs485_pins.tx_pin = pin;
-    }
-}
-
-void
-OpnPool::set_rs485_flow_control_pin(uint8_t pin) {
-    if (ipc_) {
-        ipc_->config.rs485_pins.flow_control_pin = pin;
-    }
-}
-
-void
-OpnPool::set_rs485_config(const rs485_pins_t &cfg) {
-    if (ipc_) {
-        ipc_->config.rs485_pins = cfg;
-    }
-}
-
-const rs485_pins_t &
-OpnPool::get_rs485_config() const {
-    static rs485_pins_t empty_cfg{};
-    return ipc_ ? ipc_->config.rs485_pins : empty_cfg;
 }
 
 ipc_t *
@@ -399,7 +376,7 @@ void OpnPool::update_binary_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_text_sensors(const poolstate_t *new_state) {
     
-    // Update schedule text sensors
+        // schedule
     auto *pool_sched = this->text_sensors_[static_cast<uint8_t>(TextSensorId::POOL_SCHED)];
     if (pool_sched != nullptr) {
         char sched_str[64];
@@ -420,7 +397,7 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         spa_sched->publish_state_if_changed(sched_str);
     }
     
-    // Update pump operation mode text sensor
+        // pump
     auto *pump_mode = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)];
     if (pump_mode != nullptr) {
         pump_mode->publish_state_if_changed(
@@ -433,7 +410,7 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
             network_pump_state_str(static_cast<network_pump_state_t>(new_state->pump.state)));
     }
 
-    // Update chlorinator text sensors
+        // chlorinator
     auto *chlor_name = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLOR_NAME)];
     if (chlor_name != nullptr) {
         chlor_name->publish_state_if_changed(new_state->chlor.name);
@@ -454,7 +431,7 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         chlor_status->publish_state_if_changed(status_str);
     }
     
-    // Update system time text sensor
+        // system time
     auto *system_time = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)];
     if (system_time != nullptr) {
         char time_str[32];
@@ -464,7 +441,7 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
         system_time->publish_state_if_changed(time_str);
     }
     
-    // Update firmware version text sensors
+        // firmware version
     auto *controller_fw = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CONTROLLER_FW)];
     if (controller_fw != nullptr) {
         char fw_str[16];
@@ -475,47 +452,13 @@ void OpnPool::update_text_sensors(const poolstate_t *new_state) {
 
 void OpnPool::update_climates(const poolstate_t *new_state) {
     
-    uint8_t const water_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-    float water_temp_in_celsius = (water_temp_in_fahrenheit - 32.0f) * 5.0f / 9.0f;
-
         // update all thermostats
     for (uint8_t idx = 0; idx < POOLSTATE_THERMO_TYP_COUNT; idx++) {
-        
+
         OpnPoolClimate *heater = this->heaters_[idx];
-        if (heater == nullptr) {
-            continue;
+        if (heater != nullptr) {
+            heater->update_climate(new_state);
         }
-
-            // check for pending climate changes
-        heater->check_pending_climate(new_state);
-
-        poolstate_thermo_t const * const thermo = &new_state->thermos[idx];
-
-            // update temperatures
-        heater->current_temperature = water_temp_in_celsius;
-        heater->target_temperature = (thermo->set_point - 32.0f) * 5.0f / 9.0f;
-        
-            // update mode based on {circuit state, heating status}
-        if (new_state->circuits.active[idx]) {
-            if (thermo->heating) {
-                heater->mode = climate::CLIMATE_MODE_HEAT;
-            } else {
-                heater->mode = climate::CLIMATE_MODE_AUTO;
-            }
-        } else {
-            heater->mode = climate::CLIMATE_MODE_OFF;
-        }
-        
-            // update action
-        if (thermo->heating) {
-            heater->action = climate::CLIMATE_ACTION_HEATING;
-        } else if (new_state->circuits.active[idx]) {
-            heater->action = climate::CLIMATE_ACTION_IDLE;
-        } else {
-            heater->action = climate::CLIMATE_ACTION_OFF;
-        }
-        
-        heater->publish_state_if_changed();  // Changed
     }
 }
 

@@ -116,7 +116,7 @@ async def to_code(config):
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
-    
+
     # Add interface firmware version
     import subprocess
     
@@ -151,9 +151,7 @@ async def to_code(config):
     
     # RS485 configuration (always set due to default={})
     rs485_config = config[CONF_RS485]
-    cg.add(var.set_rs485_rx_pin(rs485_config[CONF_RS485_RX_PIN]))
-    cg.add(var.set_rs485_tx_pin(rs485_config[CONF_RS485_TX_PIN]))
-    cg.add(var.set_rs485_flow_control_pin(rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
+    cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
     # Register climate entities (only if present)
     for climate_key in CONF_CLIMATES:

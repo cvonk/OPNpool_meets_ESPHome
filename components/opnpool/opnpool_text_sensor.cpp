@@ -7,7 +7,7 @@
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool.text_sensor";
+static const char *TAG = "opnpool_text_sensor";
 
 void OpnPoolTextSensor::setup() {
     // Nothing to do here - parent handles setup

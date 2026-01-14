@@ -259,7 +259,7 @@ typedef struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
     poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
-    poolstate_sched_t     scheds[NETWORK_MSG_CTRL_SCHED_COUNT];
+    poolstate_sched_t     scheds[NETWORK_POOL_CIRCUIT_COUNT];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;

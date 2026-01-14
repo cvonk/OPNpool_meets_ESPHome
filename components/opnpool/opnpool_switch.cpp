@@ -5,12 +5,12 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpoolstate.h"
+#include "opnpool_state.h"
 
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool.switch";
+static const char *TAG = "opnpool_switch";
 
 void OpnPoolSwitch::setup() {
     // Nothing to do here - parent takes care of me
@@ -28,13 +28,13 @@ void OpnPoolSwitch::publish_state_if_changed(bool state) {
     }
 }
 
-void OpnPoolSwitch::on_switch_command(uint8_t const circuit_id, bool const state) {
+void OpnPoolSwitch::on_switch_command(bool const state) {
 
     network_msg_t msg = {
         .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {
-              .circuit = static_cast<uint8_t>(circuit_id + 1),
+              .circuit = static_cast<uint8_t>(this->get_idx() + 1),
               .value = state ? (uint8_t)1 : (uint8_t)0,          
             },
         },
@@ -49,7 +49,7 @@ void OpnPoolSwitch::write_state(bool state) {
   if (this->parent_) {
     
         // send command but DON'T publish yet
-    this->on_switch_command(this->get_idx(), state);
+    this->on_switch_command(state);
     
        // store as pending
     this->add_pending_switch(state);

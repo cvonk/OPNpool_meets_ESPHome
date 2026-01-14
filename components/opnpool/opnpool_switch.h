@@ -24,14 +24,14 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
     void publish_state_if_changed(bool state);
     void add_pending_switch(bool target_state);
     void check_pending_switch(const poolstate_t *new_state);
+    void on_switch_command(bool const state);
 
   protected:
     uint8_t idx_{0};
     OpnPool * parent_{nullptr};
-    
+
     bool last_state_{false};
     bool last_state_valid_{false};
-    void on_switch_command(uint8_t const switch_id, bool const state);
 
         // management
     struct pending_switch_t {

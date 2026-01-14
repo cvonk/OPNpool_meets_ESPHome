@@ -24,7 +24,7 @@
 
 #include "utils.h"
 #include "network.h"
-#include "opnpoolstate.h"
+#include "opnpool_state.h"
 
 namespace esphome {
 namespace opnpool {
@@ -150,8 +150,10 @@ opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_
 {
     if (showSched) {
         cJSON * const item = _create_item(obj, key);
-        for (uint8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, scheds++) {
-            _add_schedule(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), scheds);
+        for (uint8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, scheds++) {
+            if (scheds->active) {
+                _add_schedule(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), scheds);
+            }
         }
     }
 }

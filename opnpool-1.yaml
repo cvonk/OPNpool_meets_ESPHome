@@ -36,16 +36,20 @@ logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
   initial_level: WARN  # only show up to WARN globally
   logs:
-    opnpool: VERBOSE   # specifically allow high detail for opnpool component
-    opnpoolstate: VERBOSE
-    opnpoolstate_rx: VERBOSE
-    opnpoolstate_get: VERBOSE
-    pool_task: VERBOSE
     rs485: WARN
     datalink_rx: WARN
     datalink_tx: WARN
     network_rx: WARN
+    pool_task: VERBOSE
     network_create: WARN
+    opnpool: VERBOSE   # specifically allow high detail for opnpool component
+    opnpool_state: VERBOSE
+    opnpool_state_rx: VERBOSE
+    opnpool_climate: VERBOSE
+    opnpool_switch: VERBOSE
+    opnpool_binary_sensor: VERBOSE
+    opnpool_text_sensor: VERBOSE
+
 
 debug:
   update_interval: 5s  # for exception decoding in logs
