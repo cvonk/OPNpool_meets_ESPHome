@@ -79,17 +79,32 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional(CONF_RS485_TX_PIN, default=26): cv.int_,
         cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=27): cv.int_,
     }),
-    **{cv.Optional(key): climate.climate_schema(OpnPoolClimate) for key in CONF_CLIMATES},
-    **{cv.Optional(key): switch.switch_schema(OpnPoolSwitch) for key in CONF_SWITCHES},
     **{
-        cv.Optional(key): sensor.sensor_schema(
-            OpnPoolSensor,
-            state_class=STATE_CLASS_MEASUREMENT,
-        ) for key in CONF_ANALOG_SENSORS
+        cv.Optional(key, default={"name": key.replace("_", " ").title()}): climate.climate_schema(OpnPoolClimate).extend({
+            cv.GenerateID(): cv.declare_id(OpnPoolClimate)
+        }) for key in CONF_CLIMATES
     },
-    **{cv.Optional(key): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor) for key in CONF_BINARY_SENSORS},
-    **{cv.Optional(key): text_sensor.text_sensor_schema(OpnPoolTextSensor) for key in CONF_TEXT_SENSORS},
-}).extend(cv.COMPONENT_SCHEMA)  # Remove .extend(uart.UART_DEVICE_SCHEMA)
+    **{
+        cv.Optional(key, default={"name": key.replace("_", " ").title()}): switch.switch_schema(OpnPoolSwitch).extend({
+            cv.GenerateID(): cv.declare_id(OpnPoolSwitch)
+        }) for key in CONF_SWITCHES
+    },
+    **{
+        cv.Optional(key, default={"name": key.replace("_", " ").title()}): sensor.sensor_schema(OpnPoolSensor).extend({
+            cv.GenerateID(): cv.declare_id(OpnPoolSensor)
+        }) for key in CONF_ANALOG_SENSORS
+    },
+    **{
+        cv.Optional(key, default={"name": key.replace("_", " ").title()}): binary_sensor.binary_sensor_schema(OpnPoolBinarySensor).extend({
+            cv.GenerateID(): cv.declare_id(OpnPoolBinarySensor)
+        }) for key in CONF_BINARY_SENSORS
+    },
+    **{
+        cv.Optional(key, default={"name": key.replace("_", " ").title()}): text_sensor.text_sensor_schema(OpnPoolTextSensor).extend({
+            cv.GenerateID(): cv.declare_id(OpnPoolTextSensor)
+        }) for key in CONF_TEXT_SENSORS
+    },
+}).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
     # instantiate the main OpnPool component
@@ -152,32 +167,42 @@ async def to_code(config):
     rs485_config = config[CONF_RS485]
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
-    # Register climate entities (only if present)
+    # Register climate entities
     for climate_key in CONF_CLIMATES:
-        if climate_key in config:
-            climate_entity = await climate.new_climate(config[climate_key])
-            cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
+        entity_cfg = config[climate_key]
+        if CONF_ID not in entity_cfg:
+            entity_cfg[CONF_ID] = cg.new_id()
+        climate_entity = await climate.new_climate(entity_cfg)
+        cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
 
-    # Register switches (only if present)
+    # Register switches
     for switch_key in CONF_SWITCHES:
-        if switch_key in config:
-            switch_entity = await switch.new_switch(config[switch_key])
-            cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
+        entity_cfg = config[switch_key]
+        if CONF_ID not in entity_cfg:
+            entity_cfg[CONF_ID] = cg.new_id()
+        switch_entity = await switch.new_switch(entity_cfg)
+        cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
 
-    # Register analog sensors (only if present)
+    # Register analog sensors
     for sensor_key in CONF_ANALOG_SENSORS:
-        if sensor_key in config:
-            sensor_entity = await sensor.new_sensor(config[sensor_key])
-            cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
+        entity_cfg = config[sensor_key]
+        if CONF_ID not in entity_cfg:
+            entity_cfg[CONF_ID] = cg.new_id()
+        sensor_entity = await sensor.new_sensor(entity_cfg)
+        cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
 
-    # Register binary sensors (only if present)
+    # Register binary sensors
     for binary_sensor_key in CONF_BINARY_SENSORS:
-        if binary_sensor_key in config:
-            bs_entity = await binary_sensor.new_binary_sensor(config[binary_sensor_key])
-            cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
+        entity_cfg = config[binary_sensor_key]
+        if CONF_ID not in entity_cfg:
+            entity_cfg[CONF_ID] = cg.new_id()
+        bs_entity = await binary_sensor.new_binary_sensor(entity_cfg)
+        cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
-    # Register text sensors (only if present)
+    # Register text sensors
     for text_sensor_key in CONF_TEXT_SENSORS:
-        if text_sensor_key in config:
-            ts_entity = await text_sensor.new_text_sensor(config[text_sensor_key])
-            cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
+        entity_cfg = config[text_sensor_key]
+        if CONF_ID not in entity_cfg:
+            entity_cfg[CONF_ID] = cg.new_id()
+        ts_entity = await text_sensor.new_text_sensor(entity_cfg)
+        cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
