@@ -526,8 +526,8 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
 
     if (state_changed) {
         set(&new_state);
-        
-        // update state in HA
+
+            // publish this as an update to the HA sensors 
         parent_->update_all(&new_state);
     }
     return state_changed ? ESP_OK : ESP_FAIL;

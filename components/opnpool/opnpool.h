@@ -133,7 +133,7 @@ class OpnPool : public Component {
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor *ts);
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor *ts);
 
-    void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
+    //void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
         // update sensors
     void update_climates(const poolstate_t * state);
@@ -143,35 +143,20 @@ class OpnPool : public Component {
     void update_binary_sensors(const poolstate_t * state);
     void update_all(const poolstate_t * state);
 
-        // helper to get climate index
-    uint8_t get_climate_index(OpnPoolClimate *climate) {
-        for (uint8_t i = 0; i < static_cast<uint8_t>(ClimateId::COUNT); i++) {
-            if (climate == this->heaters_[i]) {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    OpnPoolState * get_opnpool_state();
-    ipc_t * get_ipc();
+    ipc_t * get_ipc() { return ipc_; }
+    OpnPoolState * get_opnpool_state() { return opnPoolState_; }
     OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }
 
   protected:
 
-    OpnPoolState * opnPoolState_{nullptr};
-
     ipc_t * ipc_{};  // interprocess communication structure and RS485-pins
+    OpnPoolState * opnPoolState_{nullptr};
 
     void service_requests_from_pool(ipc_t const * const ipc);
 
-    void parse_packet_(const std::vector<uint8_t> &data);
-    std::vector<uint8_t> rx_buffer_;
-
-    // member pointers - organized in arrays
+        // sub classes
     OpnPoolClimate *heaters_[static_cast<uint8_t>(ClimateId::COUNT)]{nullptr};
-    OpnPoolSwitch *switches_[static_cast<uint8_t>(SwitchId::COUNT)]{nullptr};
-    
+    OpnPoolSwitch *switches_[static_cast<uint8_t>(SwitchId::COUNT)]{nullptr};    
     OpnPoolSensor *sensors_[static_cast<uint8_t>(SensorId::COUNT)]{nullptr};
     OpnPoolBinarySensor *binary_sensors_[static_cast<uint8_t>(BinarySensorId::COUNT)]{nullptr};
     OpnPoolTextSensor *text_sensors_[static_cast<uint8_t>(TextSensorId::COUNT)]{nullptr};

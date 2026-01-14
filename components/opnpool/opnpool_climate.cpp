@@ -227,7 +227,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         // update action
 
     climate::ClimateAction new_action;
-    
+
     if (thermo->heating) {
         new_action = climate::CLIMATE_ACTION_HEATING;
     } else if (new_mode == climate::CLIMATE_MODE_OFF) {
@@ -236,7 +236,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         new_action = climate::CLIMATE_ACTION_IDLE;
     }
 
-    ESP_LOGV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, static_cast<uint8_t>(new_action));
+    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, static_cast<uint8_t>(new_action));
 
     this->publish_state_if_changed(climate_idx, new_current_temp, new_target_temp,
                                   new_mode, new_custom_preset, new_action);
