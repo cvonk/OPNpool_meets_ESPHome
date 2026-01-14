@@ -256,7 +256,7 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
             str = "remote"; 
             break;
         default: {
-            thread_local char hex_buffer[3];  // "XX\0"
+            char hex_buffer[3];  // "XX\0"
             snprintf(hex_buffer, sizeof(hex_buffer), "%02x", ctrl);
             str = hex_buffer;
             break;

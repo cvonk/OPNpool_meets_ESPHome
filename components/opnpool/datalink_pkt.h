@@ -83,7 +83,7 @@ datalink_typ_ctrl_str(datalink_typ_ctrl_t const typ_ctrl)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local char buf[3];
+    static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ_ctrl));
     return buf;
 }
@@ -109,7 +109,7 @@ datalink_typ_pump_str(datalink_typ_pump_t const pump)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local char buf[3];
+    static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump));
     return buf;
 }
@@ -134,7 +134,7 @@ datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local char buf[3];
+    static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(chlor));
     return buf;
 }
@@ -171,7 +171,7 @@ datalink_prot_str(datalink_prot_t const prot)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local char buf[3];
+    static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(prot));
     return buf;
 }

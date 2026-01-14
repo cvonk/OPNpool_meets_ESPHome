@@ -7,7 +7,6 @@ from esphome.const import (
     UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT,
 )
 
-# Remove 'uart' from dependencies
 DEPENDENCIES = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
 AUTO_LOAD = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
 
@@ -69,8 +68,6 @@ CONF_TEXT_SENSORS = [  # MUST MATCH TextSensorId in opnpool.h
     "interface_firmware_version"
 ]
 
-# Add default values and allowed parity enums where we build the CONFIG_SCHEMA.
-# Example addition (insert into the CONFIG_SCHEMA mapping):
 CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
     # RS485 settings (required, but with defaults)
@@ -106,6 +103,7 @@ CONFIG_SCHEMA = cv.Schema({
     },
 }).extend(cv.COMPONENT_SCHEMA)
 
+
 async def to_code(config):
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
@@ -113,6 +111,7 @@ async def to_code(config):
 
     # Add all source files to build
     cg.add_library("ESP32", None, "freertos")
+    #cg.add_library("OPNPool", None, "opnpool")
     
     # Add component source files
     component_dir = os.path.dirname(__file__)
@@ -123,17 +122,13 @@ async def to_code(config):
         "+<esphome/components/opnpool/*.cpp>",
     ])
     
-    # Or explicitly add each file:
-    # This ensures the entity implementation files are compiled
-    
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
 
-    # Add interface firmware version
-    import subprocess
-    
+    # interface firmware version
+    import subprocess    
     version = "unknown"
     try:
         component_dir = os.path.dirname(os.path.abspath(__file__))
@@ -163,7 +158,7 @@ async def to_code(config):
     
     cg.add_build_flag(f"-DINTERFACE_FW_VERSION=\\\"{version}\\\"")
     
-    # RS485 configuration (always set due to default={})
+    # RS485 configuration
     rs485_config = config[CONF_RS485]
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 

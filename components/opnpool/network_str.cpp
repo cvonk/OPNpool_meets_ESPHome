@@ -42,7 +42,7 @@ enum class network_pump_program_addr_t : uint16_t {
 char const *
 network_ctrl_date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 {
-    thread_local char buffer[11];  // "YYYY-MM-DD\0"
+    static char buffer[11];  // "YYYY-MM-DD\0"
     snprintf(buffer, sizeof(buffer), "%04u-%02u-%02u", year, month, day);
     return buffer;
 }
@@ -50,7 +50,7 @@ network_ctrl_date_str(uint16_t const year, uint8_t const month, uint8_t const da
 char const *
 network_ctrl_time_str(uint8_t const hour, uint8_t const minute)
 {
-    thread_local char buffer[6];  // "HH:MM\0"
+    static char buffer[6];  // "HH:MM\0"
     snprintf(buffer, sizeof(buffer), "%02u:%02u", hour, minute);
     return buffer;
 }
@@ -66,7 +66,7 @@ network_ctrl_time_str(uint8_t const hour, uint8_t const minute)
 char const *
 network_ctrl_version_str(uint8_t const major, uint8_t const minor)
 {
-    thread_local char buffer[8];  // "MMM.mmm\0"
+    static char buffer[8];  // "MMM.mmm\0"
     snprintf(buffer, sizeof(buffer), "%u.%u", major, minor);
     return buffer;
 }
@@ -94,7 +94,7 @@ network_pump_program_str(uint16_t const address)
         case network_pump_program_addr_t::ERPM2:         return "erpm2";
         case network_pump_program_addr_t::ERPM3:         return "erpm3";
         default: {
-            thread_local char hex_buffer[5];  // "XXXX\0"
+            static char hex_buffer[5];  // "XXXX\0"
             snprintf(hex_buffer, sizeof(hex_buffer), "%04x", address);
             return hex_buffer;
         }

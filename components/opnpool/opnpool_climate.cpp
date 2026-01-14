@@ -12,7 +12,7 @@
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool_climate";
+static char const * const TAG = "opnpool_climate";
 
 void OpnPoolClimate::setup() {
     // Nothing to do here - parent handles setup
@@ -36,7 +36,7 @@ custom_presets_str(custom_presets_t const preset)
     if (!name.empty()) {
         return name.data();
     }
-    thread_local char buf[3];
+    static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(preset));
     return buf;
 }
