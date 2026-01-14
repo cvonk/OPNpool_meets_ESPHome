@@ -1,6 +1,30 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # SPDX-FileCopyrightText: 2026 Coert Vonk
 
+"""
+@file __init__.py
+@author Coert Vonk (@cvonk on GitHub)
+@brief OPNpool - ESPHome Python codegen for the OPNpool component.
+ 
+@copyright Copyright (c) 2026, Coert Vonk
+
+@details
+This file defines the ESPHome code generation logic for the OPNpool component, which integrates
+an OPNpool interface with the ESPHome ecosystem. It declares the configuration schema, entity
+types, and code generation routines for climate, switch, sensor, binary sensor, and text sensor
+entities associated with the pool controller.
+
+Responsibilities include:
+- Defining the configuration schema for all supported pool entities and RS485 hardware settings.
+- Registering all subcomponents and their C++ counterparts for code generation.
+- Dynamically extracting the firmware version from Git or ESPHome version for build metadata.
+- Adding required build flags and source files for the C++ implementation.
+- Providing async routines to instantiate and link all entities to the main OpnPool component.
+
+This module enables seamless integration of pool automation hardware into ESPHome YAML
+configurations, supporting flexible entity mapping and robust build-time configuration.
+"""
+
 import os
 import esphome.codegen as cg
 import esphome.config_validation as cv

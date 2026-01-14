@@ -1,10 +1,28 @@
 /**
  * @file opnpool.cpp
  * @author Coert Vonk (@cvonk on GitHub)
- * @brief Implementation of the OpnPool component for ESPHome.
+ * @brief Implementation of the OPNpool component for ESPHome.
  * 
  * @copyright Copyright (c) 2026, Coert Vonk
+ * 
+ * @details
+ * This file contains the implementation of the OPNpool component, which provides integration
+ * between an OPNpool interface and the ESPHome ecosystem. The component manages communication
+ * with the Pentair pool controller via RS485, processes datalink and network layer
+ * messages, and exposes pool state and controls as ESPHome entities.
+ *
+ * The OPNpool component is responsible for:
+ * - Spawning and supervising the pool_task, a FreeRTOS task that handles low-level RS485
+ *   communication, datalink protocol parsing, and network message handling.
+ * - Updating ESPHome climate, switch, sensor, binary sensor, and text sensor entities
+ *   based on the latest pool state.
+ * - Providing setter methods for associating ESPHome entities with the OPNpool component.
+ * 
+ * The design leverages modular helper functions for each protocol layer and uses FreeRTOS
+ * primitives for task scheduling and inter-task communication. Extensive logging and debug
+ * output are provided for troubleshooting and protocol analysis.
  */
+
 #include <esp_system.h>
 #include <cstdlib>
 #include <esphome/core/log.h>

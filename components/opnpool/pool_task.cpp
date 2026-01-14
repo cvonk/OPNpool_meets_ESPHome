@@ -5,9 +5,23 @@
  * 
  * @copyright Copyright (c) 2026 Coert Vonk
  * 
- * The Pool controller uses two different protocols to communicate with its peripherals:
- *   - 	A5 has messages such as 0x00 0xFF <ldb> <sub> <dst> <src> <cfi> <len> [<data>] <chH> <ckL>
- *   -  IC has messages such as 0x10 0x02 <data0> <data1> <data2> .. <dataN> <ch> 0x10 0x03
+ * This file implements the FreeRTOS task logic for the OPNpool component, responsible for
+ * managing RS-485 communication with the pool controller. It handles both receiving and
+ * transmitting protocol packets, supporting two distinct message formats used by the controller:
+ *   - A5 protocol: Framed messages with headers, length, data, and checksums.
+ *   - IC protocol: Framed with 0x10 0x02 ... <data> ... <ch> 0x10 0x03.
+ *
+ * Core responsibilities include:
+ * - Continuously reading from the RS-485 bus, packetizing incoming byte streams, and parsing
+ *   them into higher-level datalink and network messages.
+ * - Relaying received network messages to the main ESPHome task via IPC queues.
+ * - Handling requests from the main task, converting them into protocol packets, and transmitting
+ *   them to the pool controller.
+ * - Managing a transmit queue for outgoing packets, ensuring correct half-duplex operation
+ *   (using RTS/flow control) and echoing sent messages back up the protocol stack for state
+ *   consistency.
+ * - Periodically sending control and status requests (such as heat and schedule queries) to
+ *   keep the pool state up to date.
  *
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
