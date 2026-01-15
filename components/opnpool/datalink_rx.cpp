@@ -43,13 +43,13 @@ namespace opnpool {
 
 static char const * const TAG = "datalink_rx";
 
-typedef struct proto_info_t {
-    uint8_t const * const preamble;
-    uint8_t const * const postamble;
-    uint8_t const len;
-    datalink_prot_t const prot;
-    uint8_t idx;
-} proto_info_t;
+struct proto_info_t  {
+    uint8_t const * const  preamble;
+    uint8_t const * const  postamble;
+    uint8_t const          len;
+    datalink_prot_t const  prot;
+    uint8_t                idx;
+};
 
 static proto_info_t _proto_descr[] = {
     {
@@ -64,22 +64,22 @@ static proto_info_t _proto_descr[] = {
     },
 };
 
-typedef enum state_t {
+enum state_t {
     STATE_FIND_PREAMBLE,
     STATE_READ_HEAD,
     STATE_READ_DATA,
     STATE_READ_TAIL,
     STATE_CHECK_CRC,
     STATE_DONE,
-} state_t;
+};
 
-typedef struct local_data_t {
+struct local_data_t {
     size_t             head_len;
     size_t             tail_len;
     datalink_head_t *  head;
     datalink_tail_t *  tail;
     bool               crc_ok;
-} local_data_t;
+};
 
 static void
 _preamble_reset()
@@ -92,7 +92,7 @@ _preamble_reset()
 }
 
 static bool
-_preamble_complete(struct proto_info_t * const pi, uint8_t const b, bool * part_of_preamble)
+_preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_preamble)
 {
     if (b == pi->preamble[pi->idx]) {
       *part_of_preamble = true;

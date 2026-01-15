@@ -194,12 +194,12 @@ datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
  * @var chlor  Chlorinator message type (datalink_typ_chlor_t).
  * @var raw    Raw 8-bit value for generic or protocol-agnostic access.
  */
-typedef union datalink_typ_t {
+union datalink_typ_t {
     datalink_typ_ctrl_t  ctrl;
     datalink_typ_pump_t  pump;
     datalink_typ_chlor_t chlor;
     uint8_t              raw;
-} PACK8 datalink_typ_t;
+} PACK8;
 
 
 /**
@@ -211,7 +211,7 @@ typedef union datalink_typ_t {
  * protocol packets exchanged between the ESPHome component and pool equipment.
  * Each address uniquely identifies a device or endpoint on the RS485 network.
  */
-typedef uint8_t datalink_address;
+using datalink_address = uint8_t;
 
 
 /**
@@ -222,9 +222,9 @@ typedef uint8_t datalink_address;
  * This type is used for the payload buffer in data link layer packets.
  * It is a simple abstraction of a byte.
  */
-typedef uint8_t datalink_data_t;
+using datalink_data_t = uint8_t;
 
-
+    
 /**
  * @brief
  * Represents a data link layer packet in the Pentair protocol.
@@ -245,7 +245,7 @@ typedef uint8_t datalink_data_t;
  * @var size_t data_len        Length of the data payload.
  * @var skb_handle_t skb       Handle to the socket buffer containing the packet data.
  */
-typedef struct datalink_pkt_t {
+struct datalink_pkt_t {
     datalink_prot_t    prot;      // datalink_prot as detected by `_read_head`
     datalink_typ_t     typ;       // from datalink_hdr_a5->typ
     datalink_address   src;       // from datalink_hdr_a5->src
@@ -253,7 +253,8 @@ typedef struct datalink_pkt_t {
     datalink_data_t *  data;
     size_t             data_len;
     skb_handle_t       skb;
-} datalink_pkt_t;
+} PACK8;
+
 
     // helper function to convert enum class to string
 inline const char *

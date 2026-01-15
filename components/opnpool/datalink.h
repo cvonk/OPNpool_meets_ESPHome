@@ -47,44 +47,44 @@ enum class datalink_addrgroup_t : uint8_t {
  * @brief Data link header structure
  **/
 
-typedef uint8_t datalink_preamble_a5_t[3];
-typedef uint8_t datalink_preamble_ic_t[2];
-typedef uint8_t datalink_postamble_ic_t[2];
+using datalink_preamble_a5_t = uint8_t[3];
+using datalink_preamble_ic_t = uint8_t[2];
+using datalink_postamble_ic_t = uint8_t[2];
 
-typedef struct datalink_hdr_ic_t {
+using datalink_hdr_ic_t = struct {
     uint8_t dst;  // destination
     uint8_t typ;  // message type
-} PACK8 datalink_hdr_ic_t;
+} PACK8;
 
-typedef struct datalink_hdr_a5_t {
+using datalink_hdr_a5_t = struct {
     uint8_t ver;  // protocol version id
     uint8_t dst;  // destination
     uint8_t src;  // source
     uint8_t typ;  // message type
     uint8_t len;  // # of data bytes following
-} PACK8 datalink_hdr_a5_t;
+} PACK8;
 
-typedef union datalink_hdr_t {
+using datalink_hdr_t = union {
     datalink_hdr_ic_t ic;
     datalink_hdr_a5_t a5;
-} PACK8 datalink_hdr_t;
+} PACK8;
 
-typedef struct datalink_head_a5_t {
+using datalink_head_a5_t = struct {
     uint8_t                ff;
     datalink_preamble_a5_t preamble;
     datalink_hdr_a5_t      hdr;
-} PACK8 datalink_head_a5_t;
+} PACK8;
 
-typedef struct datalink_head_ic_t {
+using datalink_head_ic_t = struct {
     uint8_t                ff;
     datalink_preamble_ic_t preamble;
     datalink_hdr_ic_t      hdr;
-} PACK8 datalink_head_ic_t;
+} PACK8;
 
-typedef union datalink_head_t {
+using datalink_head_t = union {
     datalink_head_ic_t ic;
     datalink_head_a5_t a5;
-} datalink_head_t;
+};
 
 size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
 
@@ -101,19 +101,19 @@ size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
  * @brief Data link tail structure
  */
 
-typedef struct datalink_tail_a5_t {
+using datalink_tail_a5_t = struct {
     uint8_t  crc[2];
-} PACK8 datalink_tail_a5_t;
+} PACK8;
 
-typedef struct datalink_tail_ic_t {
+using datalink_tail_ic_t = struct {
     uint8_t                 crc[1];
     datalink_postamble_ic_t postamble;
-} PACK8 datalink_tail_ic_t;
+} PACK8;
 
-typedef union datalink_tail_t {
+using datalink_tail_t = union {
     datalink_tail_ic_t ic;
     datalink_tail_a5_t a5;
-} datalink_tail_t;
+};
 
 size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
@@ -125,7 +125,7 @@ size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 enum class datalink_prot_t : uint8_t;
 struct datalink_pkt_t;
 struct rs485_instance_t;
-typedef rs485_instance_t * rs485_handle_t;
+using rs485_handle_t = rs485_instance_t *;
 struct datalink_pkt_t;
 
     // datalink.cpp
