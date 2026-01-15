@@ -322,14 +322,14 @@ _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
     return ESP_FAIL;
 }
 
-typedef esp_err_t (* state_fnc_t)(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt);
+using state_fnc_t = esp_err_t (*)(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt);
 
-typedef struct state_transition_t {
+struct state_transition_t {
     state_t     state;
     state_fnc_t fnc;
     state_t     on_ok;
     state_t     on_err;
-} state_transition_t;
+};
 
 static state_transition_t state_transitions[] = {
     { STATE_FIND_PREAMBLE, _find_preamble, STATE_READ_HEAD,     STATE_FIND_PREAMBLE },

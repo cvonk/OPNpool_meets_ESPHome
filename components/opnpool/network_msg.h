@@ -32,8 +32,6 @@
 #endif
 
 #include <esp_system.h>
-#include <strings.h>
-#include <stdio.h>
 #include <cstddef>
 
 //#include "datalink.h"
@@ -47,12 +45,16 @@ namespace opnpool {
 
 
 /**
- * @brief Pool controller operation modes
+ * @brief Enumerates the operation modes of the pool controller.
+ *
+ * @details
+ * Represents the various modes in which the pool controller can operate, such as service mode,
+ * temperature increase, freeze protection, and timeout. Used for status reporting and control logic.
  */
 
 enum class network_pool_mode_t : uint8_t {
     SERVICE     = 0,
-    UNKOWN_01   = 1,
+    UNKNOWN_01  = 1,
     TEMP_INC    = 2,
     FREEZE_PROT = 3,
     TIMEOUT     = 4
@@ -75,13 +77,19 @@ network_pool_mode_str(network_pool_mode_t const mode)
     if (!name.empty()) {
         return name.data();
     }
+        // fallback
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
 
+
 /**
- * @brief Pool controller circuits and features
+ * @brief Enumerates the pool controller circuits and features.
+ *
+ * @details
+ * Represents the various circuits and features (such as SPA, AUX, POOL, and FEATURE channels)
+ * that can be controlled by the pool controller.
  */
 
 enum class network_pool_circuit_t : uint8_t {
@@ -113,15 +121,20 @@ network_pool_circuit_str(network_pool_circuit_t const circuit)
     if (!name.empty()) {
         return name.data();
     }
+        // fallback
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(circuit));
     return buf;
 }
 
-/**
- * @brief Pump operation modes
- */
 
+/**
+ * @brief Enumerates the operation modes of the pool pump.
+ *
+ * @details
+ * Represents the various modes in which the pool pump can operate, such as filter, 
+ * manual, backwash and features. Used for status reporting.
+ */
 enum class network_pump_mode_t : uint8_t {
     FILTER = 0,
     MAN    = 1,
@@ -145,13 +158,19 @@ network_pump_mode_str(network_pump_mode_t const mode)
     if (!name.empty()) {
         return name.data();
     }
+        // fallback
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
 
+
 /**
- * @brief Pump states
+ * @brief Enumerates the states of the pool pump.
+ *
+ * @details
+ * Represents the various states in which the pool pump can be, such as OK,
+ * priming, running, and system priming.
  */
 
 enum class network_pump_state_t : uint8_t {
@@ -169,13 +188,18 @@ network_pump_state_str(network_pump_state_t const pump_state)
     if (!name.empty()) {
         return name.data();
     }
+        // fallback
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump_state));
     return buf;
 }
 
  /**
-  * @brief Heat sources
+  * @brief Enumerates the heat sources for the pool heating system.
+  *
+  * @details
+  * Represents the various heat sources that can be used for heating the pool,
+  * such as none, heater, solar preference, and solar.
   */
 
 enum class network_heat_src_t : uint8_t {
@@ -192,45 +216,51 @@ network_heat_src_str(network_heat_src_t const heat_src)
     if (!name.empty()) {
         return name.data();
     }
+        // fallback
     static char buf[3];
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(heat_src));
     return buf;
 }
 
+
 /**
- * @brief A5 messages, used to communicate with components except IntelliChlor
+ * @brief Defines the structures and unions for A5-controller messages.
+ *
+ * @details
+ * This section provides packed C-style structs for each A5-pump style
+ * protocol message exchanged between the pool controller and OPNpool.
  */
 
-typedef struct network_msg_ctrl_set_ack_t {
+struct network_msg_ctrl_set_ack_t {
     uint8_t typ;  // datalink_typ_ctrl_t::*  type that it is ACK'ing
-} PACK8 network_msg_ctrl_set_ack_t;
+} PACK8;
 
-typedef struct network_msg_ctrl_circuit_set_t {
+struct network_msg_ctrl_circuit_set_t {
     uint8_t circuit;  // 1-based
     uint8_t value;
-} PACK8 network_msg_ctrl_circuit_set_t;
+} PACK8;
 
-typedef struct network_msg_ctrl_sched_req_t {
-    // be aware: sizeof(network_msg_ctrl_sched_req_t) == 1, not 0
-} network_msg_ctrl_sched_req_t;
+struct network_msg_ctrl_sched_req_t {
+    // note: sizeof(network_msg_ctrl_sched_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_sched_resp_sub_t {
+struct network_msg_ctrl_sched_resp_sub_t {
     uint8_t circuit;            // 0  (0 = schedule not active)
     uint8_t UNKNOWN_1;          // 1
     uint8_t prgStartHi;         // 2 [min]
     uint8_t prgStartLo;         // 3 [min]
     uint8_t prgStopHi;          // 4 [min]
     uint8_t prgStopLo;          // 5 [min]
-} PACK8 network_msg_ctrl_sched_resp_sub_t;
+} PACK8;
 
-#define NETWORK_MSG_CTRL_SCHED_COUNT (2)
+constexpr size_t NETWORK_MSG_CTRL_SCHED_COUNT = 2;
 
-typedef struct network_msg_ctrl_sched_resp_t {
+struct network_msg_ctrl_sched_resp_t {
     uint8_t                           UNKNOWN_0to3[4];  // 0,1,2,3
     network_msg_ctrl_sched_resp_sub_t scheds[NETWORK_MSG_CTRL_SCHED_COUNT]; // 4,5,6,7,8,9, 10,11,12,13,14,15
-} PACK8 network_msg_ctrl_sched_resp_t;
+} PACK8;
 
-typedef struct network_msg_ctrl_state_bcast_t {
+struct network_msg_ctrl_state_bcast_t {
     uint8_t hour;               // 0
     uint8_t minute;             // 1
     uint8_t activeLo;           // 2
@@ -251,19 +281,16 @@ typedef struct network_msg_ctrl_state_bcast_t {
     uint8_t UNKNOWN_20tp21[2];  // 20..21 more water sensors?
     uint8_t heatSrc;            // 22 
     uint8_t UNKNOWN_23to28[6];  // 23..28
-} PACK8 network_msg_ctrl_state_bcast_t;
+} PACK8;
 
 // just a guess
-typedef network_msg_ctrl_state_bcast_t network_msg_ctrl_state_set_t;
+using network_msg_ctrl_state_set_t = network_msg_ctrl_state_bcast_t;
 
-// TIME
+struct network_msg_ctrl_time_req_t {
+    // note: sizeof(network_msg_ctrl_time_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_time_req_t {
-    // be aware: sizeof(network_msg_ctrl_time_req_t) == 1, not 0
-} network_msg_ctrl_time_req_t;
-
-// message from controller to all (datalink_typ_ctrl_t::TIME, or datalink_typ_ctrl_t::TIME_SET)
-typedef struct network_msg_ctrl_time_t {
+struct network_msg_ctrl_time_t {
     uint8_t hour;            // 0
     uint8_t minute;          // 1
     uint8_t UNKNOWN_2;       // 2 (DST adjust?)
@@ -272,19 +299,17 @@ typedef struct network_msg_ctrl_time_t {
     uint8_t year;            // 5
     uint8_t clkSpeed;        // 6
     uint8_t daylightSavings; // 7 (1=auto, 0=manual)
-} PACK8 network_msg_ctrl_time_t;
+} PACK8;
 
-typedef network_msg_ctrl_time_t network_msg_ctrl_time_set_t;
-typedef network_msg_ctrl_time_t network_msg_ctrl_time_resp_t;
+using network_msg_ctrl_time_set_t = network_msg_ctrl_time_t;
+using network_msg_ctrl_time_resp_t = network_msg_ctrl_time_t;
 
-// VERSION
-
-typedef struct network_msg_ctrl_version_req_t {
-    // be aware: sizeof(network_msg_ctrl_version_req_t) == 1, not 0
+struct network_msg_ctrl_version_req_t {
+    // note: sizeof(network_msg_ctrl_version_req_t) == 1, not 0
     // uint8_t reqId;
-} network_msg_ctrl_version_req_t;
+};
 
-typedef struct network_msg_ctrl_version_resp_t {
+struct network_msg_ctrl_version_resp_t {
     uint8_t reqId;       // 0
     uint8_t major;       // 1    0x02  -> version 2.080
     uint8_t minor;       // 2    0x50
@@ -292,70 +317,56 @@ typedef struct network_msg_ctrl_version_resp_t {
     uint8_t bootMajor;   // 5
     uint8_t bootMinor;   // 6   
     uint8_t U07to16[10]; // 7,8,9,10,11, 12,13,14,15,16
-} network_msg_ctrl_version_resp_t;
+};
 
-// VALVE
+struct network_msg_ctrl_valve_req_t {
+    // note: sizeof(network_msg_ctrl_valve_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_valve_req_t {
-    // be aware: sizeof(network_msg_ctrl_valve_req_t) == 1, not 0
-} network_msg_ctrl_valve_req_t;
-
-typedef struct network_msg_ctrl_valve_resp_t {
+struct network_msg_ctrl_valve_resp_t {
     uint8_t UNKNOWN[24]; // 03 00 00 00 00 FF FF 01 02 03 04 01 48 00 00 00 03 00 00 00 04 00 00 00
-} network_msg_ctrl_valve_resp_t;
+};
 
-// SOLARPUMP
+struct network_msg_ctrl_solarpump_req_t {
+    // note: sizeof(network_msg_ctrl_solarpump_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_solarpump_req_t {
-    // be aware: sizeof(network_msg_ctrl_solarpump_req_t) == 1, not 0
-} network_msg_ctrl_solarpump_req_t;
-
-typedef struct network_msg_ctrl_solarpump_resp_t {
+struct network_msg_ctrl_solarpump_resp_t {
     uint8_t UNKNOWN[3];  // 05 00 00
-} network_msg_ctrl_solarpump_resp_t;
+};
 
-// DELAY_REQ
+struct network_msg_ctrl_delay_req_t {
+    // note: sizeof(network_msg_ctrl_delay_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_delay_req_t {
-    // be aware: sizeof(network_msg_ctrl_delay_req_t) == 1, not 0
-} network_msg_ctrl_delay_req_t;
-
-typedef struct network_msg_ctrl_delay_resp_t {
+struct network_msg_ctrl_delay_resp_t {
     uint8_t UNKNOWN[2];  // 10 00
-} network_msg_ctrl_delay_resp_t;
+};
 
-// HEAT_SETPT
+struct network_msg_ctrl_heat_setpt_req_t {
+    // note: sizeof(network_msg_ctrl_heat_setpt_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_heat_setpt_req_t {
-    // be aware: sizeof(network_msg_ctrl_heat_setpt_req_t) == 1, not 0
-} network_msg_ctrl_heat_setpt_req_t;
-
-typedef struct network_msg_ctrl_heat_setpt_resp_t {
+struct network_msg_ctrl_heat_setpt_resp_t {
     uint8_t UNKNOWN[10];  // 00 00 00 00 00 00 00 00 00 00 
-} network_msg_ctrl_heat_setpt_resp_t;
+};
 
-// CIRC_NAMES
-
-typedef struct network_msg_ctrl_circ_names_req_t {
+struct network_msg_ctrl_circ_names_req_t {
     uint8_t reqId;  // 0x01
-} network_msg_ctrl_circ_names_req_t;
+};
 
-typedef struct network_msg_ctrl_circ_names_resp_t {
+struct network_msg_ctrl_circ_names_resp_t {
     uint8_t reqId;       // req 0x01 -> resp 01 01 48 00 00
     uint8_t UNKNOWN[5];  // req 0x02 -> resp 02 00 03 00 00
-} network_msg_ctrl_circ_names_resp_t;
+};
 
-// UNKN_D2_REQ
-
-typedef struct network_msg_ctrl_chem_req_t {
+struct network_msg_ctrl_chem_req_t {
     uint8_t UNKNOWN;  // 0xD2
-} network_msg_ctrl_chem_req_t;
+};;
 
-// SCHEDS
-
-typedef struct network_msg_ctrl_scheds_req_t {
+struct network_msg_ctrl_scheds_req_t {
     uint8_t schedId;  // 0x01 (1 - 12)
-} network_msg_ctrl_scheds_req_t;
+};
 
 // With POOL 1/1 from 08:00 to 10:00, and
 //      SPA  1/1 from 11:00 to 12:00
@@ -373,8 +384,8 @@ typedef struct network_msg_ctrl_scheds_req_t {
 // sending [1] => 01 06 00 00 00 00 3F
 // sending [2] => 02 01 0C 30 15 14 3F
 // sending [3] => 03 00 2E 38 08 25 3F
-//
-typedef struct network_msg_ctrl_scheds_resp_t {
+
+struct network_msg_ctrl_scheds_resp_t {
     uint8_t schedId;  // 0 
     uint8_t circuit;  // 1
     uint8_t startHr;  // 2
@@ -382,15 +393,13 @@ typedef struct network_msg_ctrl_scheds_resp_t {
     uint8_t stopHr;   // 4
     uint8_t stopMin;  // 5
     uint8_t dayOfWk;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
-} network_msg_ctrl_scheds_resp_t;
+};
 
-// HEAT
+struct network_msg_ctrl_heat_req_t {
+    // note: sizeof(network_msg_ctrl_heat_req_t) == 1, not 0
+};
 
-typedef struct network_msg_ctrl_heat_req_t {
-    // be aware: sizeof(network_msg_ctrl_heat_req_t) == 1, not 0
-} network_msg_ctrl_heat_req_t;
-
-typedef struct network_msg_ctrl_heat_resp_t {
+struct network_msg_ctrl_heat_resp_t {
     uint8_t poolTemp;      // 0
     uint8_t spaTemp;       // 1
     uint8_t airTemp;       // 2
@@ -404,69 +413,64 @@ typedef struct network_msg_ctrl_heat_resp_t {
     uint8_t UNKNOWN_10;    // 10
     uint8_t UNKNOWN_11;    // 11
     uint8_t UNKNOWN_12;    // 12
-} PACK8 network_msg_ctrl_heat_resp_t;
+} PACK8;
 
-typedef struct network_msg_ctrl_heat_set_t {
+struct network_msg_ctrl_heat_set_t {
     uint8_t poolSetpoint;  // 0
     uint8_t spaSetpoint;   // 1
     uint8_t heatSrc;       // 2
     uint8_t UNKNOWN_3;     // 3
-} PACK8 network_msg_ctrl_heat_set_t;
+} PACK8;
 
-// LAYOUT
-
-typedef struct network_msg_ctrl_layout_req_t {
+struct network_msg_ctrl_layout_req_t {
     // be aware: sizeof(network_msg_ctrl_layout_req_t) == 1, not 0
-} network_msg_ctrl_layout_req_t;
+};
 
-typedef struct network_msg_ctrl_layout_resp_t {
+struct network_msg_ctrl_layout_resp_t {
     uint8_t circuit[4];  // circuits assigned to each of the 4 buttons on the remote
-} PACK8 network_msg_ctrl_layout_resp_t;
+} PACK8;
 
-typedef network_msg_ctrl_layout_resp_t network_msg_ctrl_layout_set_t;
+using network_msg_ctrl_layout_set_t = network_msg_ctrl_layout_resp_t;
 
-/*
- * A5 messages, use to communicate with Pump
+
+/**
+ * @brief
+ * Defines the structures and unions for A5-pump messages.
+ *
+ * @details
+ * This section provides packed C-style structs for each A5-pump style
+ * protocol message exchanged between the pool controller and its pump.
  */
 
-// PUMP_REG
-
-typedef struct network_msg_pump_reg_set_t {
+struct network_msg_pump_reg_set_t {
     uint8_t addressHi;   // 0
     uint8_t addressLo;   // 1
     uint8_t valueHi;     // 2
     uint8_t valueLo;     // 3
-} PACK8 network_msg_pump_reg_set_t;
+} PACK8;
 
-typedef struct network_msg_pump_reg_resp_t {
+struct network_msg_pump_reg_resp_t {
     uint8_t valueHi;     // 0
     uint8_t valueLo;     // 1
-} PACK8 network_msg_pump_reg_resp_t;
+} PACK8;
 
-// PUMP CTRL
-
-typedef struct network_msg_pump_ctrl_t {
+struct network_msg_pump_ctrl_t {
     uint8_t ctrl;        // 0
-} PACK8 network_msg_pump_ctrl_t;
+} PACK8;
 
-// 0x00 = manual, 0x01 = egg timer, 0x02 = schedule, 0x03 = disabled
-typedef struct network_msg_pump_mode_t {
+struct network_msg_pump_mode_t {
     uint8_t mode;        // 0
-} PACK8 network_msg_pump_mode_t;
+} PACK8;
 
-// PUMP RUN
-
-typedef struct network_msg_pump_run_t {
+struct network_msg_pump_run_t {
     uint8_t running;     // 0
-} PACK8 network_msg_pump_run_t;
+} PACK8;
 
-// PUMP STATUS
+struct network_msg_pump_status_req_t {
+    // note: sizeof(network_msg_pump_status_req_t) == 1, not 0
+};
 
-typedef struct network_msg_pump_status_req_t {
-    // be aware: sizeof(network_msg_pump_status_req_t) == 1, not 0
-} network_msg_pump_status_req_t;
-
-typedef struct network_msg_pump_status_resp_t {
+struct network_msg_pump_status_resp_t {
     uint8_t running;      // 0
     uint8_t mode;         // 1
     uint8_t state;        // 2
@@ -482,48 +486,59 @@ typedef struct network_msg_pump_status_resp_t {
     uint8_t remainingMin; // 12
     uint8_t clockHr;      // 13
     uint8_t clockMin;     // 14
-} PACK8 network_msg_pump_status_resp_t;
+} PACK8;
 
-/*
- * IC messages, use to communicate with IntelliChlor
+/**
+ * @brief Defines the structures and unions for IC messages.
+ *
+ * @details
+ * This section provides packed C-style structs for each IC style
+ * protocol message exchanged between the pool controller and the
+ * IntelliChlor chlorinator.
  */
 
-// CHLOR PING
-
-typedef struct network_msg_chlor_ping_req_t {
+struct network_msg_chlor_ping_req_t {
     uint8_t UNKNOWN_0;
-} PACK8 network_msg_chlor_ping_req_t;
+} PACK8;
 
-typedef struct network_msg_chlor_ping_resp_t {
+struct network_msg_chlor_ping_resp_t {
     uint8_t UNKNOWN_0;
     uint8_t UNKNOWN_1;
-} PACK8 network_msg_chlor_ping_resp_t;
+} PACK8;
 
-// CHLOR_NAME
+using network_msg_chlor_name_str_t = char[16];
 
-typedef char network_msg_chlor_name_str_t[16];
-
-typedef struct network_msg_chlor_name_req_t {
+struct network_msg_chlor_name_req_t {
     uint8_t UNKNOWN;  // Sending 0x00 or 0x02 gets a response
-} PACK8 network_msg_chlor_name_req_t;
+} PACK8;
 
-typedef struct network_msg_chlor_name_resp_t {
+struct network_msg_chlor_name_resp_t {
     uint8_t                      salt;  // ppm/50
     network_msg_chlor_name_str_t name;
-} PACK8 network_msg_chlor_name_resp_t;
+} PACK8;
 
-// CHLOR_LEVEL_SET
-
-typedef struct network_msg_chlor_level_set_t {
+struct network_msg_chlor_level_set_t {
     uint8_t  level;
-} PACK8 network_msg_chlor_level_set_t;
+} PACK8;
 
-typedef struct network_msg_chlor_level_resp_t {
+struct network_msg_chlor_level_resp_t {
     uint8_t  salt;   // ppm/50
     uint8_t  error;  // error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
-} PACK8 network_msg_chlor_level_resp_t;
+} PACK8;
 
-typedef union network_msg_data_a5_t {
+
+/**
+ * @brief Defines unions for grouping protocol message data for A5 and IC network messages.
+ *
+ * @details
+ * These unions encapsulate all supported message types for the A5 (controller/pump) and IC
+ * (chlorinator) protocols, allowing flexible access to protocol-specific message structures.
+ * The top-level union `network_msg_data_t` enables generic handling of any protocol message
+ * within the OPNpool system, simplifying encoding, decoding, and processing of network
+ * messages.
+ */
+
+union network_msg_data_a5_t {
     network_msg_pump_reg_set_t         pump_reg_set;
     network_msg_pump_reg_resp_t        pump_reg_set_resp;
     network_msg_pump_ctrl_t            pump_ctrl;
@@ -555,32 +570,34 @@ typedef union network_msg_data_a5_t {
     network_msg_ctrl_chem_req_t        ctrl_chem_req;
     network_msg_ctrl_scheds_req_t      ctrl_scheds_req;
     network_msg_ctrl_scheds_resp_t     ctrl_scheds_resp;
-} PACK8 network_msg_data_a5_t;
+} PACK8;
 
-
-/**
- * @brief IC messages, used to communicate with IntelliChlor
- */
-
-typedef union network_msg_data_ic_t {
+union network_msg_data_ic_t {
     network_msg_chlor_ping_req_t    chlor_ping_req;
     network_msg_chlor_ping_resp_t   chlor_ping_resp;
     network_msg_chlor_name_req_t    chlor_name_req;
     network_msg_chlor_name_resp_t   chlor_name_resp;
     network_msg_chlor_level_set_t   chlor_level_set;
     network_msg_chlor_level_resp_t  chlor_level_resp;
-} PACK8 network_msg_data_ic_t;
+} PACK8;
 
-typedef union network_msg_data_t {
+union network_msg_data_t {
     network_msg_data_a5_t a5;
     network_msg_data_ic_t ic;
-} PACK8 network_msg_data_t;
+} PACK8;
 
 const size_t NETWORK_DATA_MAX_SIZE = sizeof(network_msg_data_t);
 
-    // MUST MATCH network_msg_typ_info[]
-    // MUST MATCH network_msg_typ_sizes[]
-enum class network_msg_typ_t : uint8_t {
+
+/**
+ * @brief
+ * Enumerates all supported network message types for OPNpool.
+ *
+ * @details
+ * Each value represents a specific protocol message exchanged between the ESPHome component and pool equipment,
+ * including controller, pump, and chlorinator messages. Used for message dispatch, parsing, and type-safe handling.
+ */
+enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] and network_msg_typ_sizes[]
     CTRL_SET_ACK = 0,
     CTRL_CIRCUIT_SET = 1,
     CTRL_SCHED_REQ = 2,
@@ -632,7 +649,7 @@ constexpr size_t network_msg_typ_count() {
     return magic_enum::enum_count<network_msg_typ_t>();
 }
 
-    // size lookup table for message types 
+    // size lookup table for message types
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[] = {
     sizeof(network_msg_ctrl_set_ack_t),                                  // 0: CTRL_SET_ACK
@@ -681,8 +698,6 @@ static constexpr size_t network_msg_typ_sizes[] = {
     sizeof(network_msg_ctrl_scheds_resp_t),                              // 43: CTRL_SCHEDS_RESP
     sizeof(network_msg_ctrl_chem_req_t)                                  // 44: CTRL_CHEM_REQ
 };
-
-    // helper functions
 
 inline esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
@@ -763,51 +778,6 @@ constexpr network_msg_typ_info_t network_msg_typ_info[] = {
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CHEM_REQ}          // 44: CTRL_CHEM_REQ
 };
 
-    // helper functions
-
-constexpr size_t NETWORK_MSG_TYP_SIZES_COUNT = std::size(network_msg_typ_sizes);
-constexpr size_t NETWORK_MSG_TYP_INFO_COUNT = std::size(network_msg_typ_info);
-
-#ifndef __INTELLISENSE__
-static_assert(NETWORK_MSG_TYP_SIZES_COUNT == network_msg_typ_count());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-static_assert(NETWORK_MSG_TYP_INFO_COUNT == network_msg_typ_count());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-#endif
-
-inline const char *
-network_msg_typ_str(network_msg_typ_t const typ)
-{
-    auto name = magic_enum::enum_name(typ);
-    if (!name.empty()) {
-        return name.data();
-    }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
-    return buf;
-}
-
-inline int
-network_msg_typ_nr(char const * const msg_typ_str)
-{
-    if (!msg_typ_str) {
-        return -1;
-    }
-    
-    auto value = magic_enum::enum_cast<network_msg_typ_t>(std::string_view(msg_typ_str), magic_enum::case_insensitive);
-    if (value.has_value()) {
-        return static_cast<int>(value.value());
-    }
-    
-    for (uint16_t i = 0; i <= 0xFF; i++) {
-        auto candidate = static_cast<network_msg_typ_t>(i);
-        auto name = magic_enum::enum_name(candidate);
-        if (!name.empty() && strcasecmp(msg_typ_str, name.data()) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-  // helper to get datalink proto and type info for a network message type
 inline const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
@@ -818,7 +788,19 @@ network_msg_typ_get_info(network_msg_typ_t typ)
     return nullptr;
 }
 
-typedef struct network_msg_t {
+
+/**
+ * @brief    Represents a generic network message for the Pentair protocol.
+ *
+ * @details
+ * Contains the message type and a union of all possible protocol-specific message data 
+ * structures, allowing flexible handling of controller, pump, and chlorinator messages.
+ *
+ * @var typ  The network message type identifier.
+ * @var u    Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
+ */
+
+struct network_msg_t {
     network_msg_typ_t typ;
     union network_msg_union_t {
         network_msg_pump_reg_set_t  pump_reg_set;
@@ -858,9 +840,51 @@ typedef struct network_msg_t {
         network_msg_chlor_level_set_t  chlor_level_set;
         network_msg_chlor_level_resp_t  chlor_level_resp;
         network_msg_chlor_name_req_t  chlor_name_req;
-        uint8_t bytes[0];
+        uint8_t bytes[0];  // access union as bytes
     } u;
-} network_msg_t;
+};
+
+constexpr size_t NETWORK_MSG_TYP_SIZES_COUNT = std::size(network_msg_typ_sizes);
+constexpr size_t NETWORK_MSG_TYP_INFO_COUNT = std::size(network_msg_typ_info);
+
+#ifndef __INTELLISENSE__
+static_assert(NETWORK_MSG_TYP_SIZES_COUNT == network_msg_typ_count());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+static_assert(NETWORK_MSG_TYP_INFO_COUNT == network_msg_typ_count());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#endif
+
+inline const char *
+network_msg_typ_str(network_msg_typ_t const typ)
+{
+    auto name = magic_enum::enum_name(typ);
+    if (!name.empty()) {
+        return name.data();
+    }
+        // fallback
+    static char buf[3];
+    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
+    return buf;
+}
+
+inline int
+network_msg_typ_nr(char const * const msg_typ_str)
+{
+    if (!msg_typ_str) {
+        return -1;
+    }
+    auto value = magic_enum::enum_cast<network_msg_typ_t>(std::string_view(msg_typ_str), magic_enum::case_insensitive);
+    if (value.has_value()) {
+        return static_cast<int>(value.value());
+    }
+        // fallback
+    for (uint16_t ii = 0; ii <= 0xFF; ii++) {
+        auto candidate = static_cast<network_msg_typ_t>(ii);
+        auto name = magic_enum::enum_name(candidate);
+        if (!name.empty() && strcasecmp(msg_typ_str, name.data()) == 0) {
+            return ii;
+        }
+    }
+    return -1;
+}
 
 }  // namespace opnpool
 }  // namespace esphome

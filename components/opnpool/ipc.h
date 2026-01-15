@@ -10,21 +10,21 @@
 namespace esphome {
 namespace opnpool {
 
-typedef struct rs485_pins_t {
+struct rs485_pins_t {
     uint8_t rx_pin{25};
     uint8_t tx_pin{26};
     uint8_t flow_control_pin{27};
-} rs485_pins_t;
+};
 
-typedef struct config_t {
+struct config_t {
     rs485_pins_t rs485_pins;
-} config_t;
+};
 
-typedef struct ipc_t {
+struct ipc_t {
     QueueHandle_t to_main_q;
     QueueHandle_t to_pool_q;
     config_t      config;
-} ipc_t;
+};
 
     // forward declarations
 struct network_msg_t;
