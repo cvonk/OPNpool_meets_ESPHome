@@ -23,53 +23,54 @@ class OpnPoolSensor;
 class OpnPoolBinarySensor;
 class OpnPoolTextSensor;
 
-// IDs for array indexing
-enum class ClimateId : uint8_t {  // MUST MATCH CONF_CLIMATES in __init__.py
-    POOL = 0,
-    SPA,
+// IDs for array indexing (will be OVERWRITTEN by __init__.py for consistency with its CONF_*)
+
+enum class ClimateId : uint8_t {
+    POOL_CLIMATE = 0,
+    SPA_CLIMATE = 1,
     COUNT
 };
-enum class SwitchId : uint8_t {  // MUST MATCH CONF_SWITCHES in __init__.py
-    POOL = 0,
-    SPA,
-    AUX1,
-    AUX2,
-    AUX3,
-    FEATURE1,
-    FEATURE2,
-    FEATURE3,
-    FEATURE4,
+enum class SwitchId : uint8_t {
+    SPA = 0,
+    AUX1 = 1,
+    AUX2 = 2,
+    AUX3 = 3,
+    FEATURE1 = 4,
+    POOL = 5,
+    FEATURE2 = 6,
+    FEATURE3 = 7,
+    FEATURE4 = 8,
     COUNT
 };
-enum class SensorId : uint8_t {  // MUST MATCH CONF_ANALOG_SENSORS in __init__.py
-    AIR_TEMP = 0,
-    WATER_TEMP,
-    PUMP_POWER,
-    PUMP_FLOW,
-    PUMP_SPEED,
-    PUMP_ERROR,
-    CHLOR_LEVEL,
-    CHLOR_SALT,
+enum class SensorId : uint8_t {
+    AIR_TEMPERATURE = 0,
+    WATER_TEMPERATURE = 1,
+    PUMP_POWER = 2,
+    PUMP_FLOW = 3,
+    PUMP_SPEED = 4,
+    CHLORINATOR_LEVEL = 5,
+    CHLORINATOR_SALT = 6,
+    PUMP_ERROR = 7,
     COUNT
 };
-enum class BinarySensorId : uint8_t {  // MUST MATCH CONF_BINARY_SENSORS in __init__.py
+enum class BinarySensorId : uint8_t {
     PUMP_RUNNING = 0,
-    MODE_SERVICE,
-    MODE_TEMP_INC,
-    MODE_FREEZE,
-    MODE_TIMEOUT,
+    MODE_SERVICE = 1,
+    MODE_TEMPERATURE_INC = 2,
+    MODE_FREEZE_PROTECTION = 3,
+    MODE_TIMEOUT = 4,
     COUNT
 };
-enum class TextSensorId : uint8_t {  // MUST MATCH CONF_TEXT_SENSORS in __init__.py 
+enum class TextSensorId : uint8_t {
     POOL_SCHED = 0,
-    SPA_SCHED,
-    PUMP_MODE,
-    PUMP_STATE,
-    CHLOR_NAME,
-    CHLOR_STATUS,
-    SYSTEM_TIME,
-    CONTROLLER_FW,
-    INTERFACE_FW,
+    SPA_SCHED = 1,
+    PUMP_MODE = 2,
+    PUMP_STATE = 3,
+    CHLORINATOR_NAME = 4,
+    CHLORINATOR_STATUS = 5,
+    SYSTEM_TIME = 6,
+    CONTROLLER_FIRMWARE = 7,
+    INTERFACE_FIRMWARE = 8,
     COUNT
 };
 
@@ -126,8 +127,8 @@ class OpnPool : public Component {
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor * const ts);
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor * const ts);
     void set_system_time_text_sensor(OpnPoolTextSensor * const ts);
-    void set_controller_firmware_version_text_sensor(OpnPoolTextSensor * const ts);
-    void set_interface_firmware_version_text_sensor(OpnPoolTextSensor * const ts);
+    void set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts);
+    void set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts);
 
     //void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 

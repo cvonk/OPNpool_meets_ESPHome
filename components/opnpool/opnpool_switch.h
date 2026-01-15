@@ -12,6 +12,8 @@ class OpnPool;
 
 class OpnPoolSwitch : public switch_::Switch, public Component {
   public:
+    OpnPoolSwitch(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
+
     void setup() override;
     void dump_config() override;
     

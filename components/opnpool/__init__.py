@@ -51,11 +51,11 @@ CONF_RS485_RX_PIN = "rx_pin"
 CONF_RS485_TX_PIN = "tx_pin"
 CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
 
-CONF_CLIMATES = [  # MUST MATCH ClimateId in opnpool.h
+CONF_CLIMATES = [  # used to overwrite ClimateId enum in opnpool.h
     "pool_climate",
     "spa_climate"
 ]
-CONF_SWITCHES = [  # MUST MATCH SwitchId in opnpool.h
+CONF_SWITCHES = [  # used to overwrite SwitchId enum in opnpool.h
     "spa", 
     "aux1",
     "aux2",
@@ -66,7 +66,7 @@ CONF_SWITCHES = [  # MUST MATCH SwitchId in opnpool.h
     "feature3",
     "feature4"
 ]
-CONF_ANALOG_SENSORS = [  # MUST MATCH SensorId in opnpool.h
+CONF_ANALOG_SENSORS = [  # used to overwrite SensorId enum in opnpool.h
     "air_temperature",
     "water_temperature",
     "pump_power",
@@ -76,14 +76,14 @@ CONF_ANALOG_SENSORS = [  # MUST MATCH SensorId in opnpool.h
     "chlorinator_salt",
     "pump_error"
 ]
-CONF_BINARY_SENSORS = [  # MUST MATCH BinarySensorId in opnpool.h
+CONF_BINARY_SENSORS = [  # used to overwrite BinarySensorId enum in opnpool.h
     "pump_running",
     "mode_service",
     "mode_temperature_inc", 
     "mode_freeze_protection",
     "mode_timeout"
 ]
-CONF_TEXT_SENSORS = [  # MUST MATCH TextSensorId in opnpool.h
+CONF_TEXT_SENSORS = [  # used to overwrite TextSensorId enum in opnpool.h
     "pool_sched",
     "spa_sched",
     "pump_mode",
@@ -91,8 +91,8 @@ CONF_TEXT_SENSORS = [  # MUST MATCH TextSensorId in opnpool.h
     "chlorinator_name",
     "chlorinator_status",
     "system_time",
-    "controller_firmware_version",
-    "interface_firmware_version"
+    "controller_firmware",
+    "interface_firmware"
 ]
 
 CONFIG_SCHEMA = cv.Schema({
@@ -164,7 +164,7 @@ async def to_code(config):
             cwd=component_dir,
             stderr=subprocess.DEVNULL
         ).decode('ascii').strip()
-        
+
         try:
             subprocess.check_output(
                 ['git', 'diff', '--quiet'],
@@ -182,49 +182,92 @@ async def to_code(config):
             version = f"esphome-{ESPHOME_VERSION}"
         except:
             pass
-    
-    cg.add_build_flag(f"-DINTERFACE_FW_VERSION=\\\"{version}\\\"")
+
+    print(f"Git hash: {version}")    
+    cg.add_build_flag(f"-DGIT_HASH=\\\"{version}\\\"")
     
     # RS485 configuration
     rs485_config = config[CONF_RS485]
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
-    # Register climate entities
-    for climate_key in CONF_CLIMATES:
+    # register climate entities (constructor injection)
+    for idx, climate_key in enumerate(CONF_CLIMATES):
         entity_cfg = config[climate_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        climate_entity = await climate.new_climate(entity_cfg)
+        climate_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        await climate.register_climate(climate_entity, entity_cfg)
         cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
 
-    # Register switches
-    for switch_key in CONF_SWITCHES:
+    # register switches (constructor injection)
+    for idx, switch_key in enumerate(CONF_SWITCHES):
         entity_cfg = config[switch_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        switch_entity = await switch.new_switch(entity_cfg)
+        switch_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        await switch.register_switch(switch_entity, entity_cfg)
         cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
 
-    # Register analog sensors
-    for sensor_key in CONF_ANALOG_SENSORS:
+    # register analog sensors (constructor injection)
+    for idx, sensor_key in enumerate(CONF_ANALOG_SENSORS):
         entity_cfg = config[sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        sensor_entity = await sensor.new_sensor(entity_cfg)
+        sensor_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        await sensor.register_sensor(sensor_entity, entity_cfg)
         cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
 
-    # Register binary sensors
-    for binary_sensor_key in CONF_BINARY_SENSORS:
+    # register binary sensors (constructor injection)
+    for idx, binary_sensor_key in enumerate(CONF_BINARY_SENSORS):
         entity_cfg = config[binary_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        bs_entity = await binary_sensor.new_binary_sensor(entity_cfg)
+        bs_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        await binary_sensor.register_binary_sensor(bs_entity, entity_cfg)
         cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
-    # Register text sensors
-    for text_sensor_key in CONF_TEXT_SENSORS:
+    # register text sensors (constructor injection)
+    for idx, text_sensor_key in enumerate(CONF_TEXT_SENSORS):
         entity_cfg = config[text_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        ts_entity = await text_sensor.new_text_sensor(entity_cfg)
+        ts_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        await text_sensor.register_text_sensor(ts_entity, entity_cfg)
         cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
+
+# replace the enums in opnpool.h to keep them consistent with CONF_* in this file
+
+import os
+import re
+
+ENTITY_ENUMS = {
+    "ClimateId": CONF_CLIMATES,
+    "SwitchId": CONF_SWITCHES,
+    "SensorId": CONF_ANALOG_SENSORS,
+    "BinarySensorId": CONF_BINARY_SENSORS,
+    "TextSensorId": CONF_TEXT_SENSORS,
+}
+
+def generate_enum(enum_name, items):
+    lines = [f"enum class {enum_name} : uint8_t {{"]
+    for idx, name in enumerate(items):
+        lines.append(f"    {name.upper()} = {idx},")
+    lines.append("    COUNT")
+    lines.append("};")
+    return "\n".join(lines)
+
+def update_header(header_path, entity_enums):
+    with open(header_path, "r") as f:
+        content = f.read()
+    for enum_name, items in entity_enums.items():
+        pattern = rf"enum class {enum_name} : uint8_t \{{.*?\}};"
+        new_enum = generate_enum(enum_name, items)
+        content = re.sub(pattern, new_enum, content, flags=re.DOTALL)
+    with open(header_path, "w") as f:
+        f.write(content)
+
+if __name__ == "__main__":
+    # use a relative path from this script's location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    header_path = os.path.join(script_dir, "opnpool.h")
+    update_header(header_path, ENTITY_ENUMS)

@@ -137,8 +137,8 @@ climate::ClimateTraits OpnPoolClimate::traits()
 void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
     uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL);
-    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA);
+    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL_CLIMATE);
+    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA_CLIMATE);
 
        // get both thermostats ('cause the change request needs to references them both)
 
@@ -261,8 +261,8 @@ void
 OpnPoolClimate::update_climate(const poolstate_t * new_state) 
 {    
     uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL);
-    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA);
+    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL_CLIMATE);
+    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA_CLIMATE);
 
         // update temperatures
 

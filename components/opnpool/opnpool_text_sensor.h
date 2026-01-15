@@ -11,6 +11,7 @@ class OpnPool;  // Forward declaration only - don't include opnpool.h!
 
 class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
   public:
+    OpnPoolTextSensor(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
     void setup() override;
     void dump_config() override;
     
@@ -19,6 +20,7 @@ class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
 
 
   protected:
+    uint8_t    idx_{0};
     OpnPool *  parent_{nullptr};
 
     struct last_value_t {

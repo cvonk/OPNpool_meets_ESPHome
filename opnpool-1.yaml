@@ -197,7 +197,7 @@ opnpool:
     name: "Chlorinator status"
   system_time:
     name: "Controller system time"
-  controller_firmware_version:
+  controller_firmware:
     name: "Controller firmware"
-  interface_firmware_version:
+  interface_firmware:
     name: "Interface firmware"
