@@ -13,11 +13,6 @@
 namespace esphome {
 namespace opnpool {
 
-// Forward declarations to break circular dependency
-struct rs485_instance_t;
-typedef rs485_instance_t * rs485_handle_t;
-struct datalink_pkt_t;
-
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
@@ -128,6 +123,9 @@ size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
     // forward declarations
 enum class datalink_prot_t : uint8_t;
+struct datalink_pkt_t;
+struct rs485_instance_t;
+typedef rs485_instance_t * rs485_handle_t;
 struct datalink_pkt_t;
 
     // datalink.cpp

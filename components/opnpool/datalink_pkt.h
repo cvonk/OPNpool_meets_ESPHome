@@ -51,11 +51,25 @@
 namespace esphome {
 namespace opnpool {
 
+/**
+ * @brief
+ * Enumerates the supported data link layer protocol types in the Pentair protocol.
+ *
+ * @details
+ * This enum class defines the protocol identifiers used at the data link layer
+ * for communication between the ESPHome component and pool equipment. It
+ * distinguishes between the IC protocol, A5 controller protocol, A5 pump protocol.
+ *
+ * @var IC      Protocol type for the IntelliCenter (IC) protocol (e.g. Chlorinator).
+ * @var A5_CTRL Protocol type for the A5 controller protocol.
+ * @var A5_PUMP Protocol type for the A5 pump protocol.
+ * @var NONE    Indicates that no valid protocol was detected.
+ */
 enum class datalink_prot_t : uint8_t {
     IC      = 0x00,
     A5_CTRL = 0x01,
     A5_PUMP = 0x02,
-    NONE    = 0xFF,
+    NONE    = 0xFF
 };
 
 /**
@@ -165,6 +179,21 @@ datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
     return buf;
 }
 
+
+/**
+ * @brief
+ * Union representing the possible message type fields in a data link layer packet.
+ *
+ * @details
+ * This union allows access to the message type as a controller, pump, or chlorinator
+ * message type, depending on the protocol context. It also provides access to the
+ * raw 8-bit value for generic handling.
+ *
+ * @var ctrl   Controller message type (datalink_typ_ctrl_t).
+ * @var pump   Pump message type (datalink_typ_pump_t).
+ * @var chlor  Chlorinator message type (datalink_typ_chlor_t).
+ * @var raw    Raw 8-bit value for generic or protocol-agnostic access.
+ */
 typedef union datalink_typ_t {
     datalink_typ_ctrl_t  ctrl;
     datalink_typ_pump_t  pump;
@@ -173,13 +202,49 @@ typedef union datalink_typ_t {
 } PACK8 datalink_typ_t;
 
 
+/**
+ * @brief
+ * Represents an address in the data link layer protocol.
+ *
+ * @details
+ * This type is used to specify the source and destination addresses for
+ * protocol packets exchanged between the ESPHome component and pool equipment.
+ * Each address uniquely identifies a device or endpoint on the RS485 network.
+ */
 typedef uint8_t datalink_address;
-typedef uint8_t datalink_data_t;
+
 
 /**
- * @brief Data link packet structure
+ * @brief
+ * Represents a single byte of data in the data link layer protocol.
+ *
+ * @details
+ * This type is used for the payload buffer in data link layer packets.
+ * It is a simple abstraction of a byte.
  */
+typedef uint8_t datalink_data_t;
 
+
+/**
+ * @brief
+ * Represents a data link layer packet in the Pentair protocol.
+ *
+ * @details
+ * Encapsulates all metadata and payload required for a protocol message, 
+ * including protocol type, message type (controller, pump, or chlorinator),
+ * source and destination addresses, a pointer to the data payload, payload
+ * length, and a handle to the associated socket buffer. This structure
+ * is used throughout the data link layer for both receiving and transmitting
+ * packets.
+ *
+ * @var datalink_prot_t prot   Protocol type as detected by the header parser.
+ * @var datalink_typ_t typ     Message type (controller, pump, or chlorinator) as extracted from the protocol header.
+ * @var datalink_address src   Source address of the packet.
+ * @var datalink_address dst   Destination address of the packet.
+ * @var datalink_data_t* data  Pointer to the data payload buffer.
+ * @var size_t data_len        Length of the data payload.
+ * @var skb_handle_t skb       Handle to the socket buffer containing the packet data.
+ */
 typedef struct datalink_pkt_t {
     datalink_prot_t    prot;      // datalink_prot as detected by `_read_head`
     datalink_typ_t     typ;       // from datalink_hdr_a5->typ
@@ -190,6 +255,7 @@ typedef struct datalink_pkt_t {
     skb_handle_t       skb;
 } datalink_pkt_t;
 
+    // helper function to convert enum class to string
 inline const char *
 datalink_prot_str(datalink_prot_t const prot)
 {
@@ -202,6 +268,7 @@ datalink_prot_str(datalink_prot_t const prot)
     return buf;
 }
 
+    // helper function to convert enum string to number
 inline int
 datalink_prot_nr(char const * const prot_str)
 {
@@ -215,7 +282,7 @@ datalink_prot_nr(char const * const prot_str)
         return static_cast<int>(value.value());
     }
     
-        // search through entire uint8_t range (0-255) if not found in enum
+        // search through entire uint8_t range if not found in enum
     for (uint16_t ii = 0; ii <= 0xFF; ii++) {
         auto candidate = static_cast<datalink_prot_t>(ii);
         auto name = magic_enum::enum_name(candidate);

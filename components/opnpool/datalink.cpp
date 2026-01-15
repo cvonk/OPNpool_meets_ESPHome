@@ -39,22 +39,44 @@ namespace opnpool {
 
 // static char const * const TAG = "datalink";
 
-datalink_preamble_a5_t datalink_preamble_a5 = { 0x00, 0xFF, 0xA5 };  // use 0xA5 in the preamble to detection more reliable
+datalink_preamble_a5_t datalink_preamble_a5 = { 0x00, 0xFF, 0xA5 };  // use of 0xA5 in the preamble makes the detection more reliable
 datalink_preamble_ic_t datalink_preamble_ic = { 0x10, 0x02 };
 datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 
+
+/**
+ * @brief      Extracts the address group from a 16-bit address.
+ *
+ * @param addr The full 16-bit address.
+ * @return     The address group as a datalink_addrgroup_t.
+ */
 datalink_addrgroup_t
 datalink_groupaddr(uint16_t const addr)
 {
     return static_cast<datalink_addrgroup_t>((addr >> 4) & 0x0F);
 }
 
+
+/**
+ * @brief       Composes a device address from an address group and device ID.
+ *
+ * @param group The address group.
+ * @param id    The device ID within the group.
+ * @return      The composed 8-bit device address.
+ */
 uint8_t
 datalink_devaddr(datalink_addrgroup_t const group, uint8_t const id)
 {
     return (static_cast<uint8_t>(group) << 4) | (id & 0x0F);
 }
 
+/**
+ * @brief       Calculates the CRC for a data buffer.
+ *
+ * @param start Pointer to the start of the data buffer.
+ * @param stop  Pointer to one past the end of the data buffer.
+ * @return      The calculated 16-bit CRC value.
+ */
 uint16_t
 datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop)
 {

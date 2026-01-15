@@ -1,5 +1,5 @@
 /**
- * @file datalink_rx.cpp
+ * @file datalink_tx.cpp
  * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver from data packets
  * 
@@ -41,6 +41,14 @@ namespace opnpool {
 
 static char const * const TAG = "datalink_tx";
 
+
+/**
+ * @brief      Fills the IC protocol packet header fields for transmission.
+ *
+ * @param head Pointer to the IC protocol header structure to fill.
+ * @param txb  Socket buffer handle for the outgoing packet.
+ * @param typ  Message type union for the packet.
+ */
 static void
 _enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, datalink_typ_t const typ)
 {
@@ -52,12 +60,29 @@ _enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, datalink
     head->hdr.typ = typ.raw;
 }
 
+
+/**
+ * @brief       Fills the IC protocol packet tail (CRC) for transmission.
+ *
+ * @param tail  Pointer to the IC protocol tail structure to fill.
+ * @param start Pointer to the start of the data for CRC calculation.
+ * @param stop  Pointer to the end of the data for CRC calculation.
+ */
 static void
 _enter_ic_tail(datalink_tail_ic_t * const tail, uint8_t const * const start, uint8_t const * const stop)
 {
     tail->crc[0] = (uint8_t) datalink_calc_crc(start, stop);
 }
 
+
+/**
+ * @brief          Fills the A5 protocol packet header fields for transmission.
+ *
+ * @param head     Pointer to the A5 protocol header structure to fill.
+ * @param txb      Socket buffer handle for the outgoing packet.
+ * @param typ      Message type union for the packet.
+ * @param data_len Length of the data payload.
+ */
 static void
 _enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, datalink_typ_t const typ, size_t const data_len)
 {
@@ -72,8 +97,15 @@ _enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, datalink
     head->hdr.len = data_len;
 }
 
-static void
 
+/**
+ * @brief       Fills the A5 protocol packet tail (CRC) for transmission.
+ *
+ * @param tail  Pointer to the A5 protocol tail structure to fill.
+ * @param start Pointer to the start of the data for CRC calculation.
+ * @param stop  Pointer to the end of the data for CRC calculation.
+ */
+static void
 _enter_a5_tail(datalink_tail_a5_t * const tail, uint8_t const * const start, uint8_t const * const stop)
 {
     uint16_t crcVal = datalink_calc_crc(start, stop);
@@ -81,11 +113,21 @@ _enter_a5_tail(datalink_tail_a5_t * const tail, uint8_t const * const start, uin
     tail->crc[1] = crcVal & 0xFF;
 }
 
-/*
- * Adds a header and tail to the packet and queues it for transmission on the RS-485 bus.
- * Called from `pool_task`
- */
 
+/**
+ * @brief
+ * Adds protocol headers and tails to a data packet and queues it for RS485 transmission.
+ *
+ * @details
+ * This function constructs a protocol-compliant packet by adding the appropriate
+ * header and tail (preamble and CRC) for the specified protocol (IC, A5/controller,
+ * or A5/pump). It prepares the socket buffer for transmission, and enqueues the
+ * completed packet for transmission by the RS485 driver. This function is typically
+ * called from the pool_task to send messages to pool equipment.
+ *
+ * @param rs485 Pointer to the RS485 interface handle.
+ * @param pkt   Pointer to the datalink packet structure to be transmitted.
+ */
 void
 datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const pkt)
 {
@@ -113,6 +155,9 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
             _enter_a5_tail(tail, crc_start, crc_stop);
             break;
         }
+        default: {
+            ESP_LOGE(TAG, "Unsupported protocol type: %02X", static_cast<uint8_t>(pkt->prot));
+        }
     }
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         size_t const dbg_size = 128;
@@ -121,8 +166,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
         ESP_LOGV(TAG, " %s: { %s}", datalink_prot_str(pkt->prot), dbg);
     }
 
-    // queue for transmission by `pool_task`
-
+        // queue for transmission by `pool_task`
     rs485->queue(rs485, pkt);
 }
 
