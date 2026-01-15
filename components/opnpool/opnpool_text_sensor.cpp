@@ -32,11 +32,13 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_text_sensor";
 
-void OpnPoolTextSensor::setup() {
+void OpnPoolTextSensor::setup()
+{
     // nothing to do here - parent handles setup
 }
 
-void OpnPoolTextSensor::dump_config() {
+void OpnPoolTextSensor::dump_config()
+{
     LOG_TEXT_SENSOR("  ", "Text Sensor", this);
 }
 

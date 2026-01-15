@@ -26,6 +26,7 @@
 #include <freertos/semphr.h>
 #include <esphome/core/log.h>
 #include <cJSON.h>
+#include <type_traits>
 
 #include "utils.h"
 #include "network.h"
@@ -38,6 +39,13 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "opnpool_state_rx";
+
+    // helper to convert enum class to its underlying type
+template<typename E>
+constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
+
 
 /**
  * ctrl
@@ -60,8 +68,8 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * co
 void
 OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
 {
-    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
 
     state->thermos[pool_idx].temp = msg->poolTemp;
     state->thermos[pool_idx].set_point = msg->poolSetpoint;
@@ -78,8 +86,8 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t 
 void
 OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
 {
-    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
 
     state->thermos[pool_idx].set_point = msg->poolSetpoint;
     state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
@@ -168,8 +176,8 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
         msg_mask <<= 1;
     }
         // if both SPA and POOL bits are set, only SPA runs
-    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::SPA)]) {
-        state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = false;
+    if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
+        state->circuits.active[to_index(network_pool_circuit_t::POOL)] = false;
     }
 
         // update state->circuits.delay
@@ -181,13 +189,13 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     }
 
         // update state->circuits.thermos (only update when the pump is running)
-    uint8_t const pool_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = static_cast<uint8_t>(poolstate_thermo_typ_t::SPA);
+    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
 
-    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::SPA)]) {
+    if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
         state->thermos[spa_idx].temp = msg->poolTemp;
     }
-    if (state->circuits.active[static_cast<uint8_t>(network_pool_circuit_t::POOL)]) {
+    if (state->circuits.active[to_index(network_pool_circuit_t::POOL)]) {
         state->thermos[pool_idx].temp = msg->poolTemp;
     }
     state->thermos[pool_idx].heating = msg->heatStatus & 0x04;
@@ -208,8 +216,8 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     state->system.tod.time.hour = msg->hour;
 
         // update state->temps
-    uint8_t const air_idx = static_cast<uint8_t>(poolstate_temp_typ_t::AIR);
-    uint8_t const water_idx = static_cast<uint8_t>(poolstate_temp_typ_t::WATER);
+    uint8_t const air_idx = to_index(poolstate_temp_typ_t::AIR);
+    uint8_t const water_idx = to_index(poolstate_temp_typ_t::WATER);
 
     state->temps[air_idx].temp = msg->airTemp;
     state->temps[water_idx].temp = msg->waterTemp;
@@ -511,8 +519,18 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
     if ((verbose && !frequent) || very_verbose) {
         size_t const json_size = 1024;
         char * const json = static_cast<char *>(calloc(1, json_size));
-        assert(json);
-        assert(cJSON_PrintPreallocated(dbg, json, json_size, false));
+        if (json == nullptr) {
+            ESP_LOGE(TAG, "Failed to allocate memory for JSON string");
+            cJSON_Delete(dbg);
+            return ESP_FAIL;
+        }
+        bool print_success = cJSON_PrintPreallocated(dbg, json, json_size, false);
+        if (!print_success) {
+            ESP_LOGE(TAG, "Failed to print JSON string");
+            free(json);
+            cJSON_Delete(dbg);
+            return ESP_FAIL;
+        }
         ESP_LOGV(TAG, "{%s: %s}\n", network_msg_typ_str(msg->typ), json);
         free(json);
     }
@@ -521,9 +539,9 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
     bool const state_changed = memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
 
     ESP_LOGVV(TAG, "State comparison: AUX2(%u) old_state=%u new_state=%u => state_changed=%u", 
-        static_cast<uint8_t>(network_pool_circuit_t::AUX2),
-        old_state.circuits.active[static_cast<uint8_t>(network_pool_circuit_t::AUX2)],
-        new_state.circuits.active[static_cast<uint8_t>(network_pool_circuit_t::AUX2)],
+        to_index(network_pool_circuit_t::AUX2),
+        old_state.circuits.active[to_index(network_pool_circuit_t::AUX2)],
+        new_state.circuits.active[to_index(network_pool_circuit_t::AUX2)],
         state_changed);
 
     if (state_changed) {

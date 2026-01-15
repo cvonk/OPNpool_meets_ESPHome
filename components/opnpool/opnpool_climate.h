@@ -26,8 +26,8 @@ class OpnPoolClimate : public climate::Climate, public Component {
     void publish_value_if_changed(uint8_t const idx, float const value_current_temperature, float const value_target_temperature, climate::ClimateMode const value_mode, char const * value_custom_preset, climate::ClimateAction const value_action);
     
   protected:
-    uint8_t   idx_{0};
-    OpnPool * parent_{nullptr};
+    uint8_t   idx_;
+    OpnPool * parent_;
     
     struct last_value_t {
         bool                    valid{false};

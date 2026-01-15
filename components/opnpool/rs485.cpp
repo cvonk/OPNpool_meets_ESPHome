@@ -82,14 +82,15 @@ _flush(void)
 static void
 _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
 {
-    assert(pkt);
-    rs485_q_msg_t msg = {
-        .pkt = pkt,
-    };
-    if (xQueueSendToBack(handle->tx_q, &msg, 0) != pdPASS) {
-        ESP_LOGE(TAG, "tx_q full");
-        free(pkt->skb);
-        free((void *) pkt);
+    if (pkt != nullptr) {
+        rs485_q_msg_t msg = {
+            .pkt = pkt,
+        };
+        if (xQueueSendToBack(handle->tx_q, &msg, 0) != pdPASS) {
+            ESP_LOGE(TAG, "tx_q full");
+            free(pkt->skb);
+            free((void *) pkt);
+        }
     }
 }
 
@@ -98,7 +99,9 @@ _dequeue(rs485_handle_t const handle)
 {
     rs485_q_msg_t msg{};
     if (xQueueReceive(handle->tx_q, &msg, (TickType_t)0) == pdPASS) {
-        assert(msg.pkt);
+        if (msg.pkt == nullptr) {
+            ESP_LOGE(TAG, "Dequeued packet is null");
+        }
         return msg.pkt;
     }
     return NULL;
@@ -173,10 +176,16 @@ rs485_init(rs485_pins_t const * const rs485_pins)
     uart_set_mode(_uart_port, UART_MODE_RS485_HALF_DUPLEX);
 
     QueueHandle_t const tx_q = xQueueCreate(5, sizeof(rs485_q_msg_t));
-    assert(tx_q);
+    if (tx_q == nullptr) {
+        ESP_LOGE(TAG, "Failed to create TX queue");
+        return nullptr;
+    }
 
     rs485_handle_t handle = static_cast<rs485_handle_t>(calloc(1, sizeof(rs485_instance_t)));
-    assert(handle);
+    if (handle == nullptr) {
+        ESP_LOGE(TAG, "Failed to allocate RS485 handle");
+        return nullptr;
+    }
 
     handle->available = _available;
     handle->read_bytes = _read_bytes;
@@ -186,6 +195,7 @@ rs485_init(rs485_pins_t const * const rs485_pins)
     handle->queue = _queue;
     handle->dequeue = _dequeue;
     handle->tx_q = tx_q;
+    
     _tx_mode(false);
 
     return handle;

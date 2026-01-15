@@ -19,12 +19,12 @@
  * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
-#include "opnpool_state.h"
-#include "opnpool.h"
-#include "esphome/core/log.h"
-
+#include <esphome/core/log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+
+#include "opnpool_state.h"
+#include "opnpool.h"
 #include "ipc.h"
 #include "network.h"
 

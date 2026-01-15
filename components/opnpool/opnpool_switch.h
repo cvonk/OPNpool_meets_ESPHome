@@ -27,8 +27,8 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
     void publish_value_if_changed(bool const new_value);
 
   protected:
-    uint8_t idx_{0};
-    OpnPool * parent_{nullptr};
+    uint8_t idx_;
+    OpnPool * parent_;
 
     struct last_value_t {
         bool valid{false};

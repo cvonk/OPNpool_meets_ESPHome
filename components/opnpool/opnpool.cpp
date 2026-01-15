@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <esphome/core/log.h>
 #include <esphome/core/hal.h>
+#include <type_traits>
 
 #include "skb.h"
 #include "rs485.h"
@@ -48,6 +49,12 @@ namespace esphome {
 namespace opnpool {
   
 static char const * const TAG = "opnpool";
+
+    // helper to convert enum class to its underlying type
+template<typename E>
+constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
 
 /**
  * @brief Set up the OpnPool component.
@@ -75,7 +82,7 @@ void OpnPool::setup() {
     ipc_->to_pool_q = xQueueCreate(6, sizeof(network_msg_t));
     ipc_->to_main_q = xQueueCreate(10, sizeof(network_msg_t));
     if (!ipc_->to_main_q || !ipc_->to_pool_q) {
-        ESP_LOGE(TAG, "Failed to create IPC queues");
+        ESP_LOGE(TAG, "Failed to create IPC queue(s)");
         return;
     }
 
@@ -420,48 +427,48 @@ OpnPool::set_feature4_switch(OpnPoolSwitch * const sw)
 void
 OpnPool::set_air_temperature_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::AIR_TEMPERATURE)] = s; 
+    this->sensors_[to_index(SensorId::AIR_TEMPERATURE)] = s; 
 }
 
 void
 OpnPool::set_water_temperature_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMPERATURE)] = s; 
+    this->sensors_[to_index(SensorId::WATER_TEMPERATURE)] = s; 
 }
 
 void
 OpnPool::set_pump_power_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)] = s; 
+    this->sensors_[to_index(SensorId::PUMP_POWER)] = s; 
 }
 
 void
 OpnPool::set_pump_flow_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)] = s; 
+    this->sensors_[to_index(SensorId::PUMP_FLOW)] = s; 
 }
 
 void
 OpnPool::set_pump_speed_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)] = s; 
+    this->sensors_[to_index(SensorId::PUMP_SPEED)] = s; 
 }
 
 void
 OpnPool::set_pump_error_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)] = s; 
+    this->sensors_[to_index(SensorId::PUMP_ERROR)] = s; 
 }
 void
 OpnPool::set_chlorinator_level_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_LEVEL)] = s; 
+    this->sensors_[to_index(SensorId::CHLORINATOR_LEVEL)] = s; 
 }
 
 void
 OpnPool::set_chlorinator_salt_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_SALT)] = s; 
+    this->sensors_[to_index(SensorId::CHLORINATOR_SALT)] = s; 
 }
 
     // binary sensor setters
@@ -469,31 +476,31 @@ OpnPool::set_chlorinator_salt_sensor(OpnPoolSensor * const s)
 void
 OpnPool::set_pump_running_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)] = bs; 
+    this->binary_sensors_[to_index(BinarySensorId::PUMP_RUNNING)] = bs; 
 }
 
 void
 OpnPool::set_mode_service_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)] = bs; 
+    this->binary_sensors_[to_index(BinarySensorId::MODE_SERVICE)] = bs; 
 }
 
 void
 OpnPool::set_mode_temperature_inc_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMPERATURE_INC)] = bs; 
+    this->binary_sensors_[to_index(BinarySensorId::MODE_TEMPERATURE_INC)] = bs; 
 }
 
 void
 OpnPool::set_mode_freeze_protection_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE_PROTECTION)] = bs; 
+    this->binary_sensors_[to_index(BinarySensorId::MODE_FREEZE_PROTECTION)] = bs; 
 }
 
 void
 OpnPool::set_mode_timeout_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)] = bs; 
+    this->binary_sensors_[to_index(BinarySensorId::MODE_TIMEOUT)] = bs; 
 }
 
     // text sensor setters
@@ -501,55 +508,55 @@ OpnPool::set_mode_timeout_binary_sensor(OpnPoolBinarySensor * const bs)
 void
 OpnPool::set_pool_sched_text_sensor(OpnPoolTextSensor * const ts) 
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::POOL_SCHED)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::POOL_SCHED)] = ts; 
 }
 
 void
 OpnPool::set_spa_sched_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::SPA_SCHED)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::SPA_SCHED)] = ts; 
 }
 
 void
 OpnPool::set_pump_mode_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::PUMP_MODE)] = ts; 
 }
 
 void
 OpnPool::set_pump_state_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::PUMP_STATE)] = ts; 
 }
 
 void
 OpnPool::set_chlorinator_name_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_NAME)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::CHLORINATOR_NAME)] = ts; 
 }
 
 void
 OpnPool::set_chlorinator_status_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_STATUS)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::CHLORINATOR_STATUS)] = ts; 
 }
 
 void
 OpnPool::set_system_time_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)] = ts; 
+     this->text_sensors_[to_index(TextSensorId::SYSTEM_TIME)] = ts;  
 }
 
 void
 OpnPool::set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::CONTROLLER_FIRMWARE)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::CONTROLLER_FIRMWARE)] = ts; 
 }
 
 void
 OpnPool::set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[static_cast<uint8_t>(TextSensorId::INTERFACE_FIRMWARE)] = ts; 
+    this->text_sensors_[to_index(TextSensorId::INTERFACE_FIRMWARE)] = ts; 
 }
 
 }  // namespace opnpool

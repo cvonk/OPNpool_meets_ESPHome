@@ -117,11 +117,14 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", datalink_typ_ctrl_str(static_cast<datalink_typ_ctrl_t>(pkt->typ)));
 
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-              size_t const dbg_size = 128;
-              char dbg[dbg_size];
-              assert(pkt->skb);
-              (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
-              ESP_LOGVV(TAG, "tx { %s}", dbg);
+            size_t const dbg_size = 128;
+            char dbg[dbg_size];
+            if (pkt->skb == nullptr) {
+                ESP_LOGE(TAG, "Packet skb is null");
+            } else {
+                (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
+                ESP_LOGVV(TAG, "tx { %s}", dbg);
+            }
         }
         rs485->tx_mode(true);
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);

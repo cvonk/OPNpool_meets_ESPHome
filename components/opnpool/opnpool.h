@@ -146,7 +146,7 @@ class OpnPool : public Component {
 
   protected:
 
-    ipc_t * ipc_{};  // interprocess communication structure and RS485-pins
+    ipc_t * ipc_{nullptr};  // interprocess communication structure and RS485-pins
     OpnPoolState * opnPoolState_{nullptr};
 
     void service_requests_from_pool(ipc_t const * const ipc);

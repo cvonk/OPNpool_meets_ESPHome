@@ -27,6 +27,7 @@
 
 #include <esp_timer.h>
 #include <esphome/core/log.h>
+#include <type_traits>
 
 #include "opnpool_climate.h"  // no other #includes that could make a circular dependency
 #include "opnpool.h"          // no other #includes that could make a circular dependency
@@ -39,6 +40,12 @@ namespace esphome {
 namespace opnpool {
 
 static char const * const TAG = "opnpool_climate";
+
+    // helper to convert enum class to its underlying type
+template<typename E>
+constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
+    return static_cast<typename std::underlying_type<E>::type>(e);
+}
 
 inline float fahrenheit_to_celsius(float f) {
     return (f - 32.0f) * 5.0f / 9.0f;
@@ -137,8 +144,8 @@ climate::ClimateTraits OpnPoolClimate::traits()
 void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
     uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL_CLIMATE);
-    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA_CLIMATE);
+    uint8_t const climate_pool_idx = to_index(ClimateId::POOL_CLIMATE);
+    uint8_t const climate_spa_idx = to_index(ClimateId::SPA_CLIMATE);
 
        // get both thermostats ('cause the change request needs to references them both)
 
@@ -168,8 +175,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         
         ESP_LOGV(TAG, "HA requests climate mode [%u] to mode=%u", climate_idx, static_cast<int>(requested_mode));
         uint8_t switch_idx = (climate_idx == climate_pool_idx) 
-                           ? static_cast<uint8_t>(SwitchId::POOL)
-                           : static_cast<uint8_t>(SwitchId::SPA);
+                           ? to_index(SwitchId::POOL)
+                           : to_index(SwitchId::SPA);
         
         switch (requested_mode) {
             case climate::CLIMATE_MODE_OFF:  // mode 0
@@ -191,17 +198,17 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
         // handle heat source changes (based on custom preset)
 
-    const char* preset_str = call.get_custom_preset();
+    char const * preset_str = call.get_custom_preset();
     if (preset_str != nullptr) {
 
         ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", climate_idx, preset_str);
 
         if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Heat)) == 0) {
-            thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::HEATER);
+            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::HEATER);
         } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::SolarPreferred)) == 0) {
-            thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR_PREF);
+            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR_PREF);
         } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Solar)) == 0) {
-            thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::SOLAR);
+            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR);
         }
     } else if (call.get_preset().has_value()) {
 
@@ -209,7 +216,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
             ESP_LOGV(TAG, "HA requests heat source [%u] change to %u(NONE)", climate_idx, new_preset);
-            thermos_new[climate_idx].heat_src = static_cast<uint8_t>(network_heat_src_t::NONE);
+            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::NONE);
         }
     }        
 
@@ -261,14 +268,14 @@ void
 OpnPoolClimate::update_climate(const poolstate_t * new_state) 
 {    
     uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL_CLIMATE);
-    uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA_CLIMATE);
+    uint8_t const climate_pool_idx = to_index(ClimateId::POOL_CLIMATE);
+    uint8_t const climate_spa_idx = to_index(ClimateId::SPA_CLIMATE);
 
         // update temperatures
 
     poolstate_thermo_t const * const thermo = &new_state->thermos[climate_idx];
 
-    float const new_current_temp_in_fahrenheit = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+    float const new_current_temp_in_fahrenheit = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
     float const new_current_temp = fahrenheit_to_celsius(new_current_temp_in_fahrenheit);
     float const new_target_temp_in_fahrenheit = thermo->set_point;
     float new_target_temp = fahrenheit_to_celsius(new_target_temp_in_fahrenheit);
@@ -276,8 +283,8 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         // update mode based on {circuit state, heating status}
 
     uint8_t switch_idx = (climate_idx == climate_pool_idx) 
-                        ? static_cast<uint8_t>(SwitchId::POOL)
-                        : static_cast<uint8_t>(SwitchId::SPA);
+                        ? to_index(SwitchId::POOL)
+                        : to_index(SwitchId::SPA);
 
     climate::ClimateMode new_mode;
 
@@ -289,9 +296,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
     
         // update custom preset (based on heat source)
 
-    const char * new_custom_preset = nullptr;
-
-    new_custom_preset = _custom_presets_str(static_cast<custom_presets_t>(thermo->heat_src));
+    char const * new_custom_preset = _custom_presets_str(static_cast<custom_presets_t>(thermo->heat_src));
     ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", climate_idx, thermo->heat_src, new_custom_preset);
 
         // update action
@@ -306,7 +311,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         new_action = climate::CLIMATE_ACTION_IDLE;
     }
 
-    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, static_cast<uint8_t>(new_action));
+    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));
 
     this->publish_value_if_changed(climate_idx, new_current_temp, new_target_temp,
                                   new_mode, new_custom_preset, new_action);
@@ -356,7 +361,7 @@ OpnPoolClimate::publish_value_if_changed(uint8_t const idx, float const value_cu
             this->set_custom_preset_(value_custom_preset);
         }
 
-        ESP_LOGV(TAG, "Publishing climate[%u]: current=%.0f, target=%.0f, mode=%u, *preset=%s, action=%u", idx, value_current_temperature, value_target_temperature, static_cast<int8_t>(value_mode), value_custom_preset, static_cast<uint8_t>(value_action));
+        ESP_LOGV(TAG, "Publishing climate[%u]: current=%.0f, target=%.0f, mode=%u, *preset=%s, action=%u", idx, value_current_temperature, value_target_temperature, static_cast<int8_t>(value_mode), value_custom_preset, to_index(value_action));
 
         this->publish_state();
             
