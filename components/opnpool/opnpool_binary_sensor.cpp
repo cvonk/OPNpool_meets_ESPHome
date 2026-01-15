@@ -1,9 +1,14 @@
 /**
  * @file opnpool_binary_sensor.cpp
  * @author Coert Vonk (@cvonk on GitHub)
- * @brief OPNpool - Pool binary sensor interface
+ * @brief OPNpool - Reports digital pool sensors to Home Assistant.
  * 
  * @copyright Copyright (c) 2026 Coert Vonk
+ * 
+ * @details
+ * Implements the binary sensor entity interface for the OPNpool component, allowing ESPHome
+ * to monitor digital pool sensor states (such as pump status, error conditions, etc.) and
+ * publish them to Home Assistant.
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -28,23 +33,37 @@
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool.binary_sensor";
+static char const * const TAG = "opnpool.binary_sensor";
 
 void OpnPoolBinarySensor::setup() {
-    // Nothing to do here - parent handles setup
+    // nothing to do here - parent handles setup
 }
 
 void OpnPoolBinarySensor::dump_config() {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
 }
 
-void OpnPoolBinarySensor::publish_state_if_changed(bool state)
+/**
+ * @brief Publishes the binary sensor state to Home Assistant if it has changed.
+ *
+ * @details 
+ * Compares the new binary sensor state with the last published state. If the state
+ * is not yet valid, or if the new value differs from the last value, updates the
+ * internal state and publishes the new value to Home Assistant. This avoids 
+ * redundant updates to Home Assistant.
+ * 
+ * @param value The new binary sensor value to be published.
+ */
+void OpnPoolBinarySensor::publish_value_if_changed(bool value)
 {
-    if (!last_state_valid_ || last_state_ != state) {
-        
-        this->publish_state(state);
-        last_state_ = state;
-        last_state_valid_ = true;
+    if (!last_value_.valid || last_value_.value != value) {
+
+        this->publish_state(value);
+
+        last_value_ = {
+            .valid = true,
+            .value = value
+        };
     }
 }
 

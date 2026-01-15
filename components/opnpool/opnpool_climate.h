@@ -22,20 +22,20 @@ class OpnPoolClimate : public climate::Climate, public Component {
     uint8_t get_idx() const { return this->idx_; }
 
     void update_climate(const poolstate_t * state);
-    void publish_state_if_changed(uint8_t const idx, float const new_current_temperature, float const new_target_temperature, climate::ClimateMode const new_mode, char const * new_custom_preset, climate::ClimateAction const new_action);
+    void publish_value_if_changed(uint8_t const idx, float const value_current_temperature, float const value_target_temperature, climate::ClimateMode const value_mode, char const * value_custom_preset, climate::ClimateAction const value_action);
     
   protected:
     uint8_t idx_{0};
     OpnPool *parent_{nullptr};
     
-    struct last_state_t {
-        bool valid{false};
-        float current_temp{0.0f};
-        float target_temp{0.0f};
-        climate::ClimateMode mode{climate::CLIMATE_MODE_OFF};
-        char const * custom_preset{nullptr};
-        climate::ClimateAction action{climate::CLIMATE_ACTION_OFF};
-    } last_state_;
+    struct last_value_t {
+        bool                    valid{false};
+        float                   current_temp{0.0f};
+        float                   target_temp{0.0f};
+        char const *            custom_preset{nullptr};
+        climate::ClimateMode    mode{climate::CLIMATE_MODE_OFF};
+        climate::ClimateAction  action{climate::CLIMATE_ACTION_OFF};
+    } last_value_;
 };
 
 }  // namespace opnpool

@@ -28,7 +28,7 @@
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool_text_sensor";
+static char const * const TAG = "opnpool_text_sensor";
 
 void OpnPoolTextSensor::setup() {
     // Nothing to do here - parent handles setup
@@ -38,11 +38,15 @@ void OpnPoolTextSensor::dump_config() {
     LOG_TEXT_SENSOR("  ", "Text Sensor", this);
 }
 
-void OpnPoolTextSensor::publish_state_if_changed(const std::string &state) {
-    if (!last_state_valid_ || last_state_ != state) {
-        this->publish_state(state);
-        last_state_ = state;
-        last_state_valid_ = true;
+void OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
+{
+    if (!last_value_.valid || last_value_.value != value) {
+        
+        this->publish_state(value);
+        last_value_ = {
+            .valid = true,
+            .value = value
+        };
     }
 }
 

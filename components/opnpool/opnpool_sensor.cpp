@@ -1,9 +1,14 @@
 /**
  * @file opnpool_sensor.cpp
  * @author Coert Vonk (@cvonk on GitHub)
- * @brief OPNpool - Pool sensor interface
+ * @brief OPNpool - Reports analog pool sensors to Home Assistant.
  * 
  * @copyright Copyright (c) 2026 Coert Vonk
+ * 
+ * @details
+ * Implements the sensor entity interface for the OPNpool component, allowing ESPHome
+ * to monitor pool-related sensor values (such as temperatures, etc.) and publish them
+ * to Home Assistant.
  * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -29,21 +34,40 @@
 namespace esphome {
 namespace opnpool {
 
-static const char *TAG = "opnpool.sensor";
+static char const * const TAG = "opnpool_sensor";
 
-void OpnPoolSensor::setup() {
-    // Nothing to do here - parent handles setup
+void OpnPoolSensor::setup()
+{
+    // nothing to do here - my parent takes care of me :-)
 }
 
-void OpnPoolSensor::dump_config() {
+void OpnPoolSensor::dump_config()
+{
     LOG_SENSOR("  ", "Sensor", this);
 }
 
-void OpnPoolSensor::publish_state_if_changed(float state, float tolerance) {
-    if (!last_state_valid_ || fabs(last_state_ - state) > tolerance) {
-        this->publish_state(state);
-        last_state_ = state;
-        last_state_valid_ = true;
+/**
+ * @brief Publishes the sensor state to Home Assistant if it has changed.
+ *
+ * @details
+ * Compares the new sensor value with the last published value. If the state is
+ * not yet valid, or if the absolute difference between the new value and the last
+ * value exceeds the given tolerance, updates the internal state and publishes the
+ * new value to Home Assistant. This avoids redundant updates to Home Assistant.
+ *
+ * @param value      The new sensor value to be published.
+ * @param tolerance  The minimum change required to trigger a new state publication.
+ */
+void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
+{
+    if (!last_value_.valid || fabs(last_value_.value - value) > tolerance) {
+
+        this->publish_state(value);
+        
+        last_value_ = {
+            .valid = true,
+            .value = value
+        };
     }
 }
 

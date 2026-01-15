@@ -1,7 +1,7 @@
 /**
  * @file opnpool_climate.cpp
  * @author Coert Vonk (@cvonk on GitHub)
- * @brief OPNpool - Pool climate interface
+ * @brief OPNpool - Actuates climate settings from Home Assistant on the pool controller.
  * 
  * @copyright Copyright (c) 2026 Coert Vonk
  * 
@@ -48,7 +48,6 @@ inline float celsius_to_fahrenheit(float c) {
     return c * 9.0f / 5.0f + 32.0f;
 }
 
-
 enum class custom_presets_t {
     NONE,
     Heat,
@@ -69,11 +68,13 @@ _custom_presets_str(custom_presets_t const preset)
     return buf;
 }
 
-void OpnPoolClimate::setup() {
-    // Nothing to do here - parent handles setup
+void OpnPoolClimate::setup()
+{
+    // nothing to do here - my parent takes care of me :-)
 }
 
-void OpnPoolClimate::dump_config() {
+void OpnPoolClimate::dump_config()
+{
     LOG_CLIMATE("  ", "Climate", this);
 }
 
@@ -91,8 +92,8 @@ void OpnPoolClimate::dump_config() {
  * 
  * @return climate::ClimateTraits 
  */
-climate::ClimateTraits OpnPoolClimate::traits() {
-
+climate::ClimateTraits OpnPoolClimate::traits()
+{
     auto traits = climate::ClimateTraits();  // see climate_traits.h
     
     traits.set_supported_modes({
@@ -133,8 +134,8 @@ climate::ClimateTraits OpnPoolClimate::traits() {
  * 
  * @param call The climate call object containing requested changes from Home Assistant.
  */
-void OpnPoolClimate::control(const climate::ClimateCall &call) {
-    
+void OpnPoolClimate::control(const climate::ClimateCall &call)
+{
     uint8_t const climate_idx = this->get_idx();
     uint8_t const climate_pool_idx = static_cast<uint8_t>(ClimateId::POOL);
     uint8_t const climate_spa_idx = static_cast<uint8_t>(ClimateId::SPA);
@@ -173,11 +174,11 @@ void OpnPoolClimate::control(const climate::ClimateCall &call) {
         switch (requested_mode) {
             case climate::CLIMATE_MODE_OFF:  // mode 0
                 ESP_LOGVV(TAG, "Turning off switch[%u]", switch_idx);
-                parent_->get_switch(switch_idx)->on_switch_command(false);
+                parent_->get_switch(switch_idx)->write_state(false);
                 break;                
             case climate::CLIMATE_MODE_HEAT:  // mode 3
                 ESP_LOGVV(TAG, "Turning on switch[%u]", switch_idx);
-                parent_->get_switch(switch_idx)->on_switch_command(true);
+                parent_->get_switch(switch_idx)->write_state(true);
                 break;
             default:
                 ESP_LOGW(TAG, "Unsupported climate mode: %d", static_cast<int>(requested_mode));
@@ -289,21 +290,8 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         // update custom preset (based on heat source)
 
     const char * new_custom_preset = nullptr;
-    switch (static_cast<network_heat_src_t>(thermo->heat_src)) {
-        case network_heat_src_t::HEATER:
-            new_custom_preset = _custom_presets_str(custom_presets_t::Heat);
-            break;
-        case network_heat_src_t::SOLAR_PREF:
-            new_custom_preset = _custom_presets_str(custom_presets_t::SolarPreferred);
-            break;
-        case network_heat_src_t::SOLAR:
-            new_custom_preset = _custom_presets_str(custom_presets_t::Solar);
-            break;
-        default:
-            new_custom_preset = _custom_presets_str(custom_presets_t::NONE);
-            ESP_LOGW(TAG, "Unknown heat source: %u", thermo->heat_src);
-            break;
-    }
+
+    new_custom_preset = _custom_presets_str(static_cast<custom_presets_t>(thermo->heat_src));
     ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", climate_idx, thermo->heat_src, new_custom_preset);
 
         // update action
@@ -320,7 +308,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
 
     ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, static_cast<uint8_t>(new_action));
 
-    this->publish_state_if_changed(climate_idx, new_current_temp, new_target_temp,
+    this->publish_value_if_changed(climate_idx, new_current_temp, new_target_temp,
                                   new_mode, new_custom_preset, new_action);
 }
 
@@ -332,50 +320,54 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
  * Compares the new climate state (current temperature, target temperature, mode, custom preset, 
  * and action) with the last published state. If any value differs, updates the internal state,
  * sets the appropriate preset or custom preset, and publishes the new state to Home Assistant.
- * This avoids redundant updates.
+ * This avoids redundant updates to Home Assistant.
  *
- * @param idx                      Index of the climate entity (pool or spa).
- * @param new_current_temperature  The updated current temperature in Celsius.
- * @param new_target_temperature   The updated target temperature in Celsius.
- * @param new_mode                 The updated climate mode (OFF/HEAT).
- * @param new_custom_preset        The updated custom preset string (heat source).
- * @param new_action               The updated climate action (heating, idle, or off).
+ * @param idx                        Index of the climate entity (pool or spa). (diagnostic only)
+ * @param value_current_temperature  The updated current temperature in Celsius.
+ * @param value_target_temperature   The updated target temperature in Celsius.
+ * @param value_mode                 The updated climate mode (OFF/HEAT).
+ * @param value_custom_preset        The updated custom preset string (heat source).
+ * @param value_action               The updated climate action (heating, idle, or off).
  */
-void OpnPoolClimate::publish_state_if_changed(uint8_t const idx, float const new_current_temperature, float const new_target_temperature, climate::ClimateMode const new_mode, char const * new_custom_preset, climate::ClimateAction const new_action) {
-
-    last_state_t * last = &this->last_state_;
+void 
+OpnPoolClimate::publish_value_if_changed(uint8_t const idx, float const value_current_temperature, float const value_target_temperature, climate::ClimateMode const value_mode, char const * value_custom_preset, climate::ClimateAction const value_action)
+{
+    last_value_t * const last = &last_value_;
 
     if (!last->valid ||
-        last->current_temp != new_current_temperature ||
-        last->target_temp != new_target_temperature ||
-        last->mode != new_mode ||
-        strcasecmp(last->custom_preset, new_custom_preset) != 0 ||
-        last->action != new_action) {
+        last->current_temp != value_current_temperature ||
+        last->target_temp != value_target_temperature ||
+        last->mode != value_mode ||
+        strcasecmp(last->custom_preset, value_custom_preset) != 0 ||
+        last->action != value_action) {
         
-        this->current_temperature = new_current_temperature;
-        this->target_temperature = new_target_temperature;
-        this->mode = new_mode;
-        this->action = new_action;
+        this->current_temperature = value_current_temperature;
+        this->target_temperature = value_target_temperature;
+        this->mode = value_mode;
+        this->action = value_action;
 
-        if (strcasecmp(new_custom_preset, _custom_presets_str(custom_presets_t::NONE)) == 0) {
+            // NONE not handled by the regular preset, not a custom preset
+        if (strcasecmp(value_custom_preset, _custom_presets_str(custom_presets_t::NONE)) == 0) {
             ESP_LOGV(TAG, "Setting climate[%u] preset to NONE", idx);
             set_preset_(climate::CLIMATE_PRESET_NONE);
             clear_custom_preset_();
         } else {
-            ESP_LOGV(TAG, "Setting climate[%u] custom_preset to %s", idx, new_custom_preset);
-            this->set_custom_preset_(new_custom_preset);
+            ESP_LOGV(TAG, "Setting climate[%u] custom_preset to %s", idx, value_custom_preset);
+            this->set_custom_preset_(value_custom_preset);
         }
 
-        ESP_LOGV(TAG, "Publishing climate[%u]: current=%.0f, target=%.0f, mode=%u, *preset=%s, action=%u", idx, new_current_temperature, new_target_temperature, static_cast<int8_t>(new_mode), new_custom_preset, static_cast<uint8_t>(new_action));
+        ESP_LOGV(TAG, "Publishing climate[%u]: current=%.0f, target=%.0f, mode=%u, *preset=%s, action=%u", idx, value_current_temperature, value_target_temperature, static_cast<int8_t>(value_mode), value_custom_preset, static_cast<uint8_t>(value_action));
 
         this->publish_state();
             
-        last->current_temp = new_current_temperature;
-        last->target_temp = new_target_temperature;
-        last->mode = new_mode;
-        last->custom_preset = new_custom_preset;
-        last->action = new_action;
-        last->valid = true;
+        *last = {
+            .valid = true,
+            .current_temp = value_current_temperature,
+            .target_temp = value_target_temperature,
+            .custom_preset = value_custom_preset,
+            .mode = value_mode,
+            .action = value_action,
+        };
     }
 }
 

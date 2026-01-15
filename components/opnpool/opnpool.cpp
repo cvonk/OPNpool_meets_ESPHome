@@ -96,35 +96,27 @@ void OpnPool::setup() {
     }
 }
 
-void
-OpnPool::service_requests_from_pool(ipc_t const * const ipc)
-{
-    network_msg_t msg = {};
-
-    if (xQueueReceive(ipc->to_main_q, &msg, 0) == pdPASS) {  // don't block, just check if a message is available
-
-        ESP_LOGVV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(msg.typ));
-
-        if (opnPoolState_->rx_update(&msg) == ESP_OK) {
-
-            ESP_LOGVV(TAG, "FYI Poolstate changed");
-
-        }
-    }
-}
-
 /**
  * @brief Main loop for the OpnPool component.
  * 
  * This function is called repeatedly by the main ESPHome loop. It handles
  * service requests from the pool by checking the IPC queue for messages
  * from the pool task.
+ * Warning: don't do any blocking operations here.
  */
 void OpnPool::loop() {
 
-    // don't do any blocking operations here
+    network_msg_t msg = {};
 
-    this->service_requests_from_pool(this->ipc_);
+    if (xQueueReceive(ipc_->to_main_q, &msg, 0) == pdPASS) {  // check if a message is available
+
+        ESP_LOGVV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(msg.typ));
+
+        if (opnPoolState_->rx_update(&msg) == ESP_OK) {
+
+            ESP_LOGVV(TAG, "FYI Poolstate changed");
+        }
+    }
 }
 
 /**
@@ -177,7 +169,6 @@ void OpnPool::dump_config() {
     }
 }
 
-
 void OpnPool::update_climates(poolstate_t const * const new_state)
 {
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
@@ -195,7 +186,7 @@ void OpnPool::update_switches(poolstate_t const * const new_state)
         
         OpnPoolSwitch * const sw = this->switches_[idx];
         if (sw != nullptr) {
-            sw->check_pending_switch(new_state);
+            sw->update_switch(new_state);
         }
     }
 }
@@ -206,44 +197,44 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
     if (air_temp != nullptr) {
         float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
         float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
-        air_temp->publish_state_if_changed(air_temp_c);    
+        air_temp->publish_value_if_changed(air_temp_c);    
     }
 
     auto * const water_temp = this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMP)];
     if (water_temp != nullptr) {    
         float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
         float const water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
-        water_temp->publish_state_if_changed(water_temp_c);
+        water_temp->publish_value_if_changed(water_temp_c);
     }
 
     auto * const pump_power = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)];
     if (pump_power != nullptr) {
-        pump_power->publish_state_if_changed(new_state->pump.power);
+        pump_power->publish_value_if_changed(new_state->pump.power);
     }
 
     auto * const pump_flow = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)];
     if (pump_flow != nullptr) {
-        pump_flow->publish_state_if_changed(new_state->pump.flow);  
+        pump_flow->publish_value_if_changed(new_state->pump.flow);  
     }
 
     auto * const pump_speed = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)];
     if (pump_speed != nullptr) {
-        pump_speed->publish_state_if_changed(new_state->pump.speed);
+        pump_speed->publish_value_if_changed(new_state->pump.speed);
     }
 
     auto * const pump_error = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)];
     if (pump_error != nullptr) {
-        pump_error->publish_state_if_changed(new_state->pump.error);
+        pump_error->publish_value_if_changed(new_state->pump.error);
     }
 
     auto * const chlor_level = this->sensors_[static_cast<uint8_t>(SensorId::CHLOR_LEVEL)];
     if (chlor_level != nullptr) {
-        chlor_level->publish_state_if_changed(new_state->chlor.level);
+        chlor_level->publish_value_if_changed(new_state->chlor.level);
     }
 
     auto * const chlor_salt = this->sensors_[static_cast<uint8_t>(SensorId::CHLOR_SALT)];
     if (chlor_salt != nullptr) {
-        chlor_salt->publish_state_if_changed(new_state->chlor.salt);
+        chlor_salt->publish_value_if_changed(new_state->chlor.salt);
     }
 }
 
@@ -251,27 +242,27 @@ void OpnPool::update_binary_sensors(poolstate_t const * const new_state)
 {
     auto * const pump_running = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)];
     if (pump_running != nullptr) {
-        pump_running->publish_state_if_changed(new_state->pump.running);
+        pump_running->publish_value_if_changed(new_state->pump.running);
     }
 
     auto * const mode_service = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)];
     if (mode_service != nullptr) {
-        mode_service->publish_state_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
+        mode_service->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
     }
 
     auto * const mode_temp_inc = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMP_INC)];
     if (mode_temp_inc != nullptr) {
-        mode_temp_inc->publish_state_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
+        mode_temp_inc->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
     }
 
     auto * const mode_freeze = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE)];
     if (mode_freeze != nullptr) {
-        mode_freeze->publish_state_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
+        mode_freeze->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
     }
 
     auto * const mode_timeout = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)];
     if (mode_timeout != nullptr) {
-        mode_timeout->publish_state_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
+        mode_timeout->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
     }
 }
 
@@ -284,7 +275,7 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
             new_state->scheds[pool_idx].start / 60, new_state->scheds[pool_idx].start % 60,
             new_state->scheds[pool_idx].stop / 60, new_state->scheds[pool_idx].stop % 60);
-        pool_sched->publish_state_if_changed(sched_str);
+        pool_sched->publish_value_if_changed(sched_str);
     }
     
     auto * const spa_sched = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SPA_SCHED)];
@@ -294,30 +285,30 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
             new_state->scheds[spa_idx].start / 60, new_state->scheds[spa_idx].start % 60,
             new_state->scheds[spa_idx].stop / 60, new_state->scheds[spa_idx].stop % 60);
-        spa_sched->publish_state_if_changed(sched_str);
+        spa_sched->publish_value_if_changed(sched_str);
     }
     
     auto * const pump_mode = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)];
     if (pump_mode != nullptr) {
-        pump_mode->publish_state_if_changed(
+        pump_mode->publish_value_if_changed(
             network_pump_mode_str(static_cast<network_pump_mode_t>(new_state->pump.mode)));
     }
 
     auto * const pump_state = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)];
     if (pump_state != nullptr) {
-        pump_state->publish_state_if_changed(
+        pump_state->publish_value_if_changed(
             network_pump_state_str(static_cast<network_pump_state_t>(new_state->pump.state)));
     }
 
     auto * const chlor_name = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLOR_NAME)];
     if (chlor_name != nullptr) {
-        chlor_name->publish_state_if_changed(new_state->chlor.name);
+        chlor_name->publish_value_if_changed(new_state->chlor.name);
     }
     
     auto * const chlor_status = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLOR_STATUS)];
     if (chlor_status != nullptr) {
         static char const * status_str = poolstate_str_chlor_status_str(new_state->chlor.status);
-        chlor_status->publish_state_if_changed(status_str);
+        chlor_status->publish_value_if_changed(status_str);
     }
     
     auto * const system_time = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)];
@@ -326,14 +317,14 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
             new_state->system.tod.date.year, new_state->system.tod.date.month, new_state->system.tod.date.day,
             new_state->system.tod.time.hour, new_state->system.tod.time.minute);
-        system_time->publish_state_if_changed(time_str);
+        system_time->publish_value_if_changed(time_str);
     }
     
     auto * const controller_fw = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CONTROLLER_FW)];
     if (controller_fw != nullptr) {
         static char fw_str[16];
         snprintf(fw_str, sizeof(fw_str), "%d.%d", new_state->system.version.major, new_state->system.version.minor);
-        controller_fw->publish_state_if_changed(fw_str);
+        controller_fw->publish_value_if_changed(fw_str);
     }
 }
 

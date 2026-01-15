@@ -15,12 +15,15 @@ class OpnPoolSensor : public sensor::Sensor, public Component {
     
     void set_parent(OpnPool *parent) { this->parent_ = parent; }
     
-    void publish_state_if_changed(float state, float tolerance = 0.01f);
+    void publish_value_if_changed(float value, float tolerance = 0.01f);
 
   protected:
-    OpnPool *parent_{nullptr};
-    float last_state_{0};
-    bool last_state_valid_{false};
+    OpnPool * parent_{nullptr};
+
+    struct last_value_t {
+        bool  valid{false};
+        float value{false};
+    } last_value_;
 };
 
 }  // namespace opnpool

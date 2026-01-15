@@ -19,26 +19,19 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
     void set_idx(uint8_t idx) { this->idx_ = idx; }
     uint8_t get_idx() const { return this->idx_; }
     
-    void write_state(bool state) override;
+    void write_state(bool state) override;  // change triggered by Home Assistant
     
-    void publish_state_if_changed(bool state);
-    void add_pending_switch(bool target_state);
-    void check_pending_switch(const poolstate_t *new_state);
-    void on_switch_command(bool const state);
+    void update_switch(const poolstate_t *new_state);
+    void publish_value_if_changed(bool const new_value);
 
   protected:
     uint8_t idx_{0};
     OpnPool * parent_{nullptr};
 
-    bool last_state_{false};
-    bool last_state_valid_{false};
-
-        // management
-    struct pending_switch_t {
-        bool      is_pending;
-        bool      target_state;
-        int64_t   timestamp;
-    } pending_switch_{};
+    struct last_value_t {
+        bool valid{false};
+        bool value{false};
+    } last_value_;
 };
 
 }  // namespace opnpool

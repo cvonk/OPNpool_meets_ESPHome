@@ -15,14 +15,16 @@ class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
     void dump_config() override;
     
     void set_parent(OpnPool *parent) { this->parent_ = parent; }
-    
-    void publish_state_if_changed(const std::string &state);
+    void publish_value_if_changed(const std::string &value);
 
 
   protected:
-    OpnPool *parent_{nullptr};
-    std::string last_state_{};
-    bool last_state_valid_{false};
+    OpnPool *  parent_{nullptr};
+
+    struct last_value_t {
+        bool         valid{false};
+        std::string  value{""};
+    } last_value_;
 };
 
 }  // namespace opnpool

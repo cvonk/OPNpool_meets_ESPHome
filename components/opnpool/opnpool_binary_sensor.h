@@ -15,12 +15,15 @@ class OpnPoolBinarySensor : public binary_sensor::BinarySensor, public Component
     
     void set_parent(OpnPool *parent) { this->parent_ = parent; }
     
-    void publish_state_if_changed(bool state);
+    void publish_value_if_changed(bool value);
 
   protected:
-    OpnPool *parent_{nullptr};
-    bool last_state_{false};
-    bool last_state_valid_{false};
+    OpnPool * parent_{nullptr};
+
+    struct last_value_t {
+        bool valid{false};
+        bool value{false};
+    } last_value_;
 };
 
 }  // namespace opnpool
