@@ -5,6 +5,14 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements the RS485 hardware driver for the OPNpool component, providing low-level
+ * functions to initialize, configure, and operate the RS485 transceiver on ESPHome-supported hardware.
+ * It handles UART setup for half-duplex communication, GPIO configuration for transmit/receive direction,
+ * and manages a transmit queue for outgoing packets. The driver exposes a handle with function pointers
+ * for higher-level protocol layers to interact with the RS485 interface, ensuring reliable and efficient
+ * communication with pool equipment over the RS485 bus.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either
@@ -113,6 +121,20 @@ _tx_mode(bool const tx_enable)
      }
 }
 
+/**
+ * @brief Initializes the RS485 hardware interface and driver.
+ *
+ * @details
+ * Configures the specified UART port and GPIO pins for RS485 half-duplex communication,
+ * sets up the UART parameters (baud rate, data bits, stop bits, etc.), and initializes
+ * the flow control pin for transmit/receive direction control. Allocates and initializes
+ * the RS485 handle structure, sets up the transmit queue, and assigns function pointers
+ * for RS485 operations. Returns a handle to the initialized RS485 interface for use by
+ * higher-level protocol layers.
+ *
+ * @param rs485_pins Pointer to the structure containing RX, TX, and flow control pin numbers.
+ * @return rs485_handle_t Handle to the initialized RS485 interface.
+ */
 rs485_handle_t
 rs485_init(rs485_pins_t const * const rs485_pins)
 {

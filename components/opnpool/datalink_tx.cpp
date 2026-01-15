@@ -5,6 +5,14 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements the data link layer transmitter for the OPNpool component, responsible for constructing
+ * protocol-compliant packets for transmission over the RS485 bus. It provides functions to add protocol-specific
+ * headers and tails (including preambles and CRCs) for both A5 and IC protocols, ensuring correct framing and
+ * integrity of outgoing messages. The implementation manages buffer manipulation, protocol selection, and queues
+ * completed packets for transmission by the RS485 driver. This layer enables reliable and standards-compliant
+ * communication with pool equipment by encapsulating higher-level messages into properly formatted data link packets.
+ *
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

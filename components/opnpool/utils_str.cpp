@@ -5,6 +5,14 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file provides utility functions for converting various data types (such as integers and booleans)
+ * to string representations using a shared fixed-size buffer. The implementation is optimized for minimal
+ * memory usage and avoids dynamic allocation, making it suitable for embedded environments. Functions
+ * include conversions for unsigned integers (decimal and hexadecimal) and booleans, with logic to prevent
+ * buffer overflows. These utilities are used throughout the OPNpool component for logging, diagnostics,
+ * and protocol message formatting.
+ *
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

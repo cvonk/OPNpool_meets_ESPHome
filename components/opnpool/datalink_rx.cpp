@@ -5,6 +5,14 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements the data link layer receiver for the OPNpool component, responsible for converting
+ * raw bytes from the RS485 transceiver into structured data packets. It uses a state machine to detect
+ * protocol preambles, read packet headers, data, and tails, and verify checksums for both A5 and IC protocols.
+ * The implementation manages protocol-specific framing, handles CRC validation, and allocates socket buffers
+ * for incoming packets. This layer ensures reliable and robust extraction of protocol packets from the RS485
+ * byte stream, providing validated data to higher-level network processing in the OPNpool interface.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

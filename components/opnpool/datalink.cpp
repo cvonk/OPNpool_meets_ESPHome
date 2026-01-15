@@ -5,6 +5,13 @@
  * 
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
+ * @details
+ * This file implements core functions for the OPNpool data link layer, facilitating the conversion between
+ * raw RS485 byte streams and structured protocol data packets. It provides utilities for handling protocol
+ * preambles and postambles, address group extraction and composition, and CRC calculation for packet integrity.
+ * These foundational routines are used by both the transmitter and receiver to ensure reliable and standards-
+ * compliant communication between the ESPHome component and pool equipment over the RS485 bus.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

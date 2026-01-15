@@ -25,11 +25,8 @@
  */
 
 #include <esphome/core/log.h>
-#include <cmath>
 
 #include "opnpool_sensor.h"
-#include "network.h"
-#include "ipc.h"
 
 namespace esphome {
 namespace opnpool {

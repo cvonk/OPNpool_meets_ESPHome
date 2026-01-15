@@ -183,7 +183,6 @@ async def to_code(config):
         except:
             pass
 
-    print(f"Git hash: {version}")    
     cg.add_build_flag(f"-DGIT_HASH=\\\"{version}\\\"")
     
     # RS485 configuration
