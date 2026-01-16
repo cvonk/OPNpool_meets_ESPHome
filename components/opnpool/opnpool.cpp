@@ -55,9 +55,40 @@ static char const * const TAG = "opnpool";
 
     // helper to convert enum class to its underlying type
 template<typename E>
-constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
+constexpr auto to_index(E e) -> typename std::underlying_type<E>::type
+{
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
+
+    // helper to only publish if entity exists
+template<typename EntityT, typename ValueT>
+inline void publish_if(EntityT *entity, ValueT value)
+{
+    if (entity != nullptr) {
+        entity->publish_value_if_changed(value);
+    }
+}
+
+    // helper to publish scheduled times if entity exists
+template<typename StartT, typename StopT>
+void publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
+{
+    if (sensor != nullptr) {
+        char buf[12];  // HH:MM-HH:MM\n
+        snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d", start / 60, start % 60, stop / 60, stop % 60);
+        sensor->publish_value_if_changed(buf);
+    }
+}
+
+    // helper to only dump_config if entity exists
+template<typename EntityT>
+inline void dump_if(EntityT *entity)
+{
+    if (entity != nullptr) {
+        entity->dump_config();
+    }
+}
+
 
 /**
  * @brief Set up the OpnPool component.
@@ -144,38 +175,19 @@ void OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "  RS485 Flow Control Pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
 
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
-        OpnPoolClimate * const climate = this->climates_[idx];
-        if (climate != nullptr) {
-            climate->dump_config();
-        }
+        dump_if(this->climates_[idx]);
     }
-
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
-        OpnPoolSwitch * const sw = this->switches_[idx];
-        if (sw != nullptr) {
-            sw->dump_config();
-        }
+        dump_if(this->switches_[idx]);
     }
-
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SensorId::COUNT); idx++) {
-        OpnPoolSensor * const sensor = this->sensors_[idx];
-        if (sensor != nullptr) {
-            sensor->dump_config();
-        }
+        dump_if(this->sensors_[idx]);
     }
-
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(BinarySensorId::COUNT); idx++) {
-        OpnPoolBinarySensor * const binary_sensor = this->binary_sensors_[idx];
-        if (binary_sensor != nullptr) {
-            binary_sensor->dump_config();
-        }
+        dump_if(this->binary_sensors_[idx]);
     }
-
     for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(TextSensorId::COUNT); idx++) {
-        OpnPoolTextSensor * const text_sensor = this->text_sensors_[idx];
-        if (text_sensor != nullptr) {
-            text_sensor->dump_config();
-        }
+        dump_if(this->text_sensors_[idx]);
     }
 }
 
@@ -217,111 +229,61 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
         water_temperature->publish_value_if_changed(water_temp_c);
     }
 
-    _publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)], new_state->pump.power);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)], new_state->pump.power);
 
+#if 0
     auto * const pump_power = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)];
     if (pump_power != nullptr) {
         pump_power->publish_value_if_changed(new_state->pump.power);
     }
+#endif
 
-    auto * const pump_flow = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)];
-    if (pump_flow != nullptr) {
-        pump_flow->publish_value_if_changed(new_state->pump.flow);  
-    }
-
-    auto * const pump_speed = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)];
-    if (pump_speed != nullptr) {
-        pump_speed->publish_value_if_changed(new_state->pump.speed);
-    }
-
-    auto * const pump_error = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)];
-    if (pump_error != nullptr) {
-        pump_error->publish_value_if_changed(new_state->pump.error);
-    }
-
-    auto * const chlorinator_level = this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_LEVEL)];
-    if (chlorinator_level != nullptr) {
-        chlorinator_level->publish_value_if_changed(new_state->chlor.level);
-    }
-
-    auto * const chlorinator_salt = this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_SALT)];
-    if (chlorinator_salt != nullptr) {
-        chlorinator_salt->publish_value_if_changed(new_state->chlor.salt);
-    }
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)],         new_state->pump.flow);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)],        new_state->pump.speed);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)],        new_state->pump.error);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_LEVEL)], new_state->chlor.level);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_SALT)],  new_state->chlor.salt);
 }
 
 void OpnPool::update_binary_sensors(poolstate_t const * const new_state)
 {
-    auto * const pump_running = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)];
-    if (pump_running != nullptr) {
-        pump_running->publish_value_if_changed(new_state->pump.running);
-    }
-
-    auto * const mode_service = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)];
-    if (mode_service != nullptr) {
-        mode_service->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
-    }
-
-    auto * const mode_temperature_inc = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMPERATURE_INC)];
-    if (mode_temperature_inc != nullptr) {
-        mode_temperature_inc->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
-    }
-
-    auto * const mode_freeze_protection = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE_PROTECTION)];
-    if (mode_freeze_protection != nullptr) {
-        mode_freeze_protection->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
-    }
-
-    auto * const mode_timeout = this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)];
-    if (mode_timeout != nullptr) {
-        mode_timeout->publish_value_if_changed(new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
-    }
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)],           new_state->pump.running);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMPERATURE_INC)],   new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE_PROTECTION)], new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
 }
 
 void OpnPool::update_text_sensors(poolstate_t const * const new_state)
 {
-    auto * const pool_sched = this->text_sensors_[static_cast<uint8_t>(TextSensorId::POOL_SCHED)];
-    if (pool_sched != nullptr) {
-        static char sched_str[64];
-        uint8_t pool_idx = static_cast<uint8_t>(network_pool_circuit_t::POOL);
-        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
-            new_state->scheds[pool_idx].start / 60, new_state->scheds[pool_idx].start % 60,
-            new_state->scheds[pool_idx].stop / 60, new_state->scheds[pool_idx].stop % 60);
-        pool_sched->publish_value_if_changed(sched_str);
-    }
-    
-    auto * const spa_sched = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SPA_SCHED)];
-    if (spa_sched != nullptr) {
-        static char sched_str[64];
-        uint8_t spa_idx = static_cast<uint8_t>(network_pool_circuit_t::SPA);
-        snprintf(sched_str, sizeof(sched_str), "%02d:%02d-%02d:%02d",
-            new_state->scheds[spa_idx].start / 60, new_state->scheds[spa_idx].start % 60,
-            new_state->scheds[spa_idx].stop / 60, new_state->scheds[spa_idx].stop % 60);
-        spa_sched->publish_value_if_changed(sched_str);
-    }
-    
-    auto * const pump_mode = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)];
-    if (pump_mode != nullptr) {
-        pump_mode->publish_value_if_changed(
-            enum_str(static_cast<network_pump_mode_t>(new_state->pump.mode)));
-    }
+    publish_schedule_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::POOL_SCHED)],
+        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].start,
+        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].stop
+    );
 
-    auto * const pump_state = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)];
-    if (pump_state != nullptr) {
-        pump_state->publish_value_if_changed(
-            enum_str(static_cast<network_pump_state_t>(new_state->pump.state)));
-    }
+    publish_schedule_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::SPA_SCHED)],
+        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].start,
+        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].stop
+    );
 
-    auto * const chlorinator_name = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_NAME)];
-    if (chlorinator_name != nullptr) {
-        chlorinator_name->publish_value_if_changed(new_state->chlor.name);
-    }
-    
-    auto * const chlorinator_status = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_STATUS)];
-    if (chlorinator_status != nullptr) {
-        static char const * status_str = enum_str(new_state->chlor.status);
-        chlorinator_status->publish_value_if_changed(status_str);
-    }
+    publish_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)], 
+        enum_str(static_cast<network_pump_mode_t>(new_state->pump.mode))
+    );    
+    publish_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)],
+        enum_str(static_cast<network_pump_state_t>(new_state->pump.state))
+    );
+    publish_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_NAME)], 
+        new_state->chlor.name
+    );
+    publish_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_STATUS)],
+        enum_str(new_state->chlor.status)
+    );
     
     auto * const system_time = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)];
     if (system_time != nullptr) {
