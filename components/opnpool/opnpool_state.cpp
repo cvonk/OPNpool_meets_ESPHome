@@ -23,11 +23,12 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "opnpool_state.h"
 #include "opnpool.h"
 #include "ipc.h"
 #include "network.h"
-#include "to_str.h"
 
 namespace esphome {
 

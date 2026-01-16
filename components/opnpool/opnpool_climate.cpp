@@ -29,13 +29,14 @@
 #include <esphome/core/log.h>
 #include <type_traits>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "opnpool_climate.h"  // no other #includes that could make a circular dependency
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "opnpool_state.h"
 #include "opnpool_switch.h"
-#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {

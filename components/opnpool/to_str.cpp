@@ -25,7 +25,6 @@
  */
 
 #include <string.h>
-#include <esp_system.h>
 #include <esphome/core/log.h>
 
 #include "to_str.h"
@@ -42,33 +41,24 @@ name_str_t name_str = {
     .digits = "0123456789ABCDEF"
 };
 
+/**
+ * @brief
+ * Resets the index of the shared string buffer used for value-to-string conversions.
+ *
+ * @details
+ * This function should be called periodically to avoid running out of buffer space.
+ */
 void
 name_reset_idx(void) {
   	name_str.idx = 0;
 }
 
-char const *
-uint_str(uint16_t const value)
-{
-    size_t const nrdigits = 5;
-    if (name_str.idx + nrdigits + 1U >= ARRAY_SIZE(name_str.str)) {
-        return name_str.noMem;  // increase size of str.str[]
-    }
-    char * s = name_str.str + name_str.idx;
-    size_t len = 0;
-    uint16_t mask = 10000U;
-    for (uint8_t ii = 0; ii < nrdigits; ii++) {
-        uint8_t const digit = value / mask;
-        if (digit || ii == nrdigits - 1) {  // no leading 0s
-          s[len++] = name_str.digits[digit];
-        }
-        mask /= 10;
-    }
-    s[len++] = '\0';
-    name_str.idx += len;
-    return s;
-}
-
+/**
+ * @brief                Get a hexadecimal string representation of a bool
+ * 
+ * @param value          The bool value to convert
+ * @return char const *  A string representing the value
+ */
 char const *
 bool_str(bool const value)
 {
@@ -81,6 +71,12 @@ bool_str(bool const value)
     return s;
 }
 
+/**
+ * @brief                Get a hexadecimal string representation of a uint8_t
+ * 
+ * @param value          The uint8_t value to convert
+ * @return char const *  A string representing the value
+ */
 char const *
 uint8_str(uint8_t const value)
 {
@@ -97,6 +93,12 @@ uint8_str(uint8_t const value)
     return s;
 }
 
+/**
+ * @brief                Get a hexadecimal string representation of a uint16_t
+ * 
+ * @param value          The uint16_t value to convert
+ * @return char const *  A string representing the value
+ */
 char const *
 uint16_str(uint16_t const value)
 {
@@ -114,6 +116,100 @@ uint16_str(uint16_t const value)
     name_str.idx += nrdigits + 1U;
     return s;
 }
+
+/**
+ * @brief                Get a hexadecimal string representation of a uint32_t
+ * 
+ * @param value          The uint32_t value to convert
+ * @return char const *  A string representing the value
+ */
+char const *
+uint32_str(uint32_t const value) 
+{
+    uint_least8_t const nrdigits = sizeof(value) << 1;
+
+    if (name_str.idx + nrdigits + 1U >= ARRAY_SIZE(name_str.str)) {
+      return name_str.noMem;  // to prevent this, increase the size of str.str[]
+    }
+    char * s = name_str.str + name_str.idx;
+    s[0]  = name_str.digits[(value & 0xF0000000) >> 28];
+    s[1]  = name_str.digits[(value & 0x0F000000) >> 24];
+    s[2]  = name_str.digits[(value & 0x00F00000) >> 20];
+    s[3]  = name_str.digits[(value & 0x000F0000) >> 16];
+    s[4]  = name_str.digits[(value & 0x0000F000) >> 12];
+    s[5]  = name_str.digits[(value & 0x00000F00) >>  8];
+    s[6]  = name_str.digits[(value & 0x000000F0) >>  4];
+    s[7]  = name_str.digits[(value & 0x0000000F) >>  0];
+    s[8]  = name_str.digits[(value & 0x00000F00) >>  8];
+    s[9]  = name_str.digits[(value & 0x000000F0) >>  4];
+    s[10] = name_str.digits[(value & 0x0000000F) >>  0];
+    s[nrdigits] = '\0';
+    name_str.idx += nrdigits + 1U;
+    return s;
+}
+
+
+/**
+ * @brief                Get a string representation of the controller date
+ * 
+ * @param year           The year of the date
+ * @param month          The month of the date
+ * @param day            The day of the date
+ * @return char const *  A string representing the date
+ */
+char const *
+data_str(uint16_t const year, uint8_t const month, uint8_t const day)
+{
+    size_t const len = 11;  // 2026-01-15\0
+    if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
+        return name_str.noMem;  // increase size of str.str[]
+    }
+    char * s = name_str.str + name_str.idx;
+    snprintf(s, len, "%04u-%02u-%02u", year, month, day);
+    name_str.idx += len;
+    return s;
+}
+
+/**
+ * @brief                Get a string representation of the controller time
+ * 
+ * @param hour           The hour of the time
+ * @param minute         The minute of the time
+ * @return char const *  A string representing the time
+ */
+char const *
+time_str(uint8_t const hour, uint8_t const minute)
+{
+    size_t const len = 6;  // "HH:MM\0"
+    if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
+        return name_str.noMem;  // increase size of str.str[]
+    }
+    char * s = name_str.str + name_str.idx;
+    snprintf(s, len, "%02u:%02u", hour, minute);
+    name_str.idx += len;
+    return s;
+}
+
+/**
+ * @brief                Get a string representation of the controller version number
+ * 
+ * @param major          The major version number
+ * @param minor          The minor version number
+ * @return char const *  A string representing the version number
+ */
+char const *
+version_str(uint8_t const major, uint8_t const minor)
+{
+    size_t const len = 8;  // "MMM.mmm\0"
+    if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
+        return name_str.noMem;  // increase size of str.str[]
+    }
+    char * s = name_str.str + name_str.idx;
+    snprintf(s, len, "%u.%u", major, minor);
+    name_str.idx += len;
+    return s;
+}
+
 
 } // namespace opnpool
 } // namespace esphome

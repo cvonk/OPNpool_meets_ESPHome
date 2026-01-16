@@ -28,9 +28,10 @@
 #include <esp_system.h>
 #include <esphome/core/log.h>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "to_str.h"
 #include "skb.h"
 #include "network.h"
 

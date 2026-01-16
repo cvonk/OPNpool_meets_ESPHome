@@ -43,6 +43,8 @@
 #include <esp_system.h>
 #include <time.h>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
@@ -50,7 +52,6 @@
 #include "network.h"
 #include "ipc.h"
 #include "pool_task.h"
-#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {

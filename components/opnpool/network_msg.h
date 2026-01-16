@@ -34,12 +34,12 @@
 #include <esp_system.h>
 #include <cstddef>
 
-//#include "datalink.h"
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "datalink_pkt.h"
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -435,6 +435,36 @@ struct network_msg_pump_run_t {
 struct network_msg_pump_status_req_t {
     // note: sizeof(network_msg_pump_status_req_t) == 1, not 0
 };
+
+enum class network_pump_program_addr_t : uint16_t {
+    UNKNOWN_2BF0 = 0x2BF0,
+    UNKNOWN_02BF = 0x02BF,   
+    PGM          = 0x02E4,  // program GPM
+    RPM          = 0x02C4,  // program RPM
+    EPRG         = 0x0321,  // select ext prog, 0x0000=P0, 0x0008=P1, 0x0010=P2, 0x0080=P3, 0x0020=P4
+    ERPM0        = 0x0327,  // program ext program RPM0
+    ERPM1        = 0x0328,  // program ext program RPM1
+    ERPM2        = 0x0329,  // program ext program RPM2
+    ERPM3        = 0x032A   // program ext program RPM3
+};
+
+    // can't use magic enum, because  enum the values that are not contiguous, and outside the range that magic_enum expects
+inline const char * 
+network_pump_program_addr_str(network_pump_program_addr_t addr)
+{
+    switch (addr) {
+        case network_pump_program_addr_t::UNKNOWN_2BF0: return "2BF0";
+        case network_pump_program_addr_t::UNKNOWN_02BF: return "02BF";
+        case network_pump_program_addr_t::PGM:          return "pgm";
+        case network_pump_program_addr_t::RPM:          return "rpm";
+        case network_pump_program_addr_t::EPRG:         return "eprg";
+        case network_pump_program_addr_t::ERPM0:        return "erpm0";
+        case network_pump_program_addr_t::ERPM1:        return "erpm1";
+        case network_pump_program_addr_t::ERPM2:        return "erpm2";
+        case network_pump_program_addr_t::ERPM3:        return "erpm3";
+        default: return uint16_str(static_cast<uint16_t>(addr));
+    }
+}
 
 struct network_msg_pump_status_resp_t {
     uint8_t running;      // 0

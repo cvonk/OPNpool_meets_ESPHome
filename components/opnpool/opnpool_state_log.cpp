@@ -24,9 +24,10 @@
 #include <esphome/core/log.h>
 #include <cJSON.h>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "network.h"
 #include "opnpool_state.h"
-#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -49,13 +50,13 @@ _create_item(cJSON * const obj, char const * const key)
 static void
 _add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time)
 {
-    cJSON_AddStringToObject(obj, key, network_ctrl_time_str(time->hour, time->minute));
+    cJSON_AddStringToObject(obj, key, time_str(time->hour, time->minute));
 }
 
 static void
 _add_date(cJSON * const obj, char const * const key, poolstate_date_t const * const date)
 {
-    cJSON_AddStringToObject(obj, key, network_ctrl_date_str(date->year, date->month, date->day));
+    cJSON_AddStringToObject(obj, key, data_str(date->year, date->month, date->day));
 }
 
 void
@@ -69,7 +70,7 @@ opnpoolstate_log_add_tod(cJSON * const obj, char const * const key, poolstate_to
 void
 opnpoolstate_log_add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version)
 {
-    cJSON_AddStringToObject(obj, key, network_ctrl_version_str(version->major, version->minor));
+    cJSON_AddStringToObject(obj, key, version_str(version->major, version->minor));
 }
 
 static void
@@ -136,8 +137,8 @@ _add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const
 {
     if (sched->active) {
         cJSON * const item = _create_item(obj, key);
-        cJSON_AddStringToObject(item, "start", network_ctrl_time_str(sched->start / 60, sched->start % 60));
-        cJSON_AddStringToObject(item, "stop", network_ctrl_time_str(sched->stop / 60, sched->stop % 60));
+        cJSON_AddStringToObject(item, "start", time_str(sched->start / 60, sched->start % 60));
+        cJSON_AddStringToObject(item, "stop", time_str(sched->stop / 60, sched->stop % 60));
     }
 }
 

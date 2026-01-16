@@ -36,6 +36,7 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "to_str.h"
+#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {

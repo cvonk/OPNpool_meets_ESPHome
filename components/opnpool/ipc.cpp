@@ -26,6 +26,7 @@
 #include <esphome/core/log.h>
 
 #include "to_str.h"
+#include "enum_helpers.h"
 #include "ipc.h"
 #include "skb.h"
 #include "network_msg.h"

@@ -28,12 +28,13 @@
 #include <cJSON.h>
 #include <type_traits>
 
+#include "to_str.h"
+#include "enum_helpers.h"
 #include "network.h"
 #include "network_msg.h"
 #include "ipc.h"
 #include "opnpool_state.h"
 #include "opnpool.h"
-#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -253,7 +254,7 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t cons
     uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_program(dbg, network_pump_program_str(address), value);
+        opnpoolstate_log_add_pump_program(dbg, network_pump_program_addr_str(static_cast<network_pump_program_addr_t>(address)), value);
     }
 }
 

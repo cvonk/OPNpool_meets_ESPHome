@@ -37,6 +37,7 @@
 #include "magic_enum.h"
 #include "skb.h"
 #include "to_str.h"
+#include "enum_helpers.h"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
