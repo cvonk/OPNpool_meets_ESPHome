@@ -78,7 +78,7 @@ network_pool_mode_str(network_pool_mode_t const mode)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
@@ -122,7 +122,7 @@ network_pool_circuit_str(network_pool_circuit_t const circuit)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(circuit));
     return buf;
 }
@@ -159,7 +159,7 @@ network_pump_mode_str(network_pump_mode_t const mode)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
     return buf;
 }
@@ -189,7 +189,7 @@ network_pump_state_str(network_pump_state_t const pump_state)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump_state));
     return buf;
 }
@@ -217,7 +217,7 @@ network_heat_src_str(network_heat_src_t const heat_src)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(heat_src));
     return buf;
 }
@@ -860,7 +860,7 @@ network_msg_typ_str(network_msg_typ_t const typ)
         return name.data();
     }
         // fallback
-    static char buf[3];
+    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
     snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
     return buf;
 }

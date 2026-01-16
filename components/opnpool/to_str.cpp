@@ -1,17 +1,12 @@
 /**
- * @file utils_str.cpp
- * @author Coert Vonk (@cvonk on GitHub)
- * @brief OPNpool - convert various to string reusing a fixed buffer (from an earlier era)
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @file to_str.cpp
+ * @brief Helper functions for converting values to strings using a fixed buffer.
  * 
  * @details
- * This file provides utility functions for converting various data types (such as integers and booleans)
- * to string representations using a shared fixed-size buffer. The implementation is optimized for minimal
- * memory usage and avoids dynamic allocation, making it suitable for embedded environments. Functions
- * include conversions for unsigned integers (decimal and hexadecimal) and booleans, with logic to prevent
- * buffer overflows. These utilities are used throughout the OPNpool component for logging, diagnostics,
- * and protocol message formatting.
+ * Provides lightweight, allocation-free string conversion utilities for unsigned integers and booleans,
+ * optimized for embedded environments. All conversions use a shared fixed-size buffer to minimize memory
+ * usage and avoid dynamic allocation. These functions are used throughout the OPNpool component for
+ * logging, diagnostics, and protocol message formatting.
  *
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -23,18 +18,20 @@
  * You should have received a copy of the GNU General Public License along with OPNpool. 
  * If not, see <https://www.gnu.org/licenses/>.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
+ * @license SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
 #include <string.h>
 #include <esp_system.h>
 #include <esphome/core/log.h>
 
-#include "utils.h"
+#include "to_str.h"
 
 #ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
 namespace esphome {

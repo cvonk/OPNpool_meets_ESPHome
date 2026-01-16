@@ -29,7 +29,7 @@
 
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "utils.h"
+#include "to_str.h"
 #include "network.h"
 
 namespace esphome {
@@ -345,6 +345,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
         (pkt->prot == datalink_prot_t::IC && dst != datalink_addrgroup_t::ALL && dst != datalink_addrgroup_t::CHLOR)) {
 
         *txOpportunity = false;
+        ESP_LOGVV(TAG, "Ignoring packet with prot %u and dst group %u", pkt->prot, dst);
         return ESP_FAIL;
     }
 
@@ -361,9 +362,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             result = _decode_msg_ic_chlor(pkt, msg);
             break;
         default:
-            if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_WARN) {
-                ESP_LOGW(TAG, "unknown prot %u", pkt->prot);
-            }
+            ESP_LOGW(TAG, "unknown prot %u", pkt->prot);
             result = ESP_FAIL;
   	}
     *txOpportunity =

@@ -25,7 +25,7 @@
 #include <freertos/queue.h>
 #include <esphome/core/log.h>
 
-#include "utils.h"
+#include "to_str.h"
 #include "ipc.h"
 #include "skb.h"
 #include "network_msg.h"

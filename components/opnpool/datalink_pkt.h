@@ -36,6 +36,7 @@
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
 #include "skb.h"
+#include "to_str.h"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -123,9 +124,7 @@ datalink_typ_ctrl_str(datalink_typ_ctrl_t const typ_ctrl)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ_ctrl));
-    return buf;
+    return uint8_str(static_cast<uint8_t>(typ_ctrl));  // fallback
 }
 
 
@@ -149,9 +148,7 @@ datalink_typ_pump_str(datalink_typ_pump_t const pump)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump));
-    return buf;
+    return uint8_str(static_cast<uint8_t>(pump));  // fallback
 }
 
 /**
@@ -174,9 +171,7 @@ datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(chlor));
-    return buf;
+    return uint8_str(static_cast<uint8_t>(chlor));  // fallback
 }
 
 
@@ -264,9 +259,7 @@ datalink_prot_str(datalink_prot_t const prot)
     if (!name.empty()) {
         return name.data();
     }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(prot));
-    return buf;
+    return uint8_str(static_cast<uint8_t>(prot));  // fallback
 }
 
     // helper function to convert enum string to number
@@ -276,13 +269,11 @@ datalink_prot_nr(char const * const prot_str)
     if (!prot_str) {
         return -1;
     }
-    
         // try magic_enum first for efficient lookup
     auto value = magic_enum::enum_cast<datalink_prot_t>(std::string_view(prot_str), magic_enum::case_insensitive);
     if (value.has_value()) {
         return static_cast<int>(value.value());
     }
-    
         // search through entire uint8_t range if not found in enum
     for (uint16_t ii = 0; ii <= 0xFF; ii++) {
         auto candidate = static_cast<datalink_prot_t>(ii);

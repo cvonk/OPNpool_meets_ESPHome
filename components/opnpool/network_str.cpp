@@ -29,7 +29,7 @@
 #include <esp_system.h>
 #include <esphome/core/log.h>
 
-#include "utils.h"
+#include "to_str.h"
 #include "network.h"
 
 namespace esphome {
