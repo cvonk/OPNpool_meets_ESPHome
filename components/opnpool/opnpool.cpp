@@ -80,6 +80,30 @@ void publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
     }
 }
 
+    // helper to publish date and time if entity exists
+template<typename TodT>
+void publish_date_and_time_if(OpnPoolTextSensor *sensor, TodT tod)
+{
+    if (sensor != nullptr && tod != nullptr) {
+        static char time_str[17];  // 2026-01-15 22:43\n
+        snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
+            tod->date.year, tod->date.month, tod->date.day,
+            tod->time.hour, tod->time.minute);
+        sensor->publish_value_if_changed(time_str);
+    }
+}
+
+    // helper to publish version if entity exists
+template<typename VersionT>
+void publish_version_if(OpnPoolTextSensor *sensor, VersionT version)
+{
+    if (sensor != nullptr && version != nullptr) {
+        static char fw_str[8];  // 2.80\0
+        snprintf(fw_str, sizeof(fw_str), "%d.%d", version->major, version->minor);
+        sensor->publish_value_if_changed(fw_str);
+    }
+}
+
     // helper to only dump_config if entity exists
 template<typename EntityT>
 inline void dump_if(EntityT *entity)
@@ -267,7 +291,6 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].start,
         new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].stop
     );
-
     publish_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)], 
         enum_str(static_cast<network_pump_mode_t>(new_state->pump.mode))
@@ -284,22 +307,14 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_STATUS)],
         enum_str(new_state->chlor.status)
     );
-    
-    auto * const system_time = this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)];
-    if (system_time != nullptr) {
-        static char time_str[32];
-        snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
-            new_state->system.tod.date.year, new_state->system.tod.date.month, new_state->system.tod.date.day,
-            new_state->system.tod.time.hour, new_state->system.tod.time.minute);
-        system_time->publish_value_if_changed(time_str);
-    }
-    
-    auto * const controller_firmware = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CONTROLLER_FIRMWARE)];
-    if (controller_firmware != nullptr) {
-        static char fw_str[16];
-        snprintf(fw_str, sizeof(fw_str), "%d.%d", new_state->system.version.major, new_state->system.version.minor);
-        controller_firmware->publish_value_if_changed(fw_str);
-    }
+    publish_date_and_time_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::SYSTEM_TIME)],
+        &new_state->system.tod
+    );
+    publish_version_if(
+        this->text_sensors_[static_cast<uint8_t>(TextSensorId::CONTROLLER_FIRMWARE)],
+        &new_state->system.version
+    );
 }
 
 void OpnPool::update_all(poolstate_t const * const state)
