@@ -142,8 +142,5 @@ esp_err_t datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt
     // datalink_tx.cpp
 void datalink_tx_pkt_queue(rs485_handle_t const rs485_handle, datalink_pkt_t const * const pkt);
 
-    // datalink_str.cpp
-char const * datalink_prot_str(datalink_prot_t const prot);
-
 } // namespace opnpool
 } // namespace esphome

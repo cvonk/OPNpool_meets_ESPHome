@@ -24,9 +24,9 @@
 #include <esphome/core/log.h>
 #include <cJSON.h>
 
-#include "to_str.h"
 #include "network.h"
 #include "opnpool_state.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -102,7 +102,7 @@ _add_thermostat(cJSON * const obj, char const * const key, poolstate_thermo_t co
         cJSON_AddNumberToObject(item, "sp", thermostat->set_point);
     }
     if (showSrc) {
-        cJSON_AddStringToObject(item, "src", network_heat_src_str(static_cast<network_heat_src_t>(thermostat->heat_src)));
+        cJSON_AddStringToObject(item, "src", enum_str(static_cast<network_heat_src_t>(thermostat->heat_src)));
     }
     if (showHeating) {
         cJSON_AddBoolToObject(item, "heating", thermostat->heating);
@@ -121,7 +121,7 @@ opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstat
 {
     cJSON * const item = _create_item(obj, key);
     for (uint8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
-        _add_thermostat(item, poolstate_str_thermo_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
+        _add_thermostat(item, enum_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
                         showTemp, showSp, showSrc, showHeating);
     }
 }
@@ -154,7 +154,7 @@ opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_
         cJSON * const item = _create_item(obj, key);
         for (uint8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, scheds++) {
             if (scheds->active) {
-                _add_schedule(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), scheds);
+                _add_schedule(item, enum_str(static_cast<network_pool_circuit_t>(ii)), scheds);
             }
         }
     }
@@ -178,7 +178,7 @@ _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
     cJSON * const item = _create_item(obj, key);
     poolstate_temp_t const * temp = state->temps;
     for (uint8_t ii = 0; ii < POOLSTATE_TEMP_TYP_COUNT; ii++, temp++) {
-        _add_temp(item, poolstate_str_temp_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
+        _add_temp(item, enum_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
     }
 }
 
@@ -194,7 +194,7 @@ _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const 
 
     bool const * is_set = modes->is_set;
     for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, is_set++) {
-        cJSON_AddBoolToObject(item, network_pool_mode_str(static_cast<network_pool_mode_t>(ii)), *is_set);
+        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_mode_t>(ii)), *is_set);
     }
 }
 
@@ -207,7 +207,7 @@ _add_circuit_detail(cJSON * const obj, char const * const key, bool const * acti
 {
     cJSON * const item = _create_item(obj, key);
     for (uint8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, active++) {
-        cJSON_AddBoolToObject(item, network_pool_circuit_str(static_cast<network_pool_circuit_t>(ii)), *active);
+        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_circuit_t>(ii)), *active);
     }
 }
 
@@ -270,13 +270,13 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
 void
 opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode)
 {
-    cJSON_AddStringToObject(obj, key, network_pump_mode_str(static_cast<network_pump_mode_t>(mode)));
+    cJSON_AddStringToObject(obj, key, enum_str(static_cast<network_pump_mode_t>(mode)));
 }
 
 static void
 _addPumpStateToObject(cJSON * const obj, char const * const key, uint8_t const state)
 {
-    cJSON_AddStringToObject(obj, key, network_pump_state_str(static_cast<network_pump_state_t>(state)));
+    cJSON_AddStringToObject(obj, key, enum_str(static_cast<network_pump_state_t>(state)));
 }
 
 void
@@ -332,7 +332,7 @@ opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, pools
 {
     cJSON * const item = _create_item(obj, key);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", poolstate_str_chlor_status_str(chlor->status));
+    cJSON_AddStringToObject(item, "status", enum_str(chlor->status));
 }
 
 static void
@@ -343,7 +343,7 @@ _add_chlor(cJSON * const obj, char const * const key, poolstate_t const * const 
     cJSON_AddStringToObject(item, "name", chlor->name);
     cJSON_AddNumberToObject(item, "level", chlor->level);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", poolstate_str_chlor_status_str(chlor->status));
+    cJSON_AddStringToObject(item, "status", enum_str(chlor->status));
 }
 
 /**

@@ -8,8 +8,10 @@
  * @details
  * This file provides string conversion utilities for the OPNpool network layer. It implements
  * helper functions to convert various protocol values, enums, and addresses into human-readable
- * strings for logging, debugging, and display purposes. These functions are used throughout
- * the OPNpool component to improve traceability and diagnostics.
+ * strings for logging, debugging, and display purposes. Supported conversions include controller
+ * dates, times, version numbers, and pump program addresses. These functions are used throughout
+ * the OPNpool component to improve traceability and diagnostics when interacting with pool
+ * hardware and protocol messages.
  *  
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -29,7 +31,7 @@
 #include <esp_system.h>
 #include <esphome/core/log.h>
 
-#include "to_str.h"
+#include "utils.h"
 #include "network.h"
 
 namespace esphome {
@@ -92,8 +94,8 @@ network_pump_program_str(uint16_t const address)
     auto prg_addr = static_cast<network_pump_program_addr_t>(address);
     
     switch (prg_addr) {
-        case network_pump_program_addr_t::UNKNOWN_2BF0:  return "?2BF0";
-        case network_pump_program_addr_t::UNKNOWN_02BF:  return "?02BF";
+        case network_pump_program_addr_t::UNKNOWN_2BF0:  return "2BF0";
+        case network_pump_program_addr_t::UNKNOWN_02BF:  return "02BF";
         case network_pump_program_addr_t::PGM:           return "pgm";
         case network_pump_program_addr_t::RPM:           return "rpm";
         case network_pump_program_addr_t::EPRG:          return "eprg";

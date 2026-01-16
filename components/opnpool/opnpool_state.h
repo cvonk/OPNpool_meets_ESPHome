@@ -70,22 +70,8 @@ enum class poolstate_thermo_typ_t : uint8_t {
 #ifdef __INTELLISENSE__
 #define POOLSTATE_THERMO_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #else
-#define POOLSTATE_THERMO_TYP_COUNT (poolstate_thermo_type_count())
+#define POOLSTATE_THERMO_TYP_COUNT (enum_count<poolstate_thermo_typ_t>())
 #endif
-
-constexpr size_t poolstate_thermo_type_count() {
-    return magic_enum::enum_count<poolstate_thermo_typ_t>();
-}
-
-inline const char * poolstate_str_thermo_str(poolstate_thermo_typ_t const thermostat_id) {
-    auto name = magic_enum::enum_name(thermostat_id);
-    return name.data();
-}
-
-inline int poolstate_str_thermo_nr(char const * const thermostat_str) {
-    auto value = magic_enum::enum_cast<poolstate_thermo_typ_t>(thermostat_str);
-    return value.has_value() ? static_cast<int>(*value) : -1;
-}
 
 typedef struct poolstate_thermo_t {
     uint8_t  temp;
@@ -130,22 +116,8 @@ enum class poolstate_temp_typ_t : uint8_t {
 #ifdef __INTELLISENSE__
 #define POOLSTATE_TEMP_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #else
-#define POOLSTATE_TEMP_TYP_COUNT (poolstate_temp_typ_count())
+#define POOLSTATE_TEMP_TYP_COUNT (enum_count<poolstate_temp_typ_t>())
 #endif
-
-constexpr size_t poolstate_temp_typ_count() {
-    return magic_enum::enum_count<poolstate_temp_typ_t>();
-}
-
-inline const char * poolstate_str_temp_str(poolstate_temp_typ_t const temp_id) {
-    auto name = magic_enum::enum_name(temp_id);
-    return name.data();
-}
-
-inline int poolstate_str_temp_nr(char const * const temp_str) {
-    auto value = magic_enum::enum_cast<poolstate_temp_typ_t>(temp_str);
-    return value.has_value() ? static_cast<int>(*value) : -1;
-}
 
 typedef struct poolstate_temp_t {
     uint8_t temp;
@@ -161,7 +133,7 @@ enum class PoolstateElemTempTyp : uint8_t {
  **/
 
 typedef struct poolstate_modes_t {
-    bool  is_set[network_pool_mode_count()];  // IntelliSense flags this incorrectly - it compiles fine
+    bool  is_set[enum_count<network_pool_mode_t>()];  // IntelliSense flags this incorrectly
 } poolstate_modes_t;
 
 
@@ -171,8 +143,8 @@ typedef struct poolstate_modes_t {
  **/
 
 typedef struct poolstate_circuits_t {
-    bool     active[NETWORK_POOL_CIRCUIT_COUNT];  // IntelliSense flags this incorrectly - it compiles fine
-    bool     delay[NETWORK_POOL_CIRCUIT_COUNT];   // IntelliSense flags this incorrectly - it compiles fine
+    bool     active[enum_count<network_pool_circuit_t>()];  // IntelliSense flags this incorrectly
+    bool     delay[enum_count<network_pool_circuit_t>()];   // IntelliSense flags this incorrectly
 } poolstate_circuits_t;
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
@@ -226,16 +198,6 @@ enum class poolstate_chlor_status_t : uint8_t {
     OTHER = 6
 };
 
-inline const char * poolstate_str_chlor_status_str(poolstate_chlor_status_t const chlor_state_id) {
-    auto name = magic_enum::enum_name(chlor_state_id);
-    return name.data();
-}
-
-inline int poolstate_str_chlor_status_nr(char const * const chlor_status_str) {
-    auto value = magic_enum::enum_cast<poolstate_chlor_status_t>(chlor_status_str);
-    return value.has_value() ? static_cast<int>(*value) : -1;
-}
-
 typedef struct poolstate_chlor_t {
     char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
     uint8_t                   level;
@@ -257,9 +219,9 @@ enum class poolstate_elem_chlor_typ_t : uint8_t {
 
 typedef struct poolstate_t {
     poolstate_system_t    system;
-    poolstate_temp_t      temps[POOLSTATE_TEMP_TYP_COUNT];
-    poolstate_thermo_t    thermos[POOLSTATE_THERMO_TYP_COUNT];
-    poolstate_sched_t     scheds[NETWORK_POOL_CIRCUIT_COUNT];
+    poolstate_temp_t      temps[enum_count<poolstate_temp_typ_t>()];
+    poolstate_thermo_t    thermos[enum_count<poolstate_thermo_typ_t>()];
+    poolstate_sched_t     scheds[enum_count<network_pool_circuit_t>()];
     poolstate_modes_t     modes;
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;
@@ -279,6 +241,7 @@ enum class poolstate_elem_typ_t : uint8_t {
 };
 
 typedef char * poolstate_get_value_t;
+
 typedef struct poolstate_get_params_t {
     poolstate_elem_typ_t elem_typ;
     uint8_t          elem_sub_typ;

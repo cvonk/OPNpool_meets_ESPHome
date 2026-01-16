@@ -57,14 +57,14 @@ network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
         // get protocol info from the lookup table network_msg_typ_info[] in network_msg.h
     const network_msg_typ_info_t * info = network_msg_typ_get_info(msg->typ);
     if (info == nullptr) {
-        ESP_LOGE(TAG, "unknown msg typ(%s)", network_msg_typ_str(msg->typ));
+        ESP_LOGE(TAG, "unknown msg typ(%s)", enum_str(msg->typ));
         return ESP_FAIL;
     }
 
         // get message size from the lookup table network_msg_typ_sizes[] in network_msg.h
     size_t data_len;
     if (network_msg_typ_get_size(msg->typ, &data_len) != ESP_OK) {
-        ESP_LOGE(TAG, "unknown msg typ(%s)", network_msg_typ_str(msg->typ));
+        ESP_LOGE(TAG, "unknown msg typ(%s)", enum_str(msg->typ));
         return ESP_FAIL;
     }
 

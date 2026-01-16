@@ -117,7 +117,7 @@ void OpnPool::loop() {
 
     if (xQueueReceive(ipc_->to_main_q, &msg, 0) == pdPASS) {  // check if a message is available
 
-        ESP_LOGVV(TAG, "Handling msg typ=%s", ipc_to_home_typ_str(msg.typ));
+        ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
         if (opnPoolState_->rx_update(&msg) == ESP_OK) {
 
@@ -298,13 +298,13 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
     auto * const pump_mode = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)];
     if (pump_mode != nullptr) {
         pump_mode->publish_value_if_changed(
-            network_pump_mode_str(static_cast<network_pump_mode_t>(new_state->pump.mode)));
+            enum_str(static_cast<network_pump_mode_t>(new_state->pump.mode)));
     }
 
     auto * const pump_state = this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)];
     if (pump_state != nullptr) {
         pump_state->publish_value_if_changed(
-            network_pump_state_str(static_cast<network_pump_state_t>(new_state->pump.state)));
+            enum_str(static_cast<network_pump_state_t>(new_state->pump.state)));
     }
 
     auto * const chlorinator_name = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_NAME)];
@@ -314,7 +314,7 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
     
     auto * const chlorinator_status = this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_STATUS)];
     if (chlorinator_status != nullptr) {
-        static char const * status_str = poolstate_str_chlor_status_str(new_state->chlor.status);
+        static char const * status_str = enum_str(new_state->chlor.status);
         chlorinator_status->publish_value_if_changed(status_str);
     }
     

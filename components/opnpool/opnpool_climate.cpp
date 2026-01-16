@@ -35,6 +35,7 @@
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "opnpool_state.h"
 #include "opnpool_switch.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -61,19 +62,6 @@ enum class custom_presets_t {
     SolarPreferred,
     Solar
 };
-
-inline const char *
-_custom_presets_str(custom_presets_t const preset)
-{
-    auto name = magic_enum::enum_name(preset);
-    if (!name.empty()) {
-        return name.data();
-    }
-    static char buf[3];
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(preset));
-    ESP_LOGW(TAG, "Unknown custom preset: 0x%s", buf);
-    return buf;
-}
 
 void OpnPoolClimate::setup()
 {
@@ -116,9 +104,9 @@ climate::ClimateTraits OpnPoolClimate::traits()
 
         // custom heat sources
     traits.set_supported_custom_presets({
-        _custom_presets_str(custom_presets_t::Heat),
-        _custom_presets_str(custom_presets_t::SolarPreferred),
-        _custom_presets_str(custom_presets_t::Solar)
+        enum_str(custom_presets_t::Heat),
+        enum_str(custom_presets_t::SolarPreferred),
+        enum_str(custom_presets_t::Solar)
     });
     return traits;
 }
@@ -203,11 +191,11 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
         ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", climate_idx, preset_str);
 
-        if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Heat)) == 0) {
+        if (strcasecmp(preset_str, enum_str(custom_presets_t::Heat)) == 0) {
             thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::HEATER);
-        } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::SolarPreferred)) == 0) {
+        } else if (strcasecmp(preset_str, enum_str(custom_presets_t::SolarPreferred)) == 0) {
             thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR_PREF);
-        } else if (strcasecmp(preset_str, _custom_presets_str(custom_presets_t::Solar)) == 0) {
+        } else if (strcasecmp(preset_str, enum_str(custom_presets_t::Solar)) == 0) {
             thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR);
         }
     } else if (call.get_preset().has_value()) {
@@ -296,7 +284,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
     
         // update custom preset (based on heat source)
 
-    char const * new_custom_preset = _custom_presets_str(static_cast<custom_presets_t>(thermo->heat_src));
+    char const * new_custom_preset = enum_str(static_cast<custom_presets_t>(thermo->heat_src));
     ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", climate_idx, thermo->heat_src, new_custom_preset);
 
         // update action
@@ -352,7 +340,7 @@ OpnPoolClimate::publish_value_if_changed(uint8_t const idx, float const value_cu
         this->action = value_action;
 
             // NONE not handled by the regular preset, not a custom preset
-        if (strcasecmp(value_custom_preset, _custom_presets_str(custom_presets_t::NONE)) == 0) {
+        if (strcasecmp(value_custom_preset, enum_str(custom_presets_t::NONE)) == 0) {
             ESP_LOGV(TAG, "Setting climate[%u] preset to NONE", idx);
             set_preset_(climate::CLIMATE_PRESET_NONE);
             clear_custom_preset_();

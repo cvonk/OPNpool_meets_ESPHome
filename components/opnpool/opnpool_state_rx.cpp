@@ -28,12 +28,12 @@
 #include <cJSON.h>
 #include <type_traits>
 
-#include "to_str.h"
 #include "network.h"
 #include "network_msg.h"
 #include "ipc.h"
 #include "opnpool_state.h"
 #include "opnpool.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -124,7 +124,7 @@ OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_se
         {
             int idx = static_cast<int>(msg->circuit) - 1;
             if (idx >= 0) {
-                cJSON_AddNumberToObject(dbg, network_pool_circuit_str(static_cast<network_pool_circuit_t>(idx)), msg->value);
+                cJSON_AddNumberToObject(dbg, enum_str(static_cast<network_pool_circuit_t>(idx)), msg->value);
             } else {
                 cJSON_AddNumberToObject(dbg, "circuit_invalid", msg->value);
             }
@@ -147,7 +147,7 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_
             uint8_t const circuit_idx = msg_sched->circuit - 1;
 
             ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u",
-                ii, circuit_idx, network_pool_circuit_str(static_cast<network_pool_circuit_t>(circuit_idx)),
+                ii, circuit_idx, enum_str(static_cast<network_pool_circuit_t>(circuit_idx)),
                 (static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo),
                 (static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo));
 
@@ -531,7 +531,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
             cJSON_Delete(dbg);
             return ESP_FAIL;
         }
-        ESP_LOGV(TAG, "{%s: %s}\n", network_msg_typ_str(msg->typ), json);
+        ESP_LOGV(TAG, "{%s: %s}\n", enum_str(msg->typ), json);
         free(json);
     }
     cJSON_Delete(dbg);

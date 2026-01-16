@@ -27,6 +27,7 @@
 #include "opnpool.h"
 #include "ipc.h"
 #include "network.h"
+#include "to_str.h"
 
 namespace esphome {
 
@@ -75,7 +76,7 @@ OpnPoolState::get_circuit(char const * const key)
 {
 	uint16_t mask = 0x00001;
 	for (uint_least8_t ii = 0; mask; ii++) {
-		if (strcmp(key, network_pool_circuit_str(ii + 1)) == 0) {
+		if (strcmp(key, enum_str(ii + 1)) == 0) {
 			return value & mask;
 		}
 		mask <<= 1;

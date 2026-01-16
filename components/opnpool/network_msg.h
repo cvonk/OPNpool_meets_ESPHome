@@ -39,6 +39,7 @@
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -63,26 +64,8 @@ enum class network_pool_mode_t : uint8_t {
 #ifdef __INTELLISENSE__
 #define NETWORK_POOL_MODE_COUNT (5)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #else
-#define NETWORK_POOL_MODE_COUNT (network_pool_mode_count())
+#define NETWORK_POOL_MODE_COUNT (enum_count<network_pool_mode_t>())
 #endif
-
-constexpr size_t network_pool_mode_count() {
-    return magic_enum::enum_count<network_pool_mode_t>();
-}
-
-inline const char *
-network_pool_mode_str(network_pool_mode_t const mode)
-{
-    auto name = magic_enum::enum_name(mode);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
-    return buf;
-}
-
 
 /**
  * @brief Enumerates the pool controller circuits and features.
@@ -107,25 +90,8 @@ enum class network_pool_circuit_t : uint8_t {
 #ifdef __INTELLISENSE__
 #define NETWORK_POOL_CIRCUIT_COUNT (9)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #else
-#define NETWORK_POOL_CIRCUIT_COUNT (network_pool_circuit_count())
+#define NETWORK_POOL_CIRCUIT_COUNT (enum_count<network_pool_circuit_t>())
 #endif
-
-constexpr size_t network_pool_circuit_count() {
-    return magic_enum::enum_count<network_pool_circuit_t>();
-}
-
-inline const char *
-network_pool_circuit_str(network_pool_circuit_t const circuit)
-{
-    auto name = magic_enum::enum_name(circuit);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(circuit));
-    return buf;
-}
 
 
 /**
@@ -152,7 +118,7 @@ enum class network_pump_mode_t : uint8_t {
 };
 
 inline const char *
-network_pump_mode_str(network_pump_mode_t const mode)
+enum_str(network_pump_mode_t const mode)
 {
     auto name = magic_enum::enum_name(mode);
     if (!name.empty()) {
@@ -182,7 +148,7 @@ enum class network_pump_state_t : uint8_t {
 };
 
 inline const char *
-network_pump_state_str(network_pump_state_t const pump_state)
+enum_str(network_pump_state_t const pump_state)
 {
     auto name = magic_enum::enum_name(pump_state);
     if (!name.empty()) {
@@ -210,7 +176,7 @@ enum class network_heat_src_t : uint8_t {
 };
 
 inline const char *
-network_heat_src_str(network_heat_src_t const heat_src)
+enum_str(network_heat_src_t const heat_src)
 {
     auto name = magic_enum::enum_name(heat_src);
     if (!name.empty()) {
@@ -645,10 +611,6 @@ enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] a
     CTRL_CHEM_REQ = 44
 };
 
-constexpr size_t network_msg_typ_count() {
-    return magic_enum::enum_count<network_msg_typ_t>();
-}
-
     // size lookup table for message types
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[] = {
@@ -848,43 +810,9 @@ constexpr size_t NETWORK_MSG_TYP_SIZES_COUNT = std::size(network_msg_typ_sizes);
 constexpr size_t NETWORK_MSG_TYP_INFO_COUNT = std::size(network_msg_typ_info);
 
 #ifndef __INTELLISENSE__
-static_assert(NETWORK_MSG_TYP_SIZES_COUNT == network_msg_typ_count());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-static_assert(NETWORK_MSG_TYP_INFO_COUNT == network_msg_typ_count());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+static_assert(NETWORK_MSG_TYP_SIZES_COUNT == enum_count<network_msg_typ_t>());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+static_assert(NETWORK_MSG_TYP_INFO_COUNT == enum_count<network_msg_typ_t>());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #endif
-
-inline const char *
-network_msg_typ_str(network_msg_typ_t const typ)
-{
-    auto name = magic_enum::enum_name(typ);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(typ));
-    return buf;
-}
-
-inline int
-network_msg_typ_nr(char const * const msg_typ_str)
-{
-    if (!msg_typ_str) {
-        return -1;
-    }
-    auto value = magic_enum::enum_cast<network_msg_typ_t>(std::string_view(msg_typ_str), magic_enum::case_insensitive);
-    if (value.has_value()) {
-        return static_cast<int>(value.value());
-    }
-        // fallback
-    for (uint16_t ii = 0; ii <= 0xFF; ii++) {
-        auto candidate = static_cast<network_msg_typ_t>(ii);
-        auto name = magic_enum::enum_name(candidate);
-        if (!name.empty() && strcasecmp(msg_typ_str, name.data()) == 0) {
-            return ii;
-        }
-    }
-    return -1;
-}
 
 }  // namespace opnpool
 }  // namespace esphome

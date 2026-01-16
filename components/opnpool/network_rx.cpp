@@ -29,8 +29,8 @@
 
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "to_str.h"
 #include "network.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {
@@ -188,15 +188,15 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             msg->u.ctrl_chem_req = *(network_msg_ctrl_chem_req_t *) pkt->data;
             break;
         default:
-            ESP_LOGW(TAG, "unknown A5_CTRL typ=%s", datalink_typ_ctrl_str(network_typ_ctrl));
+            ESP_LOGW(TAG, "unknown A5_CTRL typ=%s", enum_str(network_typ_ctrl));
             return ESP_FAIL;
     }
 
-    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_ctrl_str(network_typ_ctrl)) != ESP_OK) {
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_ctrl)) != ESP_OK) {
         return ESP_FAIL;
     }
 
-    ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, network_msg_typ_str(msg->typ));
+    ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
 };
 
@@ -260,15 +260,15 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             ESP_LOGVV(TAG, "%s: ignoring typ (UNKNOWN_FF)", __FUNCTION__);
             return ESP_OK;
         default:
-            ESP_LOGW(TAG, "unknown A5_PUMP typ=%s", datalink_typ_pump_str(network_typ_pump));
+            ESP_LOGW(TAG, "unknown A5_PUMP typ=%s", enum_str(network_typ_pump));
             return ESP_FAIL;
     }
 
-    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_pump_str(network_typ_pump)) != ESP_OK) {
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_pump)) != ESP_OK) {
         return ESP_FAIL;
     }
 
-    ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, network_msg_typ_str(msg->typ));
+    ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
 }
 
@@ -311,15 +311,15 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
             msg->u.chlor_name_req = *(network_msg_chlor_name_req_t *) pkt->data;
             break;
         default:
-            ESP_LOGW(TAG, "unknown IC typ %s", datalink_typ_chlor_str(network_typ_chlor));
+            ESP_LOGW(TAG, "unknown IC typ %s", enum_str(network_typ_chlor));
             return ESP_FAIL;
     }
 
-    if (_validate_data_length(msg->typ, pkt, TAG, datalink_typ_chlor_str(network_typ_chlor)) != ESP_OK) {
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_chlor)) != ESP_OK) {
         return ESP_FAIL;
     }
 
-    ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, network_msg_typ_str(msg->typ));
+    ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
 }
 

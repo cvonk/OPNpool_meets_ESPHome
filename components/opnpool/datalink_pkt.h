@@ -117,17 +117,6 @@ enum class datalink_typ_ctrl_t : uint8_t {
     VERSION_REQ     = 0xFD
 };
 
-inline const char *
-datalink_typ_ctrl_str(datalink_typ_ctrl_t const typ_ctrl)
-{
-    auto name = magic_enum::enum_name(typ_ctrl);
-    if (!name.empty()) {
-        return name.data();
-    }
-    return uint8_str(static_cast<uint8_t>(typ_ctrl));  // fallback
-}
-
-
 /**
  * @brief Pump message types
  */
@@ -141,15 +130,6 @@ enum class datalink_typ_pump_t : uint8_t {
     UNKNOWN_FF = 0xFF
 };
 
-inline const char *
-datalink_typ_pump_str(datalink_typ_pump_t const pump)
-{
-    auto name = magic_enum::enum_name(pump);
-    if (!name.empty()) {
-        return name.data();
-    }
-    return uint8_str(static_cast<uint8_t>(pump));  // fallback
-}
 
 /**
  * @brief Chlorinator message types
@@ -163,16 +143,6 @@ enum class datalink_typ_chlor_t : uint8_t {
     LEVEL_RESP = 0x12,
     NAME_REQ   = 0x14
 };
-
-inline const char *
-datalink_typ_chlor_str(datalink_typ_chlor_t const chlor)
-{
-    auto name = magic_enum::enum_name(chlor);
-    if (!name.empty()) {
-        return name.data();
-    }
-    return uint8_str(static_cast<uint8_t>(chlor));  // fallback
-}
 
 
 /**
@@ -250,40 +220,6 @@ struct datalink_pkt_t {
     skb_handle_t       skb;
 } PACK8;
 
-
-    // helper function to convert enum class to string
-inline const char *
-datalink_prot_str(datalink_prot_t const prot)
-{
-    auto name = magic_enum::enum_name(prot);
-    if (!name.empty()) {
-        return name.data();
-    }
-    return uint8_str(static_cast<uint8_t>(prot));  // fallback
-}
-
-    // helper function to convert enum string to number
-inline int
-datalink_prot_nr(char const * const prot_str)
-{
-    if (!prot_str) {
-        return -1;
-    }
-        // try magic_enum first for efficient lookup
-    auto value = magic_enum::enum_cast<datalink_prot_t>(std::string_view(prot_str), magic_enum::case_insensitive);
-    if (value.has_value()) {
-        return static_cast<int>(value.value());
-    }
-        // search through entire uint8_t range if not found in enum
-    for (uint16_t ii = 0; ii <= 0xFF; ii++) {
-        auto candidate = static_cast<datalink_prot_t>(ii);
-        auto name = magic_enum::enum_name(candidate);
-        if (!name.empty() && strcasecmp(prot_str, name.data()) == 0) {
-            return ii;
-        }
-    }    
-    return -1;
-}
 
 } // namespace opnpool
 } // namespace esphome
