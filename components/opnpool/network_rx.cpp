@@ -1,27 +1,17 @@
 /**
  * @file network_rx.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Network layer: decode a datalink packet, to form a network message
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * @details
  * This file implements the decoding logic for the network layer of the OPNpool component.
  * It translates lower-level datalink packets (from RS-485) into higher-level network
  * messages, supporting multiple protocol types (A5/CTRL, A5/PUMP, IC/Chlorinator).
  * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esp_system.h>

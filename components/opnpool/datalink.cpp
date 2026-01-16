@@ -1,9 +1,6 @@
 /**
  * @file datalink.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver to/from data packets
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * @details
  * This file implements core functions for the OPNpool data link layer, facilitating the conversion between
@@ -12,18 +9,11 @@
  * These foundational routines are used by both the transmitter and receiver to ensure reliable and standards-
  * compliant communication between the ESPHome component and pool equipment over the RS485 bus.
  * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esp_system.h>

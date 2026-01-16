@@ -1,9 +1,6 @@
 /**
  * @file rs485.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - RS485 driver: receive/sent bytes to/from the RS485 transceiver
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * @details
  * This file implements the RS485 hardware driver for the OPNpool component, providing low-level
@@ -13,18 +10,11 @@
  * for higher-level protocol layers to interact with the RS485 interface, ensuring reliable and efficient
  * communication with pool equipment over the RS485 bus.
  * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string.h>

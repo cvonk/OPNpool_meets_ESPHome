@@ -1,9 +1,6 @@
 /**
  * @file opnpool.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief Implementation of the OPNpool component for ESPHome.
- * 
- * @copyright Copyright (c) 2026, Coert Vonk
  * 
  * @details
  * This file contains the implementation of the OPNpool component, which provides integration
@@ -21,6 +18,12 @@
  * The design leverages modular helper functions for each protocol layer and uses FreeRTOS
  * primitives for task scheduling and inter-task communication. Extensive logging and debug
  * output are provided for troubleshooting and protocol analysis.
+ * 
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
+ * 
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esp_system.h>
@@ -213,6 +216,8 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
         float const water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
     }
+
+    _publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)], new_state->pump.power);
 
     auto * const pump_power = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)];
     if (pump_power != nullptr) {

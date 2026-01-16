@@ -5,6 +5,8 @@
  * 
  * @copyright 2014, 2019, 2022, 2026, Coert Vonk
  * 
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
+ * 
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
  * the GNU General Public License as published by the Free Software Foundation, either

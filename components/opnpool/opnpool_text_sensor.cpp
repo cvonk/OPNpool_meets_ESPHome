@@ -1,26 +1,16 @@
 /**
  * @file opnpool_sensor.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Reports digital pool text sensors to Home Assistant.
- * 
- * @copyright Copyright (c) 2026 Coert Vonk
  * 
  * @details
  * This file implements the OPNpool text sensor integration for ESPHome, enabling the reporting of various
  * pool controller string values (such as schedules, firmware versions, and status messages) to Home Assistant.
  * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esphome/core/log.h>

@@ -21,9 +21,16 @@ Responsibilities include:
 - Adding required build flags and source files for the C++ implementation.
 - Providing async routines to instantiate and link all entities to the main OpnPool component.
 
+WARNING: The script directly edits the `opnpool.h` header file to keep the enums in opnpool.h 
+consistent with CONF_* in this file.
+
 This module enables seamless integration of pool automation hardware into ESPHome YAML
 configurations, supporting flexible entity mapping and robust build-time configuration.
 """
+
+import sys
+if sys.version_info < (3, 6):
+    raise RuntimeError("OPNpool ESPHome component requires Python 3.6 or newer.")
 
 import os
 import esphome.codegen as cg
@@ -181,7 +188,9 @@ async def to_code(config):
             from esphome.const import __version__ as ESPHOME_VERSION
             version = f"esphome-{ESPHOME_VERSION}"
         except:
-            pass
+            import logging
+            logging.warning("OPNpool: Could not determine firmware version from Git or ESPHome. Using 'unknown'.")
+            version = "unknown"
 
     cg.add_build_flag(f"-DGIT_HASH=\\\"{version}\\\"")
     
@@ -256,14 +265,24 @@ def generate_enum(enum_name, items):
     return "\n".join(lines)
 
 def update_header(header_path, entity_enums):
+    import tempfile
+    import shutil
+
     with open(header_path, "r") as f:
         content = f.read()
     for enum_name, items in entity_enums.items():
         pattern = rf"enum class {enum_name} : uint8_t \{{.*?\}};"
         new_enum = generate_enum(enum_name, items)
         content = re.sub(pattern, new_enum, content, flags=re.DOTALL)
-    with open(header_path, "w") as f:
-        f.write(content)
+
+    # write to a temporary file first
+    dir_name = os.path.dirname(header_path)
+    with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False) as tmp_file:
+        tmp_file.write(content)
+        temp_path = tmp_file.name
+
+    # atomically replace the original file
+    shutil.move(temp_path, header_path)
 
 if __name__ == "__main__":
     # use a relative path from this script's location

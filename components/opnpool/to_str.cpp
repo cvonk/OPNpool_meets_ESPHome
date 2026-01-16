@@ -7,6 +7,8 @@
  * optimized for embedded environments. All conversions use a shared fixed-size buffer to minimize memory
  * usage and avoid dynamic allocation. These functions are used throughout the OPNpool component for
  * logging, diagnostics, and protocol message formatting.
+ * 
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  *
  * This file is part of OPNpool.
  * OPNpool is free software: you can redistribute it and/or modify it under the terms of
@@ -21,7 +23,6 @@
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
- * @license SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
  */
 
 #include <string.h>

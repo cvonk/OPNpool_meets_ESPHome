@@ -1,9 +1,6 @@
 /**
  * @file datalink_tx.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver from data packets
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * @details
  * This file implements the data link layer transmitter for the OPNpool component, responsible for constructing
@@ -12,19 +9,12 @@
  * integrity of outgoing messages. The implementation manages buffer manipulation, protocol selection, and queues
  * completed packets for transmission by the RS485 driver. This layer enables reliable and standards-compliant
  * communication with pool equipment by encapsulating higher-level messages into properly formatted data link packets.
- *
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @licence SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esp_system.h>

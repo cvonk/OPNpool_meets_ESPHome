@@ -1,9 +1,6 @@
 /**
  * @file network_msg.h
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Defines the network message structure for the OPNpool component.
- * 
- * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * 
  * @details
  * This header defines the network message structures, enums, and helper functions for the OPNpool component.
@@ -12,18 +9,11 @@
  * messages exchanged between the ESPHome component and pool equipment, as well as lookup tables and functions
  * for message type metadata and size validation.
  * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
+ * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2014,2019,2022,2026 Coert Vonk
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
