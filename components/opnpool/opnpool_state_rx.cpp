@@ -282,9 +282,9 @@ void
 OpnPoolState::rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_mode(dbg, "mode", msg->mode);
+        opnpoolstate_log_add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
     }
-    state->pump.mode = msg->mode;
+    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 }
 
 void
@@ -310,8 +310,8 @@ OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t c
         return;
     }
     state->pump.running = running;
-    state->pump.mode = msg->mode;
-    state->pump.state = msg->state;
+    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
+    state->pump.state = static_cast<network_pump_state_t>(msg->state);
     state->pump.power = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
     state->pump.speed = ((uint16_t)msg->speedHi << 8) | msg->speedLo;
     state->pump.flow = msg->flow;

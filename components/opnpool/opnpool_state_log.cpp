@@ -259,15 +259,15 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
 }
 
 void
-opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, uint8_t const mode)
+opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
 {
-    cJSON_AddStringToObject(obj, key, enum_str(static_cast<network_pump_mode_t>(mode)));
+    cJSON_AddStringToObject(obj, key, enum_str(mode));
 }
 
 static void
-_addPumpStateToObject(cJSON * const obj, char const * const key, uint8_t const state)
+_addPumpStateToObject(cJSON * const obj, char const * const key, network_pump_state_t const state)
 {
-    cJSON_AddStringToObject(obj, key, enum_str(static_cast<network_pump_state_t>(state)));
+    cJSON_AddStringToObject(obj, key, enum_str(state));
 }
 
 void

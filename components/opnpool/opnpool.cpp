@@ -285,7 +285,6 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
         new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].start,
         new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].stop
     );
-
     publish_schedule_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::SPA_SCHED)],
         new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].start,
@@ -293,11 +292,11 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
     );
     publish_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_MODE)], 
-        enum_str(static_cast<network_pump_mode_t>(new_state->pump.mode))
+        enum_str(new_state->pump.mode)
     );    
     publish_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::PUMP_STATE)],
-        enum_str(static_cast<network_pump_state_t>(new_state->pump.state))
+        enum_str(new_state->pump.state)
     );
     publish_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::CHLORINATOR_NAME)], 

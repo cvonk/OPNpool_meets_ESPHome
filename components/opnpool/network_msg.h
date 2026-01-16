@@ -107,20 +107,6 @@ enum class network_pump_mode_t : uint8_t {
     EP4    = 12
 };
 
-inline const char *
-enum_str(network_pump_mode_t const mode)
-{
-    auto name = magic_enum::enum_name(mode);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(mode));
-    return buf;
-}
-
-
 /**
  * @brief Enumerates the states of the pool pump.
  *
@@ -137,19 +123,6 @@ enum class network_pump_state_t : uint8_t {
     SYSPRIMING = 4
 };
 
-inline const char *
-enum_str(network_pump_state_t const pump_state)
-{
-    auto name = magic_enum::enum_name(pump_state);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(pump_state));
-    return buf;
-}
-
  /**
   * @brief Enumerates the heat sources for the pool heating system.
   *
@@ -164,19 +137,6 @@ enum class network_heat_src_t : uint8_t {
     SOLAR_PREF = 2,
     SOLAR = 3
 };
-
-inline const char *
-enum_str(network_heat_src_t const heat_src)
-{
-    auto name = magic_enum::enum_name(heat_src);
-    if (!name.empty()) {
-        return name.data();
-    }
-        // fallback
-    static char buf[3];  // safe çause FreeRTOS uses coorporative scheduling
-    snprintf(buf, sizeof(buf), "%02X", static_cast<uint8_t>(heat_src));
-    return buf;
-}
 
 
 /**
