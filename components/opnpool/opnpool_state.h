@@ -25,31 +25,31 @@ struct ipc_t;
  * @brief Pool state system information
  **/
 
-typedef struct poolstate_time_t {
+struct poolstate_time_t {
     uint8_t  hour;
     uint8_t  minute;
-} poolstate_time_t;
+};
 
-typedef struct poolstate_date_t {
+struct poolstate_date_t {
     uint8_t   day;
     uint8_t   month;
     uint16_t  year;
-} poolstate_date_t;
+};
 
-typedef struct poolstate_tod_t {
+struct poolstate_tod_t {
     poolstate_date_t  date;
     poolstate_time_t  time;
-} poolstate_tod_t;
+};
 
-typedef struct poolstate_version_t {
+struct poolstate_version_t {
     uint8_t  major;
     uint8_t  minor;
-} poolstate_version_t;
+};
 
-typedef struct poolstate_system_t {
+struct poolstate_system_t {
     poolstate_tod_t      tod;
     poolstate_version_t  version;
-} poolstate_system_t;
+};
 
 enum class poolstate_elem_system_typ_t : uint8_t {
     TIME         = 0,
@@ -73,12 +73,12 @@ enum class poolstate_thermo_typ_t : uint8_t {
 #define POOLSTATE_THERMO_TYP_COUNT (enum_count<poolstate_thermo_typ_t>())
 #endif
 
-typedef struct poolstate_thermo_t {
+struct poolstate_thermo_t {
     uint8_t  temp;
     uint8_t  set_point;
     uint8_t  heat_src;
     bool     heating;
-} poolstate_thermo_t;
+};
 
 enum class poolstate_elem_thermos_typ_t : uint8_t {
     TEMP      = 0,
@@ -97,11 +97,11 @@ enum class poolstate_elem_sched_typ_t : uint8_t {
     STOP = 1
 };
 
-typedef struct poolstate_sched_t {
+struct poolstate_sched_t {
     bool      active;
     uint16_t  start;
     uint16_t  stop;
-} poolstate_sched_t;
+};
 
 
 /**
@@ -119,9 +119,9 @@ enum class poolstate_temp_typ_t : uint8_t {
 #define POOLSTATE_TEMP_TYP_COUNT (enum_count<poolstate_temp_typ_t>())
 #endif
 
-typedef struct poolstate_temp_t {
+struct poolstate_temp_t {
     uint8_t temp;
-} poolstate_temp_t;
+};
 
 enum class PoolstateElemTempTyp : uint8_t {
     TEMP = 0
@@ -132,20 +132,19 @@ enum class PoolstateElemTempTyp : uint8_t {
  * @brief Pool state mode bit set
  **/
 
-typedef struct poolstate_modes_t {
+struct poolstate_modes_t {
     bool  is_set[enum_count<network_pool_mode_t>()];  // IntelliSense flags this incorrectly
-} poolstate_modes_t;
-
+};
 
 
 /**
  * @brief Pool state circuits
  **/
 
-typedef struct poolstate_circuits_t {
+struct poolstate_circuits_t {
     bool     active[enum_count<network_pool_circuit_t>()];  // IntelliSense flags this incorrectly
     bool     delay[enum_count<network_pool_circuit_t>()];   // IntelliSense flags this incorrectly
-} poolstate_circuits_t;
+};
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
     ACTIVE = 0,
@@ -157,7 +156,7 @@ enum class poolstate_elem_circuits_typ_t : uint8_t {
  * @brief Pool state pump
  **/
 
-typedef struct poolstate_pump_t {
+struct poolstate_pump_t {
     poolstate_time_t     time;
     network_pump_mode_t  mode;
     bool                 running;
@@ -168,7 +167,7 @@ typedef struct poolstate_pump_t {
     uint16_t             level;
     uint8_t              error;
     uint8_t              timer;
-} poolstate_pump_t;
+};
 
 enum class poolstate_elem_pump_typ_t : uint8_t {
     TIME = 0,
@@ -198,12 +197,12 @@ enum class poolstate_chlor_status_t : uint8_t {
     OTHER = 6
 };
 
-typedef struct poolstate_chlor_t {
+struct poolstate_chlor_t {
     char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
     uint8_t                   level;
     uint16_t                  salt;
     poolstate_chlor_status_t  status;
-} poolstate_chlor_t;
+};
 
 enum class poolstate_elem_chlor_typ_t : uint8_t {
     NAME   = 0,
@@ -217,7 +216,7 @@ enum class poolstate_elem_chlor_typ_t : uint8_t {
  * @brief Pool state structure containing all pool state information
  **/
 
-typedef struct poolstate_t {
+struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[enum_count<poolstate_temp_typ_t>()];
     poolstate_thermo_t    thermos[enum_count<poolstate_thermo_typ_t>()];
@@ -226,7 +225,7 @@ typedef struct poolstate_t {
     poolstate_circuits_t  circuits;
     poolstate_pump_t      pump;
     poolstate_chlor_t     chlor;
-} poolstate_t;
+};
 
 enum class poolstate_elem_typ_t : uint8_t {
     SYSTEM = 0x00,
@@ -240,14 +239,13 @@ enum class poolstate_elem_typ_t : uint8_t {
     ALL = 0x08
 };
 
-typedef char * poolstate_get_value_t;
+using poolstate_get_value_t = char *;
 
-typedef struct poolstate_get_params_t {
+struct poolstate_get_params_t {
     poolstate_elem_typ_t elem_typ;
-    uint8_t          elem_sub_typ;
-    uint8_t const    idx;
-} poolstate_get_params_t;
-
+    uint8_t              elem_sub_typ;
+    uint8_t const        idx;
+};
 
 /**
  * @brief Class representing the current state of the pool system
@@ -275,11 +273,11 @@ class OpnPoolState {
 #endif
 
     private:
-        typedef struct poolstate_prot_t {
+        struct poolstate_prot_t {
             SemaphoreHandle_t xMutex;
             poolstate_t * state;
             bool valid;
-        } poolstate_prot_t;
+        };
 
         OpnPool * parent_;
         poolstate_prot_t protected_;

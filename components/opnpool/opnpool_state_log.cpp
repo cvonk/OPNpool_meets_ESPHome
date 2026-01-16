@@ -341,13 +341,13 @@ _add_chlor(cJSON * const obj, char const * const key, poolstate_t const * const 
  * and finally .. poolstate itself
  **/
 
-typedef void (* poolstate_json_fnc_t)(cJSON * const obj, char const * const key, poolstate_t const * const state);
+using poolstate_json_fnc_t = void (*)(cJSON * const obj, char const * const key, poolstate_t const * const state);
 
-typedef struct poolstate_json_dispatch_t {
+struct poolstate_json_dispatch_t {
     poolstate_elem_typ_t const  typ;
     char const * const      name;
     poolstate_json_fnc_t const  fnc;
-} poolstate_json_dispatch_t;
+};
 
 static poolstate_json_dispatch_t _dispatches[] = {
     { poolstate_elem_typ_t::SYSTEM,   "system",   _add_system   },

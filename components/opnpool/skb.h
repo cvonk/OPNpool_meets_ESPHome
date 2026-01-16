@@ -16,21 +16,21 @@
 namespace esphome {
 namespace opnpool {
 
-typedef struct skb_priv_t {
+struct skb_priv_t {
     uint8_t * head;  // start of the pkt
     uint8_t * data;  // start of the payload
     uint8_t * tail;  // end of the payload
     uint8_t * end;   // end of the packet
-} skb_priv_t;
+};
 
-typedef struct skb_t {
+struct skb_t {
     skb_priv_t priv;
     size_t     len;   // amount of data in buf
     size_t     size;  // amount of mem alloc'ed
     uint8_t    buf[];
-} skb_t;
+};
 
-typedef skb_t * skb_handle_t;
+using skb_handle_t = skb_t *;
 
     // allocation and deallocation
 
