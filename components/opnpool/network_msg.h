@@ -43,7 +43,7 @@ namespace opnpool {
  * temperature increase, freeze protection, and timeout. Used for status reporting and control logic.
  */
 
-enum class network_pool_mode_t : uint8_t {
+enum class network_pool_mode_bits_t : uint8_t {
     SERVICE     = 0,
     UNKNOWN_01  = 1,
     TEMP_INC    = 2,
@@ -52,9 +52,9 @@ enum class network_pool_mode_t : uint8_t {
 };
 
 #ifdef __INTELLISENSE__
-#define NETWORK_POOL_MODE_COUNT (5)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+#define NETWORK_POOL_MODE_BITS_COUNT (5)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
 #else
-#define NETWORK_POOL_MODE_COUNT (enum_count<network_pool_mode_t>())
+#define NETWORK_POOL_MODE_BITS_COUNT (enum_count<network_pool_mode_bits_t>())
 #endif
 
 /**
@@ -148,12 +148,12 @@ enum class network_heat_src_t : uint8_t {
  */
 
 struct network_msg_ctrl_set_ack_t {
-    uint8_t typ;  // datalink_typ_ctrl_t::*  type that it is ACK'ing
+    datalink_typ_ctrl_t  typ;  // type that it is ACK'ing
 } PACK8;
 
 struct network_msg_ctrl_circuit_set_t {
-    uint8_t circuit;  // 1-based
-    uint8_t value;
+    uint8_t  circuit_plus_1;  // 1-based
+    uint8_t  value;
 } PACK8;
 
 struct network_msg_ctrl_sched_req_t {
@@ -161,12 +161,12 @@ struct network_msg_ctrl_sched_req_t {
 };
 
 struct network_msg_ctrl_sched_resp_sub_t {
-    uint8_t circuit;            // 0  (0 = schedule not active)
-    uint8_t UNKNOWN_1;          // 1
-    uint8_t prgStartHi;         // 2 [min]
-    uint8_t prgStartLo;         // 3 [min]
-    uint8_t prgStopHi;          // 4 [min]
-    uint8_t prgStopLo;          // 5 [min]
+    uint8_t  circuit_plus_1;  // 0  (0 = schedule not active)
+    uint8_t  UNKNOWN_1;       // 1
+    uint8_t  prgStartHi;      // 2 [minutes]
+    uint8_t  prgStartLo;      // 3 [minutes]
+    uint8_t  prgStopHi;       // 4 [minutes]
+    uint8_t  prgStopLo;       // 5 [minutes]
 } PACK8;
 
 constexpr size_t NETWORK_MSG_CTRL_SCHED_COUNT = 2;
@@ -183,7 +183,7 @@ struct network_msg_ctrl_state_bcast_t {
     uint8_t activeHi;           // 3
     uint8_t UNKNOWN_4to6[3];    // 4..6 more `active` circuits on fancy controllers
     uint8_t UNKNOWN_7to8[2];    // 7..8
-    uint8_t modes;              // 9
+    uint8_t mode_bits;          // 9
     uint8_t heatStatus;         // 10
     uint8_t UNKNOWN_11;         // 11
     uint8_t delay;              // 12
@@ -195,7 +195,7 @@ struct network_msg_ctrl_state_bcast_t {
     uint8_t airTemp;            // 18 air sensor
     uint8_t waterTemp2;         // 19 solar sensor 2
     uint8_t UNKNOWN_20tp21[2];  // 20..21 more water sensors?
-    uint8_t heatSrc;            // 22 
+    uint8_t combined_heatSrcs;  // 22 
     uint8_t UNKNOWN_23to28[6];  // 23..28
 } PACK8;
 
@@ -214,7 +214,7 @@ struct network_msg_ctrl_time_t {
     uint8_t month;           // 4
     uint8_t year;            // 5
     uint8_t clkSpeed;        // 6
-    uint8_t daylightSavings; // 7 (1=auto, 0=manual)
+    bool    daylightSavings_auto; // 7 (1=auto, 0=manual)
 } PACK8;
 
 using network_msg_ctrl_time_set_t = network_msg_ctrl_time_t;
@@ -302,13 +302,13 @@ struct network_msg_ctrl_scheds_req_t {
 // sending [3] => 03 00 2E 38 08 25 3F
 
 struct network_msg_ctrl_scheds_resp_t {
-    uint8_t schedId;  // 0 
-    uint8_t circuit;  // 1
-    uint8_t startHr;  // 2
-    uint8_t startMin; // 3
-    uint8_t stopHr;   // 4
-    uint8_t stopMin;  // 5
-    uint8_t dayOfWk;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
+    uint8_t                schedId;  // 0 
+    network_pool_circuit_t circuit;  // 1
+    uint8_t                startHr;  // 2
+    uint8_t                startMin; // 3
+    uint8_t                stopHr;   // 4
+    uint8_t                stopMin;  // 5
+    uint8_t                dayOfWk;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
 };
 
 struct network_msg_ctrl_heat_req_t {
@@ -343,7 +343,7 @@ struct network_msg_ctrl_layout_req_t {
 };
 
 struct network_msg_ctrl_layout_resp_t {
-    uint8_t circuit[4];  // circuits assigned to each of the 4 buttons on the remote
+    network_msg_ctrl_scheds_resp_t circuit[4];  // circuits assigned to each of the 4 buttons on the remote
 } PACK8;
 
 using network_msg_ctrl_layout_set_t = network_msg_ctrl_layout_resp_t;
@@ -375,7 +375,7 @@ struct network_msg_pump_ctrl_t {
 } PACK8;
 
 struct network_msg_pump_mode_t {
-    uint8_t mode;        // 0
+    network_pump_mode_t mode;        // 0
 } PACK8;
 
 struct network_msg_pump_run_t {
@@ -417,21 +417,21 @@ network_pump_program_addr_str(network_pump_program_addr_t addr)
 }
 
 struct network_msg_pump_status_resp_t {
-    uint8_t running;      // 0
-    uint8_t mode;         // 1
-    uint8_t state;        // 2
-    uint8_t powerHi;      // 3
-    uint8_t powerLo;      // 4 [Watt]
-    uint8_t speedHi;      // 5
-    uint8_t speedLo;      // 6 [rpm]
-    uint8_t flow;         // 7 [G/min]
-    uint8_t level;        // 8 [%]
-    uint8_t UNKNOWN_9;    // 9
-    uint8_t error;        // 10
-    uint8_t remainingHr;  // 11
-    uint8_t remainingMin; // 12
-    uint8_t clockHr;      // 13
-    uint8_t clockMin;     // 14
+    bool                 running;      // 0
+    network_pump_mode_t  mode;         // 1
+    network_pump_state_t state;        // 2
+    uint8_t              powerHi;      // 3
+    uint8_t              powerLo;      // 4 [Watt]
+    uint8_t              speedHi;      // 5
+    uint8_t              speedLo;      // 6 [rpm]
+    uint8_t              flow;         // 7 [G/min]
+    uint8_t              level;        // 8 [%]
+    uint8_t              UNKNOWN_9;    // 9
+    uint8_t              error;        // 10
+    uint8_t              remainingHr;  // 11
+    uint8_t              remainingMin; // 12
+    uint8_t              clockHr;      // 13
+    uint8_t              clockMin;     // 14
 } PACK8;
 
 /**
@@ -455,7 +455,7 @@ struct network_msg_chlor_ping_resp_t {
 using network_msg_chlor_name_str_t = char[16];
 
 struct network_msg_chlor_name_req_t {
-    uint8_t UNKNOWN;  // Sending 0x00 or 0x02 gets a response
+    uint8_t UNKNOWN;  // sending 0x00 or 0x02 gets a response
 } PACK8;
 
 struct network_msg_chlor_name_resp_t {

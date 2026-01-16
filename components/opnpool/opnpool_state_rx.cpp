@@ -121,11 +121,11 @@ _rx_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t *
 void
 OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state)
 {
-    state->circuits.active[msg->circuit -1] = msg->value;
+    state->circuits.active[msg->circuit_plus_1 - 1] = msg->value;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         {
-            int idx = static_cast<int>(msg->circuit) - 1;
+            int idx = static_cast<int>(msg->circuit_plus_1) - 1;
             if (idx >= 0) {
                 cJSON_AddNumberToObject(dbg, enum_str(static_cast<network_pool_circuit_t>(idx)), msg->value);
             } else {
@@ -143,11 +143,11 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_
 
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
 
-    for (uint8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
+    for (uint_least8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
 
-        if (msg_sched->circuit != 0) {
+        if (msg_sched->circuit_plus_1 != 0) {
 
-            uint8_t const circuit_idx = msg_sched->circuit - 1;
+            uint8_t const circuit_idx = enum_index(static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1));
 
             ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u",
                 ii, circuit_idx, enum_str(static_cast<network_pool_circuit_t>(circuit_idx)),
@@ -174,7 +174,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     bool * state_active = state->circuits.active;
     uint16_t msg_mask = 0x00001;
     uint16_t const msg_active = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
-    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_active++) {
+    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_active++) {
         *state_active = msg_active & msg_mask;
         msg_mask <<= 1;
     }
@@ -186,7 +186,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
         // update state->circuits.delay
     bool * state_delay = state->circuits.delay;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_delay++) {
+    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_delay++) {
         *state_delay = msg->delay & msg_mask;
         msg_mask <<= 1;
     }
@@ -201,16 +201,16 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     if (state->circuits.active[to_index(network_pool_circuit_t::POOL)]) {
         state->thermos[pool_idx].temp = msg->poolTemp;
     }
-    state->thermos[pool_idx].heating = msg->heatStatus & 0x04;
-    state->thermos[spa_idx].heating = msg->heatStatus & 0x08;
-    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
-    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
+    state->thermos[pool_idx].heating  = msg->heatStatus & 0x04;
+    state->thermos[spa_idx ].heating  = msg->heatStatus & 0x08;
+    state->thermos[pool_idx].heat_src = (msg->combined_heatSrcs >> 0) & 0x03;
+    state->thermos[spa_idx ].heat_src = (msg->combined_heatSrcs >> 2) & 0x03;
 
         // update state->modes.is_set
     bool * state_mode = state->modes.is_set;
     msg_mask = 0x00001;
-    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, state_mode++) {
-        *state_mode = msg->modes & msg_mask;
+    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_mode++) {
+        *state_mode = msg->mode_bits & msg_mask;
         msg_mask <<= 1;
     }
 
@@ -330,7 +330,7 @@ void
 OpnPoolState::rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddNumberToObject(dbg, "ack", msg->typ);
+        cJSON_AddStringToObject(dbg, "ack", enum_str(msg->typ));
     }
 }
 

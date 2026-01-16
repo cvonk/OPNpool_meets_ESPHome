@@ -133,7 +133,7 @@ enum class PoolstateElemTempTyp : uint8_t {
  **/
 
 struct poolstate_modes_t {
-    bool  is_set[enum_count<network_pool_mode_t>()];  // IntelliSense flags this incorrectly
+    bool  is_set[enum_count<network_pool_mode_bits_t>()];  // IntelliSense flags this incorrectly
 };
 
 

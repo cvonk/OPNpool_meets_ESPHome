@@ -76,7 +76,7 @@ _preamble_reset()
 {
     proto_info_t * info = _proto_descr;
 
-    for (uint8_t ii = 0; ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
+    for (uint_least8_t ii = 0; ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
         info->idx = 0;
     }
 }
@@ -118,7 +118,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
         bool part_of_preamble = false;
         proto_info_t * info = _proto_descr;
         
-        for (uint8_t ii = 0; !part_of_preamble && ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
+        for (uint_least8_t ii = 0; !part_of_preamble && ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
             if (_preamble_complete(info, byt, &part_of_preamble)) {
                 ESP_LOGV(TAG, "%s (preamble)", dbg);
                 pkt->prot = info->prot;
@@ -140,7 +140,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
                     default:
                         return ESP_FAIL;
                 }
-                for (uint8_t jj = 0; jj < info->len; jj++) {
+                for (uint_least8_t jj = 0; jj < info->len; jj++) {
                     preamble[jj] = info->preamble[jj];
                 }
                 _preamble_reset();
@@ -152,7 +152,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
             _preamble_reset();
             proto_info_t * info = _proto_descr;
 
-            for (uint8_t ii = 0; ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
+            for (uint_least8_t ii = 0; ii < ARRAY_SIZE(_proto_descr); ii++, info++) {
                 (void)_preamble_complete(info, byt, &part_of_preamble);
             }
         }
@@ -234,7 +234,7 @@ _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 
     if (rs485->read_bytes((uint8_t *) pkt->data, pkt->data_len) == pkt->data_len) {
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-            for (uint8_t ii = 0; ii < pkt->data_len; ii++) {
+            for (uint_least8_t ii = 0; ii < pkt->data_len; ii++) {
                 len += snprintf(buf + len, buf_size - len, " %02X", pkt->data[ii]);
             }
             ESP_LOGV(TAG, "%s (data)", buf);
@@ -345,7 +345,7 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
 
     while (1) {
         state_transition_t * transition = state_transitions;
-        for (uint8_t ii = 0; ii < ARRAY_SIZE(state_transitions); ii++, transition++) {
+        for (uint_least8_t ii = 0; ii < ARRAY_SIZE(state_transitions); ii++, transition++) {
             if (state == transition->state) {
 
                 // calls the registered function for the current state.

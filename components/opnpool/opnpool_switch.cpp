@@ -59,8 +59,8 @@ void OpnPoolSwitch::write_state(bool state)
         .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {
-              .circuit = static_cast<uint8_t>(this->get_idx() + 1),
-              .value = state ? (uint8_t)1 : (uint8_t)0,          
+                .circuit_plus_1 = (uint8_t)(this->get_idx() + 1),
+                .value = (uint8_t)(state ? 1 : 0),          
             },
         },
     };

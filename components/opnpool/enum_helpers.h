@@ -26,12 +26,12 @@ inline int enum_nr(char const * const enum_str)
     if (!enum_str) {
         return -1;
     }
-    // Try magic_enum first for efficient lookup
+        // try magic_enum first for efficient lookup
     auto value = magic_enum::enum_cast<EnumT>(std::string_view(enum_str), magic_enum::case_insensitive);
     if (value.has_value()) {
         return static_cast<int>(value.value());
     }
-    // Fallback: search through entire uint8_t range if not found in enum
+        // fallback: search through entire uint8_t range if not found in enum
     for (uint16_t ii = 0; ii <= 0xFF; ii++) {
         auto candidate = static_cast<EnumT>(ii);
         auto name = magic_enum::enum_name(candidate);
@@ -42,10 +42,17 @@ inline int enum_nr(char const * const enum_str)
     return -1;
 }
 
-    // helper to return the number of enum values
+    // helper to return the total number of enum values
 template<typename EnumT>
 constexpr size_t enum_count() {
     return magic_enum::enum_count<EnumT>();
+}
+
+    // helper to to return the index (underlying value) of an enum
+template <typename E>
+constexpr auto enum_index(E e) noexcept -> std::underlying_type_t<E> {
+    static_assert(std::is_enum<E>::value, "E must be an enum type");
+    return static_cast<std::underlying_type_t<E>>(e);
 }
 
 } // namespace opnpool

@@ -111,7 +111,7 @@ opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstat
                              bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
+    for (uint_least8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
         _add_thermostat(item, enum_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
                         showTemp, showSp, showSrc, showHeating);
     }
@@ -143,7 +143,7 @@ opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_
 {
     if (showSched) {
         cJSON * const item = _create_item(obj, key);
-        for (uint8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, scheds++) {
+        for (uint_least8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, scheds++) {
             if (scheds->active) {
                 _add_schedule(item, enum_str(static_cast<network_pool_circuit_t>(ii)), scheds);
             }
@@ -168,7 +168,7 @@ _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 {
     cJSON * const item = _create_item(obj, key);
     poolstate_temp_t const * temp = state->temps;
-    for (uint8_t ii = 0; ii < POOLSTATE_TEMP_TYP_COUNT; ii++, temp++) {
+    for (uint_least8_t ii = 0; ii < POOLSTATE_TEMP_TYP_COUNT; ii++, temp++) {
         _add_temp(item, enum_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
     }
 }
@@ -180,12 +180,11 @@ _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 static void
 _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_modes_t const * const modes = &state->modes;
     cJSON * const item = _create_item(obj, key);
 
-    bool const * is_set = modes->is_set;
-    for (uint8_t ii = 0; ii < NETWORK_POOL_MODE_COUNT; ii++, is_set++) {
-        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_mode_t>(ii)), *is_set);
+    bool const * is_set = &state->modes.is_set[0];
+    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, is_set++) {
+        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_mode_bits_t>(ii)), *is_set);
     }
 }
 
@@ -197,7 +196,7 @@ static void
 _add_circuit_detail(cJSON * const obj, char const * const key, bool const * active)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, active++) {
+    for (uint_least8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, active++) {
         cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_circuit_t>(ii)), *active);
     }
 }
@@ -245,13 +244,11 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
         case 0x00: 
             str = "local"; 
             break;
-        case 0xFF: 
+        case 0xFF:                                             
             str = "remote"; 
             break;
         default: {
-            char hex_buffer[3];  // "XX\0"
-            snprintf(hex_buffer, sizeof(hex_buffer), "%02x", ctrl);
-            str = hex_buffer;
+            str = uint8_str(ctrl);
             break;
         }
     }
@@ -366,7 +363,7 @@ opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t con
     name_reset_idx();
     cJSON * const obj = cJSON_CreateObject();
     poolstate_json_dispatch_t const * dispatch = _dispatches;
-    for (uint8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {
+    for (uint_least8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {
         bool const all_types = typ == poolstate_elem_typ_t::ALL;
         if (typ == dispatch->typ || all_types) {
 

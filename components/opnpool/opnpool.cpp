@@ -198,26 +198,26 @@ void OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "  RS485 TX Pin: %u", this->ipc_->config.rs485_pins.tx_pin);
     ESP_LOGCONFIG(TAG, "  RS485 Flow Control Pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
 
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
         dump_if(this->climates_[idx]);
     }
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
         dump_if(this->switches_[idx]);
     }
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SensorId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SensorId::COUNT); idx++) {
         dump_if(this->sensors_[idx]);
     }
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(BinarySensorId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(BinarySensorId::COUNT); idx++) {
         dump_if(this->binary_sensors_[idx]);
     }
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(TextSensorId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(TextSensorId::COUNT); idx++) {
         dump_if(this->text_sensors_[idx]);
     }
 }
 
 void OpnPool::update_climates(poolstate_t const * const new_state)
 {
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
 
         OpnPoolClimate * const climate = this->climates_[idx];
         if (climate != nullptr) {
@@ -228,7 +228,7 @@ void OpnPool::update_climates(poolstate_t const * const new_state)
 
 void OpnPool::update_switches(poolstate_t const * const new_state)
 {
-    for (uint8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
+    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
         
         OpnPoolSwitch * const sw = this->switches_[idx];
         if (sw != nullptr) {
@@ -272,10 +272,10 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
 void OpnPool::update_binary_sensors(poolstate_t const * const new_state)
 {
     publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)],           new_state->pump.running);
-    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::SERVICE)]);
-    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMPERATURE_INC)],   new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TEMP_INC)]);
-    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE_PROTECTION)], new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::FREEZE_PROT)]);
-    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_t::TIMEOUT)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TEMPERATURE_INC)],   new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_FREEZE_PROTECTION)], new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]);
+    publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]);
 }
 
 void OpnPool::update_text_sensors(poolstate_t const * const new_state)
