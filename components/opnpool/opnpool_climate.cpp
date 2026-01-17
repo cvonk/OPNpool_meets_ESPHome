@@ -208,7 +208,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
                 .ctrl_heat_set = {
                     .poolSetpoint = thermos_new[climate_pool_idx].set_point,
                     .spaSetpoint = thermos_new[climate_spa_idx].set_point,
-                    .heatSrc = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
+                    .combined_heatSrc = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
                 },
             },
         };
@@ -216,7 +216,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         ESP_LOGV(TAG, "Sending HEAT_SET: pool_sp=%u°F, spa_sp=%u°F, heat_src=0x%02X", 
                   msg.u.ctrl_heat_set.poolSetpoint, 
                   msg.u.ctrl_heat_set.spaSetpoint,
-                  msg.u.ctrl_heat_set.heatSrc);
+                  msg.u.ctrl_heat_set.combined_heatSrc);
+                  
         ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());
     }
 

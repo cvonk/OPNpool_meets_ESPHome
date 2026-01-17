@@ -59,18 +59,19 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg,
     network_msg_ctrl_time_t const * const msg, poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_time");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
     state->system.tod.time.minute = msg->minute;
-    state->system.tod.time.hour = msg->hour;
-    state->system.tod.date.day = msg->day;
-    state->system.tod.date.month = msg->month;
-    state->system.tod.date.year = (uint16_t)(2000) + msg->year;
+    state->system.tod.time.hour   = msg->hour;
+    state->system.tod.date.day    = msg->day;
+    state->system.tod.date.month  = msg->month;
+    state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_tod(dbg, "tod", &state->system.tod);
+        ESP_LOGV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
     }
 }
 
@@ -91,23 +92,25 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg,
     network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_heat_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
-    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
-    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
-    state->thermos[pool_idx].temp = msg->poolTemp;
-    state->thermos[pool_idx].set_point = msg->poolSetpoint;
-    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
-    state->thermos[spa_idx].temp = msg->spaTemp;
-    state->thermos[spa_idx].set_point = msg->spaSetpoint;
-    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
+    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const  spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
+    static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
+
+    state->thermos[pool_idx].temp      =  msg->poolTemp;
+    state->thermos[ spa_idx].temp      =  msg->spaTemp;
+    state->thermos[pool_idx].set_point =  msg->poolSetpoint;
+    state->thermos[ spa_idx].set_point =  msg->spaSetpoint;
+    state->thermos[pool_idx].heat_src  = (msg->combined_heatSrc >> 0) & 0x03;  // bits 0-1 for POOL
+    state->thermos[ spa_idx].heat_src  = (msg->combined_heatSrc >> 2) & 0x03;  // bits 2-3 for SPA
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
+        ESP_LOGV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].temp, state->thermos[spa_idx].temp, state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
 
@@ -127,21 +130,22 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
     network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_heat_set");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
     uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    uint8_t const spa_idx  = to_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
-    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
+    static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
     state->thermos[pool_idx].set_point = msg->poolSetpoint;
-    state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
-    state->thermos[spa_idx].set_point = msg->spaSetpoint;
-    state->thermos[spa_idx].heat_src = (msg->heatSrc >> 2) & 0x03;
+    state->thermos[ spa_idx].set_point = msg->spaSetpoint;
+    state->thermos[pool_idx].heat_src = (msg->combined_heatSrc >> 0) & 0x03;
+    state->thermos[ spa_idx].heat_src = (msg->combined_heatSrc >> 2) & 0x03;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
+        ESP_LOGV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
 
@@ -154,15 +158,28 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
  * @param count    Number of bits/array elements to update.
  */
 static void 
-_update_bool_array_from_bits(bool * arr, uint16_t bits, size_t count) {
+_update_bool_array_from_bits(bool * arr, uint16_t bits, size_t count)
+{
     for (size_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         arr[ii] = (bits & mask) != 0;
     }
 }
 
+/**
+ * @brief       Optionally log raw hex bytes from a controller message.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param bytes Pointer to the array of bytes received from the controller.
+ * @param state Pointer to the poolstate_t structure to update.
+ * @param nrBytes Number of bytes in the array.
+ *
+ * This function logs the received bytes in hexadecimal format to the debug JSON object
+ * if verbose logging is enabled. It does not modify the pool state.
+ */
 static void
 _rx_ctrl_hex_bytes(cJSON * const dbg, 
-    uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
+    uint8_t const * const bytes,
+    poolstate_t * const state, uint8_t nrBytes)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON * const array = cJSON_CreateArray();
@@ -194,23 +211,26 @@ OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_circuit_set");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
-    state->circuits.active[msg->circuit_plus_1 - 1] = msg->value;
+    if (msg->circuit_plus_1 == 0) {
+        ESP_LOGW(TAG, "circuit_plus_1 == 0");
+        return;
+    }
+
+    uint8_t const circuit_idx = msg->circuit_plus_1 - 1;
+    state->circuits.active[circuit_idx] = msg->value;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        {
-            uint8_t const idx = msg->circuit_plus_1 - 1;
-            network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(idx);
+        network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(circuit_idx);
 
-            if ((idx >= 0) && (idx < enum_count<network_pool_circuit_t>())) {
-                cJSON_AddNumberToObject(dbg, enum_str(circuit), msg->value);
-            } else {
-                ESP_LOGW(TAG, "Received CIRCUIT_SET for invalid circuit index %u", idx);
-                cJSON_AddNumberToObject(dbg, "circuit_invalid", msg->value);
-            }
+        if (circuit_idx < enum_count<network_pool_circuit_t>()) {
+            cJSON_AddNumberToObject(dbg, enum_str(circuit), msg->value);
+        } else {
+            ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, enum_count<network_pool_circuit_t>());
         }
+        ESP_LOGV(TAG, "Circuit %u set to %u", circuit_idx, msg->value);
     }
 }
 
@@ -231,43 +251,39 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_sched_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
     poolstate_sched_t * state_scheds = state->scheds;    
-    memset(state_scheds, 0, sizeof(poolstate_sched_t) * POOLSTATE_THERMO_TYP_COUNT );
+    memset(state_scheds, 0, sizeof(state->scheds));
 
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
-
     for (uint_least8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
 
-        if (msg_sched->circuit_plus_1 != 0) {
+        if (msg_sched->circuit_plus_1 == 0) {
+            ESP_LOGW(TAG, "circuit_plus_1 for %u == 0", ii);
+            continue;
+        }
 
-            network_pool_circuit_t const circuit =
-                static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1);
-            uint8_t const circuit_idx = enum_index(circuit);
+        network_pool_circuit_t const circuit =
+            static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1);
+        uint8_t const circuit_idx = enum_index(circuit);
 
-            ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u", ii, circuit_idx, enum_str(circuit), (static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo), (static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo));
+        uint16_t const startHi = msg_sched->prgStartHi;
+        uint16_t const stopHi  = msg_sched->prgStopHi;
+        uint16_t const start = (startHi << 8) | msg_sched->prgStartLo;
+        uint16_t const stop  = ( stopHi << 8) | msg_sched->prgStopLo;
 
-            uint16_t const startHi = static_cast<uint16_t>(msg_sched->prgStartHi);
-            uint16_t const startLo = static_cast<uint16_t>(msg_sched->prgStartLo);
-            uint16_t const stopHi = static_cast<uint16_t>(msg_sched->prgStopHi);
-            uint16_t const stopLo = static_cast<uint16_t>(msg_sched->prgStopLo);
-            uint16_t const start = (startHi << 8) | startLo;
-            uint16_t const stop = (stopHi << 8) | stopLo;
+        if (circuit_idx < ARRAY_SIZE(state->scheds)) {
 
-            if (circuit_idx < ARRAY_SIZE(state->scheds)) {
-
-                ESP_LOGV(TAG, "Updating schedule for circuit %u (%s): start=%u, stop=%u", circuit_idx, enum_str(circuit), start, stop);
-
-                state_scheds[circuit_idx] = (poolstate_sched_t) {
-                    .active = true,
-                    .start = start,
-                    .stop = stop
-                };
-            } else {
-                ESP_LOGW(TAG, "Received schedule for invalid circuit index %u", circuit_idx);
-            }
+            state_scheds[circuit_idx] = (poolstate_sched_t) {
+                .active = true,
+                .start = start,
+                .stop = stop
+            };
+            ESP_LOGV(TAG, "Schedule updated for %s: start=%u, stop=%u", enum_str(circuit), start, stop);
+        } else {
+            ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, ARRAY_SIZE(state->scheds));
         }
     }
 
@@ -293,9 +309,10 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
     poolstate_t * state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_state");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
+
         // update state->circuits.active
     uint16_t const bitmask_active_circuits = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
     static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.active),
@@ -315,9 +332,9 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
 
         // update state->circuits.thermos (only update when the pump is running)
     uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
-    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
+    uint8_t const  spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size err for pool_idx");
+    static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size err for spa_idx");
 
     if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
         state->thermos[spa_idx].temp = msg->poolTemp;
@@ -333,7 +350,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
         // update state->modes.is_set
     uint8_t const bitmask_active_modes = msg->mode_bits;
     static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->modes.is_set),
-        "size mismatch for state->modes.is_set");
+        "size err for state->modes.is_set");
     _update_bool_array_from_bits(state->modes.is_set, bitmask_active_modes, NETWORK_POOL_MODE_BITS_COUNT);
 
         // update state->system (date is updated through `network_msg_ctrl_time`)
@@ -343,14 +360,15 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
         // update state->temps
     uint8_t const air_idx = to_index(poolstate_temp_typ_t::AIR);
     uint8_t const water_idx = to_index(poolstate_temp_typ_t::WATER);
-    static_assert(air_idx < ARRAY_SIZE(state->temps), "size mismatch for air_idx");
-    static_assert(water_idx < ARRAY_SIZE(state->temps), "size mismatch for water_idx");
+    static_assert(air_idx < ARRAY_SIZE(state->temps), "size err for air_idx");
+    static_assert(water_idx < ARRAY_SIZE(state->temps), "size err for water_idx");
 
     state->temps[air_idx].temp = msg->airTemp;
     state->temps[water_idx].temp = msg->waterTemp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_state(dbg, "state", state);
+        ESP_LOGV(TAG, "State updated from CTRL_STATE message");
     }
 }
 
@@ -371,14 +389,18 @@ OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_version_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
-    state->system.version.major = msg->major;
-    state->system.version.minor = msg->minor;
+
+    state->system.version = {
+        .major = msg->major,
+        .minor = msg->minor
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_version(dbg, "firmware", &state->system.version);
+        ESP_LOGV(TAG, "Firmware version updated to %u.%u", state->system.version.major, state->system.version.minor);
     }
 }
 
@@ -396,7 +418,7 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg,
     network_msg_pump_reg_set_t const * const msg)
 {
     if (!msg) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_reg_set");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
@@ -424,14 +446,13 @@ OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg,
     network_msg_pump_reg_resp_t const * const msg)
 {
     if (!msg) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_reg_set_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         uint16_t const valueHi = msg->valueHi;
-        uint16_t const valueLo = msg->valueLo;
-        uint16_t const value = (valueHi << 8) | valueLo;
+        uint16_t const value = (valueHi << 8) | msg->valueLo;
         opnpoolstate_log_add_pump_program(dbg, "resp", value);
     }
 }
@@ -450,7 +471,7 @@ OpnPoolState::rx_pump_ctrl(cJSON * const dbg,
     network_msg_pump_ctrl_t const * const msg)
 {
     if (!msg) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_ctrl");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
@@ -475,14 +496,16 @@ OpnPoolState::rx_pump_mode(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_mode");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
+    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
+        ESP_LOGV(TAG, "Pump mode updated to %s", enum_str(state->pump.mode));
     }
-    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 }
 
 /**
@@ -500,19 +523,21 @@ OpnPoolState::rx_pump_run(cJSON * const dbg,
     network_msg_pump_run_t const * const msg, poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_run");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "Invalid running state received in rx_pump_run");
+        ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->running, __func__);
         return;
     }    
     state->pump.running = running;
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_running(dbg, "running", state->pump.running);
+        ESP_LOGV(TAG, "Pump running state updated to %u", state->pump.running);
     }
 }
 
@@ -531,31 +556,39 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
     network_msg_pump_status_resp_t const * const msg, poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_pump_status");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "Invalid running state received in rx_pump_status");
+        ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->running, __func__);
         return;
     }
 
-    state->pump.running = running;
-    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
-    state->pump.state = static_cast<network_pump_state_t>(msg->state);
-    state->pump.power = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
-    state->pump.speed = ((uint16_t)msg->speedHi << 8) | msg->speedLo;
-    state->pump.flow = msg->flow;
-    state->pump.level = msg->level;
-    state->pump.error = msg->error;
-    state->pump.timer = msg->remainingMin;
-    state->pump.time.hour = msg->clockHr;
-    state->pump.time.minute = msg->clockMin;
+    uint16_t const power = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
+    uint16_t const speed = ((uint16_t)msg->speedHi << 8) | msg->speedLo;
+
+    state->pump = {
+        .time    = {
+            .hour   = msg->clockHr,
+            .minute = msg->clockMin
+        },
+        .mode    = static_cast<network_pump_mode_t>(msg->mode),
+        .running = running,
+        .state   = static_cast<network_pump_state_t>(msg->state),
+        .power   = power,
+        .flow    = msg->flow,
+        .speed   = speed,
+        .level   = msg->level,
+        .error   = msg->error,
+        .timer   = msg->remainingMin
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       opnpoolstate_log_add_pump(dbg, "status", state);
+        opnpoolstate_log_add_pump(dbg, "status", state);
+        ESP_LOGV(TAG, "Pump status updated: running=%d, mode=%s, state=%s, power=%u, speed=%u, flow=%u, level=%u, error=%u, timer=%u, time=%02u:%02u", state->pump.running, enum_str(state->pump.mode), enum_str(state->pump.state), state->pump.power, state->pump.speed, state->pump.flow, state->pump.level, state->pump.error, state->pump.timer, state->pump.time.hour, state->pump.time.minute);
     }
 }
 
@@ -573,7 +606,7 @@ OpnPoolState::rx_ctrl_set_ack(cJSON * const dbg,
     network_msg_ctrl_set_ack_t const * const msg)
 {
     if (!msg) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_set_ack");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -597,13 +630,13 @@ OpnPoolState::rx_chlor_name_resp(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_name_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
     if (msg->name == nullptr) {
-        ESP_LOGW(TAG, "Received null pointer for chlorine generator name");
+        ESP_LOGW(TAG, "null chlorine name");
         state->chlor.name[0] = '\0';
     } else {        
         size_t name_size = sizeof(state->chlor.name);
@@ -614,6 +647,7 @@ OpnPoolState::rx_chlor_name_resp(cJSON * const dbg,
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
         cJSON_AddStringToObject(dbg, "name", state->chlor.name);
+        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
     }
 }
 
@@ -633,7 +667,7 @@ OpnPoolState::rx_chlor_level_set(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_level_set");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }   
 
@@ -641,6 +675,7 @@ OpnPoolState::rx_chlor_level_set(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "level", state->chlor.level);
+        ESP_LOGV(TAG, "Chlorine level updated: level=%u", state->chlor.level);
     }
 }
 
@@ -661,11 +696,12 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
     poolstate_t * const state)
 {
     if (!msg || !state) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_level_set_resp");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
 
     state->chlor.salt = (uint16_t)msg->salt * 50;
+
     if (msg->error & 0x01) {
         state->chlor.status = poolstate_chlor_status_t::LOW_FLOW;
     } else if (msg->error & 0x02) {
@@ -685,6 +721,7 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_chlor_resp(dbg, "chlor", &state->chlor);
+        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
     }
 }
 
@@ -706,7 +743,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
   	name_reset_idx();
 
     if (!msg) {
-        ESP_LOGW(TAG, "Null pointer passed to rx_update");
+        ESP_LOGW(TAG, "null to %s", __func__);
         return ESP_FAIL;
     }
 

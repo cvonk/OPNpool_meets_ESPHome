@@ -316,26 +316,26 @@ struct network_msg_ctrl_heat_req_t {
 };
 
 struct network_msg_ctrl_heat_resp_t {
-    uint8_t poolTemp;      // 0
-    uint8_t spaTemp;       // 1
-    uint8_t airTemp;       // 2
-    uint8_t poolSetpoint;  // 3
-    uint8_t spaSetpoint;   // 4
-    uint8_t heatSrc;       // 5
-    uint8_t UNKNOWN_6;     // 6
-    uint8_t UNKNOWN_7;     // 7
-    uint8_t UNKNOWN_8;     // 8
-    uint8_t UNKNOWN_9;     // 9
-    uint8_t UNKNOWN_10;    // 10
-    uint8_t UNKNOWN_11;    // 11
-    uint8_t UNKNOWN_12;    // 12
+    uint8_t poolTemp;         // 0
+    uint8_t spaTemp;          // 1
+    uint8_t airTemp;          // 2
+    uint8_t poolSetpoint;     // 3
+    uint8_t spaSetpoint;      // 4
+    uint8_t combined_heatSrc; // 5 bits 0-1 for POOL, bits 2-3 for SPA
+    uint8_t UNKNOWN_6;        // 6
+    uint8_t UNKNOWN_7;        // 7
+    uint8_t UNKNOWN_8;        // 8
+    uint8_t UNKNOWN_9;        // 9
+    uint8_t UNKNOWN_10;       // 10
+    uint8_t UNKNOWN_11;       // 11
+    uint8_t UNKNOWN_12;       // 12
 } PACK8;
 
 struct network_msg_ctrl_heat_set_t {
-    uint8_t poolSetpoint;  // 0
-    uint8_t spaSetpoint;   // 1
-    uint8_t heatSrc;       // 2
-    uint8_t UNKNOWN_3;     // 3
+    uint8_t poolSetpoint;      // 0
+    uint8_t spaSetpoint;       // 1
+    uint8_t combined_heatSrc;  // 2 bits 0-1 for POOL, bits 2-3 for SPA
+    uint8_t UNKNOWN_3;         // 3
 } PACK8;
 
 struct network_msg_ctrl_layout_req_t {
