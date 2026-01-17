@@ -1,6 +1,6 @@
 /**
  * @file pool_task.cpp
- * @brief OPNpool - pool_task: packetizes RS-485 byte stream from bus
+ * @brief pool_task: packetizes RS-485 byte stream from bus
  * 
  * This file implements the FreeRTOS task logic for the OPNpool component, responsible for
  * managing RS-485 communication with the pool controller. It handles both receiving and
@@ -49,6 +49,17 @@ namespace opnpool {
 
 static char const * const TAG = "pool_task";
 
+/**
+ * @brief Processes incoming packets from the RS-485 bus and relays messages to the main
+ * task.
+ *
+ * Receives a packet from RS-485, decodes it into a network message, and sends it to the
+ * main task via IPC if successful. Frees the packet buffer after processing.
+ *
+ * @param rs485 RS-485 handle.
+ * @param ipc   IPC structure pointer.
+ * @return true if a transmit opportunity is available, false otherwise.
+ */
 static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 {
@@ -67,8 +78,17 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
     return txOpportunity;
 }
 
+/**
+ * @brief Handles requests from the main task and queues them for RS-485 transmission.
+ *
+ * Receives network messages from the IPC queue, packetizes them, and queues them for
+ * transmission to the pool controller. Frees the packet if creation fails.
+ *
+ * @param rs485 RS-485 handle.
+ * @param ipc   IPC structure pointer.
+ */
 static void
-_service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
+_service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
 {
     network_msg_t msg;
 
@@ -85,6 +105,15 @@ _service_requests_from_home(rs485_handle_t rs485, ipc_t const * const ipc)
     }
 }
 
+/**
+ * @brief Queues a network message for transmission to the pool controller.
+ *
+ * Creates a network message of the specified type, packetizes it, and queues it for
+ * transmission on the RS-485 bus. Frees the packet if creation fails.
+ *
+ * @param rs485 RS-485 handle.
+ * @param typ   Network message type to send.
+ */
 static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
 {
@@ -102,6 +131,15 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
     }
 }
 
+/**
+ * @brief Forwards a queued packet from the transmit queue to the RS-485 bus.
+ *
+ * Dequeues a packet, transmits it over RS-485, logs the transmission if verbose,
+ * and simulates reception for protocol state consistency. Frees the packet after use.
+ *
+ * @param rs485 RS-485 handle.
+ * @param ipc   IPC structure pointer.
+ */
 static void
 _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 {
@@ -123,7 +161,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);
         rs485->tx_mode(false);
 
-        // pretend that we received our own message
+            // pretend that we received our own message
 
         bool txOpportunity = false;
         network_msg_t msg;
@@ -139,6 +177,14 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
     }
 }
 
+/**
+ * @brief FreeRTOS sub-task for periodic pool controller requests.
+ *
+ * Periodically sends heat and schedule request messages to the pool controller
+ * to keep the pool state up to date.
+ *
+ * @param rs485_void Pointer to the RS-485 handle (as void* for FreeRTOS compatibility).
+ */
 void
 pool_req_task(void * rs485_void) 
 {
@@ -151,6 +197,22 @@ pool_req_task(void * rs485_void)
     }
 }
 
+/**
+ * @brief FreeRTOS task for RS-485 communication and protocol handling.
+ *
+ * This function implements the main loop for the OPNpool component, responsible for:
+ *   - Initializing the RS-485 interface and IPC structure.
+ *   - Requesting initial controller information (version, time).
+ *   - Spawning a periodic request sub-task for heat and schedule queries.
+ *   - Continuously servicing requests from the main task and processing incoming RS-485
+ *     packets.
+ *   - Forwarding queued packets for transmission when a transmit opportunity is
+ *     available.
+ *   - Maintaining protocol state and relaying messages between the controller and main
+ *     task.
+ *
+ * @param ipc_void Pointer to the IPC structure.
+ */
 void
 pool_task(void * ipc_void)
 {
@@ -159,29 +221,27 @@ pool_task(void * ipc_void)
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
-    // request some initial information from the controller
+        // request some initial information from the controller
     _queue_req(rs485, network_msg_typ_t::CTRL_VERSION_REQ);
     _queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
 
-    // periodically request information from controller
+        // periodically request information from controller
     xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
-
-    ESP_LOGI(TAG, "started");
 
     while (1) {
 
-        // read from ipc->to_pool_q
+            // read from ipc->to_pool_q
 
-        _service_requests_from_home(rs485, ipc);
+        _service_requests_from_main(rs485, ipc);
 
-        // read from the rs485 device, until there is a packet,
-        // then move the packet up the protocol stack to process it.
+            // read from the rs485 device, until there is a packet,
+            // then move the packet up the protocol stack to process it.
 
         if (_service_pkts_from_rs485(rs485, ipc)) {
 
-            // there is a transmit opportunity after the pool controller
-            // send a broadcast.  If there is rs485 transmit queue, then
-            // create a network message and transmit it.
+                // there is a transmit opportunity after the pool controller
+                // send a broadcast.  If there is rs485 transmit queue, then
+                // create a network message and transmit it.
 
             _forward_queued_pkt_to_rs485(rs485, ipc);
         }

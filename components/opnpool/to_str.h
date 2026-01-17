@@ -6,9 +6,10 @@
 namespace esphome {
 namespace opnpool {
 
-    // should be at least ((sizeof(datalink_hdr_t) + sizeof(network_msg_ctrl_state_bcast_t) + 1) * 3 + 50).
-    // that 3 bytes for each hex value when displaying raw, and another 50 for displying date/time.
-#define TO_STR_BUF_SIZE (200)
+    // should be at least ((sizeof(datalink_hdr_t) +
+    // sizeof(network_msg_ctrl_state_bcast_t) + 1) * 3 + 50). that 3 bytes for each hex
+    // value when displaying raw, and another 50 for displying date/time.
+constexpr size_t TO_STR_BUF_SIZE = 200; 
 
     // reusable global string
 struct name_str_t {
@@ -20,7 +21,6 @@ struct name_str_t {
 
     // helpers
 char const * bool_str(bool const value);
-char const * uint16_str(uint16_t const value);
 char const * uint8_str(uint8_t const value);
 char const * uint16_str(uint16_t const value);
 char const * uint32_str(uint32_t const value);

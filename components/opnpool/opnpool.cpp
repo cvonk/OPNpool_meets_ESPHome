@@ -124,7 +124,7 @@ inline void dump_if(EntityT *entity)
  */
 void OpnPool::setup() {
     
-    ESP_LOGV(TAG, "Setting up OpnPool...");
+    ESP_LOGI(TAG, "Setting up OpnPool...");
 
     opnPoolState_ = new OpnPoolState(this);
     if (!opnPoolState_) {

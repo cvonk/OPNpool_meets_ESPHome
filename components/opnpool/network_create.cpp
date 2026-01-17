@@ -1,6 +1,6 @@
 /**
  * @file network_create.cpp
- * @brief OPNpool - Network layer: create datalink_pkt from network_msg
+ * @brief Network layer: create datalink_pkt from network_msg
  *
  * @details
  * This file implements the logic for constructing datalink packets from higher-level

@@ -1,6 +1,6 @@
 /**
  * @file datalink_rx.cpp
- * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver to data packets
+ * @brief Data Link layer: bytes from the RS485 transceiver to data packets
  *
  * @details
  * This file implements the data link layer receiver for the OPNpool component,
@@ -162,6 +162,29 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
     return ESP_FAIL;
 }
 
+
+// Lookup table for IC message type lengths
+// MUST MATCH datalink_typ_chlor_t enum
+static constexpr uint8_t _ic_type_len_table[] = {
+    sizeof(network_msg_chlor_ping_req_t),
+    sizeof(network_msg_chlor_ping_resp_t),
+    sizeof(network_msg_chlor_name_resp_t),
+    sizeof(network_msg_chlor_level_set_t),
+    sizeof(network_msg_chlor_level_resp_t),
+    sizeof(network_msg_chlor_name_req_t)
+};
+static_assert(ARRAY_SIZE(_ic_type_len_table) == enum_count<datalink_typ_chlor_t>(), "IC type length table does not match datalink_typ_chlor_t enum");
+
+static uint8_t _network_ic_len(uint8_t const ic_typ)
+{
+    auto typ = static_cast<size_t>(static_cast<datalink_typ_chlor_t>(ic_typ));
+
+    if (typ < ARRAY_SIZE(_ic_type_len_table)) {
+        return _ic_type_len_table[typ];
+    }
+    return 0;
+}
+
 /*
  * Reads a A5/IC protocol header (or times-out) Writes the header details to `pkt->typ`,
  * `pkt->src`, `pkt->dst`, `pkt->data_len` The bytes received are stored in
@@ -208,7 +231,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 pkt->typ.raw  = hdr->typ;
                 pkt->src      = 0;
                 pkt->dst      = hdr->dst;
-                pkt->data_len = network_ic_len(hdr->typ);
+                pkt->data_len = _network_ic_len(hdr->typ);
                 return ESP_OK;
             }
             break;

@@ -1,6 +1,6 @@
 /**
  * @file opnpool_sensor.cpp
- * @brief OPNpool - Reports analog pool sensors to Home Assistant.
+ * @brief Reports analog pool sensors to Home Assistant.
  *
  * @details
  * Implements the sensor entity interface for the OPNpool component, allowing ESPHome to

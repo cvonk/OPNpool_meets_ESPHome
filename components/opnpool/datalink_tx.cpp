@@ -1,6 +1,6 @@
 /**
  * @file datalink_tx.cpp
- * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver from data packets
+ * @brief Data Link layer: bytes from the RS485 transceiver from data packets
  *
  * @details
  * This file implements the data link layer transmitter for the OPNpool component,

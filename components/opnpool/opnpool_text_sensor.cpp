@@ -1,6 +1,6 @@
 /**
  * @file opnpool_text_sensor.cpp
- * @brief OPNpool - Reports digital pool text sensors to Home Assistant.
+ * @brief Reports digital pool text sensors to Home Assistant.
  *
  * @details
  * This file implements the OPNpool text sensor integration for ESPHome, enabling the

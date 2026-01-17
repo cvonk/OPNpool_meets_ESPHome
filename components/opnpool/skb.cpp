@@ -1,5 +1,5 @@
 /**
- * @brief OPNpool - Linux sk_buff inspired continuous memory for tx
+ * @brief Linux sk_buff inspired continuous memory for tx
  *
  *   Since this code originated from code which is public domain, I
  *   hereby declare this code to be public domain as well.

@@ -1,6 +1,6 @@
 /**
  * @file opnpool_state_rx.cpp
- * @brief OPNpool - Pool state: updates the state in response to network messages
+ * @brief Pool state: updates the state in response to network messages
  *
  * @details
  * This file contains the implementation of state update functions for the OPNpool ESPHome custom component.
@@ -101,12 +101,12 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg,
     static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
     static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
-    state->thermos[pool_idx].temp      =  msg->poolTemp;
-    state->thermos[ spa_idx].temp      =  msg->spaTemp;
-    state->thermos[pool_idx].set_point =  msg->poolSetpoint;
-    state->thermos[ spa_idx].set_point =  msg->spaSetpoint;
-    state->thermos[pool_idx].heat_src  = (msg->combined_heatSrc >> 0) & 0x03;  // bits 0-1 for POOL
-    state->thermos[ spa_idx].heat_src  = (msg->combined_heatSrc >> 2) & 0x03;  // bits 2-3 for SPA
+    state->thermos[pool_idx].temp      =  msg->pool_temp;
+    state->thermos[ spa_idx].temp      =  msg->spa_temp;
+    state->thermos[pool_idx].set_point =  msg->pool_set_point;
+    state->thermos[ spa_idx].set_point =  msg->spa_set_point;
+    state->thermos[pool_idx].heat_src  = (msg->combined_heat_src >> 0) & 0x03;  // bits 0-1 for POOL
+    state->thermos[ spa_idx].heat_src  = (msg->combined_heat_src >> 2) & 0x03;  // bits 2-3 for SPA
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstatelog::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
@@ -138,10 +138,10 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
     static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
     static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
-    state->thermos[pool_idx].set_point = msg->poolSetpoint;
-    state->thermos[ spa_idx].set_point = msg->spaSetpoint;
-    state->thermos[pool_idx].heat_src = (msg->combined_heatSrc >> 0) & 0x03;
-    state->thermos[ spa_idx].heat_src = (msg->combined_heatSrc >> 2) & 0x03;
+    state->thermos[pool_idx].set_point = msg->pool_set_point;
+    state->thermos[ spa_idx].set_point = msg->spa_set_point;
+    state->thermos[pool_idx].heat_src = (msg->combined_heat_src >> 0) & 0x03;
+    state->thermos[ spa_idx].heat_src = (msg->combined_heat_src >> 2) & 0x03;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstatelog::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
@@ -269,10 +269,10 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
             static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1);
         uint8_t const circuit_idx = enum_index(circuit);
 
-        uint16_t const startHi = msg_sched->prgStartHi;
-        uint16_t const stopHi  = msg_sched->prgStopHi;
-        uint16_t const start = (startHi << 8) | msg_sched->prgStartLo;
-        uint16_t const stop  = ( stopHi << 8) | msg_sched->prgStopLo;
+        uint16_t const startHi = msg_sched->prg_start_hi;
+        uint16_t const stopHi  = msg_sched->prg_stop_hi;
+        uint16_t const start = (startHi << 8) | msg_sched->prg_start_lo;
+        uint16_t const stop  = ( stopHi << 8) | msg_sched->prg_stop_lo;
 
         if (circuit_idx < ARRAY_SIZE(state->scheds)) {
 
@@ -314,7 +314,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
     }
 
         // update state->circuits.active
-    uint16_t const bitmask_active_circuits = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
+    uint16_t const bitmask_active_circuits = ((uint16_t)msg->active_hi << 8) | msg->active_lo;
     static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.active),
         "size mismatch for state->circuits.active");
     _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, NETWORK_POOL_MODE_BITS_COUNT);
@@ -337,15 +337,15 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
     static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size err for spa_idx");
 
     if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
-        state->thermos[spa_idx].temp = msg->poolTemp;
+        state->thermos[spa_idx].temp = msg->pool_temp;
     }
     if (state->circuits.active[to_index(network_pool_circuit_t::POOL)]) {
-        state->thermos[pool_idx].temp = msg->poolTemp;
+        state->thermos[pool_idx].temp = msg->pool_temp;
     }
     state->thermos[pool_idx].heating  = msg->combined_heatStatus & 0x04;       // bit2 is for POOL
     state->thermos[spa_idx ].heating  = msg->combined_heatStatus & 0x08;       // bit3 is for SPA
-    state->thermos[pool_idx].heat_src = (msg->combined_heatSrcs >> 0) & 0x03;  // lowest nibble is for POOL
-    state->thermos[spa_idx ].heat_src = (msg->combined_heatSrcs >> 2) & 0x03;  // highest nibble is for SPA
+    state->thermos[pool_idx].heat_src = (msg->combined_heat_srcs >> 0) & 0x03;  // lowest nibble is for POOL
+    state->thermos[spa_idx ].heat_src = (msg->combined_heat_srcs >> 2) & 0x03;  // highest nibble is for SPA
 
         // update state->modes.is_set
     uint8_t const bitmask_active_modes = msg->mode_bits;
@@ -363,8 +363,8 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
     static_assert(air_idx < ARRAY_SIZE(state->temps), "size err for air_idx");
     static_assert(water_idx < ARRAY_SIZE(state->temps), "size err for water_idx");
 
-    state->temps[air_idx].temp = msg->airTemp;
-    state->temps[water_idx].temp = msg->waterTemp;
+    state->temps[air_idx].temp = msg->air_temp;
+    state->temps[water_idx].temp = msg->water_temp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstatelog::add_state(dbg, "state", state);
@@ -423,8 +423,8 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg,
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const address = (msg->addressHi << 8) | msg->addressLo;
-        uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
+        uint16_t const address = (msg->address_hi << 8) | msg->address_lo;
+        uint16_t const value = (msg->value_hi << 8) | msg->value_lo;
         network_pump_program_addr_t const address_enum =
             static_cast<network_pump_program_addr_t>(address);
         opnpoolstatelog::add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
@@ -451,8 +451,8 @@ OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg,
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const valueHi = msg->valueHi;
-        uint16_t const value = (valueHi << 8) | msg->valueLo;
+        uint16_t const value_hi = msg->value_hi;
+        uint16_t const value = (value_hi << 8) | msg->value_lo;
         opnpoolstatelog::add_pump_program(dbg, "resp", value);
     }
 }
@@ -568,13 +568,13 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
         return;
     }
 
-    uint16_t const power = ((uint16_t)msg->powerHi << 8) | msg->powerLo;
-    uint16_t const speed = ((uint16_t)msg->speedHi << 8) | msg->speedLo;
+    uint16_t const power = ((uint16_t)msg->power_hi << 8) | msg->power_lo;
+    uint16_t const speed = ((uint16_t)msg->speed_hi << 8) | msg->speed_lo;
 
     state->pump = {
         .time    = {
-            .hour   = msg->clockHr,
-            .minute = msg->clockMin
+            .hour   = msg->clock_hr,
+            .minute = msg->clock_min
         },
         .mode    = static_cast<network_pump_mode_t>(msg->mode),
         .running = running,
@@ -584,7 +584,7 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
         .speed   = speed,
         .level   = msg->level,
         .error   = msg->error,
-        .timer   = msg->remainingMin
+        .timer   = msg->remaining_min
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {

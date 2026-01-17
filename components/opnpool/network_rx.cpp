@@ -1,6 +1,6 @@
 /**
  * @file network_rx.cpp
- * @brief OPNpool - Network layer: decode a datalink packet, to form a network message
+ * @brief Network layer: decode a datalink packet, to form a network message
  * 
  * @details
  * This file implements the decoding logic for the network layer of the OPNpool component.

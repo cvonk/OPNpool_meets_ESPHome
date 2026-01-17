@@ -1,6 +1,6 @@
 /**
  * @file opnpool_switch.cpp
- * @brief OPNpool - Actuates switch settings from Home Assistant on the pool controller.
+ * @brief Actuates switch settings from Home Assistant on the pool controller.
  *
  * @details
  * This file implements the switch entity interface for the OPNpool component, enabling

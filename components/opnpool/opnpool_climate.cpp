@@ -1,6 +1,6 @@
 /**
  * @file opnpool_climate.cpp
- * @brief OPNpool - Actuates climate settings from Home Assistant on the pool controller.
+ * @brief Actuates climate settings from Home Assistant on the pool controller.
  *
  * @details
  * Implements the climate entity interface for the OPNpool component, allowing ESPHome to
@@ -206,17 +206,17 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
             .typ = network_msg_typ_t::CTRL_HEAT_SET,
             .u = {
                 .ctrl_heat_set = {
-                    .poolSetpoint = thermos_new[climate_pool_idx].set_point,
-                    .spaSetpoint = thermos_new[climate_spa_idx].set_point,
-                    .combined_heatSrc = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
+                    .pool_set_point = thermos_new[climate_pool_idx].set_point,
+                    .spa_set_point = thermos_new[climate_spa_idx].set_point,
+                    .combined_heat_src = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
                 },
             },
         };
 
         ESP_LOGV(TAG, "Sending HEAT_SET: pool_sp=%u°F, spa_sp=%u°F, heat_src=0x%02X", 
-                  msg.u.ctrl_heat_set.poolSetpoint, 
-                  msg.u.ctrl_heat_set.spaSetpoint,
-                  msg.u.ctrl_heat_set.combined_heatSrc);
+                  msg.u.ctrl_heat_set.pool_set_point, 
+                  msg.u.ctrl_heat_set.spa_set_point,
+                  msg.u.ctrl_heat_set.combined_heat_src);
                   
         ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());
     }

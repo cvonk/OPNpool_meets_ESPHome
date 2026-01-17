@@ -1,5 +1,5 @@
 /**
- * @brief OPNpool - Linux sk_buff inspired continuous memory
+ * @brief Linux sk_buff inspired continuous memory
  * the removed header. The assertion ensures that the data pointer doesn't move before
  * the head pointer, preventing underflow and preserving the reserved headroom boundary.
  * pointer to a single `skb`, modifying its internal pointers to "strip" or "add"

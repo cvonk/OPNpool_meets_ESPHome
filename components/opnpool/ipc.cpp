@@ -1,10 +1,10 @@
 /**
  * @file ipc.cpp
- * @brief OPNpool - Inter Process Communication: mailboxes used to exchange messages between tasks
- * 
+ * @brief Inter Process Communication: mailboxes used to exchange messages between tasks
+ *
  * The design assumes a single-threaded environment (as provided by ESPHome), so no
  * explicit thread safety is implemented. 
- * 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later

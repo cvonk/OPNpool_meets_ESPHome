@@ -1,6 +1,6 @@
 /**
  * @file rs485.cpp
- * @brief OPNpool - RS485 driver: receive/sent bytes to/from the RS485 transceiver
+ * @brief RS485 driver: receive/sent bytes to/from the RS485 transceiver
  *
  * @details
  * This file implements the RS485 hardware driver for the OPNpool component, providing
@@ -44,6 +44,9 @@ static TickType_t _txTimeout = (100 / portTICK_PERIOD_MS);
 static uart_port_t _uart_port;
 static gpio_num_t _flow_control_pin;
 
+/**
+ * @brief Returns the number of bytes available in the UART RX buffer.
+ */
 static int
 _available()
 {
@@ -52,18 +55,35 @@ _available()
     return length;
 }
 
+/**
+ * @brief     Reads bytes from the UART RX buffer with a timeout.
+ *
+ * @param dst Destination buffer.
+ * @param len Number of bytes to read.
+ * @return    Number of bytes read.
+ */
 static int
 _read_bytes(uint8_t * dst, uint32_t len)
 {
     return uart_read_bytes(_uart_port, dst, len, _rxTimeout);
 }
 
+/**
+ * @brief     Writes bytes to the UART TX buffer.
+ *
+ * @param src Source buffer.
+ * @param len Number of bytes to write.
+ * @return    Number of bytes written.
+ */
 static int
 _write_bytes(uint8_t * src, size_t len)
 {
     return uart_write_bytes(_uart_port, (char *) src, len);
 }
 
+/**
+ * @brief Flushes the UART TX and RX buffers, waiting for TX to complete.
+ */
 static void
 _flush(void)
 {
@@ -71,6 +91,12 @@ _flush(void)
     ESP_ERROR_CHECK(uart_flush_input(_uart_port));
 }
 
+/**
+ * @brief        Queues a packet for transmission on the RS-485 bus.
+ *
+ * @param handle RS-485 handle.
+ * @param pkt    Packet to queue.
+ */
 static void
 _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
 {
@@ -86,6 +112,12 @@ _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
     }
 }
 
+/**
+ * @brief        Dequeues a packet from the RS-485 transmit queue.
+ *
+ * @param handle RS-485 handle.
+ * @return       Pointer to the dequeued packet, or NULL if none available.
+ */
 static datalink_pkt_t const *
 _dequeue(rs485_handle_t const handle)
 {
@@ -99,6 +131,11 @@ _dequeue(rs485_handle_t const handle)
     return NULL;
 }
 
+/**
+ * @brief           Sets the RS-485 transceiver to transmit or receive mode.
+ *
+ * @param tx_enable True to enable transmit mode, false for receive mode.
+ */
 static void
 _tx_mode(bool const tx_enable)
 {

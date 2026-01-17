@@ -18,9 +18,6 @@ namespace opnpool {
  * @brief Exported functions
  */
 
-    // network.cpp
-uint8_t network_ic_len(uint8_t const ic_typ);
-
     // network_rx.cpp
 esp_err_t network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity);
 

@@ -1,12 +1,13 @@
 /**
  * @file datalink_pkt.h
- * @brief OPNpool - Defines the core data structure for the OPNpool data link layer.
- * 
+ * @brief Defines the core data structure for the OPNpool data link layer.
+ *
  * @details
- * This header defines the core data structures, enums, and utility functions for the OPNpool data link layer.
- * The file defines the main datalink packet structure used for encapsulating protocol messages, along with macros
- * for alignment and packing to ensure compatibility with embedded hardware.
- * 
+ * This header defines the core data structures, enums, and utility functions for the
+ * OPNpool data link layer. The file defines the main datalink packet structure used for
+ * encapsulating protocol messages, along with macros for alignment and packing to ensure
+ * compatibility with embedded hardware.
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @licence SPDX-License-Identifier: GPL-3.0-or-later
@@ -124,6 +125,7 @@ enum class datalink_typ_pump_t : uint8_t {
  * @brief Chlorinator message types
  */
 
+ // MUST MATCH _ic_type_len_table in datalink_rx.cpp
 enum class datalink_typ_chlor_t : uint8_t {
     PING_REQ   = 0x00,
     PING_RESP  = 0x01,

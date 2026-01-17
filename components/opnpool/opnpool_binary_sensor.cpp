@@ -1,6 +1,6 @@
 /**
  * @file opnpool_binary_sensor.cpp
- * @brief OPNpool - Reports digital pool sensors to Home Assistant.
+ * @brief Reports digital pool sensors to Home Assistant.
  *
  * @details
  * Implements the binary sensor entity interface for the OPNpool component, allowing

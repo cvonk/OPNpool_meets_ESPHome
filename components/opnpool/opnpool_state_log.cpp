@@ -1,6 +1,6 @@
 /**
  * @file opnpool_state_log.cpp
- * @brief OPNpool - Pool state: log state as a JSON-formatted string
+ * @brief Pool state: log state as a JSON-formatted string
  *
  * @details
  * This file provides functions to serialize the OPNpool controller's internal state and
