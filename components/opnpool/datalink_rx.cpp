@@ -163,32 +163,40 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
 }
 
 
-// Lookup table for IC message type lengths
-// MUST MATCH datalink_typ_chlor_t enum
-static constexpr uint8_t _ic_type_len_table[] = {
-    sizeof(network_msg_chlor_ping_req_t),
-    sizeof(network_msg_chlor_ping_resp_t),
-    sizeof(network_msg_chlor_name_resp_t),
-    sizeof(network_msg_chlor_level_set_t),
-    sizeof(network_msg_chlor_level_resp_t),
-    sizeof(network_msg_chlor_name_req_t)
-};
-static_assert(ARRAY_SIZE(_ic_type_len_table) == enum_count<datalink_typ_chlor_t>(), "IC type length table does not match datalink_typ_chlor_t enum");
 
+/**
+ * @brief        Returns the length of the IC network message for a given type.
+ *
+ * @note         This can't be a table, because the datalink_typ_chlor_t enum is non-continuous.
+ * 
+ * @param ic_typ The IC message type (as uint8_t/datalink_typ_chlor_t).
+ * @return       The size of the corresponding network message struct, or 0 if unknown.
+ */
 static uint8_t _network_ic_len(uint8_t const ic_typ)
 {
-    auto typ = static_cast<size_t>(static_cast<datalink_typ_chlor_t>(ic_typ));
-
-    if (typ < ARRAY_SIZE(_ic_type_len_table)) {
-        return _ic_type_len_table[typ];
+    auto typ = static_cast<datalink_typ_chlor_t>(ic_typ);
+    switch (typ) {
+        case datalink_typ_chlor_t::PING_REQ:
+            return sizeof(network_msg_chlor_ping_req_t);
+        case datalink_typ_chlor_t::PING_RESP:
+            return sizeof(network_msg_chlor_ping_resp_t);
+        case datalink_typ_chlor_t::NAME_RESP:
+            return sizeof(network_msg_chlor_name_resp_t);
+        case datalink_typ_chlor_t::LEVEL_SET:
+            return sizeof(network_msg_chlor_level_set_t);
+        case datalink_typ_chlor_t::LEVEL_RESP:
+            return sizeof(network_msg_chlor_level_resp_t);
+        case datalink_typ_chlor_t::NAME_REQ:
+            return sizeof(network_msg_chlor_name_req_t);
+        default:
+            return 0;
     }
-    return 0;
 }
 
 /*
- * Reads a A5/IC protocol header (or times-out) Writes the header details to `pkt->typ`,
- * `pkt->src`, `pkt->dst`, `pkt->data_len` The bytes received are stored in
- * `local->head[]` Called from `datalink_rx_pkt`
+ * Reads a A5/IC protocol header (or times-out). Writes the header details to `pkt->typ`,
+ * `pkt->src`, `pkt->dst`, `pkt->data_len`. The bytes received are stored in
+ * `local->head[]`. Called from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -219,8 +227,6 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 return ESP_OK;
             }
             break;
-
-
         }
         case datalink_prot_t::IC: {
             datalink_hdr_ic_t * const hdr = &local->head->ic.hdr;
@@ -239,13 +245,13 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
         default:
             break;
     }
-    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X", static_cast<uint8_t>(pkt->prot));
+    ESP_LOGW(TAG, "unsupported pkt->prot 0x%02X", static_cast<uint8_t>(pkt->prot));
       return ESP_FAIL;
 }
 
 /*
- * Reads a A5/IC protocol data (or times-out) Writes the data to `pkt->data[]` Called from
- * `datalink_rx_pkt`
+ * Reads a A5/IC protocol data (or times-out). Writes the data to `pkt->data[]`. Called
+ * from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -269,7 +275,7 @@ _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 
 /*
  * Reads a A5/IC protocol tail (or times-out) The bytes received are stored in
- * `local->tail` (the CRC) Called from `datalink_rx_pkt`
+ * `local->tail` (the CRC). Called from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -298,7 +304,7 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
         default:
             break;
     }
-    ESP_LOGE(TAG, "unsupported pkt->prot 0x%02X !", static_cast<uint8_t>(pkt->prot));
+    ESP_LOGW(TAG, "unsupported pkt->prot 0x%02X !", static_cast<uint8_t>(pkt->prot));
     return ESP_FAIL;
 }
 
@@ -330,7 +336,7 @@ _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
     if (local->crc_ok) {
         return ESP_OK;
     }
-    ESP_LOGE(TAG, "crc err (rx=0x%03x calc=0x%03x)", crc.rx, crc.calc);
+    ESP_LOGW(TAG, "crc err (rx=0x%03x calc=0x%03x)", crc.rx, crc.calc);
     return ESP_FAIL;
 }
 

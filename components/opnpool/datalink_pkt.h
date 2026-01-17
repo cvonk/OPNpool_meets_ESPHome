@@ -123,9 +123,9 @@ enum class datalink_typ_pump_t : uint8_t {
 
 /**
  * @brief Chlorinator message types
+ * 
+ * @note  Keep in sync with _network_ic_len in datalink_rx.cpp
  */
-
- // MUST MATCH _ic_type_len_table in datalink_rx.cpp
 enum class datalink_typ_chlor_t : uint8_t {
     PING_REQ   = 0x00,
     PING_RESP  = 0x01,
