@@ -14,21 +14,16 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
   public:
     OpnPoolSwitch(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
 
-    void setup() override;
     void dump_config() override;
-    
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
-    void set_idx(uint8_t idx) { this->idx_ = idx; }
-    uint8_t get_idx() const { return this->idx_; }
-    
     void write_state(bool state) override;  // change triggered by Home Assistant
     
+    uint8_t get_idx() const { return this->idx_; }    
     void update_switch(const poolstate_t *new_state);
     void publish_value_if_changed(bool const new_value);
 
   protected:
-    uint8_t idx_;
-    OpnPool * parent_;
+    uint8_t const idx_;
+    OpnPool * const parent_;
 
     struct last_value_t {
         bool valid{false};

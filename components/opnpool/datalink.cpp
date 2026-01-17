@@ -1,16 +1,19 @@
 /**
  * @file datalink.cpp
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver to/from data packets
- * 
+ *
  * @details
- * This file implements core functions for the OPNpool data link layer, facilitating the conversion between
- * raw RS485 byte streams and structured protocol data packets. It provides utilities for handling protocol
- * preambles and postambles, address group extraction and composition, and CRC calculation for packet integrity.
- * These foundational routines are used by both the transmitter and receiver to ensure reliable and standards-
- * compliant communication between the ESPHome component and pool equipment over the RS485 bus.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ * This file implements core functions for the OPNpool data link layer, facilitating the
+ * conversion between raw RS485 byte streams and structured protocol data packets. It
+ * provides utilities for handling protocol preambles and postambles, address group
+ * extraction and composition, and CRC calculation for packet integrity. These
+ * foundational routines are used by both the transmitter and receiver to ensure reliable
+ * and standards- compliant communication between the ESPHome component and pool equipment
+ * over the RS485 bus.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later

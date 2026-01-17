@@ -20,7 +20,8 @@
  * - Periodically sending control and status requests (such as heat and schedule queries) to
  *   keep the pool state up to date.
  * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk

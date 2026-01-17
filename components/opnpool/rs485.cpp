@@ -1,17 +1,19 @@
 /**
  * @file rs485.cpp
  * @brief OPNpool - RS485 driver: receive/sent bytes to/from the RS485 transceiver
- * 
+ *
  * @details
- * This file implements the RS485 hardware driver for the OPNpool component, providing low-level
- * functions to initialize, configure, and operate the RS485 transceiver on ESPHome-supported hardware.
- * It handles UART setup for half-duplex communication, GPIO configuration for transmit/receive direction,
- * and manages a transmit queue for outgoing packets. The driver exposes a handle with function pointers
- * for higher-level protocol layers to interact with the RS485 interface, ensuring reliable and efficient
+ * This file implements the RS485 hardware driver for the OPNpool component, providing
+ * low-level functions to initialize, configure, and operate the RS485 transceiver on
+ * ESPHome-supported hardware. It handles UART setup for half-duplex communication, GPIO
+ * configuration for transmit/receive direction, and manages a transmit queue for outgoing
+ * packets. The driver exposes a handle with function pointers for higher-level protocol
+ * layers to interact with the RS485 interface, ensuring reliable and efficient
  * communication with pool equipment over the RS485 bus.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -101,8 +103,8 @@ static void
 _tx_mode(bool const tx_enable)
 {
 	// messages should be sent directly after an A5 packets (and before any IC packets)
-	// 2BD: there might be a mandatory wait after enabling this pin !!!!!!!
-    // A few words on the DE signal:
+	// 2BD: there might be a mandatory wait after enabling this pin !!!!!!! A few words on
+	// the DE signal:
     //  - choose a GPIO that doesn't mind being pulled down during reset
 
     if (tx_enable) {
@@ -125,7 +127,8 @@ _tx_mode(bool const tx_enable)
  * for RS485 operations. Returns a handle to the initialized RS485 interface for use by
  * higher-level protocol layers.
  *
- * @param rs485_pins Pointer to the structure containing RX, TX, and flow control pin numbers.
+ * @param rs485_pins Pointer to the structure containing RX, TX, and flow control pin
+ * numbers.
  * @return rs485_handle_t Handle to the initialized RS485 interface.
  */
 rs485_handle_t

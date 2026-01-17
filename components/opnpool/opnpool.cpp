@@ -1,12 +1,12 @@
 /**
  * @file opnpool.cpp
  * @brief Implementation of the OPNpool component for ESPHome.
- * 
+ *
  * @details
- * This file contains the implementation of the OPNpool component, which provides integration
- * between an OPNpool interface and the ESPHome ecosystem. The component manages communication
- * with the Pentair pool controller via RS485, processes datalink and network layer
- * messages, and exposes pool state and controls as ESPHome entities.
+ * This file contains the implementation of the OPNpool component, which provides
+ * integration between an OPNpool interface and the ESPHome ecosystem. The component
+ * manages communication with the Pentair pool controller via RS485, processes datalink
+ * and network layer messages, and exposes pool state and controls as ESPHome entities.
  *
  * The OPNpool component is responsible for:
  * - Spawning and supervising the pool_task, a FreeRTOS task that handles low-level RS485
@@ -14,13 +14,14 @@
  * - Updating ESPHome climate, switch, sensor, binary sensor, and text sensor entities
  *   based on the latest pool state.
  * - Providing setter methods for associating ESPHome entities with the OPNpool component.
- * 
+ *
  * The design leverages modular helper functions for each protocol layer and uses FreeRTOS
- * primitives for task scheduling and inter-task communication. Extensive logging and debug
- * output are provided for troubleshooting and protocol analysis.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ * primitives for task scheduling and inter-task communication. Extensive logging and
+ * debug output are provided for troubleshooting and protocol analysis.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -116,10 +117,10 @@ inline void dump_if(EntityT *entity)
 
 /**
  * @brief Set up the OpnPool component.
- * 
- * This function initializes the OpnPool state, sets up inter-process communication (IPC) queues,
- * and starts the pool task that handles RS485 communication, datalink layer, and network layer.
- * It also publishes the interface firmware version if available.
+ *
+ * This function initializes the OpnPool state, sets up inter-process communication (IPC)
+ * queues, and starts the pool task that handles RS485 communication, datalink layer, and
+ * network layer. It also publishes the interface firmware version if available.
  */
 void OpnPool::setup() {
     
@@ -144,7 +145,8 @@ void OpnPool::setup() {
         return;
     }
 
-        // spin off a pool_task that handles RS485 communication, datalink layer and network layer
+        // spin off a pool_task that handles RS485 communication, datalink layer and
+        // network layer
     if (xTaskCreate(&pool_task, "pool_task", 2*4096, this->ipc_, 3, NULL) != pdPASS) {
         ESP_LOGE(TAG, "Failed to create pool_task");
         return;
@@ -163,10 +165,9 @@ void OpnPool::setup() {
 
 /**
  * @brief Main loop for the OpnPool component.
- * 
- * This function is called repeatedly by the main ESPHome loop. It handles
- * service requests from the pool by checking the IPC queue for messages
- * from the pool task.
+ *
+ * This function is called repeatedly by the main ESPHome loop. It handles service
+ * requests from the pool by checking the IPC queue for messages from the pool task.
  * Warning: don't do any blocking operations here.
  */
 void OpnPool::loop() {
@@ -186,10 +187,10 @@ void OpnPool::loop() {
 
 /**
  * @brief Dump the configuration of the OpnPool component.
- * 
- * This function logs the configuration of the OpnPool component, including
- * the RS485 pin assignments and the configuration of all associated climate,
- * switch, sensor, binary sensor, and text sensor components.
+ *
+ * This function logs the configuration of the OpnPool component, including the RS485 pin
+ * assignments and the configuration of all associated climate, switch, sensor, binary
+ * sensor, and text sensor components.
  */
 void OpnPool::dump_config() {
 

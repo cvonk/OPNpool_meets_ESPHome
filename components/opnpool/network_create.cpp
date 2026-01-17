@@ -1,14 +1,16 @@
 /**
  * @file network_create.cpp
  * @brief OPNpool - Network layer: create datalink_pkt from network_msg
- * 
+ *
  * @details
- * This file implements the logic for constructing datalink packets from higher-level network messages
- * within the OPNpool component. It provides functions to allocate buffers, set protocol headers, and
- * serialize network message data into the appropriate datalink packet format for transmission over RS-485.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ * This file implements the logic for constructing datalink packets from higher-level
+ * network messages within the OPNpool component. It provides functions to allocate
+ * buffers, set protocol headers, and serialize network message data into the appropriate
+ * datalink packet format for transmission over RS-485.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later

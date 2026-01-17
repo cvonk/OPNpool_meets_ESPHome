@@ -9,18 +9,16 @@ namespace opnpool {
 class OpnPool;  // Forward declaration only - don't include opnpool.h!
 
 class OpnPoolSensor : public sensor::Sensor, public Component {
+
   public:
     OpnPoolSensor(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
-    void setup() override;
     void dump_config() override;
-    
-    void set_parent(OpnPool *parent) { this->parent_ = parent; }
     
     void publish_value_if_changed(float value, float tolerance = 0.01f);
 
   protected:
-    uint8_t    idx_;
-    OpnPool *  parent_;
+    uint8_t const   idx_;
+    OpnPool * const parent_;
 
     struct last_value_t {
         bool  valid{false};

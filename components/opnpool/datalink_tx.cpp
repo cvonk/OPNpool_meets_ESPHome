@@ -1,16 +1,19 @@
 /**
  * @file datalink_tx.cpp
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver from data packets
- * 
+ *
  * @details
- * This file implements the data link layer transmitter for the OPNpool component, responsible for constructing
- * protocol-compliant packets for transmission over the RS485 bus. It provides functions to add protocol-specific
- * headers and tails (including preambles and CRCs) for both A5 and IC protocols, ensuring correct framing and
- * integrity of outgoing messages. The implementation manages buffer manipulation, protocol selection, and queues
- * completed packets for transmission by the RS485 driver. This layer enables reliable and standards-compliant
- * communication with pool equipment by encapsulating higher-level messages into properly formatted data link packets.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
+ * This file implements the data link layer transmitter for the OPNpool component,
+ * responsible for constructing protocol-compliant packets for transmission over the RS485
+ * bus. It provides functions to add protocol-specific headers and tails (including
+ * preambles and CRCs) for both A5 and IC protocols, ensuring correct framing and
+ * integrity of outgoing messages. The implementation manages buffer manipulation,
+ * protocol selection, and queues completed packets for transmission by the RS485 driver.
+ * This layer enables reliable and standards-compliant communication with pool equipment
+ * by encapsulating higher-level messages into properly formatted data link packets.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
@@ -111,11 +114,11 @@ _enter_a5_tail(datalink_tail_a5_t * const tail, uint8_t const * const start, uin
  * Adds protocol headers and tails to a data packet and queues it for RS485 transmission.
  *
  * @details
- * This function constructs a protocol-compliant packet by adding the appropriate
- * header and tail (preamble and CRC) for the specified protocol (IC, A5/controller,
- * or A5/pump). It prepares the socket buffer for transmission, and enqueues the
- * completed packet for transmission by the RS485 driver. This function is typically
- * called from the pool_task to send messages to pool equipment.
+ * This function constructs a protocol-compliant packet by adding the appropriate header
+ * and tail (preamble and CRC) for the specified protocol (IC, A5/controller, or A5/pump).
+ * It prepares the socket buffer for transmission, and enqueues the completed packet for
+ * transmission by the RS485 driver. This function is typically called from the pool_task
+ * to send messages to pool equipment.
  *
  * @param rs485 Pointer to the RS485 interface handle.
  * @param pkt   Pointer to the datalink packet structure to be transmitted.

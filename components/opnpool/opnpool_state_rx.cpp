@@ -1,24 +1,17 @@
 /**
  * @file opnpool_state_rx.cpp
- * @author Coert Vonk (@cvonk on GitHub)
  * @brief OPNpool - Pool state: updates the state in response to network messages
- * 
+ *
+ * @details
+ * This file contains the implementation of state update functions for the OPNpool ESPHome custom component.
+ * It processes incoming network messages from the pool controller, pump, and chlorine generator, updating
+ * the internal pool state and publishing changes to Home Assistant sensors. The design assumes a single-threaded
+ * environment (as provided by ESPHome), so no explicit thread safety is implemented. Verbose debug logging is
+ * supported via cJSON objects for diagnostics and troubleshooting.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
  * @copyright 2014, 2019, 2022, 2026, Coert Vonk
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
- * 
- * SPDX-License-Identifier: GPL-3.0-or-later
- * SPDX-FileCopyrightText: Copyright 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string.h>
@@ -51,12 +44,25 @@ constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
 
 
 /**
- * ctrl
- **/
-
+ * @brief       Process a controller time message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_time_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ * 
+ * This function updates the system time and date in the pool state based on the
+ * received controller time message. If verbose logging is enabled, the updated
+ * time-of-day is added to the debug JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_ctrl_time(cJSON * const dbg,
+    network_msg_ctrl_time_t const * const msg, poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_time");
+        return;
+    }
+
     state->system.tod.time.minute = msg->minute;
     state->system.tod.time.hour = msg->hour;
     state->system.tod.date.day = msg->day;
@@ -68,11 +74,30 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * co
     }
 }
 
+/**
+ * @brief       Process a controller heat response message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_heat_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the pool and spa thermostat values (temperature, set point, heat
+ * source) in the pool state based on the received controller heat response message. If
+ * verbose logging is enabled, the updated thermostat information is added to the debug
+ * JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg,
+    network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_heat_resp");
+        return;
+    }
     uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
     uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
+    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
     state->thermos[pool_idx].temp = msg->poolTemp;
     state->thermos[pool_idx].set_point = msg->poolSetpoint;
@@ -86,11 +111,29 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t 
     }
 }
 
+/**
+ * @brief       Process a controller heat set message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_heat_set_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the set point and heat source for the pool and spa thermostats
+ * in the pool state based on the received controller heat set message. If verbose logging
+ * is enabled, the updated thermostat information is added to the debug JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
+    network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_heat_set");
+        return;
+    }
     uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
     uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
+    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
     state->thermos[pool_idx].set_point = msg->poolSetpoint;
     state->thermos[pool_idx].heat_src = msg->heatSrc & 0x03;
@@ -102,8 +145,24 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t co
     }
 }
 
+
+/**
+ * @brief      Helper to update a bool array from a bitfield value.
+ *
+ * @param arr      Pointer to the bool array to update.
+ * @param bits     Bitfield value to extract bits from.
+ * @param count    Number of bits/array elements to update.
+ */
+static void 
+_update_bool_array_from_bits(bool * arr, uint16_t bits, size_t count) {
+    for (size_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        arr[ii] = (bits & mask) != 0;
+    }
+}
+
 static void
-_rx_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
+_rx_ctrl_hex_bytes(cJSON * const dbg, 
+    uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON * const array = cJSON_CreateArray();
@@ -118,26 +177,63 @@ _rx_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, poolstate_t *
     }
 }
 
+/**
+ * @brief       Process a controller circuit set message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_circuit_set_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the active state of a specific pool circuit based on the
+ * received controller circuit set message. If verbose logging is enabled, the updated
+ * circuit value is added to the debug JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg, 
+    network_msg_ctrl_circuit_set_t const * const msg,
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_circuit_set");
+        return;
+    }
     state->circuits.active[msg->circuit_plus_1 - 1] = msg->value;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         {
-            int idx = static_cast<int>(msg->circuit_plus_1) - 1;
-            if (idx >= 0) {
-                cJSON_AddNumberToObject(dbg, enum_str(static_cast<network_pool_circuit_t>(idx)), msg->value);
+            uint8_t const idx = msg->circuit_plus_1 - 1;
+            network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(idx);
+
+            if ((idx >= 0) && (idx < enum_count<network_pool_circuit_t>())) {
+                cJSON_AddNumberToObject(dbg, enum_str(circuit), msg->value);
             } else {
+                ESP_LOGW(TAG, "Received CIRCUIT_SET for invalid circuit index %u", idx);
                 cJSON_AddNumberToObject(dbg, "circuit_invalid", msg->value);
             }
         }
     }
 }
 
+/**
+ * @brief       Process a controller schedule response message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_sched_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the pool state with schedule information for each circuit based on
+ * the received controller schedule response message. If verbose logging is enabled, the
+ * updated schedule information is added to the debug JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
+    network_msg_ctrl_sched_resp_t const * const msg,
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_sched_resp");
+        return;
+    }
     poolstate_sched_t * state_scheds = state->scheds;    
     memset(state_scheds, 0, sizeof(poolstate_sched_t) * POOLSTATE_THERMO_TYP_COUNT );
 
@@ -147,18 +243,31 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_
 
         if (msg_sched->circuit_plus_1 != 0) {
 
-            uint8_t const circuit_idx = enum_index(static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1));
+            network_pool_circuit_t const circuit =
+                static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1);
+            uint8_t const circuit_idx = enum_index(circuit);
 
-            ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u",
-                ii, circuit_idx, enum_str(static_cast<network_pool_circuit_t>(circuit_idx)),
-                (static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo),
-                (static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo));
+            ESP_LOGVV(TAG, "RX schedule[%u]: circuit=%u(%s), start=%u, stop=%u", ii, circuit_idx, enum_str(circuit), (static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo), (static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo));
 
-            state_scheds[circuit_idx] = (poolstate_sched_t) {
-                .active = true,
-                .start = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStartHi) << 8) | static_cast<uint16_t>(msg_sched->prgStartLo)),
-                .stop = static_cast<uint16_t>((static_cast<uint16_t>(msg_sched->prgStopHi) << 8) | static_cast<uint16_t>(msg_sched->prgStopLo))
-            };
+            uint16_t const startHi = static_cast<uint16_t>(msg_sched->prgStartHi);
+            uint16_t const startLo = static_cast<uint16_t>(msg_sched->prgStartLo);
+            uint16_t const stopHi = static_cast<uint16_t>(msg_sched->prgStopHi);
+            uint16_t const stopLo = static_cast<uint16_t>(msg_sched->prgStopLo);
+            uint16_t const start = (startHi << 8) | startLo;
+            uint16_t const stop = (stopHi << 8) | stopLo;
+
+            if (circuit_idx < ARRAY_SIZE(state->scheds)) {
+
+                ESP_LOGV(TAG, "Updating schedule for circuit %u (%s): start=%u, stop=%u", circuit_idx, enum_str(circuit), start, stop);
+
+                state_scheds[circuit_idx] = (poolstate_sched_t) {
+                    .active = true,
+                    .start = start,
+                    .stop = stop
+                };
+            } else {
+                ESP_LOGW(TAG, "Received schedule for invalid circuit index %u", circuit_idx);
+            }
         }
     }
 
@@ -167,33 +276,48 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_
     }
 }
 
+/**
+ * @brief       Process a controller state broadcast message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_state_bcast_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the entire pool state (circuits, modes, thermostats, system time,
+ * and temperatures) based on the received controller state broadcast message. If verbose
+ * logging is enabled, the updated state is added to the debug JSON object.
+ */
 void
-OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * state)
+OpnPoolState::rx_ctrl_state(cJSON * const dbg,
+    network_msg_ctrl_state_bcast_t const * const msg, 
+    poolstate_t * state)
 {
-     // update state->circuits.active
-    bool * state_active = state->circuits.active;
-    uint16_t msg_mask = 0x00001;
-    uint16_t const msg_active = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
-    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_active++) {
-        *state_active = msg_active & msg_mask;
-        msg_mask <<= 1;
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_state");
+        return;
     }
+        // update state->circuits.active
+    uint16_t const bitmask_active_circuits = ((uint16_t)msg->activeHi << 8) | msg->activeLo;
+    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.active),
+        "size mismatch for state->circuits.active");
+    _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, NETWORK_POOL_MODE_BITS_COUNT);
+
         // if both SPA and POOL bits are set, only SPA runs
     if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
         state->circuits.active[to_index(network_pool_circuit_t::POOL)] = false;
     }
 
         // update state->circuits.delay
-    bool * state_delay = state->circuits.delay;
-    msg_mask = 0x00001;
-    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_delay++) {
-        *state_delay = msg->delay & msg_mask;
-        msg_mask <<= 1;
-    }
+    uint8_t const bitmask_delay_circuits = msg->delay;
+    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.delay),
+        "size mismatch for state->circuits.delay");
+    _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, NETWORK_POOL_MODE_BITS_COUNT);
 
         // update state->circuits.thermos (only update when the pump is running)
     uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
     uint8_t const spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
+    static_assert(spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
     if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
         state->thermos[spa_idx].temp = msg->poolTemp;
@@ -201,18 +325,16 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
     if (state->circuits.active[to_index(network_pool_circuit_t::POOL)]) {
         state->thermos[pool_idx].temp = msg->poolTemp;
     }
-    state->thermos[pool_idx].heating  = msg->heatStatus & 0x04;
-    state->thermos[spa_idx ].heating  = msg->heatStatus & 0x08;
-    state->thermos[pool_idx].heat_src = (msg->combined_heatSrcs >> 0) & 0x03;
-    state->thermos[spa_idx ].heat_src = (msg->combined_heatSrcs >> 2) & 0x03;
+    state->thermos[pool_idx].heating  = msg->combined_heatStatus & 0x04;       // bit2 is for POOL
+    state->thermos[spa_idx ].heating  = msg->combined_heatStatus & 0x08;       // bit3 is for SPA
+    state->thermos[pool_idx].heat_src = (msg->combined_heatSrcs >> 0) & 0x03;  // lowest nibble is for POOL
+    state->thermos[spa_idx ].heat_src = (msg->combined_heatSrcs >> 2) & 0x03;  // highest nibble is for SPA
 
         // update state->modes.is_set
-    bool * state_mode = state->modes.is_set;
-    msg_mask = 0x00001;
-    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, state_mode++) {
-        *state_mode = msg->mode_bits & msg_mask;
-        msg_mask <<= 1;
-    }
+    uint8_t const bitmask_active_modes = msg->mode_bits;
+    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->modes.is_set),
+        "size mismatch for state->modes.is_set");
+    _update_bool_array_from_bits(state->modes.is_set, bitmask_active_modes, NETWORK_POOL_MODE_BITS_COUNT);
 
         // update state->system (date is updated through `network_msg_ctrl_time`)
     state->system.tod.time.minute = msg->minute;
@@ -221,6 +343,8 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
         // update state->temps
     uint8_t const air_idx = to_index(poolstate_temp_typ_t::AIR);
     uint8_t const water_idx = to_index(poolstate_temp_typ_t::WATER);
+    static_assert(air_idx < ARRAY_SIZE(state->temps), "size mismatch for air_idx");
+    static_assert(water_idx < ARRAY_SIZE(state->temps), "size mismatch for water_idx");
 
     state->temps[air_idx].temp = msg->airTemp;
     state->temps[water_idx].temp = msg->waterTemp;
@@ -231,12 +355,25 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t co
 }
 
 /**
- * version
+ * @brief       Process a controller version response message and update the pool state.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_version_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the firmware version in the pool state based on the received
+ * controller version response message. If verbose logging is enabled, the updated
+ * version information is added to the debug JSON object.
  */
-
 void
-OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * state)
+OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg,
+    network_msg_ctrl_version_resp_t const * const msg,
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_version_resp");
+        return;
+    }
     state->system.version.major = msg->major;
     state->system.version.minor = msg->minor;
 
@@ -246,69 +383,165 @@ OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_r
 }
 
 /**
- * pump
- **/
-
+ * @brief       Process a pump register set message and log the register update.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_reg_set_t message.
+ *
+ * This function decodes the pump register address and value from the message and, if
+ * verbose logging is enabled, logs the register update to the debug JSON object.
+ */
 void
-OpnPoolState::rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
+OpnPoolState::rx_pump_reg_set(cJSON * const dbg,
+    network_msg_pump_reg_set_t const * const msg)
 {
-    uint16_t const address = (msg->addressHi << 8) | msg->addressLo;
-    uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
+    if (!msg) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_reg_set");
+        return;
+    }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_program(dbg, network_pump_program_addr_str(static_cast<network_pump_program_addr_t>(address)), value);
+        uint16_t const address = (msg->addressHi << 8) | msg->addressLo;
+        uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
+        network_pump_program_addr_t const address_enum =
+            static_cast<network_pump_program_addr_t>(address);
+        opnpoolstate_log_add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
     }
 }
 
+
+/**
+ * @brief       Process a pump register set response message and log the register value.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_reg_resp_t message.
+ *
+ * This function decodes the register value from the message and, if verbose logging is
+ * enabled, logs the value to the debug JSON object.
+ */
 void
-OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg)
+OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg,
+    network_msg_pump_reg_resp_t const * const msg)
 {
-    uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
+    if (!msg) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_reg_set_resp");
+        return;
+    }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        uint16_t const valueHi = msg->valueHi;
+        uint16_t const valueLo = msg->valueLo;
+        uint16_t const value = (valueHi << 8) | valueLo;
         opnpoolstate_log_add_pump_program(dbg, "resp", value);
     }
 }
 
+/**
+ * @brief       Process a pump control message and log the control value.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_ctrl_t message.
+ *
+ * This function logs the pump control value to the debug JSON object if verbose logging
+ * is enabled.
+ */
 void
-OpnPoolState::rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
+OpnPoolState::rx_pump_ctrl(cJSON * const dbg,
+    network_msg_pump_ctrl_t const * const msg)
 {
+    if (!msg) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_ctrl");
+        return;
+    }
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
        opnpoolstate_log_add_pump_ctrl(dbg, "ctrl", msg->ctrl);
     }
 }
 
+/**
+ * @brief      Process a pump mode message, update the pool state, and log the mode.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_mode_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the pump mode in the pool state and logs the mode to the debug
+ * JSON object if verbose logging is enabled.
+ */
 void
-OpnPoolState::rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_pump_mode(cJSON * const dbg,
+    network_msg_pump_mode_t const * const msg, 
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_mode");
+        return;
+    }
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
     }
     state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 }
 
+/**
+ * @brief      Process a pump run message, update the running state, and log the status.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_run_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the running state of the pump in the pool state and logs the
+ * status to the debug JSON object if verbose logging is enabled.
+ */
 void
-OpnPoolState::rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_pump_run(cJSON * const dbg,
+    network_msg_pump_run_t const * const msg, poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_run");
+        return;
+    }
+
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
     if (!running && !not_running) {
+        ESP_LOGW(TAG, "Invalid running state received in rx_pump_run");
         return;
-    }
+    }    
     state->pump.running = running;
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_running(dbg, "running", state->pump.running);
     }
 }
 
+/**
+ * @brief       Process a pump status response message, update the pool state, and log the status.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_pump_status_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates all pump status fields in the pool state and logs the status to
+ * the debug JSON object if verbose logging is enabled.
+ */
 void
-OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_pump_status(cJSON * const dbg,
+    network_msg_pump_status_resp_t const * const msg, poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_pump_status");
+        return;
+    }
+
     bool const running = msg->running == 0x0A;
     bool const not_running = msg->running == 0x04;
     if (!running && !not_running) {
+        ESP_LOGW(TAG, "Invalid running state received in rx_pump_status");
         return;
     }
+
     state->pump.running = running;
     state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
     state->pump.state = static_cast<network_pump_state_t>(msg->state);
@@ -326,26 +559,57 @@ OpnPoolState::rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t c
     }
 }
 
+/**
+ * @brief       Process a controller set acknowledgment message and log the result.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_ctrl_set_ack_t message.
+ *
+ * This function logs the acknowledgment type to the debug JSON object if verbose logging
+ * is enabled.
+ */
 void
-OpnPoolState::rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
+OpnPoolState::rx_ctrl_set_ack(cJSON * const dbg, 
+    network_msg_ctrl_set_ack_t const * const msg)
 {
+    if (!msg) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_ctrl_set_ack");
+        return;
+    }
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddStringToObject(dbg, "ack", enum_str(msg->typ));
     }
 }
 
 /**
- * chlor
- **/
-
+ * @brief       Process a chlorine generator name response message, update the pool state, and log the status.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_chlor_name_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the chlorine generator name and salt level in the pool state and
+ * logs the status to the debug JSON object if verbose logging is enabled.
+ */
 void
-OpnPoolState::rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_chlor_name_resp(cJSON * const dbg,
+    network_msg_chlor_name_resp_t const * const msg, 
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_name_resp");
+        return;
+    }
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
-    size_t name_size = sizeof(state->chlor.name);
-    strncpy(state->chlor.name, msg->name, name_size);
-    state->chlor.name[name_size - 1] = '\0';
+    if (msg->name == nullptr) {
+        ESP_LOGW(TAG, "Received null pointer for chlorine generator name");
+        state->chlor.name[0] = '\0';
+    } else {        
+        size_t name_size = sizeof(state->chlor.name);
+        strncpy(state->chlor.name, msg->name, name_size);
+        state->chlor.name[name_size - 1] = '\0';
+    }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
@@ -353,9 +617,26 @@ OpnPoolState::rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_
     }
 }
 
+/**
+ * @brief       Process a chlorine generator level set message, update the pool state, and log the status.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_chlor_level_set_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the chlorine generator level in the pool state and logs the
+ * status to the debug JSON object if verbose logging is enabled.
+ */
 void
-OpnPoolState::rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_chlor_level_set(cJSON * const dbg,
+    network_msg_chlor_level_set_t const * const msg,
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_level_set");
+        return;
+    }   
+
     state->chlor.level = msg->level;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -363,9 +644,27 @@ OpnPoolState::rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_
     }
 }
 
+/**
+ * @brief       Process a chlorine generator level set response message, update the pool state, and log the status.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_msg_chlor_level_resp_t message.
+ * @param state Pointer to the poolstate_t structure to update.
+ *
+ * This function updates the chlorine generator salt level and status in the pool state and logs the status to
+ * the debug JSON object if verbose logging is enabled.
+ * Note: good salt range is 2600 to 4500 ppm.
+ */
 void
-OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state)
+OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
+    network_msg_chlor_level_resp_t const * const msg,
+    poolstate_t * const state)
 {
+    if (!msg || !state) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_chlor_level_set_resp");
+        return;
+    }
+
     state->chlor.salt = (uint16_t)msg->salt * 50;
     if (msg->error & 0x01) {
         state->chlor.status = poolstate_chlor_status_t::LOW_FLOW;
@@ -381,18 +680,35 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level
         state->chlor.status = poolstate_chlor_status_t::OK;
     } else {
         state->chlor.status = poolstate_chlor_status_t::OTHER;
+        ESP_LOGW(TAG, "Unknown error code received in rx_chlor_level_set_resp: 0x%02X", msg->error);
     }
-    // good salt range is 2600 to 4500 ppm
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_chlor_resp(dbg, "chlor", &state->chlor);
     }
 }
 
+/**
+ * @brief      Update the pool state in response to a received network message.
+ *
+ * @param msg  Pointer to the received network_msg_t message.
+ * @return     ESP_OK if the state was updated and published, ESP_FAIL otherwise.
+ *
+ * This function processes the incoming network message, updates the pool state
+ * accordingly, and publishes changes to Home Assistant sensors if the state has changed.
+ * It also logs detailed debug information if verbose logging is enabled.
+ *
+ */
 esp_err_t
 OpnPoolState::rx_update(network_msg_t const * const msg)
 {
+        // reset name index for circuit names
   	name_reset_idx();
+
+    if (!msg) {
+        ESP_LOGW(TAG, "Null pointer passed to rx_update");
+        return ESP_FAIL;
+    }
 
         // remember the current state
     poolstate_t old_state;
@@ -505,6 +821,9 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
             break;
         case network_msg_typ_t::CHLOR_LEVEL_RESP:
             rx_chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
+            break;
+        default:
+            ESP_LOGW(TAG, "Received unknown message type: %u", static_cast<uint8_t>(msg->typ));
             break;
     }
 

@@ -1,17 +1,20 @@
 /**
  * @file datalink_rx.cpp
  * @brief OPNpool - Data Link layer: bytes from the RS485 transceiver to data packets
- * 
+ *
  * @details
- * This file implements the data link layer receiver for the OPNpool component, responsible for converting
- * raw bytes from the RS485 transceiver into structured data packets. It uses a state machine to detect
- * protocol preambles, read packet headers, data, and tails, and verify checksums for both A5 and IC protocols.
- * The implementation manages protocol-specific framing, handles CRC validation, and allocates socket buffers
- * for incoming packets. This layer ensures reliable and robust extraction of protocol packets from the RS485
- * byte stream, providing validated data to higher-level network processing in the OPNpool interface.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ * This file implements the data link layer receiver for the OPNpool component,
+ * responsible for converting raw bytes from the RS485 transceiver into structured data
+ * packets. It uses a state machine to detect protocol preambles, read packet headers,
+ * data, and tails, and verify checksums for both A5 and IC protocols. The implementation
+ * manages protocol-specific framing, handles CRC validation, and allocates socket buffers
+ * for incoming packets. This layer ensures reliable and robust extraction of protocol
+ * packets from the RS485 byte stream, providing validated data to higher-level network
+ * processing in the OPNpool interface.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -97,10 +100,9 @@ _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_prea
 }
 
 /*
- * Waits until a A5/IC protocol preamgle is received (or times-out)
- * Writes the protocol type to `pkt->prot`.
- * The bytes received are stored in `local->head[]`, updates `local->head_len` and `local->tail_len`.
- * Called from `datalink_rx_pkt`
+ * Waits until a A5/IC protocol preamgle is received (or times-out) Writes the protocol
+ * type to `pkt->prot`. The bytes received are stored in `local->head[]`, updates
+ * `local->head_len` and `local->tail_len`. Called from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -161,10 +163,9 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
 }
 
 /*
- * Reads a A5/IC protocol header (or times-out)
- * Writes the header details to `pkt->typ`, `pkt->src`, `pkt->dst`, `pkt->data_len`
- * The bytes received are stored in `local->head[]`
- * Called from `datalink_rx_pkt`
+ * Reads a A5/IC protocol header (or times-out) Writes the header details to `pkt->typ`,
+ * `pkt->src`, `pkt->dst`, `pkt->data_len` The bytes received are stored in
+ * `local->head[]` Called from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -220,9 +221,8 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 }
 
 /*
- * Reads a A5/IC protocol data (or times-out)
- * Writes the data to `pkt->data[]`
- * Called from `datalink_rx_pkt`
+ * Reads a A5/IC protocol data (or times-out) Writes the data to `pkt->data[]` Called from
+ * `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -245,9 +245,8 @@ _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 }
 
 /*
- * Reads a A5/IC protocol tail (or times-out)
- * The bytes received are stored in `local->tail` (the CRC)
- * Called from `datalink_rx_pkt`
+ * Reads a A5/IC protocol tail (or times-out) The bytes received are stored in
+ * `local->tail` (the CRC) Called from `datalink_rx_pkt`
  */
 
 static esp_err_t
@@ -330,8 +329,7 @@ static state_transition_t state_transitions[] = {
 };
 
 /**
- * Receive a packet from the RS-485 bus.
- * Uses a state machine `state_transitions[]`.
+ * Receive a packet from the RS-485 bus. Uses a state machine `state_transitions[]`.
  * Called from `pool_task`.
  */
 
@@ -348,8 +346,8 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
         for (uint_least8_t ii = 0; ii < ARRAY_SIZE(state_transitions); ii++, transition++) {
             if (state == transition->state) {
 
-                // calls the registered function for the current state.
-                // it will store head/tail in `local` and update `pkt`
+                // calls the registered function for the current state. it will store
+                // head/tail in `local` and update `pkt`
 
                 bool const ok = transition->fnc(rs485, &local, pkt) == ESP_OK;
 

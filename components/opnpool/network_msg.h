@@ -177,26 +177,26 @@ struct network_msg_ctrl_sched_resp_t {
 } PACK8;
 
 struct network_msg_ctrl_state_bcast_t {
-    uint8_t hour;               // 0
-    uint8_t minute;             // 1
-    uint8_t activeLo;           // 2
-    uint8_t activeHi;           // 3
-    uint8_t UNKNOWN_4to6[3];    // 4..6 more `active` circuits on fancy controllers
-    uint8_t UNKNOWN_7to8[2];    // 7..8
-    uint8_t mode_bits;          // 9
-    uint8_t heatStatus;         // 10
-    uint8_t UNKNOWN_11;         // 11
-    uint8_t delay;              // 12
-    uint8_t UNKNOWN_13;         // 13
-    uint8_t poolTemp;           // 14 water sensor 1
-    uint8_t spaTemp;            // 15 water sensor 2
-    uint8_t UNKNOWN_16;         // 16 unknown          (was major)
-    uint8_t waterTemp;          // 17 solar sensor 1   (was minor)
-    uint8_t airTemp;            // 18 air sensor
-    uint8_t waterTemp2;         // 19 solar sensor 2
-    uint8_t UNKNOWN_20tp21[2];  // 20..21 more water sensors?
-    uint8_t combined_heatSrcs;  // 22 
-    uint8_t UNKNOWN_23to28[6];  // 23..28
+    uint8_t hour;                // 0
+    uint8_t minute;              // 1
+    uint8_t activeLo;            // 2      (activeHi << 8 | activeLo) forms a bitmask for active circuits
+    uint8_t activeHi;            // 3
+    uint8_t UNKNOWN_4to6[3];     // 4..6   more `active` circuits on fancy controllers
+    uint8_t UNKNOWN_7to8[2];     // 7..8
+    uint8_t mode_bits;           // 9      bitmask for active pool modes
+    uint8_t combined_heatStatus; // 10     bit2 is for POOL, bit3 is for SPA
+    uint8_t UNKNOWN_11;          // 11
+    uint8_t delay;               // 12     bitmask for delay status of circuits
+    uint8_t UNKNOWN_13;          // 13
+    uint8_t poolTemp;            // 14     water sensor 1
+    uint8_t spaTemp;             // 15     water sensor 2
+    uint8_t UNKNOWN_16;          // 16     unknown          (was major)
+    uint8_t waterTemp;           // 17     solar sensor 1   (was minor)
+    uint8_t airTemp;             // 18     air sensor
+    uint8_t waterTemp2;          // 19     solar sensor 2
+    uint8_t UNKNOWN_20tp21[2];   // 20..21 more water sensors?
+    uint8_t combined_heatSrcs;   // 22     lowest nibble is for POOL, highest nibble is for SPA
+    uint8_t UNKNOWN_23to28[6];   // 23..28
 } PACK8;
 
 // just a guess

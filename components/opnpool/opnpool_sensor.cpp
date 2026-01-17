@@ -1,15 +1,16 @@
 /**
  * @file opnpool_sensor.cpp
  * @brief OPNpool - Reports analog pool sensors to Home Assistant.
- * 
+ *
  * @details
- * Implements the sensor entity interface for the OPNpool component, allowing ESPHome
- * to monitor pool-related sensor values (such as temperatures, etc.) and publish them
- * to Home Assistant.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
- * 
+ * Implements the sensor entity interface for the OPNpool component, allowing ESPHome to
+ * monitor pool-related sensor values (such as temperatures, etc.) and publish them to
+ * Home Assistant.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. The maximum number of analog sensors is limited
+ * by the use of uint8_t for indexing.
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -24,11 +25,6 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_sensor";
 
-void OpnPoolSensor::setup()
-{
-    // nothing to do here - my parent takes care of me :-)
-}
-
 void OpnPoolSensor::dump_config()
 {
     LOG_SENSOR("  ", "Sensor", this);
@@ -38,10 +34,10 @@ void OpnPoolSensor::dump_config()
  * @brief Publishes the sensor state to Home Assistant if it has changed.
  *
  * @details
- * Compares the new sensor value with the last published value. If the state is
- * not yet valid, or if the absolute difference between the new value and the last
- * value exceeds the given tolerance, updates the internal state and publishes the
- * new value to Home Assistant. This avoids redundant updates to Home Assistant.
+ * Compares the new sensor value with the last published value. If the state is not yet
+ * valid, or if the absolute difference between the new value and the last value exceeds
+ * the given tolerance, updates the internal state and publishes the new value to Home
+ * Assistant. This avoids redundant updates to Home Assistant.
  *
  * @param value      The new sensor value to be published.
  * @param tolerance  The minimum change required to trigger a new state publication.
@@ -50,6 +46,8 @@ void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
 {
     if (!last_value_.valid || fabs(last_value_.value - value) > tolerance) {
 
+        ESP_LOGV(TAG, "Publishing sensor [%u] value: %.2f", idx_, value);
+        
         this->publish_state(value);
         
         last_value_ = {

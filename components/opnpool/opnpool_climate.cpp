@@ -1,15 +1,17 @@
 /**
  * @file opnpool_climate.cpp
  * @brief OPNpool - Actuates climate settings from Home Assistant on the pool controller.
- * 
+ *
  * @details
  * Implements the climate entity interface for the OPNpool component, allowing ESPHome to
  * control and monitor pool/spa heating via RS-485. Handles mapping between ESPHome
  * climate calls and pool controller commands, and updates climate state from pool
  * controller feedback.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. The maximum number of climates is limited
+ * by the use of uint8_t for indexing.
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -54,11 +56,6 @@ enum class custom_presets_t {
     Solar
 };
 
-void OpnPoolClimate::setup()
-{
-    // nothing to do here - my parent takes care of me :-)
-}
-
 void OpnPoolClimate::dump_config()
 {
     LOG_CLIMATE("  ", "Climate", this);
@@ -67,15 +64,14 @@ void OpnPoolClimate::dump_config()
 
 /**
  * @brief Get the climate traits for the OPNpool climate entity
- * 
+ *
  * @details
  * Defines the supported modes, temperature range, and custom presets for the OPNpool
  * climate entity. Specifies how the pool/spa heating interface appears to Home Assistant,
  * including available climate modes, valid temperature range, and selectable heating
- * sources.
- * Home Assistant will use the custom presets (Heat/SolarPreferred/Solar), but has to use
- * the regular preset (NONE) to disable the heating source.
- * 
+ * sources. Home Assistant will use the custom presets (Heat/SolarPreferred/Solar), but
+ * has to use the regular preset (NONE) to disable the heating source.
+ *
  * @return climate::ClimateTraits 
  */
 climate::ClimateTraits OpnPoolClimate::traits()
@@ -108,16 +104,13 @@ climate::ClimateTraits OpnPoolClimate::traits()
  * Handles requests from Home Assistant to change the climate state of the pool or spa.
  *
  * @details
- * Processes incoming commands for target temperature, climate mode (OFF/HEAT), and
- * heat source (custom preset).
- * The pool controller doesn't have a concept of climate modes.  Instead we map it to
- * the pool/spa circuit switch.
- * Constructs and sends protocol messages to the pool controller if thermostat
- * settings have changed.
- * Unsupported climate modes are logged and reported to Home Assistant as OFF.
- * State is not published immediately; updates are sent after confirmation from the
- * pool controller.
- * 
+ * Processes incoming commands for target temperature, climate mode (OFF/HEAT), and heat
+ * source (custom preset). The pool controller doesn't have a concept of climate modes.
+ * Instead we map it to the pool/spa circuit switch. Constructs and sends protocol
+ * messages to the pool controller if thermostat settings have changed. Unsupported
+ * climate modes are logged and reported to Home Assistant as OFF. State is not published
+ * immediately; updates are sent after confirmation from the pool controller.
+ *
  * @param call The climate call object containing requested changes from Home Assistant.
  */
 void OpnPoolClimate::control(const climate::ClimateCall &call)
@@ -146,7 +139,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         thermos_new[climate_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
     }
 
-        // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on or off
+        // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on or
+        // off
 
     if (call.get_mode().has_value()) {
 
@@ -236,12 +230,13 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
  *
  * @details
  * Extracts current and target temperatures, climate mode, heat source, and heating action
- * from the provided pool state.
- * Maps pool controller heat source values to custom presets for Home Assistant.
- * Determines the climate action (heating, idle, or off) based on controller feedback.
- * Publishes the updated state to Home Assistant only if any relevant value has changed.
+ * from the provided pool state. Maps pool controller heat source values to custom presets
+ * for Home Assistant. Determines the climate action (heating, idle, or off) based on
+ * controller feedback. Publishes the updated state to Home Assistant only if any relevant
+ * value has changed.
  *
- * @param new_state Pointer to the latest poolstate_t structure containing updated pool controller data.
+ * @param new_state Pointer to the latest poolstate_t structure containing updated pool
+ * controller data.
  */
 void
 OpnPoolClimate::update_climate(const poolstate_t * new_state) 
@@ -301,12 +296,13 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
  * Publishes the climate entity state to Home Assistant if any relevant value has changed.
  *
  * @details
- * Compares the new climate state (current temperature, target temperature, mode, custom preset, 
- * and action) with the last published state. If any value differs, updates the internal state,
- * sets the appropriate preset or custom preset, and publishes the new state to Home Assistant.
- * This avoids redundant updates to Home Assistant.
+ * Compares the new climate state (current temperature, target temperature, mode, custom
+ * preset, and action) with the last published state. If any value differs, updates the
+ * internal state, sets the appropriate preset or custom preset, and publishes the new
+ * state to Home Assistant. This avoids redundant updates to Home Assistant.
  *
- * @param idx                        Index of the climate entity (pool or spa). (diagnostic only)
+ * @param idx                        Index of the climate entity (pool or spa).
+ * (diagnostic only)
  * @param value_current_temperature  The updated current temperature in Celsius.
  * @param value_target_temperature   The updated target temperature in Celsius.
  * @param value_mode                 The updated climate mode (OFF/HEAT).
@@ -314,7 +310,10 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
  * @param value_action               The updated climate action (heating, idle, or off).
  */
 void 
-OpnPoolClimate::publish_value_if_changed(uint8_t const idx, float const value_current_temperature, float const value_target_temperature, climate::ClimateMode const value_mode, char const * value_custom_preset, climate::ClimateAction const value_action)
+OpnPoolClimate::publish_value_if_changed(
+    uint8_t const idx, float const value_current_temperature, 
+    float const value_target_temperature, climate::ClimateMode const value_mode,
+    char const * value_custom_preset, climate::ClimateAction const value_action)
 {
     last_value_t * const last = &last_value_;
 

@@ -1,9 +1,21 @@
 /**
  * @file opnpool_state_log.cpp
  * @brief OPNpool - Pool state: log state as a JSON-formatted string
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ *
+ * @details
+ * This file provides functions to serialize the OPNpool controller's internal state and
+ * its subcomponents (system, pump, chlorinator, thermostats, schedules, etc.) into a
+ * compact JSON representation for logging.  Each function adds a specific part of the
+ * pool state to a cJSON object, using type-safe enum-to-string helpers and value checks
+ * to ensure clarity and correctness in the output.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. The code emphasizes maintainability, clear
+ * mapping between C++ structures and JSON.
+ *
+ * Usage: Call opnpoolstate_log_state() or the relevant add_* functions to serialize
+ * the desired state or subcomponent.
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -49,16 +61,32 @@ _add_date(cJSON * const obj, char const * const key, poolstate_date_t const * co
     cJSON_AddStringToObject(obj, key, data_str(date->year, date->month, date->day));
 }
 
+/**
+ * @brief      Add time-of-day and date information to a JSON object for logging.
+ *
+ * @param obj  The parent JSON object.
+ * @param key  The key under which to add the time/date object.
+ * @param tod  Pointer to the poolstate_tod_t structure to log.
+ */
 void
-opnpoolstate_log_add_tod(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
+opnpoolstate_log_add_tod(
+    cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
 {
     cJSON * const item = _create_item(obj, key);
     _add_time(item, "time", &tod->time);
     _add_date(item, "date", &tod->date);
 }
 
+/**
+ * @brief          Add firmware version information to a JSON object for logging.
+ *
+ * @param obj      The parent JSON object.
+ * @param key      The key under which to add the version string.
+ * @param version  Pointer to the poolstate_version_t structure to log.
+ */
 void
-opnpoolstate_log_add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version)
+opnpoolstate_log_add_version(
+    cJSON * const obj, char const * const key, poolstate_version_t const * const version)
 {
     cJSON_AddStringToObject(obj, key, version_str(version->major, version->minor));
 }
@@ -71,8 +99,16 @@ _add_system(cJSON * const obj, char const * const key, poolstate_t const * const
     opnpoolstate_log_add_version(item, "firmware", &state->system.version);
 }
 
+/**
+ * @brief        Add system information (time, date, firmware) to a JSON object for logging.
+ *
+ * @param obj    The parent JSON object.
+ * @param key    The key under which to add the system object.
+ * @param state  Pointer to the poolstate_t structure to log.
+ */
 void
-opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
+opnpoolstate_log_add_system(
+    cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     _add_system(obj, key, state);
 }
@@ -82,8 +118,9 @@ opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate
  **/
 
 static void
-_add_thermostat(cJSON * const obj, char const * const key, poolstate_thermo_t const * const thermostat,
-                       bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
+_add_thermostat(
+    cJSON * const obj, char const * const key, poolstate_thermo_t const * const thermostat,
+    bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
     if (showTemp) {
@@ -106,9 +143,21 @@ _add_thermos(cJSON * const obj, char const * const key, poolstate_t const * cons
     opnpoolstate_log_add_thermos(obj, key, state->thermos, true, true, true, true);
 }
 
+/**
+ * @brief              Add thermostat information to a JSON object for logging.
+ *
+ * @param obj          The parent JSON object.
+ * @param key          The key under which to add the thermostat array.
+ * @param thermos      Pointer to the array of poolstate_thermo_t structures.
+ * @param showTemp     Whether to include temperature values.
+ * @param showSp       Whether to include set point values.
+ * @param showSrc      Whether to include heat source values.
+ * @param showHeating  Whether to include heating status.
+ */
 void
-opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos,
-                             bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
+opnpoolstate_log_add_thermos(
+    cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos,
+    bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
     for (uint_least8_t ii = 0; ii < POOLSTATE_THERMO_TYP_COUNT; ii++, thermos++) {
@@ -123,7 +172,8 @@ opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstat
  **/
 
 static void
-_add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const * const sched)
+_add_schedule(
+    cJSON * const obj, char const * const key, poolstate_sched_t const * const sched)
 {
     if (sched->active) {
         cJSON * const item = _create_item(obj, key);
@@ -138,8 +188,18 @@ _add_scheds(cJSON * const obj, char const * const key, poolstate_t const * const
     opnpoolstate_log_add_sched(obj, key, state->scheds, true);
 }
 
+/**
+ * @brief           Add schedule information to a JSON object for logging.
+ *
+ * @param obj       The parent JSON object.
+ * @param key       The key under which to add the schedule array.
+ * @param scheds    Pointer to the array of poolstate_sched_t structures.
+ * @param showSched Whether to include schedule information.
+ */
 void
-opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched)
+opnpoolstate_log_add_sched(
+    cJSON * const obj, char const * const key, poolstate_sched_t const * scheds,
+    bool const showSched)
 {
     if (showSched) {
         cJSON * const item = _create_item(obj, key);
@@ -214,8 +274,16 @@ _add_circuits(cJSON * const obj, char const * const key, poolstate_t const * con
  * poolstate
  **/
 
+/**
+ * @brief       Add the controller pool state to a JSON object for logging.
+ *
+ * @param obj   The parent JSON object.
+ * @param key   The key under which to add the pool state object.
+ * @param state Pointer to the poolstate_t structure to log.
+ */
 void
-opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_t const * const state)
+opnpoolstate_log_add_state(
+    cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
     _add_system(item, "system", state);
@@ -230,14 +298,30 @@ opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_
  * poolstate->pump
  **/
 
+/**
+ * @brief       Add pump program value to a JSON object for logging.
+ *
+ * @param obj   The parent JSON object.
+ * @param key   The key under which to add the pump program value.
+ * @param value The pump program value to log.
+ */
 void
-opnpoolstate_log_add_pump_program(cJSON * const obj, char const * const key, uint16_t const value)
+opnpoolstate_log_add_pump_program(
+    cJSON * const obj, char const * const key, uint16_t const value)
 {
     cJSON_AddNumberToObject(obj, key, value);
 }
 
+/**
+ * @brief      Add pump control mode to a JSON object for logging.
+ *
+ * @param obj  The parent JSON object.
+ * @param key  The key under which to add the pump control value.
+ * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
+ */
 void
-opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl)
+opnpoolstate_log_add_pump_ctrl(
+    cJSON * const obj, char const * const key, uint8_t const ctrl)
 {
     char const * str;
     switch (ctrl) {
@@ -255,8 +339,16 @@ opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_
     cJSON_AddStringToObject(obj, key, str);
 }
 
+/**
+ * @brief      Add pump mode to a JSON object for logging.
+ *
+ * @param obj  The parent JSON object.
+ * @param key  The key under which to add the pump mode value.
+ * @param mode The pump mode value to log (as enum).
+ */
 void
-opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+opnpoolstate_log_add_pump_mode(
+    cJSON * const obj, char const * const key, network_pump_mode_t const mode)
 {
     cJSON_AddStringToObject(obj, key, enum_str(mode));
 }
@@ -267,15 +359,24 @@ _addPumpStateToObject(cJSON * const obj, char const * const key, network_pump_st
     cJSON_AddStringToObject(obj, key, enum_str(state));
 }
 
+/**
+ * @brief      Add pump running status to a JSON object for logging.
+ *
+ * @param obj     The parent JSON object.
+ * @param key     The key under which to add the running status.
+ * @param running The pump running status to log (true if running).
+ */
 void
-opnpoolstate_log_add_pump_running(cJSON * const obj, char const * const key, bool const running)
+opnpoolstate_log_add_pump_running(
+    cJSON * const obj, char const * const key, bool const running)
 {
     cJSON_AddBoolToObject(obj, key, running);
 }
 
 #if 0
 void
-cJSON_AddPumpStatusToObject(cJSON * const obj, char const * const key, poolstate_pump_t const * const pump)
+cJSON_AddPumpStatusToObject(
+    cJSON * const obj, char const * const key, poolstate_pump_t const * const pump)
 {
     cJSON * const item = _create_item(obj, key);
     opnpoolstate_log_add_pump_running(item, "running", pump->running);
@@ -305,8 +406,16 @@ _add_pump(cJSON * const obj, char const * const key, poolstate_t const * const s
     cJSON_AddNumberToObject(item, "timer", pump->timer);
 }
 
+/**
+ * @brief       Add pump information to a JSON object for logging.
+ *
+ * @param obj   The parent JSON object.
+ * @param key   The key under which to add the pump object.
+ * @param state Pointer to the poolstate_t structure to log.
+ */
 void
-opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state)
+opnpoolstate_log_add_pump(
+    cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     _add_pump(obj, key, state);
 }
@@ -315,8 +424,16 @@ opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t
  * poolstate->chlor
  **/
 
+/**
+ * @brief       Add chlorinator response information to a JSON object for logging.
+ *
+ * @param obj   The parent JSON object.
+ * @param key   The key under which to add the chlorinator response object.
+ * @param chlor Pointer to the poolstate_chlor_t structure to log.
+ */
 void
-opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
+opnpoolstate_log_add_chlor_resp(
+    cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
 {
     cJSON * const item = _create_item(obj, key);
     cJSON_AddNumberToObject(item, "salt", chlor->salt);
@@ -338,7 +455,8 @@ _add_chlor(cJSON * const obj, char const * const key, poolstate_t const * const 
  * and finally .. poolstate itself
  **/
 
-using poolstate_json_fnc_t = void (*)(cJSON * const obj, char const * const key, poolstate_t const * const state);
+using poolstate_json_fnc_t = void (*)(cJSON * const obj, char const * const key,
+    poolstate_t const * const state);
 
 struct poolstate_json_dispatch_t {
     poolstate_elem_typ_t const  typ;
@@ -357,11 +475,20 @@ static poolstate_json_dispatch_t _dispatches[] = {
     { poolstate_elem_typ_t::MODES,    "modes",    _add_modes    },
 };
 
+/**
+ * @brief Generate a JSON string representing the pool state or a specific element.
+ *
+ * @param state  Pointer to the pool state structure.
+ * @param typ    The poolstate element type to log, or ALL for the full state.
+ * @return       Unformatted JSON string (caller must free).
+ */
 char const *
 opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
 {
     name_reset_idx();
+
     cJSON * const obj = cJSON_CreateObject();
+
     poolstate_json_dispatch_t const * dispatch = _dispatches;
     for (uint_least8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {
         bool const all_types = typ == poolstate_elem_typ_t::ALL;

@@ -1,25 +1,17 @@
 /**
  * @file to_str.cpp
  * @brief Helper functions for converting values to strings using a fixed buffer.
- * 
- * @details
- * Provides lightweight, allocation-free string conversion utilities for unsigned integers and booleans,
- * optimized for embedded environments. All conversions use a shared fixed-size buffer to minimize memory
- * usage and avoid dynamic allocation. These functions are used throughout the OPNpool component for
- * logging, diagnostics, and protocol message formatting.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
  *
- * This file is part of OPNpool.
- * OPNpool is free software: you can redistribute it and/or modify it under the terms of
- * the GNU General Public License as published by the Free Software Foundation, either
- * version 3 of the License, or (at your option) any later version.
- * OPNpool is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
- * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License along with OPNpool. 
- * If not, see <https://www.gnu.org/licenses/>.
- * 
+ * @details
+ * Provides lightweight, allocation-free string conversion utilities for unsigned integers
+ * and booleans, optimized for embedded environments. All conversions use a shared
+ * fixed-size buffer to minimize memory usage and avoid dynamic allocation. These
+ * functions are used throughout the OPNpool component for logging, diagnostics, and
+ * protocol message formatting.
+ *
+ * The design assumes a single-threaded environment (as provided by ESPHome), so no
+ * explicit thread safety is implemented. 
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -56,7 +48,7 @@ name_reset_idx(void) {
 
 /**
  * @brief                Get a hexadecimal string representation of a bool
- * 
+ *
  * @param value          The bool value to convert
  * @return char const *  A string representing the value
  */
@@ -74,7 +66,7 @@ bool_str(bool const value)
 
 /**
  * @brief                Get a hexadecimal string representation of a uint8_t
- * 
+ *
  * @param value          The uint8_t value to convert
  * @return char const *  A string representing the value
  */
@@ -96,7 +88,7 @@ uint8_str(uint8_t const value)
 
 /**
  * @brief                Get a hexadecimal string representation of a uint16_t
- * 
+ *
  * @param value          The uint16_t value to convert
  * @return char const *  A string representing the value
  */
@@ -120,7 +112,7 @@ uint16_str(uint16_t const value)
 
 /**
  * @brief                Get a hexadecimal string representation of a uint32_t
- * 
+ *
  * @param value          The uint32_t value to convert
  * @return char const *  A string representing the value
  */
@@ -152,7 +144,7 @@ uint32_str(uint32_t const value)
 
 /**
  * @brief                Get a string representation of the controller date
- * 
+ *
  * @param year           The year of the date
  * @param month          The month of the date
  * @param day            The day of the date
@@ -173,7 +165,7 @@ data_str(uint16_t const year, uint8_t const month, uint8_t const day)
 
 /**
  * @brief                Get a string representation of the controller time
- * 
+ *
  * @param hour           The hour of the time
  * @param minute         The minute of the time
  * @return char const *  A string representing the time
@@ -193,7 +185,7 @@ time_str(uint8_t const hour, uint8_t const minute)
 
 /**
  * @brief                Get a string representation of the controller version number
- * 
+ *
  * @param major          The major version number
  * @param minor          The minor version number
  * @return char const *  A string representing the version number
