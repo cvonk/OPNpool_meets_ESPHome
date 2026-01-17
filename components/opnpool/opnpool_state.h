@@ -21,10 +21,6 @@ namespace opnpool {
 // Forward declarations instead of including ipc.h or FreeRTOS.h
 struct ipc_t;
 
-/**
- * @brief Pool state system information
- **/
-
 struct poolstate_time_t {
     uint8_t  hour;
     uint8_t  minute;
@@ -57,11 +53,6 @@ enum class poolstate_elem_system_typ_t : uint8_t {
     IF_VERSION   = 2
 };
 
-
-/**
- * @brief Pool state thermostat types
- **/
-
 enum class poolstate_thermo_typ_t : uint8_t {
     POOL = 0,
     SPA  = 1
@@ -81,14 +72,9 @@ enum class poolstate_elem_thermos_typ_t : uint8_t {
     HEATING   = 3
 };
 
-
-/**
- * @brief Pool state schedule
- **/
-
 enum class poolstate_elem_sched_typ_t : uint8_t {
     START = 0,
-    STOP = 1
+    STOP  = 1
 };
 
 struct poolstate_sched_t {
@@ -97,13 +83,8 @@ struct poolstate_sched_t {
     uint16_t  stop;
 };
 
-
-/**
- * @brief Pool state temperature types
- **/
-
 enum class poolstate_temp_typ_t : uint8_t {
-    AIR = 0,
+    AIR   = 0,
     WATER = 1
 };
 
@@ -115,23 +96,13 @@ enum class PoolstateElemTempTyp : uint8_t {
     TEMP = 0
 };
 
-
-/**
- * @brief Pool state mode bit set
- **/
-
 struct poolstate_modes_t {
     bool  is_set[enum_count<network_pool_mode_bits_t>()];  // IntelliSense flags this incorrectly
 };
 
-
-/**
- * @brief Pool state circuits
- **/
-
 struct poolstate_circuits_t {
-    bool     active[enum_count<network_pool_circuit_t>()];  // IntelliSense flags this incorrectly
-    bool     delay[enum_count<network_pool_circuit_t>()];   // IntelliSense flags this incorrectly
+    bool  active[enum_count<network_pool_circuit_t>()];  // IntelliSense flags this incorrectly
+    bool  delay[enum_count<network_pool_circuit_t>()];   // IntelliSense flags this incorrectly
 };
 
 enum class poolstate_elem_circuits_typ_t : uint8_t {
@@ -139,10 +110,6 @@ enum class poolstate_elem_circuits_typ_t : uint8_t {
     DELAY = 1
 };
 
-
-/**
- * @brief Pool state pump
- **/
 
 struct poolstate_pump_t {
     poolstate_time_t     time;
@@ -157,6 +124,7 @@ struct poolstate_pump_t {
     uint8_t              timer;
 };
 
+#if 0
 enum class poolstate_elem_pump_typ_t : uint8_t {
     TIME = 0,
     MODE = 1,
@@ -169,20 +137,16 @@ enum class poolstate_elem_pump_typ_t : uint8_t {
     ERROR = 8,
     TIMER = 9
 };
-
-
-/**
- * @brief Pool state chlorinator
- **/
+#endif
 
 enum class poolstate_chlor_status_t : uint8_t {
-    OK = 0,
-    LOW_FLOW = 1,
-    LOW_SALT = 2,
-    HIGH_SALT = 3,
-    COLD = 4,
+    OK         = 0,
+    LOW_FLOW   = 1,
+    LOW_SALT   = 2,
+    HIGH_SALT  = 3,
+    COLD       = 4,
     CLEAN_CELL = 5,
-    OTHER = 6
+    OTHER      = 6
 };
 
 struct poolstate_chlor_t {
@@ -192,18 +156,37 @@ struct poolstate_chlor_t {
     poolstate_chlor_status_t  status;
 };
 
+#if 0
 enum class poolstate_elem_chlor_typ_t : uint8_t {
     NAME   = 0,
     LEVEL  = 1,
     SALT   = 2,
     STATUS = 3
 };
-
+#endif
 
 /**
- * @brief Pool state structure containing all pool state information
- **/
-
+ * @brief Complete pool state structure for the pool automation system.
+ *
+ * This structure contains the full state of the pool system, including:
+ * - System information (date, time, firmware version)
+ * - Temperature readings (air, water)
+ * - Thermostat states (pool, spa)
+ * - Schedules for each circuit
+ * - Mode bitsets
+ * - Circuit states (active, delay)
+ * - Pump status (mode, running, power, etc.)
+ * - Chlorinator status (name, level, salt, status)
+ *
+ * @var system   System information (date, time, firmware version)
+ * @var temps    Array of temperature readings (e.g., air, water)
+ * @var thermos  Array of thermostat states (pool, spa)
+ * @var scheds   Array of schedules for each circuit
+ * @var modes    Mode bitsets (which pool modes are active)
+ * @var circuits Circuit states (active/delay for each circuit)
+ * @var pump     Pump status (mode, running, power, speed, etc.)
+ * @var chlor    Chlorinator status (name, level, salt, status)
+ */
 struct poolstate_t {
     poolstate_system_t    system;
     poolstate_temp_t      temps[enum_count<poolstate_temp_typ_t>()];
@@ -216,17 +199,18 @@ struct poolstate_t {
 };
 
 enum class poolstate_elem_typ_t : uint8_t {
-    SYSTEM = 0x00,
-    TEMP = 0x01,
-    THERMO = 0x02,
-    SCHED = 0x03,
+    SYSTEM   = 0x00,
+    TEMP     = 0x01,
+    THERMO   = 0x02,
+    SCHED    = 0x03,
     CIRCUITS = 0x04,
-    PUMP = 0x05,
-    CHLOR = 0x06,
-    MODES = 0x07,
-    ALL = 0x08
+    PUMP     = 0x05,
+    CHLOR    = 0x06,
+    MODES    = 0x07,
+    ALL      = 0x08
 };
 
+#if 0
 using poolstate_get_value_t = char *;
 
 struct poolstate_get_params_t {
@@ -234,6 +218,7 @@ struct poolstate_get_params_t {
     uint8_t              elem_sub_typ;
     uint8_t const        idx;
 };
+#endif
 
 /**
  * @brief Class representing the current state of the pool system
@@ -260,7 +245,7 @@ class OpnPoolState {
             return ESP_OK;
         }
 
-        /* openpool_state_rx.cpp */
+            // from openpool_state_rx.cpp
         esp_err_t rx_update(network_msg_t const * const msg);
 
     private:
@@ -271,7 +256,7 @@ class OpnPoolState {
             poolstate_t value;
         } last_state_;
         
-        /* openpool_state_rx.cpp */
+            // from openpool_state_rx.cpp
         void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state);

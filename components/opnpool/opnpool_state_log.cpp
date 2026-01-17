@@ -39,7 +39,7 @@ namespace opnpoolstatelog {
 static cJSON *
 _create_item(cJSON * const obj, char const * const key)
 {
-    if (key == NULL) {
+    if (key == nullptr) {
         return obj;
     }
     cJSON * const item = cJSON_CreateObject();
@@ -67,8 +67,7 @@ _add_date(cJSON * const obj, char const * const key, poolstate_date_t const * co
  * @param tod Pointer to the poolstate_tod_t structure containing the time and date.
  */
 void
-add_time_and_date(cJSON * const obj, char const * const key,
-    poolstate_tod_t const * const tod)
+add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
 {
     cJSON * const item = _create_item(obj, key);
     _add_time(item, "time", &tod->time);
@@ -111,15 +110,14 @@ _dispatch_add_system(cJSON * const obj, char const * const key, poolstate_t cons
  * @param state Pointer to the poolstate_t structure to log.
  */
 void
-add_system(
-    cJSON * const obj, char const * const key, poolstate_t const * const state)
+add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     _dispatch_add_system(obj, key, state);
 }
 
 static void
-_add_thermostat(
-    cJSON * const obj, char const * const key, poolstate_thermo_t const * const thermostat,
+_add_thermostat(cJSON * const obj, char const * const key,
+    poolstate_thermo_t const * const thermostat, 
     bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
@@ -130,7 +128,8 @@ _add_thermostat(
         cJSON_AddNumberToObject(item, "sp", thermostat->set_point);
     }
     if (showSrc) {
-        cJSON_AddStringToObject(item, "src", enum_str(static_cast<network_heat_src_t>(thermostat->heat_src)));
+        network_heat_src_t src = static_cast<network_heat_src_t>(thermostat->heat_src);
+        cJSON_AddStringToObject(item, "src", enum_str(src));
     }
     if (showHeating) {
         cJSON_AddBoolToObject(item, "heating", thermostat->heating);
@@ -410,13 +409,13 @@ _dispatch_add_pump(cJSON * const obj, char const * const key, poolstate_t const 
  *
  * @param obj   The parent JSON object.
  * @param key   The key under which to add the pump object.
- * @param state Pointer to the poolstate_t structure to log.
+ * @param state Pointer to the poolstate_t structure containing the pump information.
  */
 void
 add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     _dispatch_add_pump(obj, key, state);
-}
+}   
 
 /**
  * @brief       Add chlorinator response information to a JSON object for logging.
@@ -455,8 +454,10 @@ _dispatch_add_chlor(cJSON * const obj, char const * const key, poolstate_t const
  * and finally .. poolstate itself
  **/
 
-using poolstate_json_fnc_t = void (*)(cJSON * const obj, char const * const key,
-    poolstate_t const * const state);
+using poolstate_json_fnc_t = void (*)(
+    cJSON * const obj, char const * const key,
+    poolstate_t const * const state
+);
 
 struct poolstate_json_dispatch_t {
     poolstate_elem_typ_t const  typ;
@@ -465,7 +466,7 @@ struct poolstate_json_dispatch_t {
 };
 
 static poolstate_json_dispatch_t _dispatches[] = {
-    { poolstate_elem_typ_t::SYSTEM,   "system",   _dispatch_add_system  },
+    { poolstate_elem_typ_t::SYSTEM,   "system",   _dispatch_add_system   },
     { poolstate_elem_typ_t::TEMP,     "temps",    _dispatch_add_temps    },
     { poolstate_elem_typ_t::THERMO,   "thermos",  _dispatch_add_thermos  },
     { poolstate_elem_typ_t::PUMP,     "pump",     _dispatch_add_pump     },
