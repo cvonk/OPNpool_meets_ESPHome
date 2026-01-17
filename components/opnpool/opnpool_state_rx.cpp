@@ -70,7 +70,7 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg,
     state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_time_and_date(dbg, "tod", &state->system.tod);
+        opnpoolstatelog::add_time_and_date(dbg, "tod", &state->system.tod);
         ESP_LOGVV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
     }
 }
@@ -109,7 +109,7 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg,
     state->thermos[ spa_idx].heat_src  = (msg->combined_heatSrc >> 2) & 0x03;  // bits 2-3 for SPA
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
+        opnpoolstatelog::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
         ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].temp, state->thermos[spa_idx].temp, state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
@@ -144,7 +144,7 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
     state->thermos[ spa_idx].heat_src = (msg->combined_heatSrc >> 2) & 0x03;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
+        opnpoolstatelog::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
         ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
@@ -288,7 +288,7 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_sched(dbg, "scheds", state->scheds, true);
+        opnpoolstatelog::add_sched(dbg, "scheds", state->scheds, true);
     }
 }
 
@@ -367,7 +367,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
     state->temps[water_idx].temp = msg->waterTemp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_state(dbg, "state", state);
+        opnpoolstatelog::add_state(dbg, "state", state);
         ESP_LOGVV(TAG, "State updated from CTRL_STATE message");
     }
 }
@@ -399,7 +399,7 @@ OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg,
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_version(dbg, "firmware", &state->system.version);
+        opnpoolstatelog::add_version(dbg, "firmware", &state->system.version);
         ESP_LOGVV(TAG, "Firmware version updated to %u.%u", state->system.version.major, state->system.version.minor);
     }
 }
@@ -427,7 +427,7 @@ OpnPoolState::rx_pump_reg_set(cJSON * const dbg,
         uint16_t const value = (msg->valueHi << 8) | msg->valueLo;
         network_pump_program_addr_t const address_enum =
             static_cast<network_pump_program_addr_t>(address);
-        opnpoolstate_log_add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
+        opnpoolstatelog::add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
     }
 }
 
@@ -453,7 +453,7 @@ OpnPoolState::rx_pump_reg_set_resp(cJSON * const dbg,
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         uint16_t const valueHi = msg->valueHi;
         uint16_t const value = (valueHi << 8) | msg->valueLo;
-        opnpoolstate_log_add_pump_program(dbg, "resp", value);
+        opnpoolstatelog::add_pump_program(dbg, "resp", value);
     }
 }
 
@@ -476,7 +476,7 @@ OpnPoolState::rx_pump_ctrl(cJSON * const dbg,
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       opnpoolstate_log_add_pump_ctrl(dbg, "ctrl", msg->ctrl);
+       opnpoolstatelog::add_pump_ctrl(dbg, "ctrl", msg->ctrl);
     }
 }
 
@@ -503,7 +503,7 @@ OpnPoolState::rx_pump_mode(cJSON * const dbg,
     state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
+        opnpoolstatelog::add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
         ESP_LOGVV(TAG, "Pump mode updated to %s", enum_str(state->pump.mode));
     }
 }
@@ -536,7 +536,7 @@ OpnPoolState::rx_pump_run(cJSON * const dbg,
     state->pump.running = running;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump_running(dbg, "running", state->pump.running);
+        opnpoolstatelog::add_pump_running(dbg, "running", state->pump.running);
         ESP_LOGVV(TAG, "Pump running state updated to %u", state->pump.running);
     }
 }
@@ -588,7 +588,7 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_pump(dbg, "status", state);
+        opnpoolstatelog::add_pump(dbg, "status", state);
         ESP_LOGVV(TAG, "Pump status updated: running=%d, mode=%s, state=%s, power=%u, speed=%u, flow=%u, level=%u, error=%u, timer=%u, time=%02u:%02u", state->pump.running, enum_str(state->pump.mode), enum_str(state->pump.state), state->pump.power, state->pump.speed, state->pump.flow, state->pump.level, state->pump.error, state->pump.timer, state->pump.time.hour, state->pump.time.minute);
     }
 }
@@ -721,7 +721,7 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_chlor_resp(dbg, "chlor", &state->chlor);
+        opnpoolstatelog::add_chlor_resp(dbg, "chlor", &state->chlor);
         ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
     }
 }

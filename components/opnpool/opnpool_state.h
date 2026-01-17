@@ -67,12 +67,6 @@ enum class poolstate_thermo_typ_t : uint8_t {
     SPA  = 1
 };
 
-#ifdef __INTELLISENSE__
-#define POOLSTATE_THERMO_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-#else
-#define POOLSTATE_THERMO_TYP_COUNT (enum_count<poolstate_thermo_typ_t>())
-#endif
-
 struct poolstate_thermo_t {
     uint8_t  temp;
     uint8_t  set_point;
@@ -112,12 +106,6 @@ enum class poolstate_temp_typ_t : uint8_t {
     AIR = 0,
     WATER = 1
 };
-
-#ifdef __INTELLISENSE__
-#define POOLSTATE_TEMP_TYP_COUNT (2)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-#else
-#define POOLSTATE_TEMP_TYP_COUNT (enum_count<poolstate_temp_typ_t>())
-#endif
 
 struct poolstate_temp_t {
     uint8_t temp;
@@ -303,20 +291,22 @@ class OpnPoolState {
         void rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state);
 };
 
-    // poolstate_log.cpp
-void opnpoolstate_log_add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
-void opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
-void opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
-void opnpoolstate_log_add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void opnpoolstate_log_add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
-void opnpoolstate_log_add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
-void opnpoolstate_log_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode);
-void opnpoolstate_log_add_pump_running(cJSON * const obj, char const * const key, bool const running);
-void opnpoolstate_log_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void opnpoolstate_log_add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
-void opnpoolstate_log_add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
-char const * opnpoolstate_log_state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
+    // namespace-scope free functions from poolstate_log.cpp
+namespace opnpoolstatelog {
+    void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
+    void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
+    void add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
+    void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
+    void add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
+    void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
+    void add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
+    void add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
+    void add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode);
+    void add_pump_running(cJSON * const obj, char const * const key, bool const running);
+    void add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
+    void add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
+    char const * state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
+}
 
 }  // namespace opnpool
 }  // namespace esphome
