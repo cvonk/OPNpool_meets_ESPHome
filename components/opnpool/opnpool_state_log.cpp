@@ -58,7 +58,7 @@ _add_time(cJSON * const obj, char const * const key, poolstate_time_t const * co
 static void
 _add_date(cJSON * const obj, char const * const key, poolstate_date_t const * const date)
 {
-    cJSON_AddStringToObject(obj, key, data_str(date->year, date->month, date->day));
+    cJSON_AddStringToObject(obj, key, date_str(date->year, date->month, date->day));
 }
 
 /**
@@ -69,7 +69,7 @@ _add_date(cJSON * const obj, char const * const key, poolstate_date_t const * co
  * @param tod  Pointer to the poolstate_tod_t structure to log.
  */
 void
-opnpoolstate_log_add_tod(
+opnpoolstate_log_add_time_and_date(
     cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
 {
     cJSON * const item = _create_item(obj, key);
@@ -95,7 +95,7 @@ static void
 _add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-    opnpoolstate_log_add_tod(item, "tod", &state->system.tod);
+    opnpoolstate_log_add_time_and_date(item, "tod", &state->system.tod);
     opnpoolstate_log_add_version(item, "firmware", &state->system.version);
 }
 

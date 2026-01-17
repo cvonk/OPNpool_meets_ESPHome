@@ -70,7 +70,7 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg,
     state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpoolstate_log_add_tod(dbg, "tod", &state->system.tod);
+        opnpoolstate_log_add_time_and_date(dbg, "tod", &state->system.tod);
         ESP_LOGVV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
     }
 }

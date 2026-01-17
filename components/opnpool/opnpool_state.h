@@ -304,7 +304,7 @@ class OpnPoolState {
 };
 
     // poolstate_log.cpp
-void opnpoolstate_log_add_tod(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
+void opnpoolstate_log_add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void opnpoolstate_log_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void opnpoolstate_log_add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
 void opnpoolstate_log_add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);

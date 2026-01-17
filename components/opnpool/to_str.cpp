@@ -151,7 +151,7 @@ uint32_str(uint32_t const value)
  * @return char const *  A string representing the date
  */
 char const *
-data_str(uint16_t const year, uint8_t const month, uint8_t const day)
+date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 {
     size_t const len = 11;  // 2026-01-15\0
     if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
