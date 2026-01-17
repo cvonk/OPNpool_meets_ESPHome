@@ -46,13 +46,12 @@ void OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
 {
     if (!last_value_.valid || last_value_.value != value) {
 
-        ESP_LOGV(TAG, "Publishing text sensor [%u] value: %s", idx_, value.c_str());
-        
         this->publish_state(value);
         last_value_ = {
             .valid = true,
             .value = value
         };
+        ESP_LOGV(TAG, "Publised text sensor [%u]: %s", idx_, value.c_str());
     }
 }
 

@@ -43,8 +43,6 @@ void OpnPoolBinarySensor::dump_config() {
 void OpnPoolBinarySensor::publish_value_if_changed(bool const value)
 {
     if (!last_value_.valid || last_value_.value != value) {
-
-        ESP_LOGV(TAG, "Publishing binary sensor [%u] value: %s", idx_, value ? "ON" : "OFF");
         
         this->publish_state(value);
 
@@ -52,6 +50,7 @@ void OpnPoolBinarySensor::publish_value_if_changed(bool const value)
             .valid = true,
             .value = value
         };
+        ESP_LOGV(TAG, "Published binary sensor [%u]: %s", idx_, value ? "ON" : "OFF");
     }
 }
 

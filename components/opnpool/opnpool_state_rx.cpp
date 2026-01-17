@@ -71,7 +71,7 @@ OpnPoolState::rx_ctrl_time(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_tod(dbg, "tod", &state->system.tod);
-        ESP_LOGV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
+        ESP_LOGVV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
     }
 }
 
@@ -110,7 +110,7 @@ OpnPoolState::rx_ctrl_heat_resp(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
-        ESP_LOGV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].temp, state->thermos[spa_idx].temp, state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
+        ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].temp, state->thermos[spa_idx].temp, state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
 
@@ -145,7 +145,7 @@ OpnPoolState::rx_ctrl_heat_set(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
-        ESP_LOGV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
+        ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
 
@@ -230,7 +230,7 @@ OpnPoolState::rx_ctrl_circuit_set(cJSON * const dbg,
         } else {
             ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, enum_count<network_pool_circuit_t>());
         }
-        ESP_LOGV(TAG, "Circuit %u set to %u", circuit_idx, msg->value);
+        ESP_LOGVV(TAG, "Circuit %u set to %u", circuit_idx, msg->value);
     }
 }
 
@@ -261,7 +261,7 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
     for (uint_least8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
 
         if (msg_sched->circuit_plus_1 == 0) {
-            ESP_LOGW(TAG, "circuit_plus_1 for %u == 0", ii);
+            // nothing wrong with this. the schedule entry is just unused
             continue;
         }
 
@@ -281,7 +281,7 @@ OpnPoolState::rx_ctrl_sched_resp(cJSON * const dbg,
                 .start = start,
                 .stop = stop
             };
-            ESP_LOGV(TAG, "Schedule updated for %s: start=%u, stop=%u", enum_str(circuit), start, stop);
+            ESP_LOGVV(TAG, "Schedule updated for %s: start=%u, stop=%u", enum_str(circuit), start, stop);
         } else {
             ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, ARRAY_SIZE(state->scheds));
         }
@@ -368,7 +368,7 @@ OpnPoolState::rx_ctrl_state(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_state(dbg, "state", state);
-        ESP_LOGV(TAG, "State updated from CTRL_STATE message");
+        ESP_LOGVV(TAG, "State updated from CTRL_STATE message");
     }
 }
 
@@ -400,7 +400,7 @@ OpnPoolState::rx_ctrl_version_resp(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_version(dbg, "firmware", &state->system.version);
-        ESP_LOGV(TAG, "Firmware version updated to %u.%u", state->system.version.major, state->system.version.minor);
+        ESP_LOGVV(TAG, "Firmware version updated to %u.%u", state->system.version.major, state->system.version.minor);
     }
 }
 
@@ -504,7 +504,7 @@ OpnPoolState::rx_pump_mode(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_mode(dbg, "mode", static_cast<network_pump_mode_t>(msg->mode));
-        ESP_LOGV(TAG, "Pump mode updated to %s", enum_str(state->pump.mode));
+        ESP_LOGVV(TAG, "Pump mode updated to %s", enum_str(state->pump.mode));
     }
 }
 
@@ -537,7 +537,7 @@ OpnPoolState::rx_pump_run(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump_running(dbg, "running", state->pump.running);
-        ESP_LOGV(TAG, "Pump running state updated to %u", state->pump.running);
+        ESP_LOGVV(TAG, "Pump running state updated to %u", state->pump.running);
     }
 }
 
@@ -560,10 +560,11 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
         return;
     }
 
-    bool const running = msg->running == 0x0A;
-    bool const not_running = msg->running == 0x04;
+    bool const running     = msg->running == network_pump_running_t::ON;
+    bool const not_running = msg->running == network_pump_running_t::OFF;
+
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->running, __func__);
+        ESP_LOGW(TAG, "running state err 0x%02X (%u %u) in %s", static_cast<uint8_t>(msg->running), running, not_running, __func__);
         return;
     }
 
@@ -588,7 +589,7 @@ OpnPoolState::rx_pump_status(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_pump(dbg, "status", state);
-        ESP_LOGV(TAG, "Pump status updated: running=%d, mode=%s, state=%s, power=%u, speed=%u, flow=%u, level=%u, error=%u, timer=%u, time=%02u:%02u", state->pump.running, enum_str(state->pump.mode), enum_str(state->pump.state), state->pump.power, state->pump.speed, state->pump.flow, state->pump.level, state->pump.error, state->pump.timer, state->pump.time.hour, state->pump.time.minute);
+        ESP_LOGVV(TAG, "Pump status updated: running=%d, mode=%s, state=%s, power=%u, speed=%u, flow=%u, level=%u, error=%u, timer=%u, time=%02u:%02u", state->pump.running, enum_str(state->pump.mode), enum_str(state->pump.state), state->pump.power, state->pump.speed, state->pump.flow, state->pump.level, state->pump.error, state->pump.timer, state->pump.time.hour, state->pump.time.minute);
     }
 }
 
@@ -647,7 +648,7 @@ OpnPoolState::rx_chlor_name_resp(cJSON * const dbg,
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
         cJSON_AddStringToObject(dbg, "name", state->chlor.name);
-        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
+        ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
     }
 }
 
@@ -675,7 +676,7 @@ OpnPoolState::rx_chlor_level_set(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "level", state->chlor.level);
-        ESP_LOGV(TAG, "Chlorine level updated: level=%u", state->chlor.level);
+        ESP_LOGVV(TAG, "Chlorine level updated: level=%u", state->chlor.level);
     }
 }
 
@@ -721,7 +722,7 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         opnpoolstate_log_add_chlor_resp(dbg, "chlor", &state->chlor);
-        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
+        ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
     }
 }
 
@@ -872,6 +873,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
                           msg->typ == network_msg_typ_t::PUMP_RUN_RESP ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_REQ ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
+
     bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
     bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
 
@@ -898,12 +900,6 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         // compare old and new state
 
     bool const state_changed = !old_state_valid || memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
-
-    ESP_LOGVV(TAG, "State comparison: AUX2(%u) old_state=%u new_state=%u => state_changed=%u", 
-        to_index(network_pool_circuit_t::AUX2),
-        old_state.circuits.active[to_index(network_pool_circuit_t::AUX2)],
-        new_state.circuits.active[to_index(network_pool_circuit_t::AUX2)],
-        state_changed);
 
     if (state_changed) {
         set(&new_state);

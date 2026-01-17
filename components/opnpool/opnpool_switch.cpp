@@ -103,14 +103,13 @@ void OpnPoolSwitch::publish_value_if_changed(bool value)
 {
     if (!last_value_.valid || last_value_.value != value) {
 
-        ESP_LOGV(TAG, "Publishing switch [%u] value: %s", idx_, value ? "ON" : "OFF");
-        
         this->publish_state(value);
 
         last_value_ = {
             .valid = true,
             .value = value
         };
+        ESP_LOGV(TAG, "Published switch [%u]: %s", idx_, value ? "ON" : "OFF");
     }
 }
 

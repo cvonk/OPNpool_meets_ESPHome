@@ -42,14 +42,13 @@ logger:
     network_rx: WARN
     pool_task: VERBOSE
     network_create: WARN
-    opnpool: VERBOSE   # specifically allow high detail for opnpool component
-    opnpool_state: VERBOSE
+    opnpool: VERBOSE
+    opnpool_state: WARN
     opnpool_state_rx: VERBOSE
     opnpool_climate: VERBOSE
     opnpool_switch: VERBOSE
     opnpool_binary_sensor: VERBOSE
     opnpool_text_sensor: VERBOSE
-
 
 debug:
   update_interval: 5s  # for exception decoding in logs

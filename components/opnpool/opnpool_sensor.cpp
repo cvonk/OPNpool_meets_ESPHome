@@ -46,14 +46,13 @@ void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
 {
     if (!last_value_.valid || fabs(last_value_.value - value) > tolerance) {
 
-        ESP_LOGV(TAG, "Publishing sensor [%u] value: %.2f", idx_, value);
-        
         this->publish_state(value);
         
         last_value_ = {
             .valid = true,
             .value = value
         };
+        ESP_LOGV(TAG, "Published sensor [%u]: %.2f", idx_, value);        
     }
 }
 

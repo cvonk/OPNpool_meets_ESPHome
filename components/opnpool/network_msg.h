@@ -416,22 +416,27 @@ network_pump_program_addr_str(network_pump_program_addr_t addr)
     }
 }
 
+enum class network_pump_running_t : uint8_t {
+    OFF = 0x04,
+    ON  = 0x0A
+};
+
 struct network_msg_pump_status_resp_t {
-    bool                 running;      // 0
-    network_pump_mode_t  mode;         // 1
-    network_pump_state_t state;        // 2
-    uint8_t              powerHi;      // 3
-    uint8_t              powerLo;      // 4 [Watt]
-    uint8_t              speedHi;      // 5
-    uint8_t              speedLo;      // 6 [rpm]
-    uint8_t              flow;         // 7 [G/min]
-    uint8_t              level;        // 8 [%]
-    uint8_t              UNKNOWN_9;    // 9
-    uint8_t              error;        // 10
-    uint8_t              remainingHr;  // 11
-    uint8_t              remainingMin; // 12
-    uint8_t              clockHr;      // 13
-    uint8_t              clockMin;     // 14
+    network_pump_running_t running;      // 0
+    network_pump_mode_t    mode;         // 1
+    network_pump_state_t   state;        // 2
+    uint8_t                powerHi;      // 3
+    uint8_t                powerLo;      // 4 [Watt]
+    uint8_t                speedHi;      // 5
+    uint8_t                speedLo;      // 6 [rpm]
+    uint8_t                flow;         // 7 [G/min]
+    uint8_t                level;        // 8 [%]
+    uint8_t                UNKNOWN_9;    // 9
+    uint8_t                error;        // 10
+    uint8_t                remainingHr;  // 11
+    uint8_t                remainingMin; // 12
+    uint8_t                clockHr;      // 13
+    uint8_t                clockMin;     // 14
 } PACK8;
 
 /**
