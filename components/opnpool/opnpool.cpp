@@ -127,7 +127,7 @@ void OpnPool::setup() {
     ESP_LOGV(TAG, "Setting up OpnPool...");
 
     opnPoolState_ = new OpnPoolState(this);
-    if (!opnPoolState_ || !opnPoolState_->is_valid()) {
+    if (!opnPoolState_) {
         ESP_LOGE(TAG, "Failed to initialize OpnPoolState");
         return;
     }

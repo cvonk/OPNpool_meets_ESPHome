@@ -257,38 +257,40 @@ class OpnPool;
 class OpnPoolState {
 
     public:
-        OpnPoolState(OpnPool *parent);
-        bool is_valid() const { return protected_.valid; }
-        
-        void set(poolstate_t const * const state);
-        esp_err_t get(poolstate_t * const state);
-        //esp_err_t update(network_msg_t const * const msg);
-        //esp_err_t get_value(poolstate_get_params_t const * const params, poolstate_get_value_t * value);
-        const char * to_json(poolstate_elem_typ_t const typ);
+        OpnPoolState(OpnPool * const parent) : parent_{parent} {}
+        ~OpnPoolState() {}
 
+        void set(poolstate_t const * const state) {
+            memcpy(&last_state_.value, state, sizeof(poolstate_t));
+            last_state_.valid = true;
+        }
+        esp_err_t get(poolstate_t * const state) {
+            if (!last_state_.valid) {
+                return ESP_ERR_INVALID_STATE;
+            }
+            memcpy(state, &last_state_.value, sizeof(poolstate_t));
+            return ESP_OK;
+        }
+
+        /* openpool_state_rx.cpp */
         esp_err_t rx_update(network_msg_t const * const msg);
 
-#if 0        
-        esp_err_t get_poolstate_value(poolstate_t const * const state, poolstate_get_params_t const * const params, poolstate_get_value_t * value);
-#endif
-
     private:
-        struct poolstate_prot_t {
-            SemaphoreHandle_t xMutex;
-            poolstate_t * state;
-            bool valid;
-        };
+        OpnPool * const parent_;
 
-        OpnPool * parent_;
-        poolstate_prot_t protected_;
+        struct last_state_t {
+            bool        valid;
+            poolstate_t value;
+        } last_state_;
         
+        /* openpool_state_rx.cpp */
         void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state);
         void rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state);
         void rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state);
         void rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * state);
-        void rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * state);
+        void rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * const state);
+        void rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * const state);
         void rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg);
         void rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg);
         void rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg);

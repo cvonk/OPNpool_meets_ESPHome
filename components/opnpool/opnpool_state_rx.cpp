@@ -712,7 +712,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
 
         // remember the current state
     poolstate_t old_state;
-    (void) get(&old_state);
+    bool const old_state_valid = get(&old_state) == ESP_OK;
 
         // start with the current state
     poolstate_t new_state;
@@ -858,7 +858,9 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
     }
     cJSON_Delete(dbg);
 
-    bool const state_changed = memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
+        // compare old and new state
+
+    bool const state_changed = !old_state_valid || memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
 
     ESP_LOGVV(TAG, "State comparison: AUX2(%u) old_state=%u new_state=%u => state_changed=%u", 
         to_index(network_pool_circuit_t::AUX2),
