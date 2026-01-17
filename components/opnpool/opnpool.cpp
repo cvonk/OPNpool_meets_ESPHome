@@ -176,10 +176,29 @@ void OpnPool::loop() {
 
     if (xQueueReceive(ipc_->to_main_q, &msg, 0) == pdPASS) {  // check if a message is available
 
+            // reset global string buffer (as a new cycle begins)
+        name_reset_idx();
+
+            // start with the current state
+        poolstate_t last_state;
+        poolstate_t new_state;
+        opnPoolState_->get(&last_state);
+        memcpy(&new_state, &last_state, sizeof(poolstate_t));
+
         ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
-        if (opnPoolState_->rx_update(&msg) == ESP_OK) {
+        if (opnPoolState_->rx_update(&msg, &new_state) == ESP_OK) {
 
+            bool const state_changed = memcmp(&new_state, &last_state, sizeof(new_state)) != 0;
+
+            if (state_changed) {
+
+                opnPoolState_->set(&new_state);
+
+                    // publish this as an update to the HA sensors 
+                update_all(&new_state);
+            }
+ 
             ESP_LOGVV(TAG, "FYI Poolstate changed");
         }
     }

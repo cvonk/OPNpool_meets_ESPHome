@@ -188,6 +188,7 @@ enum class poolstate_elem_chlor_typ_t : uint8_t {
  * @var chlor    Chlorinator status (name, level, salt, status)
  */
 struct poolstate_t {
+    bool                  valid;
     poolstate_system_t    system;
     poolstate_temp_t      temps[enum_count<poolstate_temp_typ_t>()];
     poolstate_thermo_t    thermos[enum_count<poolstate_thermo_typ_t>()];
@@ -234,27 +235,23 @@ class OpnPoolState {
         ~OpnPoolState() {}
 
         void set(poolstate_t const * const state) {
-            memcpy(&last_state_.value, state, sizeof(poolstate_t));
-            last_state_.valid = true;
+            memcpy(&last_poolstate_, state, sizeof(poolstate_t));
+            last_poolstate_.valid = true;
         }
         esp_err_t get(poolstate_t * const state) {
-            if (!last_state_.valid) {
+            if (!last_poolstate_.valid) {
                 return ESP_ERR_INVALID_STATE;
             }
-            memcpy(state, &last_state_.value, sizeof(poolstate_t));
+            memcpy(state, &last_poolstate_, sizeof(poolstate_t));
             return ESP_OK;
         }
 
             // from openpool_state_rx.cpp
-        esp_err_t rx_update(network_msg_t const * const msg);
+        esp_err_t rx_update(network_msg_t const * const msg, poolstate_t * const state);
 
     private:
         OpnPool * const parent_;
-
-        struct last_state_t {
-            bool        valid;
-            poolstate_t value;
-        } last_state_;
+        poolstate_t last_poolstate_ = { .valid = false };
         
             // from openpool_state_rx.cpp
         void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);

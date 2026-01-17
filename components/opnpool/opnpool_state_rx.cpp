@@ -738,23 +738,15 @@ OpnPoolState::rx_chlor_level_set_resp(cJSON * const dbg,
  *
  */
 esp_err_t
-OpnPoolState::rx_update(network_msg_t const * const msg)
+OpnPoolState::rx_update(network_msg_t const * const msg, poolstate_t * const new_state)
 {
-        // reset name index for circuit names
-  	name_reset_idx();
-
-    if (!msg) {
+    if (msg == nullptr || new_state == nullptr) {
         ESP_LOGW(TAG, "null to %s", __func__);
         return ESP_FAIL;
     }
 
-        // remember the current state
-    poolstate_t old_state;
-    bool const old_state_valid = get(&old_state) == ESP_OK;
-
-        // start with the current state
-    poolstate_t new_state;
-    memcpy(&new_state, &old_state, sizeof(poolstate_t));
+        // the new state will always be valid
+    new_state->valid = true;
 
         // adjust the new_state based on the incoming message
     cJSON * const dbg = cJSON_CreateObject();
@@ -763,31 +755,31 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
             rx_ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);
             break;
         case network_msg_typ_t::CTRL_CIRCUIT_SET:
-            rx_ctrl_circuit_set(dbg, &msg->u.ctrl_circuit_set, &new_state);
+            rx_ctrl_circuit_set(dbg, &msg->u.ctrl_circuit_set, new_state);
             break;
         case network_msg_typ_t::CTRL_SCHED_REQ:
             break;
         case network_msg_typ_t::CTRL_SCHED_RESP:
-            rx_ctrl_sched_resp(dbg, &msg->u.ctrl_sched_resp, &new_state);
+            rx_ctrl_sched_resp(dbg, &msg->u.ctrl_sched_resp, new_state);
             break;
         case network_msg_typ_t::CTRL_STATE_BCAST:
-            rx_ctrl_state(dbg, &msg->u.ctrl_state, &new_state);
+            rx_ctrl_state(dbg, &msg->u.ctrl_state, new_state);
             break;
         case network_msg_typ_t::CTRL_TIME_REQ:
             break;
         case network_msg_typ_t::CTRL_TIME_RESP:
-            rx_ctrl_time(dbg, &msg->u.ctrl_time_resp, &new_state);
+            rx_ctrl_time(dbg, &msg->u.ctrl_time_resp, new_state);
             break;
         case network_msg_typ_t::CTRL_TIME_SET:
-            rx_ctrl_time(dbg, &msg->u.ctrl_time_set, &new_state);
+            rx_ctrl_time(dbg, &msg->u.ctrl_time_set, new_state);
             break;
         case network_msg_typ_t::CTRL_HEAT_REQ:
             break;
         case network_msg_typ_t::CTRL_HEAT_RESP:
-            rx_ctrl_heat_resp(dbg, &msg->u.ctrl_heat_resp, &new_state);
+            rx_ctrl_heat_resp(dbg, &msg->u.ctrl_heat_resp, new_state);
             break;
         case network_msg_typ_t::CTRL_HEAT_SET:
-            rx_ctrl_heat_set(dbg, &msg->u.ctrl_heat_set, &new_state);
+            rx_ctrl_heat_set(dbg, &msg->u.ctrl_heat_set, new_state);
             break;
         case network_msg_typ_t::CTRL_LAYOUT_REQ:
         case network_msg_typ_t::CTRL_LAYOUT_RESP:
@@ -802,28 +794,28 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         case network_msg_typ_t::CTRL_CIRC_NAMES_REQ:
         case network_msg_typ_t::CTRL_CHEM_REQ:
         case network_msg_typ_t::CHLOR_NAME_REQ:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, 1);
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, 1);
             break;
         case network_msg_typ_t::CTRL_VERSION_RESP:
-            rx_ctrl_version_resp(dbg, &msg->u.ctrl_version_resp, &new_state);
+            rx_ctrl_version_resp(dbg, &msg->u.ctrl_version_resp, new_state);
             break;
         case network_msg_typ_t::CTRL_VALVE_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_valve_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_valve_resp_t));
             break;
         case network_msg_typ_t::CTRL_SOLARPUMP_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
             break;
         case network_msg_typ_t::CTRL_DELAY_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_delay_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_delay_resp_t));
             break;
         case network_msg_typ_t::CTRL_HEAT_SETPT_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
             break;
         case network_msg_typ_t::CTRL_CIRC_NAMES_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
             break;
         case network_msg_typ_t::CTRL_SCHEDS_RESP:
-            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, &new_state, sizeof(network_msg_ctrl_scheds_resp_t));
+            _rx_ctrl_hex_bytes(dbg, msg->u.bytes, new_state, sizeof(network_msg_ctrl_scheds_resp_t));
             break;
         case network_msg_typ_t::PUMP_REG_SET:
             rx_pump_reg_set(dbg, &msg->u.pump_reg_set);
@@ -837,28 +829,28 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
             break;
         case network_msg_typ_t::PUMP_MODE_SET:
         case network_msg_typ_t::PUMP_MODE_RESP:
-            rx_pump_mode(dbg, &msg->u.pump_mode, &new_state);
+            rx_pump_mode(dbg, &msg->u.pump_mode, new_state);
             break;
         case network_msg_typ_t::PUMP_RUN_SET:
         case network_msg_typ_t::PUMP_RUN_RESP:
-            rx_pump_run(dbg, &msg->u.pump_run, &new_state);
+            rx_pump_run(dbg, &msg->u.pump_run, new_state);
             break;
         case network_msg_typ_t::PUMP_STATUS_REQ:
              break;
         case network_msg_typ_t::PUMP_STATUS_RESP:
-            rx_pump_status(dbg, &msg->u.pump_status_resp, &new_state);
+            rx_pump_status(dbg, &msg->u.pump_status_resp, new_state);
             break;
         case network_msg_typ_t::CHLOR_PING_REQ:
         case network_msg_typ_t::CHLOR_PING_RESP:
             break;
         case network_msg_typ_t::CHLOR_NAME_RESP:
-            rx_chlor_name_resp(dbg, &msg->u.chlor_name_resp, &new_state);
+            rx_chlor_name_resp(dbg, &msg->u.chlor_name_resp, new_state);
             break;
         case network_msg_typ_t::CHLOR_LEVEL_SET:
-            rx_chlor_level_set(dbg, &msg->u.chlor_level_set, &new_state);
+            rx_chlor_level_set(dbg, &msg->u.chlor_level_set, new_state);
             break;
         case network_msg_typ_t::CHLOR_LEVEL_RESP:
-            rx_chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, &new_state);
+            rx_chlor_level_set_resp(dbg, &msg->u.chlor_level_resp, new_state);
             break;
         default:
             ESP_LOGW(TAG, "Received unknown message type: %u", static_cast<uint8_t>(msg->typ));
@@ -896,18 +888,7 @@ OpnPoolState::rx_update(network_msg_t const * const msg)
         free(json);
     }
     cJSON_Delete(dbg);
-
-        // compare old and new state
-
-    bool const state_changed = !old_state_valid || memcmp(&new_state, &old_state, sizeof(poolstate_t)) != 0;
-
-    if (state_changed) {
-        set(&new_state);
-
-            // publish this as an update to the HA sensors 
-        parent_->update_all(&new_state);
-    }
-    return state_changed ? ESP_OK : ESP_FAIL;
+    return ESP_OK;
 }
 
 } // namespace opnpool

@@ -74,7 +74,8 @@ enum class TextSensorId : uint8_t {
     COUNT
 };
 
-// main component
+
+    // main component
 
 class OpnPool : public Component {
 
@@ -129,8 +130,6 @@ class OpnPool : public Component {
     void set_system_time_text_sensor(OpnPoolTextSensor * const ts);
     void set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts);
     void set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts);
-
-    //void write_packet(uint8_t command, const std::vector<uint8_t> &payload);
 
         // update sensors
     void update_climates(poolstate_t const * const state);
