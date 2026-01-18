@@ -43,7 +43,7 @@
 #include "pool_task.h"
 #include "opnpool.h"
 
-#include "opnpool_state.h"
+#include "pool_state.h"
 #include "opnpool_climate.h"
 #include "opnpool_switch.h"
 #include "opnpool_sensor.h"
@@ -127,9 +127,9 @@ void OpnPool::setup() {
     
     ESP_LOGI(TAG, "Setting up OpnPool...");
 
-    opnPoolState_ = new OpnPoolState(this);
-    if (!opnPoolState_) {
-        ESP_LOGE(TAG, "Failed to initialize OpnPoolState");
+    poolState_ = new PoolState(this);
+    if (!poolState_) {
+        ESP_LOGE(TAG, "Failed to initialize PoolState");
         return;
     }
 
@@ -183,16 +183,16 @@ void OpnPool::loop() {
             // start with the current state
         poolstate_t last_state;
         poolstate_t new_state;
-        opnPoolState_->get(&last_state);
+        poolState_->get(&last_state);
         memcpy(&new_state, &last_state, sizeof(poolstate_t));
 
         ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
         if (opnpool_state_rx::update(&msg, &new_state) == ESP_OK) {
 
-            if (opnPoolState_->has_changed(&new_state)) {
+            if (poolState_->has_changed(&new_state)) {
 
-                opnPoolState_->set(&new_state);
+                poolState_->set(&new_state);
 
                     // publish this as an update to the HA sensors 
                 update_all(&new_state);

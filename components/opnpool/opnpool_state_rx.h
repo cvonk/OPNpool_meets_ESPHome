@@ -4,7 +4,7 @@
 #endif
 
 #include "network_msg.h"
-#include "opnpool_state.h"
+#include "pool_state.h"
 
 namespace esphome {
 namespace opnpool {

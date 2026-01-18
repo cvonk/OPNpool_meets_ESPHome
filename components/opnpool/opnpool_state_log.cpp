@@ -30,7 +30,7 @@
 #include "to_str.h"
 #include "enum_helpers.h"
 #include "network.h"
-#include "opnpool_state.h"
+#include "pool_state.h"
 
 namespace esphome {
 namespace opnpool {

@@ -16,7 +16,7 @@ struct rs485_pins_t;
 struct poolstate_t;
 struct pending_switch_t;
 struct pending_climate_t;
-class OpnPoolState; 
+class PoolState; 
 class OpnPoolClimate;
 class OpnPoolSwitch;
 class OpnPoolSensor;
@@ -140,13 +140,13 @@ class OpnPool : public Component {
     void update_all(poolstate_t const * const state);
 
     ipc_t * get_ipc() { return ipc_; }
-    OpnPoolState * get_opnpool_state() { return opnPoolState_; }
+    PoolState * get_opnpool_state() { return poolState_; }
     OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }
 
   protected:
 
     ipc_t * ipc_{nullptr};  // interprocess communication structure and RS485-pins
-    OpnPoolState * opnPoolState_{nullptr};
+    PoolState * poolState_{nullptr};
 
     void service_requests_from_pool(ipc_t const * const ipc);
 

@@ -27,7 +27,7 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpool_state.h"
+#include "pool_state.h"
 #include "opnpool_switch.h"
 
 namespace esphome {

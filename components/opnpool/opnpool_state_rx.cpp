@@ -28,7 +28,7 @@
 #include "network.h"
 #include "network_msg.h"
 #include "ipc.h"
-#include "opnpool_state.h"
+#include "pool_state.h"
 #include "opnpool.h"
 #include "opnpool_state_log.h"
 
