@@ -28,7 +28,7 @@ class OpnPoolTextSensor;
 
 enum class ClimateId : uint8_t {
     POOL_CLIMATE = 0,
-    SPA_CLIMATE = 1,
+    SPA_CLIMATE = 1
 };
 enum class SwitchId : uint8_t {
     SPA = 0,
@@ -39,7 +39,7 @@ enum class SwitchId : uint8_t {
     POOL = 5,
     FEATURE2 = 6,
     FEATURE3 = 7,
-    FEATURE4 = 8,
+    FEATURE4 = 8
 };
 enum class SensorId : uint8_t {
     AIR_TEMPERATURE = 0,
@@ -56,7 +56,7 @@ enum class BinarySensorId : uint8_t {
     MODE_SERVICE = 1,
     MODE_TEMPERATURE_INC = 2,
     MODE_FREEZE_PROTECTION = 3,
-    MODE_TIMEOUT = 4,
+    MODE_TIMEOUT = 4
 };
 enum class TextSensorId : uint8_t {
     POOL_SCHED = 0,
