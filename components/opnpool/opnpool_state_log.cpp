@@ -34,6 +34,7 @@
 namespace esphome {
 namespace opnpool {
 
+namespace opnpool_state_rx {
 namespace opnpool_state_log {
 
 static cJSON *
@@ -502,7 +503,8 @@ state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
 	return json;  // caller MUST free
 }   
 
-}  // namespace opnpoolstate_log
+}  // namespace opnpool_state_log
+}  // namespace opnpool_state_rx
 
 }  // namespace opnpool
 }  // namespace esphome
