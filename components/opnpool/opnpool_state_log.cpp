@@ -34,7 +34,7 @@
 namespace esphome {
 namespace opnpool {
 
-namespace opnpoolstatelog {
+namespace opnpool_state_log {
 
 static cJSON *
 _create_item(cJSON * const obj, char const * const key)
@@ -137,19 +137,6 @@ _add_thermostat(cJSON * const obj, char const * const key,
 }
 
 /**
- * @brief Add thermostat information to a JSON object for logging.
- * 
- * @param obj The parent JSON object.
- * @param key The key under which to add the thermostat array.
- * @param state Pointer to the poolstate_t structure containing the thermostats.
- */
-static void
-_dispatch_add_thermos(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    add_thermos(obj, key, state->thermos, true, true, true, true);
-}
-
-/**
  * @brief              Add thermostat information to a JSON object for logging.
  *
  * @param obj          The parent JSON object.
@@ -172,6 +159,19 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
 }
 
 
+/**
+ * @brief Add thermostat information to a JSON object for logging.
+ * 
+ * @param obj The parent JSON object.
+ * @param key The key under which to add the thermostat array.
+ * @param state Pointer to the poolstate_t structure containing the thermostats.
+ */
+static void
+_dispatch_add_thermos(cJSON * const obj, char const * const key, poolstate_t const * const state)
+{
+    add_thermos(obj, key, state->thermos, true, true, true, true);
+}
+
 static void
 _add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const * const sched)
 {
@@ -180,19 +180,6 @@ _add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const
         cJSON_AddStringToObject(item, "start", time_str(sched->start / 60, sched->start % 60));
         cJSON_AddStringToObject(item, "stop", time_str(sched->stop / 60, sched->stop % 60));
     }
-}
-
-/**
- * @brief       Add schedule information to a JSON object for logging.
- * 
- * @param obj   The parent JSON object.
- * @param key   The key under which to add the schedule array.
- * @param state Pointer to the poolstate_t structure containing the schedules.
- */
-static void
-_dispatch_add_scheds(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    add_sched(obj, key, state->scheds, true);
 }
 
 /**
@@ -215,6 +202,19 @@ add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * s
             }
         }
     }
+}
+
+/**
+ * @brief       Add schedule information to a JSON object for logging.
+ * 
+ * @param obj   The parent JSON object.
+ * @param key   The key under which to add the schedule array.
+ * @param state Pointer to the poolstate_t structure containing the schedules.
+ */
+static void
+_dispatch_add_scheds(cJSON * const obj, char const * const key, poolstate_t const * const state)
+{
+    add_sched(obj, key, state->scheds, true);
 }
 
 static void
@@ -351,8 +351,7 @@ add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl)
  * @param mode The pump mode value to log (as enum).
  */
 void
-add_pump_mode(
-    cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
 {
     cJSON_AddStringToObject(obj, key, enum_str(mode));
 }

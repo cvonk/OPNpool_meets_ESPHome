@@ -246,49 +246,19 @@ class OpnPoolState {
             return ESP_OK;
         }
 
-            // from openpool_state_rx.cpp
-        esp_err_t rx_update(network_msg_t const * const msg, poolstate_t * const state);
+        bool has_changed(poolstate_t const * const state) {
+            if (!last_poolstate_.valid) {  // redundant check
+                return true;
+            }   
+            return memcmp(&last_poolstate_, state, sizeof(poolstate_t)) != 0;
+        }
+
 
     private:
         OpnPool * const parent_;
         poolstate_t last_poolstate_ = { .valid = false };
         
-            // from openpool_state_rx.cpp
-        void rx_ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * const msg, poolstate_t * const state);
-        void rx_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg);
-        void rx_pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg);
-        void rx_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg);
-        void rx_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolstate_t * const state);
-        void rx_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, poolstate_t * const state);
-        void rx_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, poolstate_t * const state);
-        void rx_ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg);
-        void rx_chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const msg, poolstate_t * const state);
-        void rx_chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const msg, poolstate_t * const state);
-        void rx_chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * const msg, poolstate_t * const state);
 };
-
-    // namespace-scope free functions from poolstate_log.cpp
-namespace opnpoolstatelog {
-    void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
-    void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
-    void add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
-    void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
-    void add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
-    void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
-    void add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
-    void add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl);
-    void add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode);
-    void add_pump_running(cJSON * const obj, char const * const key, bool const running);
-    void add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
-    void add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
-    char const * state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
-}
 
 }  // namespace opnpool
 }  // namespace esphome

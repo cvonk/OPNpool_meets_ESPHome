@@ -33,6 +33,7 @@
 #include <esphome/core/hal.h>
 #include <type_traits>
 
+#include "opnpool_state_rx.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
@@ -187,11 +188,9 @@ void OpnPool::loop() {
 
         ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
-        if (opnPoolState_->rx_update(&msg, &new_state) == ESP_OK) {
+        if (opnpool_state_rx::update(&msg, &new_state) == ESP_OK) {
 
-            bool const state_changed = memcmp(&new_state, &last_state, sizeof(new_state)) != 0;
-
-            if (state_changed) {
+            if (opnPoolState_->has_changed(&new_state)) {
 
                 opnPoolState_->set(&new_state);
 

@@ -375,7 +375,7 @@ struct network_msg_pump_ctrl_t {
 } PACK8;
 
 struct network_msg_pump_mode_t {
-    network_pump_mode_t mode;        // 0
+    network_pump_mode_t mode;  // 0
 } PACK8;
 
 struct network_msg_pump_run_t {
