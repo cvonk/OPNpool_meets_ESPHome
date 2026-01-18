@@ -107,6 +107,11 @@ enum class network_pump_mode_t : uint8_t {
     EP4    = 12
 };
 
+enum class network_pump_ctrl_t : uint8_t {
+    LOCAL    = 0x00,
+    REMOTE   = 0xFF
+};
+
 /**
  * @brief Enumerates the states of the pool pump.
  *
@@ -371,15 +376,20 @@ struct network_msg_pump_reg_resp_t {
 } PACK8;
 
 struct network_msg_pump_ctrl_t {
-    uint8_t ctrl;        // 0
+    network_pump_ctrl_t ctrl;  // 0
 } PACK8;
 
 struct network_msg_pump_mode_t {
     network_pump_mode_t mode;  // 0
 } PACK8;
 
+enum class network_pump_running_t : uint8_t {
+    OFF = 0x04,
+    ON  = 0x0A
+};
+
 struct network_msg_pump_run_t {
-    uint8_t running;     // 0
+    network_pump_running_t running;  // 0
 } PACK8;
 
 struct network_msg_pump_status_req_t {
@@ -415,11 +425,6 @@ network_pump_program_addr_str(network_pump_program_addr_t addr)
         default: return uint16_str(static_cast<uint16_t>(addr));
     }
 }
-
-enum class network_pump_running_t : uint8_t {
-    OFF = 0x04,
-    ON  = 0x0A
-};
 
 struct network_msg_pump_status_resp_t {
     network_pump_running_t running;       // 0

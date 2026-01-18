@@ -33,7 +33,7 @@
 #include <esphome/core/hal.h>
 #include <type_traits>
 
-#include "opnpool_state_rx.h"
+#include "pool_state_rx.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
@@ -55,11 +55,18 @@ namespace opnpool {
   
 static char const * const TAG = "opnpool";
 
+
     // helper to convert enum class to its underlying type
 template<typename E>
 constexpr auto to_index(E e) -> typename std::underlying_type<E>::type
 {
     return static_cast<typename std::underlying_type<E>::type>(e);
+}
+
+    // helper to convert Fahrenheit to Celsius
+constexpr float fahrenheit_to_celsius(float f)
+{
+    return (f - 32.0f) * 5.0f / 9.0f;
 }
 
     // helper to only publish if entity exists
@@ -180,22 +187,24 @@ void OpnPool::loop() {
             // reset global string buffer (as a new cycle begins)
         name_reset_idx();
 
-            // start with the current state
-        poolstate_t last_state;
+            // start with new_state being the current state
         poolstate_t new_state;
-        poolState_->get(&last_state);
-        memcpy(&new_state, &last_state, sizeof(poolstate_t));
+        poolState_->get(&new_state);
 
         ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
-        if (opnpool_state_rx::update(&msg, &new_state) == ESP_OK) {
+        if (pool_state_rx::update_state(&msg, &new_state) == ESP_OK) {
 
             if (poolState_->has_changed(&new_state)) {
 
                 poolState_->set(&new_state);
 
                     // publish this as an update to the HA sensors 
-                update_all(&new_state);
+                this->update_climates(&new_state);
+                this->update_switches(&new_state);
+                this->update_text_sensors(&new_state);
+                this->update_analog_sensors(&new_state);
+                this->update_binary_sensors(&new_state);
             }
  
             ESP_LOGVV(TAG, "FYI Poolstate changed");
@@ -217,28 +226,28 @@ void OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "  RS485 TX Pin: %u", this->ipc_->config.rs485_pins.tx_pin);
     ESP_LOGCONFIG(TAG, "  RS485 Flow Control Pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
 
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
-        dump_if(this->climates_[idx]);
+    for (auto idx : magic_enum::enum_values<ClimateId>()) {
+        dump_if(this->climates_[to_index(idx)]);
+    }   
+    for (auto idx : magic_enum::enum_values<SwitchId>()) {
+        dump_if(this->switches_[to_index(idx)]);
     }
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
-        dump_if(this->switches_[idx]);
+    for (auto idx : magic_enum::enum_values<SensorId>()) {
+        dump_if(this->sensors_[to_index(idx)]);
     }
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SensorId::COUNT); idx++) {
-        dump_if(this->sensors_[idx]);
+    for (auto idx : magic_enum::enum_values<BinarySensorId>()) {
+        dump_if(this->binary_sensors_[to_index(idx)]);
     }
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(BinarySensorId::COUNT); idx++) {
-        dump_if(this->binary_sensors_[idx]);
-    }
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(TextSensorId::COUNT); idx++) {
-        dump_if(this->text_sensors_[idx]);
+    for (auto idx : magic_enum::enum_values<TextSensorId>()) {
+        dump_if(this->text_sensors_[to_index(idx)]);
     }
 }
 
 void OpnPool::update_climates(poolstate_t const * const new_state)
 {
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(ClimateId::COUNT); idx++) {
+    for (auto idx : magic_enum::enum_values<ClimateId>()) {
 
-        OpnPoolClimate * const climate = this->climates_[idx];
+        OpnPoolClimate * const climate = this->climates_[to_index(idx)];
         if (climate != nullptr) {
             climate->update_climate(new_state);
         }
@@ -247,9 +256,9 @@ void OpnPool::update_climates(poolstate_t const * const new_state)
 
 void OpnPool::update_switches(poolstate_t const * const new_state)
 {
-    for (uint_least8_t idx = 0; static_cast<uint8_t>(idx) < static_cast<uint8_t>(SwitchId::COUNT); idx++) {
+    for (auto idx : magic_enum::enum_values<SwitchId>()) {
         
-        OpnPoolSwitch * const sw = this->switches_[idx];
+        OpnPoolSwitch * const sw = this->switches_[to_index(idx)];
         if (sw != nullptr) {
             sw->update_switch(new_state);
         }
@@ -261,26 +270,18 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(SensorId::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
         float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
-        float air_temp_c = (air_temp_f - 32.0f) * 5.0f / 9.0f;
+        float air_temp_c = fahrenheit_to_celsius(air_temp_f);
         air_temp->publish_value_if_changed(air_temp_c);    
     }
 
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
         float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-        float const water_temp_c = (water_temp_f - 32.0f) * 5.0f / 9.0f;
+        float const water_temp_c = fahrenheit_to_celsius(water_temp_f);
         water_temperature->publish_value_if_changed(water_temp_c);
     }
 
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)], new_state->pump.power);
-
-#if 0
-    auto * const pump_power = this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)];
-    if (pump_power != nullptr) {
-        pump_power->publish_value_if_changed(new_state->pump.power);
-    }
-#endif
-
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)],         new_state->pump.flow);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)],        new_state->pump.speed);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)],        new_state->pump.error);
@@ -335,16 +336,7 @@ void OpnPool::update_text_sensors(poolstate_t const * const new_state)
     );
 }
 
-void OpnPool::update_all(poolstate_t const * const state)
-{
-        this->update_climates(state);
-        this->update_switches(state);
-        this->update_text_sensors(state);
-        this->update_analog_sensors(state);
-        this->update_binary_sensors(state);
-}
-
-    // RS485 setter
+    // setters
 
 void 
 OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const flow_control_pin)
@@ -355,8 +347,6 @@ OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t cons
         ipc_->config.rs485_pins.flow_control_pin = flow_control_pin;
     }
 }
-
-    // climate setters      
 
 void
 OpnPool::set_pool_climate(OpnPoolClimate * const climate)
@@ -369,7 +359,6 @@ OpnPool::set_spa_climate(OpnPoolClimate * const climate)
 { 
     this->climates_[static_cast<uint8_t>(poolstate_thermo_typ_t::SPA)] = climate; 
 }
-    // switch setters
 
 void
 OpnPool::set_pool_switch(OpnPoolSwitch * const sw)
@@ -422,8 +411,6 @@ OpnPool::set_feature4_switch(OpnPoolSwitch * const sw)
 { 
     this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)] = sw; 
 }
-    // sensor setters
-
 void
 OpnPool::set_air_temperature_sensor(OpnPoolSensor * const s)
 { 
@@ -471,8 +458,6 @@ OpnPool::set_chlorinator_salt_sensor(OpnPoolSensor * const s)
     this->sensors_[to_index(SensorId::CHLORINATOR_SALT)] = s; 
 }
 
-    // binary sensor setters
-
 void
 OpnPool::set_pump_running_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
@@ -502,8 +487,6 @@ OpnPool::set_mode_timeout_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
     this->binary_sensors_[to_index(BinarySensorId::MODE_TIMEOUT)] = bs; 
 }
-
-    // text sensor setters
 
 void
 OpnPool::set_pool_sched_text_sensor(OpnPoolTextSensor * const ts) 

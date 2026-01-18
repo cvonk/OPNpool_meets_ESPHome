@@ -1,5 +1,5 @@
 /**
- * @file opnpool_state_log.cpp
+ * @file pool_state_rx_log.cpp
  * @brief Pool state: log state as a JSON-formatted string
  *
  * @details
@@ -9,7 +9,7 @@
  * pool state to a cJSON object, using type-safe enum-to-string helpers and value checks
  * to ensure clarity and correctness in the output.
  *
- * These functions are kept seperate from opnpool_state_rx.cpp because their purpose is
+ * These functions are kept seperate from pool_state_rx.cpp because their purpose is
  * to provide logging functionality, and separating them helps to avoid making that file
  * unwieldy large.
  * 
@@ -35,8 +35,8 @@
 namespace esphome {
 namespace opnpool {
 
-namespace opnpool_state_rx {
-namespace opnpool_state_log {
+namespace pool_state_rx {
+namespace pool_state_rx_log {
 
 static cJSON *
 _create_item(cJSON * const obj, char const * const key)
@@ -154,9 +154,10 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
     bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint_least8_t ii = 0; ii < enum_count<poolstate_thermo_typ_t>(); ii++, thermos++) {
-        _add_thermostat(item, enum_str(static_cast<poolstate_thermo_typ_t>(ii)), thermos,
-                        showTemp, showSp, showSrc, showHeating);
+
+    for (auto typ : magic_enum::enum_values<poolstate_thermo_typ_t>()) {
+        _add_thermostat(item, enum_str(typ), thermos, showTemp, showSp, showSrc, showHeating);
+        ++thermos;
     }
 }
 
@@ -198,10 +199,11 @@ add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * s
 {
     if (showSched) {
         cJSON * const item = _create_item(obj, key);
-        for (uint_least8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, scheds++) {
+        for (auto circuit : magic_enum::enum_values<network_pool_circuit_t>()) {
             if (scheds->active) {
-                _add_schedule(item, enum_str(static_cast<network_pool_circuit_t>(ii)), scheds);
+                _add_schedule(item, enum_str(circuit), scheds);
             }
+            ++scheds;
         }
     }
 }
@@ -239,8 +241,10 @@ _dispatch_add_temps(cJSON * const obj, char const * const key, poolstate_t const
 {
     cJSON * const item = _create_item(obj, key);
     poolstate_temp_t const * temp = state->temps;
-    for (uint_least8_t ii = 0; ii < enum_count<poolstate_temp_typ_t>(); ii++, temp++) {
-        _add_temp(item, enum_str(static_cast<poolstate_temp_typ_t>(ii)), temp);
+    
+    for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
+        _add_temp(item, enum_str(typ), temp);
+        ++temp;
     }
 }
 
@@ -255,10 +259,11 @@ static void
 _dispatch_add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-
     bool const * is_set = &state->modes.is_set[0];
-    for (uint_least8_t ii = 0; ii < NETWORK_POOL_MODE_BITS_COUNT; ii++, is_set++) {
-        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_mode_bits_t>(ii)), *is_set);
+
+    for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
+        cJSON_AddBoolToObject(item, enum_str(typ), *is_set);
+        ++is_set;
     }
 }
 
@@ -266,8 +271,10 @@ static void
 _add_circuit_detail(cJSON * const obj, char const * const key, bool const * active)
 {
     cJSON * const item = _create_item(obj, key);
-    for (uint_least8_t ii = 0; ii < NETWORK_POOL_CIRCUIT_COUNT; ii++, active++) {
-        cJSON_AddBoolToObject(item, enum_str(static_cast<network_pool_circuit_t>(ii)), *active);
+
+    for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
+        cJSON_AddBoolToObject(item, enum_str(typ), *active);
+        ++active;
     }
 }
 
@@ -327,22 +334,9 @@ add_pump_program(cJSON * const obj, char const * const key, uint16_t const value
  * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, uint8_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, network_pump_ctrl_t const ctrl)
 {
-    char const * str;
-    switch (ctrl) {
-        case 0x00: 
-            str = "local"; 
-            break;
-        case 0xFF:                                             
-            str = "remote"; 
-            break;
-        default: {
-            str = uint8_str(ctrl);
-            break;
-        }
-    }
-    cJSON_AddStringToObject(obj, key, str);
+    cJSON_AddStringToObject(obj, key, enum_str(ctrl));
 }
 
 /**
@@ -504,8 +498,8 @@ state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
 	return json;  // caller MUST free
 }   
 
-}  // namespace opnpool_state_log
-}  // namespace opnpool_state_rx
+}  // namespace pool_state_rx_log
+}  // namespace pool_state_rx
 
 }  // namespace opnpool
 }  // namespace esphome

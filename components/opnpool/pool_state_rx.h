@@ -8,10 +8,10 @@
 
 namespace esphome {
 namespace opnpool {
-namespace opnpool_state_rx {
+namespace pool_state_rx {
 
-esp_err_t update(network_msg_t const * const msg, poolstate_t * const state);
+esp_err_t update_state(network_msg_t const * const msg, poolstate_t * const state);
 
-}  // namespace opnpool_state_rx
+}  // namespace pool_state_rx
 }  // namespace opnpool
 }  // namespace esphome

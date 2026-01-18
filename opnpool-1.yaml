@@ -40,15 +40,16 @@ logger:
     datalink_rx: WARN
     datalink_tx: WARN
     network_rx: WARN
-    pool_task: VERBOSE
     network_create: WARN
+    pool_task: VERBOSE
+    pool_state: WARN
+    pool_state_rx: VERBOSE
     opnpool: VERBOSE
-    opnpool_state: WARN
-    opnpool_state_rx: VERBOSE
     opnpool_climate: VERBOSE
     opnpool_switch: VERBOSE
     opnpool_binary_sensor: VERBOSE
     opnpool_text_sensor: VERBOSE
+    enum_helpers: VERBOSE
 
 debug:
   update_interval: 5s  # for exception decoding in logs

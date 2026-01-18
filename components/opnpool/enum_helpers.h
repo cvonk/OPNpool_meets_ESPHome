@@ -8,6 +8,8 @@
 namespace esphome {
 namespace opnpool {
 
+static char const * const ENUM_HELPER_TAG = "enum_helpers";
+
     // helper to convert an enum value to its string representation
 template<typename EnumT>
 inline const char * enum_str(EnumT value)
@@ -39,6 +41,7 @@ inline int enum_nr(char const * const enum_str)
             return ii;
         }
     }
+    ESP_LOGE(ENUM_HELPER_TAG, "enum_str '%s' not found", enum_str);
     return -1;
 }
 

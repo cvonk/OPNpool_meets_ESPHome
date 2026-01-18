@@ -1,13 +1,23 @@
 /**
- * @file opnpool_state_rx.cpp
- * @brief Pool state: updates the state in response to network messages
+ * @file pool_state_rx.cpp
+ * @brief Implements pool state update logic for OPNpool ESPHome integration.
  *
  * @details
- * This file contains the implementation of state update functions for the OPNpool ESPHome custom component.
- * It processes incoming network messages from the pool controller, pump, and chlorine generator, updating
- * the internal pool state and publishing changes to Home Assistant sensors. The design assumes a single-threaded
- * environment (as provided by ESPHome), so no explicit thread safety is implemented. Verbose debug logging is
- * supported via cJSON objects for diagnostics and troubleshooting.
+ * This file provides the main logic for updating the pool state in response to all
+ * supported protocol messages received from the pool controller, pump, and chlorine
+ * generator. It contains message dispatch, field extraction, and state mutation logic, as
+ * well as integration with Home Assistant via ESPHome. Each message type is handled by a
+ * dedicated function, ensuring robust and maintainable state updates. Verbose debug
+ * logging is supported using cJSON objects for diagnostics and troubleshooting, and all
+ * state changes are optionally logged in detail.
+ *
+ * Design notes:
+ * - Assumes a single-threaded environment (as provided by ESPHome); no explicit thread
+ *   safety.
+ * - Closely coupled with pool_state.h, network_msg.h, and pool_state_rx_log.h for data
+ *   structures and logging.
+ * - Intended as the main entry point for protocol-driven state updates in the OPNpool
+ *   component.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright 2014, 2019, 2022, 2026, Coert Vonk
@@ -30,14 +40,14 @@
 #include "ipc.h"
 #include "pool_state.h"
 #include "opnpool.h"
-#include "opnpool_state_log.h"
+#include "pool_state_rx_log.h"
 
 namespace esphome {
 namespace opnpool {
 
-namespace opnpool_state_rx {
+namespace pool_state_rx {
 
-static char const * const TAG = "opnpool_state_rx";
+static char const * const TAG = "pool_state_rx";
 
     // helper to convert enum class to its underlying type
 template<typename E>
@@ -72,7 +82,7 @@ _ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolsta
     state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_time_and_date(dbg, "tod", &state->system.tod);
+        pool_state_rx_log::add_time_and_date(dbg, "tod", &state->system.tod);
         ESP_LOGVV(TAG, "Time-of-day updated: %02u:%02u %02u/%02u/%04u", state->system.tod.time.hour, state->system.tod.time.minute, state->system.tod.date.day, state->system.tod.date.month, state->system.tod.date.year);
     }
 }
@@ -110,7 +120,7 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     state->thermos[ spa_idx].heat_src  = (msg->combined_heat_src >> 2) & 0x03;  // bits 2-3 for SPA
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
+        pool_state_rx_log::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
         ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].temp, state->thermos[spa_idx].temp, state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
@@ -144,7 +154,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     state->thermos[ spa_idx].heat_src = (msg->combined_heat_src >> 2) & 0x03;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
+        pool_state_rx_log::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
         ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", state->thermos[pool_idx].set_point, state->thermos[spa_idx].set_point, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
     }
 }
@@ -282,7 +292,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_sched(dbg, "scheds", state->scheds, true);
+        pool_state_rx_log::add_sched(dbg, "scheds", state->scheds, true);
     }
 }
 
@@ -359,7 +369,7 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
     state->temps[water_idx].temp = msg->water_temp;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_state(dbg, "state", state);
+        pool_state_rx_log::add_state(dbg, "state", state);
         ESP_LOGVV(TAG, "State updated from CTRL_STATE message");
     }
 }
@@ -389,7 +399,7 @@ _ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * co
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_version(dbg, "firmware", &state->system.version);
+        pool_state_rx_log::add_version(dbg, "firmware", &state->system.version);
         ESP_LOGVV(TAG, "Firmware version updated to %u.%u", state->system.version.major, state->system.version.minor);
     }
 }
@@ -416,7 +426,7 @@ _pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
         uint16_t const value = (msg->value_hi << 8) | msg->value_lo;
         network_pump_program_addr_t const address_enum =
             static_cast<network_pump_program_addr_t>(address);
-        opnpool_state_log::add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
+        pool_state_rx_log::add_pump_program(dbg, network_pump_program_addr_str(address_enum), value);
     }
 }
 
@@ -441,7 +451,7 @@ _pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         uint16_t const value_hi = msg->value_hi;
         uint16_t const value = (value_hi << 8) | msg->value_lo;
-        opnpool_state_log::add_pump_program(dbg, "resp", value);
+        pool_state_rx_log::add_pump_program(dbg, "resp", value);
     }
 }
 
@@ -463,7 +473,7 @@ _pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       opnpool_state_log::add_pump_ctrl(dbg, "ctrl", msg->ctrl);
+       pool_state_rx_log::add_pump_ctrl(dbg, "ctrl", msg->ctrl);
     }
 }
 
@@ -488,7 +498,7 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolsta
     state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_pump_mode(dbg, "mode", state->pump.mode);
+        pool_state_rx_log::add_pump_mode(dbg, "mode", state->pump.mode);
         ESP_LOGVV(TAG, "Pump mode updated to %s", enum_str(state->pump.mode));
     }
 }
@@ -512,8 +522,8 @@ _pump_run(cJSON * const dbg,
         return;
     }
 
-    bool const running = msg->running == 0x0A;
-    bool const not_running = msg->running == 0x04;
+    bool const running     = msg->running == network_pump_running_t::ON;
+    bool const not_running = msg->running == network_pump_running_t::OFF;
     if (!running && !not_running) {
         ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->running, __func__);
         return;
@@ -521,7 +531,7 @@ _pump_run(cJSON * const dbg,
     state->pump.running = running;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_pump_running(dbg, "running", state->pump.running);
+        pool_state_rx_log::add_pump_running(dbg, "running", state->pump.running);
         ESP_LOGVV(TAG, "Pump running state updated to %u", state->pump.running);
     }
 }
@@ -572,7 +582,7 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_pump(dbg, "status", state);
+        pool_state_rx_log::add_pump(dbg, "status", state);
         ESP_LOGVV(TAG, "Pump status updated: running=%d, mode=%s, state=%s, power=%u, speed=%u, flow=%u, level=%u, error=%u, timer=%u, time=%02u:%02u", state->pump.running, enum_str(state->pump.mode), enum_str(state->pump.state), state->pump.power, state->pump.speed, state->pump.flow, state->pump.level, state->pump.error, state->pump.timer, state->pump.time.hour, state->pump.time.minute);
     }
 }
@@ -698,24 +708,28 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        opnpool_state_log::add_chlor_resp(dbg, "chlor", &state->chlor);
+        pool_state_rx_log::add_chlor_resp(dbg, "chlor", &state->chlor);
         ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
     }
 }
 
 /**
- * @brief      Update the pool state in response to a received network message.
+ * @brief           Process a received network message and update the pool state.
  *
- * @param msg  Pointer to the received network_msg_t message.
- * @return     ESP_OK if the state was updated and published, ESP_FAIL otherwise.
+ * @param msg       Pointer to the received network_msg_t message (must not be null).
+ * @param new_state Pointer to the poolstate_t structure to update (must not be null).
+ * @return          ESP_OK if the state was updated and processed successfully, ESP_FAIL otherwise.
  *
- * This function processes the incoming network message, updates the pool state
- * accordingly, and publishes changes to Home Assistant sensors if the state has changed.
- * It also logs detailed debug information if verbose logging is enabled.
+ * This function dispatches the received network message to the appropriate handler,
+ * updating the provided pool state structure based on the message contents. It also
+ * logs detailed debug information to a cJSON object if verbose logging is enabled.
  *
+ * The function sets the 'valid' flag in the state, updates all relevant fields according
+ * to the message type, and optionally logs the update as JSON. It is the main entry point
+ * for state updates in response to protocol messages.
  */
 esp_err_t
-update(network_msg_t const * const msg, poolstate_t * const new_state)
+update_state(network_msg_t const * const msg, poolstate_t * const new_state)
 {
     if (msg == nullptr || new_state == nullptr) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -868,7 +882,7 @@ update(network_msg_t const * const msg, poolstate_t * const new_state)
     return ESP_OK;
 }
 
-} // namespace opnpool_state_rx
+} // namespace pool_state_rx
 
 } // namespace opnpool
 } // namespace esphome  
