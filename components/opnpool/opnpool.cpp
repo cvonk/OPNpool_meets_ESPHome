@@ -239,6 +239,9 @@ void OpnPool::dump_config() {
         dump_if(this->binary_sensors_[to_index(idx)]);
     }
     for (auto idx : magic_enum::enum_values<TextSensorId>()) {
+        if (idx == TextSensorId::INTERFACE_FIRMWARE) {
+            continue;
+        }
         dump_if(this->text_sensors_[to_index(idx)]);
     }
 }
@@ -246,6 +249,8 @@ void OpnPool::dump_config() {
 void OpnPool::update_climates(poolstate_t const * const new_state)
 {
     for (auto idx : magic_enum::enum_values<ClimateId>()) {
+
+        ESP_LOGVV(TAG, "Updating climate[%u]", to_index(idx));
 
         OpnPoolClimate * const climate = this->climates_[to_index(idx)];
         if (climate != nullptr) {

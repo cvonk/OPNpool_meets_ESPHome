@@ -168,31 +168,31 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
  * @param count    Number of bits/array elements to update.
  */
 static void 
-_update_bool_array_from_bits(bool * arr, uint16_t bits, size_t count)
+_update_bool_array_from_bits(bool * arr, uint16_t bits, uint8_t count)
 {
-    for (size_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         arr[ii] = (bits & mask) != 0;
     }
 }
 
 /**
- * @brief       Optionally log raw hex bytes from a controller message.
+ * @brief             Optionally log raw hex bytes from a controller message.
  *
- * @param dbg   Optional JSON object for verbose debug logging.
- * @param bytes Pointer to the array of bytes received from the controller.
- * @param state Pointer to the poolstate_t structure to update.
- * @param nrBytes Number of bytes in the array.
+ * @param dbg         Optional JSON object for verbose debug logging.
+ * @param bytes       Pointer to the array of bytes received from the controller.
+ * @param state       Pointer to the poolstate_t structure to update.
+ * @param no_of_bytes Number of bytes in the array.
  *
  * This function logs the received bytes in hexadecimal format to the debug JSON object
  * if verbose logging is enabled. It does not modify the pool state.
  */
 static void
-_ctrl_hex_bytes(cJSON * const dbg,  uint8_t const * const bytes, poolstate_t * const state, uint8_t nrBytes)
+_ctrl_hex_bytes(cJSON * const dbg,  uint8_t const * const bytes, poolstate_t * const state, uint8_t no_of_bytes)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON * const array = cJSON_CreateArray();
         
-        for (uint_least8_t ii = 0; ii < nrBytes; ii++) {
+        for (uint_least8_t ii = 0; ii < no_of_bytes; ii++) {
             char hex_str[3];  // "XX\0"
             ESP_LOGVV(TAG, "byte[%u] = 0x%02X", ii, bytes[ii]);
             snprintf(hex_str, sizeof(hex_str), "%02X", bytes[ii]);
@@ -261,22 +261,25 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     poolstate_sched_t * state_scheds = state->scheds;    
     memset(state_scheds, 0, sizeof(state->scheds));
 
+#if 0    
     network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
     for (uint_least8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
+#endif
+    for (const auto& sched : msg->scheds) {
 
-        if (msg_sched->circuit_plus_1 == 0) {
+        if (sched.circuit_plus_1 == 0) {
             // nothing wrong with this. the schedule entry is just unused
             continue;
         }
 
         network_pool_circuit_t const circuit =
-            static_cast<network_pool_circuit_t>(msg_sched->circuit_plus_1 - 1);
+            static_cast<network_pool_circuit_t>(sched.circuit_plus_1 - 1);
         uint8_t const circuit_idx = enum_index(circuit);
 
-        uint16_t const startHi = msg_sched->prg_start_hi;
-        uint16_t const stopHi  = msg_sched->prg_stop_hi;
-        uint16_t const start = (startHi << 8) | msg_sched->prg_start_lo;
-        uint16_t const stop  = ( stopHi << 8) | msg_sched->prg_stop_lo;
+        uint16_t const startHi = sched.prg_start_hi;
+        uint16_t const stopHi  = sched.prg_stop_hi;
+        uint16_t const start = (startHi << 8) | sched.prg_start_lo;
+        uint16_t const stop  = ( stopHi << 8) | sched.prg_stop_lo;
 
         if (circuit_idx < ARRAY_SIZE(state->scheds)) {
 

@@ -48,7 +48,7 @@ logger:
     opnpool_climate: VERBOSE
     opnpool_switch: VERBOSE
     opnpool_binary_sensor: VERBOSE
-    opnpool_text_sensor: VERBOSE
+    opnpool_text_sensor: WARN
     enum_helpers: VERBOSE
 
 debug:

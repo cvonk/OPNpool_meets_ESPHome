@@ -4,6 +4,7 @@
 #endif
 
 #include "magic_enum.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {

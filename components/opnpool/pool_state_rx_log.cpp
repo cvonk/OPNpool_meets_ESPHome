@@ -23,6 +23,7 @@
  */
 
 #include <string.h>
+#include <cstddef>
 #include <esp_system.h>
 #include <esphome/core/log.h>
 #include <cJSON.h>
@@ -486,16 +487,15 @@ state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
     cJSON * const obj = cJSON_CreateObject();
 
     poolstate_json_dispatch_t const * dispatch = _dispatches;
-    for (uint_least8_t ii = 0; ii < ARRAY_SIZE(_dispatches); ii++, dispatch++) {
+    for (uint8_t ii = 0; ii < std::size(_dispatches); ii++, dispatch++) {
         bool const all_types = typ == poolstate_elem_typ_t::ALL;
         if (typ == dispatch->typ || all_types) {
-
             dispatch->fnc(obj, all_types ? dispatch->name : NULL, state);
         }
     }
     char const * const json = cJSON_PrintUnformatted(obj);
-	cJSON_Delete(obj);
-	return json;  // caller MUST free
+    cJSON_Delete(obj);
+    return json;  // caller MUST free
 }   
 
 }  // namespace pool_state_rx_log

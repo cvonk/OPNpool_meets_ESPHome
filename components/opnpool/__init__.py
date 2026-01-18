@@ -260,7 +260,7 @@ def generate_enum(enum_name, items):
     lines = [f"enum class {enum_name} : uint8_t {{"]
     for idx, name in enumerate(items):
         lines.append(f"    {name.upper()} = {idx},")
-    lines.append("    COUNT")
+    # do not add COUNT
     lines.append("};")
     return "\n".join(lines)
 

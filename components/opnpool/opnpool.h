@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <esphome/core/component.h>
+#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {
@@ -28,7 +29,6 @@ class OpnPoolTextSensor;
 enum class ClimateId : uint8_t {
     POOL_CLIMATE = 0,
     SPA_CLIMATE = 1,
-    COUNT
 };
 enum class SwitchId : uint8_t {
     SPA = 0,
@@ -40,7 +40,6 @@ enum class SwitchId : uint8_t {
     FEATURE2 = 6,
     FEATURE3 = 7,
     FEATURE4 = 8,
-    COUNT
 };
 enum class SensorId : uint8_t {
     AIR_TEMPERATURE = 0,
@@ -50,8 +49,7 @@ enum class SensorId : uint8_t {
     PUMP_SPEED = 4,
     CHLORINATOR_LEVEL = 5,
     CHLORINATOR_SALT = 6,
-    PUMP_ERROR = 7,
-    COUNT
+    PUMP_ERROR = 7
 };
 enum class BinarySensorId : uint8_t {
     PUMP_RUNNING = 0,
@@ -59,7 +57,6 @@ enum class BinarySensorId : uint8_t {
     MODE_TEMPERATURE_INC = 2,
     MODE_FREEZE_PROTECTION = 3,
     MODE_TIMEOUT = 4,
-    COUNT
 };
 enum class TextSensorId : uint8_t {
     POOL_SCHED = 0,
@@ -70,8 +67,7 @@ enum class TextSensorId : uint8_t {
     CHLORINATOR_STATUS = 5,
     SYSTEM_TIME = 6,
     CONTROLLER_FIRMWARE = 7,
-    INTERFACE_FIRMWARE = 8,
-    COUNT
+    INTERFACE_FIRMWARE = 8
 };
 
 
@@ -151,11 +147,11 @@ class OpnPool : public Component {
     void service_requests_from_pool(ipc_t const * const ipc);
 
         // sub classes
-    OpnPoolClimate *climates_[static_cast<uint8_t>(ClimateId::COUNT)]{nullptr};
-    OpnPoolSwitch *switches_[static_cast<uint8_t>(SwitchId::COUNT)]{nullptr};    
-    OpnPoolSensor *sensors_[static_cast<uint8_t>(SensorId::COUNT)]{nullptr};
-    OpnPoolBinarySensor *binary_sensors_[static_cast<uint8_t>(BinarySensorId::COUNT)]{nullptr};
-    OpnPoolTextSensor *text_sensors_[static_cast<uint8_t>(TextSensorId::COUNT)]{nullptr};
+    OpnPoolClimate *climates_[enum_count<ClimateId>()]{nullptr};
+    OpnPoolSwitch *switches_[enum_count<SwitchId>()]{nullptr};    
+    OpnPoolSensor *sensors_[enum_count<SensorId>()]{nullptr};
+    OpnPoolBinarySensor *binary_sensors_[enum_count<BinarySensorId>()]{nullptr};
+    OpnPoolTextSensor *text_sensors_[enum_count<TextSensorId>()]{nullptr};
 };
 
 } // namespace opnpool

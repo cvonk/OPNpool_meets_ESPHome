@@ -350,7 +350,9 @@ OpnPoolClimate::publish_value_if_changed(
             .mode = value_mode,
             .action = value_action,
         };
-        ESP_LOGV(TAG, "Published climate[%u]: current=%.0f, target=%.0f, mode=%u, *preset=%s, action=%u", idx, value_current_temperature, value_target_temperature, static_cast<int8_t>(value_mode), value_custom_preset, to_index(value_action));
+        ESP_LOGV(TAG, "Published climate[%u]: %.0f > %.0f, mode=%s, preset=%s, action=%s", 
+            idx, value_current_temperature, value_target_temperature,
+            enum_str(value_mode), value_custom_preset, enum_str(value_action));
     }
 }
 
