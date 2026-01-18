@@ -9,12 +9,13 @@
  * pool state to a cJSON object, using type-safe enum-to-string helpers and value checks
  * to ensure clarity and correctness in the output.
  *
+ * These functions are kept seperate from opnpool_state_rx.cpp because their purpose is
+ * to provide logging functionality, and separating them helps to avoid making that file
+ * unwieldy large.
+ * 
  * The design assumes a single-threaded environment (as provided by ESPHome), so no
  * explicit thread safety is implemented. The code emphasizes maintainability, clear
  * mapping between C++ structures and JSON.
- *
- * Usage: Call state() or the relevant add_* functions to serialize
- * the desired state or subcomponent.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
