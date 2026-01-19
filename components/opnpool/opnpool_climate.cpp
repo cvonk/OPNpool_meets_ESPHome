@@ -59,11 +59,11 @@ void OpnPoolClimate::dump_config() const
 
     LOG_CLIMATE("  ", "Climate", this);
     ESP_LOGCONFIG(TAG, "    ID: %u", get_idx());
-    ESP_LOGCONFIG(TAG, "    Thermostat: %s (%u)", enum_str(thermo), enum_index(thermo));
+    ESP_LOGCONFIG(TAG, "    Thermo: %s (%u)", enum_str(thermo), enum_index(thermo));
     ESP_LOGCONFIG(TAG, "    Last current temp: %.1f°C", last_.valid ? last_.current_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last target temp: %.1f°C", last_.valid ? last_.target_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last mode: %s", last_.valid ? enum_str(last_.mode) : "<unknown>");
-    ESP_LOGCONFIG(TAG, "    Last custom preset: %s", last_.valid ? last_.custom_preset : "<unknown>");
+    ESP_LOGCONFIG(TAG, "    Last custom preset: %s", last_.valid ? enum_str(last_.custom_preset) : "<unknown>");
     ESP_LOGCONFIG(TAG, "    Last action: %s", last_.valid ? enum_str(last_.action) : "<unknown>");
 }
 
