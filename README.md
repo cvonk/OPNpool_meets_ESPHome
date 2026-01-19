@@ -130,7 +130,7 @@ Add it, and specify your API key.  Name the device and assign it an area. You sh
 then see the enities although their values are `unknown`.  Time to populate those
 entities by connecting it to the pool controller ;-)
 
-![Entities_unknown](opnpool-entities-unknown.png)
+![Entities_unknown](assets/opnpool-entities-unknown.png)
 
 ### Connect
 
@@ -170,8 +170,8 @@ The serial monitor will show decoded messages such as:
 
 In Home Assistant the entities should populate:
 
-![Entities_bediening](opnpool-bediening.png)
-![Entities_sensoren](opnpool-sensoren.png)
+![Entities_bediening](assets/opnpool-bediening.png)
+![Entities_sensoren](assets/opnpool-sensoren.png)
 
 FYI, the [`hass-config` project](https://github.com/cvonk/hass-config) has my Lovelace dashboard configuration.
 
