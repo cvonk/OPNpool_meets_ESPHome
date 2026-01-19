@@ -14,17 +14,17 @@ class OpnPool;
 
 class OpnPoolSwitch : public switch_::Switch, public Component {
   public:
-    OpnPoolSwitch(OpnPool* parent, uint8_t id) : parent_{parent}, switch_id_{id} {}
+    OpnPoolSwitch(OpnPool* parent, uint8_t id) : parent_{parent}, id_{static_cast<switch_id_t>(id)} {}
 
     void dump_config();
     void write_state(bool state) override;  // change triggered by Home Assistant
     
-    uint8_t get_switch_id() const { return this->switch_id_; }    
+    switch_id_t get_switch_id() const { return this->id_; }    
     void publish_value_if_changed(bool const new_value);
 
   protected:
-    OpnPool * const parent_;
-    uint8_t const switch_id_;
+    OpnPool * const   parent_;
+    switch_id_t const id_;
 
     struct last_t {
         bool valid{false};

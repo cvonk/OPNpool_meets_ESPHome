@@ -26,7 +26,8 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpool_ids.h"  // conversion helper
+#include "opnpool_ids.h"      // conversion helper
+#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {
@@ -50,7 +51,7 @@ OpnPoolSwitch::dump_config()
     network_pool_circuit_t circuit = switch_id_to_network_circuit(switch_id);
 
     LOG_SWITCH("  ", "Switch", this);
-    ESP_LOGCONFIG(TAG, "    ID: %u", get_switch_id());
+    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(switch_id), enum_index(switch_id));
     ESP_LOGCONFIG(TAG, "    Circuit: %s (%u)", enum_str(circuit), enum_index(circuit));
     ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "Unknown");
 }

@@ -19,6 +19,7 @@
 #include <esphome/core/log.h>
 
 #include "opnpool_binary_sensor.h"
+#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {
@@ -37,7 +38,7 @@ void
 OpnPoolBinarySensor::dump_config()
 {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
-    ESP_LOGCONFIG(TAG, "    ID: %u", get_binary_sensor_id());
+    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(get_binary_sensor_id()), enum_index(get_binary_sensor_id()));
     ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "<unknown>");
 }
 
@@ -63,7 +64,7 @@ OpnPoolBinarySensor::publish_value_if_changed(bool const value)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Published binary sensor [%u]: %s", get_binary_sensor_id(), value ? "ON" : "OFF");
+        ESP_LOGV(TAG, "Published %s (%u): %s", enum_str(get_binary_sensor_id()), enum_index(get_binary_sensor_id()), value ? "ON" : "OFF");
     }
 }
 

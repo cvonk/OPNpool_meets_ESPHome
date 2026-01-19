@@ -307,7 +307,7 @@ OpnPool::update_climates(poolstate_t const * const new_state)
             new_action = climate::CLIMATE_ACTION_IDLE;
         }
 
-        climate->publish_value_if_changed(thermo_typ_idx, new_current_temp, new_target_temp,
+        climate->publish_value_if_changed(thermo_typ, new_current_temp, new_target_temp,
                                           new_mode, new_custom_preset, new_action);
 
         ESP_LOGVV(TAG, "RX updated climate[%s]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", to_str(climate_id), new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));

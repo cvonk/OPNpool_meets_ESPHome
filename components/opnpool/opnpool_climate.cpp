@@ -30,6 +30,7 @@
 #include "pool_state.h"
 #include "opnpool_switch.h"
 #include "opnpool_ids.h"
+#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {
@@ -62,11 +63,11 @@ void
 OpnPoolClimate::dump_config()
 {
     climate_id_t climate_id = static_cast<climate_id_t>(get_climate_id());
-    poolstate_thermo_typ_t thermo = climate_id_to_poolstate_thermo(climate_id);
+    poolstate_thermo_typ_t thermo_typ = climate_id_to_poolstate_thermo(climate_id);
 
     LOG_CLIMATE("  ", "Climate", this);
-    ESP_LOGCONFIG(TAG, "    ID: %u", get_climate_id());
-    ESP_LOGCONFIG(TAG, "    Thermostat: %s (%u)", enum_str(thermo), enum_index(thermo));
+    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(climate_id), enum_index(climate_id));
+    ESP_LOGCONFIG(TAG, "    Thermostat: %s (%u)", enum_str(thermo_typ), enum_index(thermo_typ));
     ESP_LOGCONFIG(TAG, "    Last current temp: %.1f°C", last_.valid ? last_.current_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last target temp: %.1f°C", last_.valid ? last_.target_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last mode: %s", last_.valid ? enum_str(last_.mode) : "<unknown>");
@@ -128,9 +129,9 @@ climate::ClimateTraits OpnPoolClimate::traits()
  */
 void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
-        // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
-    static_assert(enum_count<climate_id_t>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
-    uint8_t const thermo_idx = this->get_climate_id();
+    climate_id_t const climate_id = this->get_climate_id();
+    poolstate_thermo_typ_t const thermo_typ = climate_id_to_poolstate_thermo(climate_id);
+    uint8_t const thermo_idx = to_index(thermo_typ);
 
     uint8_t const thermo_pool_idx = to_index(climate_id_t::POOL_CLIMATE);
     uint8_t const thermo_spa_idx = to_index(climate_id_t::SPA_CLIMATE);
@@ -251,8 +252,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
  * internal state, sets the appropriate preset or custom preset, and publishes the new
  * state to Home Assistant. This avoids redundant updates to Home Assistant.
  *
- * @param climate_id                 Index of the climate entity (pool or spa).
- * (diagnostic only)
+ * @param thermo_typ                 Index of the climate entity (pool or spa). (diagnostic only)
  * @param value_current_temperature  The updated current temperature in Celsius.
  * @param value_target_temperature   The updated target temperature in Celsius.
  * @param value_mode                 The updated climate mode (OFF/HEAT).
@@ -261,9 +261,9 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
  */
 void 
 OpnPoolClimate::publish_value_if_changed(
-    uint8_t const climate_id, float const value_current_temperature, 
+    poolstate_thermo_typ_t const thermo_typ, float const value_current_temperature, 
     float const value_target_temperature, climate::ClimateMode const value_mode,
-    char const * value_custom_preset, climate::ClimateAction const value_action)
+    char const * const value_custom_preset, climate::ClimateAction const value_action)
 {
     last_t * const last = &last_;
 
@@ -279,13 +279,13 @@ OpnPoolClimate::publish_value_if_changed(
         this->mode = value_mode;
         this->action = value_action;
 
-            // NONE not handled by the regular preset, not a custom preset
+            // NONE is handled by the regular preset, not a custom preset
         if (strcasecmp(value_custom_preset, enum_str(custom_presets_t::NONE)) == 0) {
-            ESP_LOGV(TAG, "Setting climate[%u] preset to NONE", climate_id);
+            ESP_LOGVV(TAG, "Setting thermostat[%s] preset to NONE", enum_str(thermo_typ));
             set_preset_(climate::CLIMATE_PRESET_NONE);
             clear_custom_preset_();
         } else {
-            ESP_LOGV(TAG, "Setting climate[%u] custom_preset to %s", climate_id, value_custom_preset);
+            ESP_LOGVV(TAG, "Setting thermostat[%s] custom_preset to %s", enum_str(thermo_typ), value_custom_preset);
             this->set_custom_preset_(value_custom_preset);
         }
 
@@ -299,9 +299,11 @@ OpnPoolClimate::publish_value_if_changed(
             .mode = value_mode,
             .action = value_action,
         };
-        ESP_LOGV(TAG, "Published climate[%u]: %.0f > %.0f, mode=%s, preset=%s, action=%s", 
-            climate_id, value_current_temperature, value_target_temperature,
-            enum_str(value_mode), value_custom_preset, enum_str(value_action));
+        ESP_LOGVV(TAG, "Published %s (%u): %.0f > %.0f, mode=%s, preset=%s, action=%s", 
+            enum_str(thermo_typ), enum_index(thermo_typ),
+            value_current_temperature, value_target_temperature,
+            enum_str(value_mode), value_custom_preset, 
+            enum_str(value_action));
     }
 }
 

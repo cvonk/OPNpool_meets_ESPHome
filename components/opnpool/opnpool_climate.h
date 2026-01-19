@@ -15,22 +15,22 @@ class OpnPool;
 class OpnPoolClimate : public climate::Climate, public Component {
     
   public:
-    OpnPoolClimate(OpnPool* parent, uint8_t id) : parent_{parent}, climate_id_{id} {}
+    OpnPoolClimate(OpnPool* parent, uint8_t id) : parent_{parent}, id_{static_cast<climate_id_t>(id)} {}
 
     void dump_config();
     climate::ClimateTraits traits() override;
     void control(const climate::ClimateCall &call) override;
         
-    uint8_t get_climate_id() const { return this->climate_id_; }
+    climate_id_t get_climate_id() const { return this->id_; }
     void publish_value_if_changed(
-        uint8_t const climate_id, float const value_current_temperature, 
+        poolstate_thermo_typ_t const thermo_typ, float const value_current_temperature, 
         float const value_target_temperature, climate::ClimateMode const value_mode,
         char const * value_custom_preset, climate::ClimateAction const value_action
     );
     
   protected: 
-    OpnPool * const parent_;
-    uint8_t const   climate_id_;
+    OpnPool * const    parent_;
+    climate_id_t const id_;
     
     struct last_t {
         bool                    valid{false};

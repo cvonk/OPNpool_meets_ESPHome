@@ -13,16 +13,16 @@ class OpnPool;  // Forward declaration only - don't include opnpool.h!
 
 class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
   public:
-    OpnPoolTextSensor(OpnPool* parent, uint8_t id) : parent_{parent}, text_sensor_id_{id} {}
+    OpnPoolTextSensor(OpnPool* parent, uint8_t id) : parent_{parent}, id_{static_cast<text_sensor_id_t>(id)} {}
     
     void dump_config();
     
-    uint8_t get_text_sensor_id() const { return this->text_sensor_id_; }    
+    text_sensor_id_t get_text_sensor_id() const { return this->id_; }    
     void publish_value_if_changed(const std::string &value);
 
   protected:
-    OpnPool * const parent_;
-    uint8_t const   text_sensor_id_;
+    OpnPool * const        parent_;
+    text_sensor_id_t const id_;
 
     struct last_t {
         bool         valid{false};
