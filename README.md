@@ -2,8 +2,7 @@
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://github.com/cvonk/OPNpool_meets_ESPHome/discussions)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
-![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/cvonk/OPNpool_meets_ESPHome/esp-idf)
-![GitHub](https://img.shields.io/github/license/cvonk/OPNpool_meets_ESPHome)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
 
