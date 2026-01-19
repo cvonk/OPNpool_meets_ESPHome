@@ -4,6 +4,8 @@
 #include <esphome/components/text_sensor/text_sensor.h>
 #include <string>
 
+#include "opnpool_ids.h"
+
 namespace esphome {
 namespace opnpool {
 

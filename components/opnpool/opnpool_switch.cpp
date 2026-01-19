@@ -26,7 +26,7 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpool_helpers.h"  // conversion helper
+#include "opnpool_ids.h"  // conversion helper
 
 namespace esphome {
 namespace opnpool {
@@ -46,8 +46,8 @@ static char const * const TAG = "opnpool_switch";
 void
 OpnPoolSwitch::dump_config()
 {
-    SwitchId switch_id = static_cast<SwitchId>(get_switch_id());
-    network_pool_circuit_t circuit = helpers::switch_id_to_network_circuit(switch_id);
+    switch_id_t switch_id = static_cast<switch_id_t>(get_switch_id());
+    network_pool_circuit_t circuit = switch_id_to_network_circuit(switch_id);
 
     LOG_SWITCH("  ", "Switch", this);
     ESP_LOGCONFIG(TAG, "    ID: %u", get_switch_id());
@@ -71,8 +71,8 @@ OpnPoolSwitch::dump_config()
 void
 OpnPoolSwitch::write_state(bool value)
 {
-    SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
-    network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+    switch_id_t const switch_id = static_cast<switch_id_t>(get_switch_id());
+    network_pool_circuit_t const circuit = switch_id_to_network_circuit(switch_id);
     uint8_t const circuit_idx = enum_index(circuit);
 
     network_msg_t msg = {
@@ -112,8 +112,8 @@ OpnPoolSwitch::publish_value_if_changed(bool value)
             .value = value
         };
         
-        SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
-        network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+        switch_id_t const switch_id = static_cast<switch_id_t>(get_switch_id());
+        network_pool_circuit_t const circuit = switch_id_to_network_circuit(switch_id);
         ESP_LOGV(TAG, "Published switch %s(%u): %s", enum_str(circuit), enum_index(circuit), value ? "ON" : "OFF");
     }
 }

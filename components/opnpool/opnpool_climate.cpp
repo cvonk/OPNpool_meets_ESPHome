@@ -29,7 +29,7 @@
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "pool_state.h"
 #include "opnpool_switch.h"
-#include "opnpool_helpers.h"
+#include "opnpool_ids.h"
 
 namespace esphome {
 namespace opnpool {
@@ -41,6 +41,12 @@ template<typename E>
 constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
+
+inline float
+_celsius_to_fahrenheit(float c) {
+    return c * 9.0f / 5.0f + 32.0f;
+}
+
 
 /**
  * @brief Dump the configuration and last known state of the climate entity.
@@ -55,8 +61,8 @@ constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
 void
 OpnPoolClimate::dump_config()
 {
-    ClimateId climate_id = static_cast<ClimateId>(get_climate_id());
-    poolstate_thermo_typ_t thermo = helpers::climate_id_to_poolstate_thermo(climate_id);
+    climate_id_t climate_id = static_cast<climate_id_t>(get_climate_id());
+    poolstate_thermo_typ_t thermo = climate_id_to_poolstate_thermo(climate_id);
 
     LOG_CLIMATE("  ", "Climate", this);
     ESP_LOGCONFIG(TAG, "    ID: %u", get_climate_id());
@@ -123,11 +129,11 @@ climate::ClimateTraits OpnPoolClimate::traits()
 void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
         // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
-    static_assert(enum_count<ClimateId>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
+    static_assert(enum_count<climate_id_t>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
     uint8_t const thermo_idx = this->get_climate_id();
 
-    uint8_t const thermo_pool_idx = to_index(ClimateId::POOL_CLIMATE);
-    uint8_t const thermo_spa_idx = to_index(ClimateId::SPA_CLIMATE);
+    uint8_t const thermo_pool_idx = to_index(climate_id_t::POOL_CLIMATE);
+    uint8_t const thermo_spa_idx = to_index(climate_id_t::SPA_CLIMATE);
 
        // get both thermostats ('cause the change request needs to references them both)
 
@@ -143,7 +149,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
     if (call.get_target_temperature().has_value()) {
 
         float const target_temp_celsius = *call.get_target_temperature();
-        float const target_temp_fahrenheit = helpers::celsius_to_fahrenheit(target_temp_celsius);
+        float const target_temp_fahrenheit = _celsius_to_fahrenheit(target_temp_celsius);
         ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", thermo_idx, target_temp_fahrenheit);
 
         thermos_new[thermo_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
@@ -158,8 +164,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         
         ESP_LOGV(TAG, "HA requests climate mode [%u] to mode=%u", thermo_idx, static_cast<int>(requested_mode));
         uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
-                           ? to_index(SwitchId::POOL)
-                           : to_index(SwitchId::SPA);
+                           ? to_index(switch_id_t::POOL)
+                           : to_index(switch_id_t::SPA);
         
         switch (requested_mode) {
             case climate::CLIMATE_MODE_OFF:  // mode 0

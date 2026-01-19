@@ -59,12 +59,12 @@ CONF_RS485_TX_PIN = "tx_pin"
 CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
 
 # MUST be in the same order as network_pool_thermo_t
-CONF_CLIMATES = [  # used to overwrite ClimateId enum in opnpool.h
+CONF_CLIMATES = [  # used to overwrite climate_id_t enum in opnpool.h
     "pool_climate",
     "spa_climate"
 ]
 # MUST be in the same order as network_pool_circuit_t
-CONF_SWITCHES = [  # used to overwrite SwitchId enum in opnpool.h
+CONF_SWITCHES = [  # used to overwrite switch_id_t enum in opnpool.h
     "spa", 
     "aux1",
     "aux2",
@@ -75,7 +75,7 @@ CONF_SWITCHES = [  # used to overwrite SwitchId enum in opnpool.h
     "feature3",
     "feature4"
 ]
-CONF_ANALOG_SENSORS = [  # used to overwrite SensorId enum in opnpool.h
+CONF_ANALOG_SENSORS = [  # used to overwrite sensor_id_t enum in opnpool.h
     "air_temperature",
     "water_temperature",
     "pump_power",
@@ -95,14 +95,14 @@ CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
     "chlorinator_salt": {"unit": "ppm", "device_class": ""},
     "pump_error": {"unit": "", "device_class": ""},
 }
-CONF_BINARY_SENSORS = [  # used to overwrite BinarySensorId enum in opnpool.h
+CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.h
     "pump_running",
     "mode_service",
     "mode_temperature_inc", 
     "mode_freeze_protection",
     "mode_timeout"
 ]
-CONF_TEXT_SENSORS = [  # used to overwrite TextSensorId enum in opnpool.h
+CONF_TEXT_SENSORS = [  # used to overwrite text_sensor_id_t enum in opnpool.h
     "pool_sched",
     "spa_sched",
     "pump_mode",
@@ -262,12 +262,14 @@ async def to_code(config):
 import os
 import re
 
+
+# New enum naming convention: e.g., switch_id_t, climate_id_t, etc.
 ENTITY_ENUMS = {
-    "ClimateId": CONF_CLIMATES,
-    "SwitchId": CONF_SWITCHES,
-    "SensorId": CONF_ANALOG_SENSORS,
-    "BinarySensorId": CONF_BINARY_SENSORS,
-    "TextSensorId": CONF_TEXT_SENSORS,
+    "climate_id_t": CONF_CLIMATES,
+    "switch_id_t": CONF_SWITCHES,
+    "sensor_id_t": CONF_ANALOG_SENSORS,
+    "binary_sensor_id_t": CONF_BINARY_SENSORS,
+    "text_sensor_id_t": CONF_TEXT_SENSORS,
 }
 
 def generate_enum(enum_name, items):
@@ -284,7 +286,9 @@ def update_header(header_path, entity_enums):
     with open(header_path, "r") as f:
         content = f.read()
     for enum_name, items in entity_enums.items():
-        pattern = rf"enum class {enum_name} : uint8_t \{{.*?\}};"
+        # Accept both old and new enum names for replacement
+        # e.g., switch_id_t or switch_id_t
+        pattern = rf"enum class (?:{enum_name}|{enum_name.replace('_id_t','Id').replace('_','').capitalize()}) : uint8_t \{{.*?\}};"
         new_enum = generate_enum(enum_name, items)
         content = re.sub(pattern, new_enum, content, flags=re.DOTALL)
 
@@ -300,5 +304,5 @@ def update_header(header_path, entity_enums):
 if __name__ == "__main__":
     # use a relative path from this script's location
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    header_path = os.path.join(script_dir, "opnpool.h")
+    header_path = os.path.join(script_dir, "opnpool_ids.h")
     update_header(header_path, ENTITY_ENUMS)
