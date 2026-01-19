@@ -47,12 +47,10 @@ static char const * const TAG = "opnpool_switch";
 void
 OpnPoolSwitch::dump_config()
 {
-    switch_id_t switch_id = static_cast<switch_id_t>(get_switch_id());
-    network_pool_circuit_t circuit = switch_id_to_network_circuit(switch_id);
+    network_pool_circuit_t circuit = get_circuit();
 
     LOG_SWITCH("  ", "Switch", this);
-    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(switch_id), enum_index(switch_id));
-    ESP_LOGCONFIG(TAG, "    Circuit: %s (%u)", enum_str(circuit), enum_index(circuit));
+    ESP_LOGCONFIG(TAG, "    Circuit: %s", enum_str(circuit));
     ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "Unknown");
 }
 
@@ -72,8 +70,7 @@ OpnPoolSwitch::dump_config()
 void
 OpnPoolSwitch::write_state(bool value)
 {
-    switch_id_t const switch_id = static_cast<switch_id_t>(get_switch_id());
-    network_pool_circuit_t const circuit = switch_id_to_network_circuit(switch_id);
+    network_pool_circuit_t const circuit = get_circuit();
     uint8_t const circuit_idx = enum_index(circuit);
 
     network_msg_t msg = {
@@ -113,9 +110,8 @@ OpnPoolSwitch::publish_value_if_changed(bool value)
             .value = value
         };
         
-        switch_id_t const switch_id = static_cast<switch_id_t>(get_switch_id());
-        network_pool_circuit_t const circuit = switch_id_to_network_circuit(switch_id);
-        ESP_LOGV(TAG, "Published switch %s(%u): %s", enum_str(circuit), enum_index(circuit), value ? "ON" : "OFF");
+        network_pool_circuit_t const circuit = get_circuit();
+        ESP_LOGV(TAG, "Published %s: %s", enum_str(circuit), value ? "ON" : "OFF");
     }
 }
 

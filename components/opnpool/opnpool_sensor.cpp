@@ -39,7 +39,6 @@ void
 OpnPoolSensor::dump_config()
 {
     LOG_SENSOR("  ", "Sensor", this);
-    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(get_sensor_id()), enum_index(get_sensor_id()));
     ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? std::to_string(last_.value).c_str() : "<unknown>");
 }
 
@@ -66,7 +65,7 @@ OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Published %s (%u): %.2f", enum_str(get_sensor_id()), enum_index(get_sensor_id()), value);        
+        ESP_LOGV(TAG, "Published %.1f", value);        
     }
 }
 

@@ -20,11 +20,13 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
     void write_state(bool state) override;  // change triggered by Home Assistant
     
     switch_id_t get_switch_id() const { return this->id_; }    
+    network_pool_circuit_t get_circuit() const { return this->circuit_; }
     void publish_value_if_changed(bool const new_value);
 
   protected:
-    OpnPool * const   parent_;
-    switch_id_t const id_;
+    OpnPool * const              parent_;
+    switch_id_t const            id_;
+    network_pool_circuit_t const circuit_ = switch_id_to_network_circuit(id_);
 
     struct last_t {
         bool valid;

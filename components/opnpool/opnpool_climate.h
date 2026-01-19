@@ -21,16 +21,18 @@ class OpnPoolClimate : public climate::Climate, public Component {
     climate::ClimateTraits traits() override;
     void control(const climate::ClimateCall &call) override;
         
-    climate_id_t get_climate_id() const { return this->id_; }
+    poolstate_thermo_typ_t get_thermo_typ() const { return this->thermo_typ_; }
+
     void publish_value_if_changed(
-        poolstate_thermo_typ_t const thermo_typ, float const value_current_temperature, 
+        float const value_current_temperature, 
         float const value_target_temperature, climate::ClimateMode const value_mode,
         char const * value_custom_preset, climate::ClimateAction const value_action
     );
     
   protected: 
-    OpnPool * const    parent_;
-    climate_id_t const id_;
+    OpnPool * const              parent_;
+    climate_id_t const           id_;
+    poolstate_thermo_typ_t const thermo_typ_ = climate_id_to_poolstate_thermo(id_);
     
     struct last_t {
         bool                    valid;

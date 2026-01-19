@@ -213,47 +213,47 @@ async def to_code(config):
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
 
     # register climate entities (constructor injection)
-    for idx, climate_key in enumerate(CONF_CLIMATES):
+    for id, climate_key in enumerate(CONF_CLIMATES):
         entity_cfg = config[climate_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        climate_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        climate_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, id)
         await climate.register_climate(climate_entity, entity_cfg)
         cg.add(getattr(var, f"set_{climate_key}")(climate_entity))
 
     # register switches (constructor injection)
-    for idx, switch_key in enumerate(CONF_SWITCHES):
+    for id, switch_key in enumerate(CONF_SWITCHES):
         entity_cfg = config[switch_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        switch_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        switch_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, id)
         await switch.register_switch(switch_entity, entity_cfg)
         cg.add(getattr(var, f"set_{switch_key}_switch")(switch_entity))
 
     # register analog sensors (constructor injection)
-    for idx, sensor_key in enumerate(CONF_ANALOG_SENSORS):
+    for id, sensor_key in enumerate(CONF_ANALOG_SENSORS):
         entity_cfg = config[sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        sensor_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        sensor_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
         await sensor.register_sensor(sensor_entity, entity_cfg)
         cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
 
     # register binary sensors (constructor injection)
-    for idx, binary_sensor_key in enumerate(CONF_BINARY_SENSORS):
+    for id, binary_sensor_key in enumerate(CONF_BINARY_SENSORS):
         entity_cfg = config[binary_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        bs_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        bs_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
         await binary_sensor.register_binary_sensor(bs_entity, entity_cfg)
         cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
     # register text sensors (constructor injection)
-    for idx, text_sensor_key in enumerate(CONF_TEXT_SENSORS):
+    for id, text_sensor_key in enumerate(CONF_TEXT_SENSORS):
         entity_cfg = config[text_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        ts_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var, idx)
+        ts_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
         await text_sensor.register_text_sensor(ts_entity, entity_cfg)
         cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
 
@@ -262,8 +262,6 @@ async def to_code(config):
 import os
 import re
 
-
-# New enum naming convention: e.g., switch_id_t, climate_id_t, etc.
 ENTITY_ENUMS = {
     "climate_id_t": CONF_CLIMATES,
     "switch_id_t": CONF_SWITCHES,
@@ -274,8 +272,8 @@ ENTITY_ENUMS = {
 
 def generate_enum(enum_name, items):
     lines = [f"enum class {enum_name} : uint8_t {{"]
-    for idx, name in enumerate(items):
-        lines.append(f"    {name.upper()} = {idx},")
+    for id, name in enumerate(items):
+        lines.append(f"    {name.upper()} = {id},")
     lines.append("};")
     return "\n".join(lines)
 
@@ -286,8 +284,7 @@ def update_header(header_path, entity_enums):
     with open(header_path, "r") as f:
         content = f.read()
     for enum_name, items in entity_enums.items():
-        # Accept both old and new enum names for replacement
-        # e.g., switch_id_t or switch_id_t
+        # accept both old and new enum names for replacement, e.g., switch_id_t or SwitchId
         pattern = rf"enum class (?:{enum_name}|{enum_name.replace('_id_t','Id').replace('_','').capitalize()}) : uint8_t \{{.*?\}};"
         new_enum = generate_enum(enum_name, items)
         content = re.sub(pattern, new_enum, content, flags=re.DOTALL)
@@ -302,7 +299,6 @@ def update_header(header_path, entity_enums):
     shutil.move(temp_path, header_path)
 
 if __name__ == "__main__":
-    # use a relative path from this script's location
     script_dir = os.path.dirname(os.path.abspath(__file__))
     header_path = os.path.join(script_dir, "opnpool_ids.h")
     update_header(header_path, ENTITY_ENUMS)

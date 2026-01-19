@@ -39,13 +39,11 @@ void
 OpnPoolTextSensor::dump_config()
 {
     LOG_TEXT_SENSOR("  ", "Text Sensor", this);
-    ESP_LOGCONFIG(TAG, "    ID: %s (%u)", enum_str(get_text_sensor_id()), enum_index(get_text_sensor_id()));
     ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? last_.value.c_str() : "<unknown>");
 }
 
 /**
- * @brief
- * Publishes the text sensor state to Home Assistant if it has changed.
+ * @brief Publishes the text sensor state to Home Assistant if it has changed.
  *
  * @details
  * Compares the new text sensor value with the last published value. If the state is not
@@ -65,7 +63,7 @@ OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Publised %s (%u): %s", enum_str(get_text_sensor_id()), enum_index(get_text_sensor_id()), value.c_str());
+        ESP_LOGV(TAG, "Publised %s", value.c_str());
     }
 }
 
