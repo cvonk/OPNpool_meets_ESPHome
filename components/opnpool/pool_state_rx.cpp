@@ -199,10 +199,11 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
  * @param count    Number of bits/array elements to update.
  */
 static void 
-_update_bool_array_from_bits(bool * arr, uint16_t bits, uint8_t count)
+_update_bool_array_from_bits(bool * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         arr[ii] = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii]);
     }
 }
 
@@ -351,7 +352,11 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
         // update state->circuits.active
     uint16_t const bitmask_active_circuits = ((uint16_t)msg->active_hi << 8) | msg->active_lo;
     static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.active), "size mismatch for state->circuits.active");
-    _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, NETWORK_POOL_MODE_BITS_COUNT);
+    _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
+
+    ESP_LOGE(TAG, "FEAT1 active: %u, FEAT2 active: %u", 
+        state->circuits.active[to_index(network_pool_circuit_t::FEATURE1)], 
+        state->circuits.active[to_index(network_pool_circuit_t::FEATURE2)]);
 
         // if both SPA and POOL bits are set, only SPA runs
     if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
@@ -361,7 +366,7 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
         // update state->circuits.delay
     uint8_t const bitmask_delay_circuits = msg->delay;
     static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.delay), "size mismatch for state->circuits.delay");
-    _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, NETWORK_POOL_MODE_BITS_COUNT);
+    _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
 
         // update state->circuits.thermos (only update when the pump is running)
     constexpr uint8_t pool_idx = to_index(poolstate_thermo_typ_t::POOL);
@@ -877,7 +882,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
+    bool const frequent = //msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_RESP ||

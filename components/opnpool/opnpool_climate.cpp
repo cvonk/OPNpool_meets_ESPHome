@@ -14,6 +14,10 @@
  * explicit thread safety is implemented. The maximum number of climates is limited
  * by the use of uint8_t for indexing.
  *
+ * restore_mode is ignored because state is always synchronized from the pool controller.
+ * The component will always reflect the actual state of the pool/spa thermostats as 
+ * reported by the pool controller.
+ * 
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
