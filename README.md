@@ -157,7 +157,6 @@ Connect the RS-485 adapter to the ESP32 module.  I also pulled `GPIO#27` down wi
 The serial monitor will show decoded messages such as:
 
 ```json
-{
 {CTRL_VERSION_REQ: {}}
 {CTRL_VERSION_RESP: {"firmware":"2.80"}}
 {CTRL_TIME_REQ: {}}
@@ -219,7 +218,7 @@ The schematic fits easily on a two layer PCB. Note the cut out for the RF antenn
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head              | Essentra 50M020040D016     |
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                  | Essentra 04M020040HN       |
 
-[^1]: We shared our [PCB order](https://oshpark.com/shared_projects/nS1z3Duu) for your convienence.
+[^1]: We shared our [PCB order]() for your convienence.
 
 At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can breadboard this using:
 
@@ -263,7 +262,7 @@ debug:
 
 ### Development
 
-For better development experience: in VS Code, install the ESPHome extension.
+For better development experience: in VS Code, install the C/C++ and [ESPHome extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
 
 Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.
 
@@ -285,6 +284,8 @@ Short cuts:
   * View logs with ctrl-shift-p → "Run Task" → "ESPHome Monitor"
 
 Remember: if the ESP32 crashes, you will only see that on the serial console.
+
+![vscode_ide](assets/media/vscode-ide.png)
 
 ## Design documentation
 
