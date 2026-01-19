@@ -34,7 +34,7 @@ static char const * const TAG = "opnpool.binary_sensor";
  * debugging, providing visibility into the entity's state and configuration at runtime.
  */
 void 
-OpnPoolBinarySensor::dump_config() const
+OpnPoolBinarySensor::dump_config()
 {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
     ESP_LOGCONFIG(TAG, "    ID: %u", get_binary_sensor_id());
