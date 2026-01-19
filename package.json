@@ -1,14 +1,7 @@
 {
-  "name": "OPNpool meets ESPHome",
+  "name": "opnpool_meets_esphome",
   "version": "0.3.3",
-  "description": "Integrates the traditional Pool Controller into our smart hom",
-  "dependencies": {
-    "climate": ">=2024.6.1",
-    "switch": ">=2024.6.1",
-    "sensor": ">=2024.6.1",
-    "binary_sensor": ">=2024.6.1",
-    "text_sensor": ">=2024.6.1"
-  },
+  "description": "Integrates the traditional Pool Controller into our smart home using ESPHome.",
   "repository": {
     "type": "git",
     "url": "https://github.com/cvonk/OPNpool_meets_ESPHome"
