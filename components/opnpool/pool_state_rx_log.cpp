@@ -125,10 +125,10 @@ _add_thermostat(cJSON * const obj, char const * const key,
 {
     cJSON * const item = _create_item(obj, key);
     if (showTemp) {
-        cJSON_AddNumberToObject(item, "temp", thermostat->temp);
+        cJSON_AddNumberToObject(item, "temp", thermostat->temp_in_f);
     }
     if (showSp) {
-        cJSON_AddNumberToObject(item, "sp", thermostat->set_point);
+        cJSON_AddNumberToObject(item, "sp", thermostat->set_point_in_f);
     }
     if (showSrc) {
         network_heat_src_t src = static_cast<network_heat_src_t>(thermostat->heat_src);

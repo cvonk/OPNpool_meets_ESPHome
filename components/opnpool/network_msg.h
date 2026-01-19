@@ -137,12 +137,11 @@ enum class network_pump_state_t : uint8_t {
   */
 
 enum class network_heat_src_t : uint8_t {
-    NONE = 0,
-    HEATER = 1,
-    SOLAR_PREF = 2,
-    SOLAR = 3
+    NONE,
+    Heat,
+    SolarPreferred,
+    Solar
 };
-
 
 /**
  * @brief Defines the structures and unions for A5-controller messages.

@@ -253,83 +253,57 @@ OpnPool::dump_config() {
 }
 
 void 
-OpnPool::update_climates(poolstate_t const * const new_state)
+OpnPool::update_climates(const poolstate_t *new_state)
 {
     for (auto climate_id : magic_enum::enum_values<climate_id_t>()) {
 
-        OpnPoolClimate * const climate = this->climates_[to_index(climate_id)];
-        if (climate == nullptr) {
-            continue;
-        }
+        OpnPoolClimate *climate = this->climates_[to_index(climate_id)];
+        if (!climate) continue;
 
-        poolstate_thermo_typ_t const thermo_typ = climate_id_to_poolstate_thermo(climate_id);
-        uint8_t const thermo_typ_idx = to_index(climate->get_thermo_typ());
-        uint8_t const thermo_typ_pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-        uint8_t const thermo_typ_spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+        auto const thermo_typ = climate->get_thermo_typ();
+        auto const thermo = &new_state->thermos[to_index(thermo_typ)];
 
-            // update temperatures
+            // temperatures
+        float const current_temp_f = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
+        float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
+        float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
 
-        poolstate_thermo_t const * const thermo = &new_state->thermos[thermo_typ_idx];
-
-        float const new_current_temp_in_f = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
-        float const new_current_temp = fahrenheit_to_celsius(new_current_temp_in_f);
-        float const new_target_temp_in_f = thermo->set_point;
-        float new_target_temp = fahrenheit_to_celsius(new_target_temp_in_f);
-        
-            // update mode based on {circuit state, heating status}
-
-        uint8_t switch_idx = (thermo_typ_idx == thermo_typ_pool_idx) 
+            // mode
+        uint8_t switch_idx = (thermo_typ == poolstate_thermo_typ_t::POOL)
                            ? to_index(network_pool_circuit_t::POOL)
                            : to_index(network_pool_circuit_t::SPA);
 
-        climate::ClimateMode new_mode;
+        climate::ClimateMode mode = new_state->circuits.active[switch_idx]
+                                  ? climate::CLIMATE_MODE_HEAT
+                                  : climate::CLIMATE_MODE_OFF;
 
-        if (new_state->circuits.active[switch_idx]) {
-            new_mode = climate::CLIMATE_MODE_HEAT;
-        } else {
-            new_mode = climate::CLIMATE_MODE_OFF;
-        }
-        
-            // update custom preset (based on heat source)
+            // custom preset
+        auto const custom_preset = enum_str(thermo->heat_src);
 
-        char const * new_custom_preset = enum_str(static_cast<custom_presets_t>(thermo->heat_src));
+            // action
+        climate::ClimateAction action = thermo->heating
+            ? climate::CLIMATE_ACTION_HEATING
+            : (mode == climate::CLIMATE_MODE_OFF
+                ? climate::CLIMATE_ACTION_OFF
+                : climate::CLIMATE_ACTION_IDLE);
 
-            // update action
-
-        climate::ClimateAction new_action;
-
-        if (thermo->heating) {
-            new_action = climate::CLIMATE_ACTION_HEATING;
-        } else if (new_mode == climate::CLIMATE_MODE_OFF) {
-            new_action = climate::CLIMATE_ACTION_OFF;
-        } else {
-            new_action = climate::CLIMATE_ACTION_IDLE;
-        }
-
-        climate->publish_value_if_changed(new_current_temp, new_target_temp,
-                                          new_mode, new_custom_preset, new_action);
+        climate->publish_value_if_changed(current_temp_c, target_temp_c, mode, custom_preset, action);
     }
 }
 
 void
-OpnPool::update_switches(poolstate_t const * const state)
+OpnPool::update_switches(const poolstate_t *state)
 {
     for (auto switch_id : magic_enum::enum_values<switch_id_t>()) {
-        
-        OpnPoolSwitch * const sw = this->switches_[to_index(switch_id)];
-        if (sw == nullptr) {
-            continue;
-        }
-        network_pool_circuit_t const circuit = switch_id_to_network_circuit(switch_id);
-        uint8_t const circuit_idx = enum_index(circuit);
 
-        bool value = state->circuits.active[circuit_idx];
+        OpnPoolSwitch *sw = this->switches_[to_index(switch_id)];
+        if (!sw) continue;
 
-        ESP_LOGVV(TAG, "Updating switch[%s] -> circuit[%s] to %s",
-            to_str(switch_id), to_str(circuit), value ? "ON" : "OFF");
+        auto const circuit = switch_id_to_network_circuit(switch_id);
+        bool const is_active = state->circuits.active[enum_index(circuit)];
 
-        sw->publish_value_if_changed(value);
-    }  
+        sw->publish_value_if_changed(is_active);
+    }
 }
 
 void

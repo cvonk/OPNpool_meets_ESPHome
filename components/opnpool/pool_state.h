@@ -59,10 +59,10 @@ enum class poolstate_thermo_typ_t : uint8_t {
 };
 
 struct poolstate_thermo_t {
-    uint8_t  temp;
-    uint8_t  set_point;
-    uint8_t  heat_src;
-    bool     heating;
+    uint8_t              temp_in_f;
+    uint8_t              set_point_in_f;
+    network_heat_src_t   heat_src;
+    bool                 heating;
 };
 
 enum class poolstate_elem_thermos_typ_t : uint8_t {

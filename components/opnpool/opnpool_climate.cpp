@@ -103,9 +103,9 @@ climate::ClimateTraits OpnPoolClimate::traits()
 
         // custom heat sources
     traits.set_supported_custom_presets({
-        enum_str(custom_presets_t::Heat),
-        enum_str(custom_presets_t::SolarPreferred),
-        enum_str(custom_presets_t::Solar)
+        enum_str(network_heat_src_t::Heat),
+        enum_str(network_heat_src_t::SolarPreferred),
+        enum_str(network_heat_src_t::Solar)
     });
     return traits;
 }
@@ -150,7 +150,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         float const target_temp_fahrenheit = _celsius_to_fahrenheit(target_temp_celsius);
         ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", thermo_idx, target_temp_fahrenheit);
 
-        thermos_new[thermo_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
+        thermos_new[thermo_idx].set_point_in_f = static_cast<uint8_t>(target_temp_fahrenheit);
     }
 
         // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on or
@@ -160,7 +160,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
         climate::ClimateMode const requested_mode = *call.get_mode();
         
-        ESP_LOGV(TAG, "HA requests climate mode [%u] to mode=%u", thermo_idx, static_cast<int>(requested_mode));
+        ESP_LOGV(TAG, "HA requests %s to mode=%u", enum_str(thermo_typ), static_cast<int>(requested_mode));
         uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
                            ? to_index(switch_id_t::POOL)
                            : to_index(switch_id_t::SPA);
@@ -188,22 +188,22 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
     char const * preset_str = call.get_custom_preset();
     if (preset_str != nullptr) {
 
-        ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", thermo_idx, preset_str);
+        ESP_LOGV(TAG, "HA requests %s change to %s", enum_str(thermo_typ), preset_str);
 
-        if (strcasecmp(preset_str, enum_str(custom_presets_t::Heat)) == 0) {
-            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::HEATER);
-        } else if (strcasecmp(preset_str, enum_str(custom_presets_t::SolarPreferred)) == 0) {
-            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::SOLAR_PREF);
-        } else if (strcasecmp(preset_str, enum_str(custom_presets_t::Solar)) == 0) {
-            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::SOLAR);
+        for (auto heat_src : magic_enum::enum_values<network_heat_src_t>()) {
+            if (strcasecmp(preset_str, enum_str(heat_src)) == 0) {
+                thermos_new[thermo_idx].heat_src = heat_src;
+                break;
+            }
         }
+        
     } else if (call.get_preset().has_value()) {
 
         climate::ClimatePreset new_preset = *call.get_preset();
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
-            ESP_LOGV(TAG, "HA requests heat source [%u] change to %u(NONE)", thermo_idx, new_preset);
-            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::NONE);
+            ESP_LOGV(TAG, "HA requests %s change to %u(NONE)", enum_str(thermo_typ), new_preset);
+            thermos_new[thermo_idx].heat_src = network_heat_src_t::NONE;
         }
     }        
 
@@ -213,15 +213,15 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (thermos_changed) {
 
-        uint8_t const pool_heat_src = thermos_new[thermo_pool_idx].heat_src;
-        uint8_t const spa_heat_src = thermos_new[thermo_spa_idx].heat_src;
+        uint8_t const pool_heat_src = enum_index(thermos_new[thermo_pool_idx].heat_src);
+        uint8_t const spa_heat_src = enum_index(thermos_new[thermo_spa_idx].heat_src);
 
         network_msg_t msg = {
             .typ = network_msg_typ_t::CTRL_HEAT_SET,
             .u = {
                 .ctrl_heat_set = {
-                    .pool_set_point = thermos_new[thermo_pool_idx].set_point,
-                    .spa_set_point = thermos_new[thermo_spa_idx].set_point,
+                    .pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f,
+                    .spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f,
                     .combined_heat_src = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
                 },
             },
@@ -277,7 +277,7 @@ OpnPoolClimate::publish_value_if_changed(
         this->action = value_action;
 
             // NONE is handled by the regular preset, not a custom preset
-        if (strcasecmp(value_custom_preset, enum_str(custom_presets_t::NONE)) == 0) {
+        if (strcasecmp(value_custom_preset, enum_str(network_heat_src_t::NONE)) == 0) {
             ESP_LOGVV(TAG, "Setting thermostat[%s] preset to NONE", enum_str(thermo_typ));
             set_preset_(climate::CLIMATE_PRESET_NONE);
             clear_custom_preset_();

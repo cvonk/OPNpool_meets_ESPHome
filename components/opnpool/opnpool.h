@@ -25,14 +25,6 @@ class OpnPoolSensor;
 class OpnPoolBinarySensor;
 class OpnPoolTextSensor;
 
-    // custom presets for climate entity (shared between opnpool.cpp and opnpool_climate.cpp)
-enum class custom_presets_t {
-    NONE,
-    Heat,
-    SolarPreferred,
-    Solar
-};
-
     // main component
 
 class OpnPool : public Component {
