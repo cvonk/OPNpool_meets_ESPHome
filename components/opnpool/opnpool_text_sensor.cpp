@@ -51,7 +51,7 @@ void OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Publised text sensor [%u]: %s", idx_, value.c_str());
+        ESP_LOGV(TAG, "Publised text sensor [%u]: %s", get_text_sensor_id(), value.c_str());
     }
 }
 

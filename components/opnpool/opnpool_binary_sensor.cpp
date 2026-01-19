@@ -25,7 +25,9 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool.binary_sensor";
 
-void OpnPoolBinarySensor::dump_config() {
+void 
+OpnPoolBinarySensor::dump_config()
+{
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
 }
 
@@ -40,7 +42,8 @@ void OpnPoolBinarySensor::dump_config() {
  *
  * @param value The new binary sensor value to be published.
  */
-void OpnPoolBinarySensor::publish_value_if_changed(bool const value)
+void
+OpnPoolBinarySensor::publish_value_if_changed(bool const value)
 {
     if (!last_.valid || last_.value != value) {
         
@@ -50,7 +53,7 @@ void OpnPoolBinarySensor::publish_value_if_changed(bool const value)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Published binary sensor [%u]: %s", idx_, value ? "ON" : "OFF");
+        ESP_LOGV(TAG, "Published binary sensor [%u]: %s", get_binary_sensor_id(), value ? "ON" : "OFF");
     }
 }
 

@@ -52,7 +52,7 @@ void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Published sensor [%u]: %.2f", idx_, value);        
+        ESP_LOGV(TAG, "Published sensor [%u]: %.2f", get_sensor_id(), value);        
     }
 }
 

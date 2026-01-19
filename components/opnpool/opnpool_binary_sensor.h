@@ -11,14 +11,15 @@ class OpnPool;  // Forward declaration only - don't include opnpool.h!
 class OpnPoolBinarySensor : public binary_sensor::BinarySensor, public Component {
 
   public:
-    OpnPoolBinarySensor(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
-    void dump_config() override;
+    OpnPoolBinarySensor(OpnPool* parent, uint8_t id) : parent_{parent}, binary_sensor_id_{id} {}
+    void dump_config();
     
+    uint8_t get_binary_sensor_id() const { return this->binary_sensor_id_; }    
     void publish_value_if_changed(bool value);
 
   protected:
-    uint8_t const   idx_;
     OpnPool * const parent_;
+    uint8_t const   binary_sensor_id_;
 
     struct last_t {
         bool valid{false};

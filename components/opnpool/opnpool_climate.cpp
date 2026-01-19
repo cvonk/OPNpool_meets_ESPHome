@@ -103,7 +103,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
         // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
     static_assert(enum_count<ClimateId>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
-    uint8_t const thermo_idx = this->get_idx();
+    uint8_t const thermo_idx = this->get_climate_id();
 
     uint8_t const thermo_pool_idx = to_index(ClimateId::POOL_CLIMATE);
     uint8_t const thermo_spa_idx = to_index(ClimateId::SPA_CLIMATE);
@@ -213,78 +213,6 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
     // DON'T publish state here - wait for pool controller confirmation
 }
 
-
-#if 0
-/**
- * @brief
- * Updates the climate entity state from the latest pool controller feedback.
- *
- * @details
- * Extracts current and target temperatures, climate mode, heat source, and heating action
- * from the provided pool state. Maps pool controller heat source values to custom presets
- * for Home Assistant. Determines the climate action (heating, idle, or off) based on
- * controller feedback. Publishes the updated state to Home Assistant only if any relevant
- * value has changed.
- *
- * @param new_state Pointer to the latest poolstate_t structure containing updated pool
- * controller data.
- */
-void
-OpnPoolClimate::update_climate(const poolstate_t * new_state) 
-{    
-        // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
-    static_assert(enum_count<ClimateId>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
-    uint8_t const thermo_idx = this->get_idx();
-
-    uint8_t const thermo_pool_idx = to_index(ClimateId::POOL_CLIMATE);
-    uint8_t const thermo_spa_idx = to_index(ClimateId::SPA_CLIMATE);
-
-        // update temperatures
-
-    poolstate_thermo_t const * const thermo = &new_state->thermos[thermo_idx];
-
-    float const new_current_temp_in_fahrenheit = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
-    float const new_current_temp = helpers:fahrenheit_to_celsius(new_current_temp_in_fahrenheit);
-    float const new_target_temp_in_fahrenheit = thermo->set_point;
-    float new_target_temp = helpers::fahrenheit_to_celsius(new_target_temp_in_fahrenheit);
-    
-        // update mode based on {circuit state, heating status}
-
-    uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
-                        ? to_index(SwitchId::POOL)
-                        : to_index(SwitchId::SPA);
-
-    climate::ClimateMode new_mode;
-
-    if (new_state->circuits.active[switch_idx]) {
-        new_mode = climate::CLIMATE_MODE_HEAT;
-    } else {
-        new_mode = climate::CLIMATE_MODE_OFF;
-    }
-    
-        // update custom preset (based on heat source)
-
-    char const * new_custom_preset = enum_str(static_cast<custom_presets_t>(thermo->heat_src));
-    ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", thermo_idx, thermo->heat_src, new_custom_preset);
-
-        // update action
-
-    climate::ClimateAction new_action;
-
-    if (thermo->heating) {
-        new_action = climate::CLIMATE_ACTION_HEATING;
-    } else if (new_mode == climate::CLIMATE_MODE_OFF) {
-        new_action = climate::CLIMATE_ACTION_OFF;
-    } else {
-        new_action = climate::CLIMATE_ACTION_IDLE;
-    }
-
-    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", thermo_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));
-
-    this->publish_value_if_changed(thermo_idx, new_current_temp, new_target_temp,
-                                  new_mode, new_custom_preset, new_action);
-}
-#endif
 
 /**
  * @brief

@@ -26,7 +26,6 @@
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "pool_state.h"
 #include "opnpool_helpers.h"  // conversion helper
 
 namespace esphome {
@@ -52,7 +51,7 @@ void OpnPoolSwitch::dump_config()
  *
  * @param state The desired state of the switch (true for ON, false for OFF).
  */
-void OpnPoolSwitch::write_state(bool state)
+void OpnPoolSwitch::write_state(bool value)
 {
     SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
     network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
@@ -63,40 +62,14 @@ void OpnPoolSwitch::write_state(bool state)
         .u = {
             .ctrl_circuit_set = {
                 .circuit_plus_1 = static_cast<uint8_t>(circuit_idx + uint8_t(1)),
-                .value = static_cast<uint8_t>(state ? 1 : 0),          
+                .value = static_cast<uint8_t>(value ? 1 : 0),          
             },
         },
     };
 
-    ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit=%u to %u", msg.u.ctrl_circuit_set.circuit, msg.u.ctrl_circuit_set.value);
+    ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit+1=%u to %u", msg.u.ctrl_circuit_set.circuit_plus_1, msg.u.ctrl_circuit_set.value);
     ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());    
 }
-
-#if 0
-/**
- * @brief
- * Updates the switch state from the latest pool controller feedback.
- *
- * @details
- * Retrieves the current state of the specified circuit from the pool controller's state
- * structure. Compares the received state with the last published state and publishes the
- * new value to Home Assistant only if it has changed.
- *
- * @param state Pointer to the latest poolstate_t structure containing updated pool
- * controller data.
- */
-void
-OpnPoolSwitch::update_switch(poolstate_t const * const state)
-{
-        // this relies on CONF_SWITCHES being in the same order as network_pool_circuit_t
-    static_assert(enum_count<SwitchId>() == enum_count<network_pool_circuit_t(), "CONF_SWITCHES size must match network_pool_circuit_t enum count");
-    uint8_t const idx = get_switch_id();  
-
-    bool current_state = state->circuits.active[idx];
-
-    publish_value_if_changed(current_state);
-}
-#endif
 
 /**
  * @brief
