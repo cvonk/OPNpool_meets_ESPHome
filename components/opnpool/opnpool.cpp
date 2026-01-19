@@ -274,19 +274,22 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
 {
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(SensorId::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
-        float air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
+        float const air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
         float air_temp_c = fahrenheit_to_celsius(air_temp_f);
+        air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp->publish_value_if_changed(air_temp_c);    
     }
 
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
         float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-        float const water_temp_c = fahrenheit_to_celsius(water_temp_f);
+        float water_temp_c = fahrenheit_to_celsius(water_temp_f);
+        water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
+        
     }
 
-    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)], new_state->pump.power);
+    publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)],        new_state->pump.power);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)],         new_state->pump.flow);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)],        new_state->pump.speed);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_ERROR)],        new_state->pump.error);

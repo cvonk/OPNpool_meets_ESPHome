@@ -83,6 +83,16 @@ CONF_ANALOG_SENSORS = [  # used to overwrite SensorId enum in opnpool.h
     "chlorinator_salt",
     "pump_error"
 ]
+CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
+    "air_temperature": {"unit": "°C", "device_class": "temperature"},
+    "water_temperature": {"unit": "°C", "device_class": "temperature"},
+    "pump_power": {"unit": "W", "device_class": "power"},
+    "pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate"},
+    "pump_speed": {"unit": "rpm", "device_class": ""},
+    "chlorinator_level": {"unit": "%", "device_class": ""},
+    "chlorinator_salt": {"unit": "ppm", "device_class": ""},
+    "pump_error": {"unit": "", "device_class": ""},
+}
 CONF_BINARY_SENSORS = [  # used to overwrite BinarySensorId enum in opnpool.h
     "pump_running",
     "mode_service",
@@ -122,7 +132,9 @@ CONFIG_SCHEMA = cv.Schema({
     },
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): sensor.sensor_schema(OpnPoolSensor).extend({
-            cv.GenerateID(): cv.declare_id(OpnPoolSensor)
+            cv.GenerateID(): cv.declare_id(OpnPoolSensor),
+            cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSOR_META[key]["unit"]): cv.string,
+            cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["device_class"]): cv.string,
         }) for key in CONF_ANALOG_SENSORS
     },
     **{

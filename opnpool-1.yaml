@@ -10,7 +10,7 @@
 
 substitutions:
   device_name: opnpool-1
-  friendly_name: "External component OPNpool"
+  friendly_name: "OPNpool meets ESPHome"
   description: "External component, see https://github.com/cvonk/OPNpool_meets_ESPHome"
 
 esphome:
@@ -88,18 +88,6 @@ external_components:
   - source: 
       type: local
       path: components
-
-#uart:
-#  id: uart_bus
-#  rx_pin: GPIO25
-#  tx_pin: GPIO26
-#  flow_control_pin: GPIO27
-#  baud_rate: 9600
-#  data_bits: 8
-#  parity: NONE
-#  stop_bits: 1
-#  debug:
-#    direction: BOTH
 
 opnpool:
   id: opnpool_1
