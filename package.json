@@ -3,7 +3,7 @@
   "version": "0.3.3",
   "description": "OPNpool integrates the traditional Pool Controller into our smart hom",
   "dependencies": {
-    "esphome": "2025.12.0"
+    "esphome": "2025.12.7"
   },
   "repository": {
     "type": "git",
