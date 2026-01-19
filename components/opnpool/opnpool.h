@@ -24,6 +24,14 @@ class OpnPoolSensor;
 class OpnPoolBinarySensor;
 class OpnPoolTextSensor;
 
+    // custom presets for climate entity (shared between opnpool.cpp and opnpool_climate.cpp)
+enum class custom_presets_t {
+    NONE,
+    Heat,
+    SolarPreferred,
+    Solar
+};
+
 // IDs for array indexing (will be OVERWRITTEN by __init__.py for consistency with its CONF_*)
 
 enum class ClimateId : uint8_t {

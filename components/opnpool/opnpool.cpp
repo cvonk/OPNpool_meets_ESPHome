@@ -66,13 +66,6 @@ to_index(E e) -> typename std::underlying_type<E>::type
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-    // helper to convert Fahrenheit to Celsius
-constexpr float 
-fahrenheit_to_celsius(float f)
-{
-    return (f - 32.0f) * 5.0f / 9.0f;
-}
-
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
 inline void 
@@ -258,35 +251,67 @@ OpnPool::dump_config() {
 void 
 OpnPool::update_climates(poolstate_t const * const new_state)
 {
-    for (auto idx : magic_enum::enum_values<ClimateId>()) {
+    for (auto climate_id : magic_enum::enum_values<ClimateId>()) {
 
-        ESP_LOGVV(TAG, "Updating climate[%u]", to_index(idx));
-
-        OpnPoolClimate * const climate = this->climates_[to_index(idx)];
-        if (climate != nullptr) {
-            climate->update_climate(new_state);
+        OpnPoolClimate * const climate = this->climates_[to_index(climate_id)];
+        if (climate == nullptr) {
+            continue;
         }
+
+        poolstate_thermo_typ_t const thermo_typ = helpers::climate_id_to_poolstate_thermo(climate_id);
+        uint8_t const thermo_typ_idx = enum_index(thermo_typ);
+        uint8_t const thermo_typ_pool_idx = to_index(poolstate_thermo_typ_t::POOL);
+        uint8_t const thermo_typ_spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+
+            // update temperatures
+
+        poolstate_thermo_t const * const thermo = &new_state->thermos[thermo_typ_idx];
+
+        float const new_current_temp_in_f = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
+        float const new_current_temp = helpers::fahrenheit_to_celsius(new_current_temp_in_f);
+        float const new_target_temp_in_f = thermo->set_point;
+        float new_target_temp = helpers::fahrenheit_to_celsius(new_target_temp_in_f);
+        
+            // update mode based on {circuit state, heating status}
+
+        uint8_t switch_idx = (thermo_typ_idx == thermo_typ_pool_idx) 
+                           ? to_index(network_pool_circuit_t::POOL)
+                           : to_index(network_pool_circuit_t::SPA);
+
+        climate::ClimateMode new_mode;
+
+        if (new_state->circuits.active[switch_idx]) {
+            new_mode = climate::CLIMATE_MODE_HEAT;
+        } else {
+            new_mode = climate::CLIMATE_MODE_OFF;
+        }
+        
+            // update custom preset (based on heat source)
+
+        char const * new_custom_preset = enum_str(static_cast<custom_presets_t>(thermo->heat_src));
+        ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", thermo_typ_idx, thermo->heat_src, new_custom_preset);
+
+            // update action
+
+        climate::ClimateAction new_action;
+
+        if (thermo->heating) {
+            new_action = climate::CLIMATE_ACTION_HEATING;
+        } else if (new_mode == climate::CLIMATE_MODE_OFF) {
+            new_action = climate::CLIMATE_ACTION_OFF;
+        } else {
+            new_action = climate::CLIMATE_ACTION_IDLE;
+        }
+
+        climate->publish_value_if_changed(thermo_typ_idx, new_current_temp, new_target_temp,
+                                          new_mode, new_custom_preset, new_action);
+
+        ESP_LOGVV(TAG, "RX updated climate[%s]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", to_str(climate_id), new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));
+#if 0            
+            climate->update_climate(new_state);
+#endif            
     }
 }
-
-  /**
-   * @brief Convert SwitchId to network_pool_circuit_t.
-   *
-   * @details
-   * This helper assumes that SwitchId and network_pool_circuit_t enums are kept in the
-   * same order and size. A static_assert is used to enforce the size match at compile
-   * time.
-   *
-   * @param id SwitchId value to convert.
-   * @return network_pool_circuit_t corresponding value.
-   */
-static network_pool_circuit_t
-_switch_id_to_network_circuit(SwitchId const id)
-{
-    static_assert(enum_count<SwitchId>() == enum_count<network_pool_circuit_t>(), "SwitchId and network_pool_circuit_t must have the same number of elements");
-    return static_cast<network_pool_circuit_t>(static_cast<uint8_t>(id));
-}
-
 
 void
 OpnPool::update_switches(poolstate_t const * const state)
@@ -294,17 +319,18 @@ OpnPool::update_switches(poolstate_t const * const state)
     for (auto switch_id : magic_enum::enum_values<SwitchId>()) {
         
         OpnPoolSwitch * const sw = this->switches_[to_index(switch_id)];
-        if (sw != nullptr) {
-            network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
-            uint8_t const circuit_idx = enum_index(circuit);
-
-            bool value = state->circuits.active[circuit_idx];
-
-            ESP_LOGVV(TAG, "Updating switch[%s] -> circuit[%s] to %s",
-                to_str(switch_id), to_str(circuit), value ? "ON" : "OFF");
-
-            sw->publish_value_if_changed(value);
+        if (sw == nullptr) {
+            continue;
         }
+        network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+        uint8_t const circuit_idx = enum_index(circuit);
+
+        bool value = state->circuits.active[circuit_idx];
+
+        ESP_LOGVV(TAG, "Updating switch[%s] -> circuit[%s] to %s",
+            to_str(switch_id), to_str(circuit), value ? "ON" : "OFF");
+
+        sw->publish_value_if_changed(value);
     }  
 }
 
@@ -314,14 +340,14 @@ OpnPool::update_analog_sensors(poolstate_t const * const new_state)
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(SensorId::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
         float const air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
-        float air_temp_c = fahrenheit_to_celsius(air_temp_f);
+        float air_temp_c = helpers::fahrenheit_to_celsius(air_temp_f);
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp->publish_value_if_changed(air_temp_c);    
     }
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
         float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
-        float water_temp_c = fahrenheit_to_celsius(water_temp_f);
+        float water_temp_c = helpers::fahrenheit_to_celsius(water_temp_f);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
 
