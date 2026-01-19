@@ -1,7 +1,7 @@
 {
-  "name": "opnpool",
+  "name": "OPNpool meets ESPHome",
   "version": "0.3.3",
-  "description": "OPNpool integrates the traditional Pool Controller into our smart hom",
+  "description": "Integrates the traditional Pool Controller into our smart hom",
   "dependencies": {
     "climate": ">=2024.6.1",
     "switch": ">=2024.6.1",
