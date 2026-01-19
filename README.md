@@ -1,13 +1,11 @@
-# This is a work in progress
-
-Porting my [OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
-
 # OPNpool meets ESPHome
 
 [![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://github.com/cvonk/OPNpool_meets_ESPHome/discussions)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 ![GitHub package.json dependency version (prod)](https://img.shields.io/github/package-json/dependency-version/cvonk/OPNpool_meets_ESPHome/esp-idf)
 ![GitHub](https://img.shields.io/github/license/cvonk/OPNpool_meets_ESPHome)
+
+This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
 
 The OPNpool integrates the functionality of a traditional Pool Controller into the modern smart home. It keeps tabs on the status of the connected controller, pool pump and chlorinator. This provides not only a more convenient solution than physically interacting with the pool equipment, but the ability to create automations that runs the pump for a duration depending on the temperature.
 
@@ -267,19 +265,31 @@ debug:
 
 For better development experience: in VS Code, install the ESPHome extension.
 
-Build with ctrl-shift-b, or on mac use cmd-shift-b.  
+Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.
+
+```bash
+git clone --recursive https://github.com/cvonk/OPNpool_meets_ESPHome.git
+```
+
+or using `ssh`
+```bash
+git clone --recursive git@github.com:cvonk/OPNpool_meets_ESPHome.git
+```
 
 The `tasks.json` file defines the build tasks. It will map the compile pathnames back from the build directory to the project directory.  You can then inspect the build output in the PROBLEMS tab in VS Code.
 
-To compile & upload: ctrl-shift-p → "Run Task" → "ESPHome Upload"
-To view logs: ctrl-shift-p → "Run Task" → "ESPHome Monitor"
+Short cuts:
 
-Remember if the ESP32 crashes, you will only see that on the serial console.
+  * Build with ctrl-shift-b, or on mac use cmd-shift-b.  
+  * Compile & upload with ctrl-shift-p → "Run Task" → "ESPHome Upload"
+  * View logs with ctrl-shift-p → "Run Task" → "ESPHome Monitor"
+
+Remember: if the ESP32 crashes, you will only see that on the serial console.
 
 ## Design documentation
 
 The design documentation for the (original OPNpool project)[https://github.com/cvonk/OPNpool] is still available at
-[https://coertvonk.com/category/sw/embedded/opnpool-design](https://coertvonk.com/category/sw/embedded/opnpool-design). Chapters that are still relevant are:
+[https://coertvonk.com/category/sw/embedded/opnpool-design](https://coertvonk.com/category/sw/embedded/opnpool-design). The following chapters are relevant here:
 
 - [RS-485 bus](https://coertvonk.com/sw/embedded/opnpool-design/bus-access-31957)
 - [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
