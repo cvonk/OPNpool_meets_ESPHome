@@ -12,6 +12,7 @@ class OpnPoolSensor : public sensor::Sensor, public Component {
 
   public:
     OpnPoolSensor(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
+    
     void dump_config() override;
     
     void publish_value_if_changed(float value, float tolerance = 0.01f);
@@ -20,10 +21,10 @@ class OpnPoolSensor : public sensor::Sensor, public Component {
     uint8_t const   idx_;
     OpnPool * const parent_;
 
-    struct last_value_t {
+    struct last_t {
         bool  valid{false};
-        float value{false};
-    } last_value_;
+        float value{0.0f};
+    } last_;
 };
 
 }  // namespace opnpool

@@ -12,19 +12,19 @@ class OpnPool;  // Forward declaration only - don't include opnpool.h!
 class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
   public:
     OpnPoolTextSensor(OpnPool* parent, uint8_t idx) : parent_{parent}, idx_{idx} {}
+    
     void dump_config() override;
     
     void publish_value_if_changed(const std::string &value);
-
 
   protected:
     uint8_t const   idx_;
     OpnPool * const parent_;
 
-    struct last_value_t {
+    struct last_t {
         bool         valid{false};
         std::string  value{""};
-    } last_value_;
+    } last_;
 };
 
 }  // namespace opnpool

@@ -115,9 +115,12 @@ climate::ClimateTraits OpnPoolClimate::traits()
  */
 void OpnPoolClimate::control(const climate::ClimateCall &call)
 {
-    uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = to_index(ClimateId::POOL_CLIMATE);
-    uint8_t const climate_spa_idx = to_index(ClimateId::SPA_CLIMATE);
+        // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
+    static_assert(enum_count<ClimateId>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
+    uint8_t const thermo_idx = this->get_idx();
+
+    uint8_t const thermo_pool_idx = to_index(ClimateId::POOL_CLIMATE);
+    uint8_t const thermo_spa_idx = to_index(ClimateId::SPA_CLIMATE);
 
        // get both thermostats ('cause the change request needs to references them both)
 
@@ -134,9 +137,9 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
         float const target_temp_celsius = *call.get_target_temperature();
         float const target_temp_fahrenheit = celsius_to_fahrenheit(target_temp_celsius);
-        ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", climate_idx, target_temp_fahrenheit);
+        ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", thermo_idx, target_temp_fahrenheit);
 
-        thermos_new[climate_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
+        thermos_new[thermo_idx].set_point = static_cast<uint8_t>(target_temp_fahrenheit);
     }
 
         // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on or
@@ -146,8 +149,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
         climate::ClimateMode const requested_mode = *call.get_mode();
         
-        ESP_LOGV(TAG, "HA requests climate mode [%u] to mode=%u", climate_idx, static_cast<int>(requested_mode));
-        uint8_t switch_idx = (climate_idx == climate_pool_idx) 
+        ESP_LOGV(TAG, "HA requests climate mode [%u] to mode=%u", thermo_idx, static_cast<int>(requested_mode));
+        uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
                            ? to_index(SwitchId::POOL)
                            : to_index(SwitchId::SPA);
         
@@ -174,22 +177,22 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
     char const * preset_str = call.get_custom_preset();
     if (preset_str != nullptr) {
 
-        ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", climate_idx, preset_str);
+        ESP_LOGV(TAG, "HA requests heat source [%u] change to %s", thermo_idx, preset_str);
 
         if (strcasecmp(preset_str, enum_str(custom_presets_t::Heat)) == 0) {
-            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::HEATER);
+            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::HEATER);
         } else if (strcasecmp(preset_str, enum_str(custom_presets_t::SolarPreferred)) == 0) {
-            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR_PREF);
+            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::SOLAR_PREF);
         } else if (strcasecmp(preset_str, enum_str(custom_presets_t::Solar)) == 0) {
-            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::SOLAR);
+            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::SOLAR);
         }
     } else if (call.get_preset().has_value()) {
 
         climate::ClimatePreset new_preset = *call.get_preset();
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
-            ESP_LOGV(TAG, "HA requests heat source [%u] change to %u(NONE)", climate_idx, new_preset);
-            thermos_new[climate_idx].heat_src = to_index(network_heat_src_t::NONE);
+            ESP_LOGV(TAG, "HA requests heat source [%u] change to %u(NONE)", thermo_idx, new_preset);
+            thermos_new[thermo_idx].heat_src = to_index(network_heat_src_t::NONE);
         }
     }        
 
@@ -199,15 +202,15 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (thermos_changed) {
 
-        uint8_t const pool_heat_src = thermos_new[climate_pool_idx].heat_src;
-        uint8_t const spa_heat_src = thermos_new[climate_spa_idx].heat_src;
+        uint8_t const pool_heat_src = thermos_new[thermo_pool_idx].heat_src;
+        uint8_t const spa_heat_src = thermos_new[thermo_spa_idx].heat_src;
 
         network_msg_t msg = {
             .typ = network_msg_typ_t::CTRL_HEAT_SET,
             .u = {
                 .ctrl_heat_set = {
-                    .pool_set_point = thermos_new[climate_pool_idx].set_point,
-                    .spa_set_point = thermos_new[climate_spa_idx].set_point,
+                    .pool_set_point = thermos_new[thermo_pool_idx].set_point,
+                    .spa_set_point = thermos_new[thermo_spa_idx].set_point,
                     .combined_heat_src = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
                 },
             },
@@ -242,13 +245,16 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 void
 OpnPoolClimate::update_climate(const poolstate_t * new_state) 
 {    
-    uint8_t const climate_idx = this->get_idx();
-    uint8_t const climate_pool_idx = to_index(ClimateId::POOL_CLIMATE);
-    uint8_t const climate_spa_idx = to_index(ClimateId::SPA_CLIMATE);
+        // this relies on CONF_CLIMATES being in the same order as network_pool_thermo_t
+    static_assert(enum_count<ClimateId>() == enum_count<poolstate_thermo_typ_t>(), "CONF_CLIMATES size must match network_pool_thermo_t enum count");
+    uint8_t const thermo_idx = this->get_idx();
+
+    uint8_t const thermo_pool_idx = to_index(ClimateId::POOL_CLIMATE);
+    uint8_t const thermo_spa_idx = to_index(ClimateId::SPA_CLIMATE);
 
         // update temperatures
 
-    poolstate_thermo_t const * const thermo = &new_state->thermos[climate_idx];
+    poolstate_thermo_t const * const thermo = &new_state->thermos[thermo_idx];
 
     float const new_current_temp_in_fahrenheit = new_state->temps[to_index(poolstate_temp_typ_t::WATER)].temp;
     float const new_current_temp = fahrenheit_to_celsius(new_current_temp_in_fahrenheit);
@@ -257,7 +263,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
     
         // update mode based on {circuit state, heating status}
 
-    uint8_t switch_idx = (climate_idx == climate_pool_idx) 
+    uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
                         ? to_index(SwitchId::POOL)
                         : to_index(SwitchId::SPA);
 
@@ -272,7 +278,7 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         // update custom preset (based on heat source)
 
     char const * new_custom_preset = enum_str(static_cast<custom_presets_t>(thermo->heat_src));
-    ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", climate_idx, thermo->heat_src, new_custom_preset);
+    ESP_LOGVV(TAG, "Mapped heat source [%u]: %u(%s)", thermo_idx, thermo->heat_src, new_custom_preset);
 
         // update action
 
@@ -286,9 +292,9 @@ OpnPoolClimate::update_climate(const poolstate_t * new_state)
         new_action = climate::CLIMATE_ACTION_IDLE;
     }
 
-    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", climate_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));
+    ESP_LOGVV(TAG, "RX updated climate[%u]: current=%.0f, target=%.0f, mode=%u, custom_preset=%s, action=%u", thermo_idx, new_current_temp, new_target_temp, static_cast<int8_t>(new_mode), new_custom_preset, to_index(new_action));
 
-    this->publish_value_if_changed(climate_idx, new_current_temp, new_target_temp,
+    this->publish_value_if_changed(thermo_idx, new_current_temp, new_target_temp,
                                   new_mode, new_custom_preset, new_action);
 }
 
@@ -316,7 +322,7 @@ OpnPoolClimate::publish_value_if_changed(
     float const value_target_temperature, climate::ClimateMode const value_mode,
     char const * value_custom_preset, climate::ClimateAction const value_action)
 {
-    last_value_t * const last = &last_value_;
+    last_t * const last = &last_;
 
     if (!last->valid ||
         last->current_temp != value_current_temperature ||

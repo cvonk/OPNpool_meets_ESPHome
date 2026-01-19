@@ -42,6 +42,7 @@
 #include "ipc.h"
 #include "pool_task.h"
 #include "opnpool.h"
+#include "to_str.h"
 
 #include "pool_state.h"
 #include "opnpool_climate.h"
@@ -49,6 +50,7 @@
 #include "opnpool_sensor.h"
 #include "opnpool_binary_sensor.h"
 #include "opnpool_text_sensor.h"
+#include "opnpool_helpers.h"
 
 namespace esphome {
 namespace opnpool {
@@ -58,20 +60,23 @@ static char const * const TAG = "opnpool";
 
     // helper to convert enum class to its underlying type
 template<typename E>
-constexpr auto to_index(E e) -> typename std::underlying_type<E>::type
+constexpr auto 
+to_index(E e) -> typename std::underlying_type<E>::type
 {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
     // helper to convert Fahrenheit to Celsius
-constexpr float fahrenheit_to_celsius(float f)
+constexpr float 
+fahrenheit_to_celsius(float f)
 {
     return (f - 32.0f) * 5.0f / 9.0f;
 }
 
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
-inline void publish_if(EntityT *entity, ValueT value)
+inline void 
+publish_if(EntityT *entity, ValueT value)
 {
     if (entity != nullptr) {
         entity->publish_value_if_changed(value);
@@ -80,7 +85,8 @@ inline void publish_if(EntityT *entity, ValueT value)
 
     // helper to publish scheduled times if entity exists
 template<typename StartT, typename StopT>
-void publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
+void 
+publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
 {
     if (sensor != nullptr) {
         char buf[12];  // HH:MM-HH:MM\n
@@ -91,7 +97,8 @@ void publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
 
     // helper to publish date and time if entity exists
 template<typename TodT>
-void publish_date_and_time_if(OpnPoolTextSensor *sensor, TodT tod)
+void 
+publish_date_and_time_if(OpnPoolTextSensor *sensor, TodT tod)
 {
     if (sensor != nullptr && tod != nullptr) {
         static char time_str[17];  // 2026-01-15 22:43\n
@@ -130,7 +137,8 @@ inline void dump_if(EntityT *entity)
  * queues, and starts the pool task that handles RS485 communication, datalink layer, and
  * network layer. It also publishes the interface firmware version if available.
  */
-void OpnPool::setup() {
+void 
+OpnPool::setup() {
     
     ESP_LOGI(TAG, "Setting up OpnPool...");
 
@@ -219,7 +227,8 @@ void OpnPool::loop() {
  * assignments and the configuration of all associated climate, switch, sensor, binary
  * sensor, and text sensor components.
  */
-void OpnPool::dump_config() {
+void 
+OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
     ESP_LOGCONFIG(TAG, "  RS485 RX Pin: %u", this->ipc_->config.rs485_pins.rx_pin);
@@ -246,7 +255,8 @@ void OpnPool::dump_config() {
     }
 }
 
-void OpnPool::update_climates(poolstate_t const * const new_state)
+void 
+OpnPool::update_climates(poolstate_t const * const new_state)
 {
     for (auto idx : magic_enum::enum_values<ClimateId>()) {
 
@@ -259,18 +269,47 @@ void OpnPool::update_climates(poolstate_t const * const new_state)
     }
 }
 
-void OpnPool::update_switches(poolstate_t const * const new_state)
+  /**
+   * @brief Convert SwitchId to network_pool_circuit_t.
+   *
+   * @details
+   * This helper assumes that SwitchId and network_pool_circuit_t enums are kept in the
+   * same order and size. A static_assert is used to enforce the size match at compile
+   * time.
+   *
+   * @param id SwitchId value to convert.
+   * @return network_pool_circuit_t corresponding value.
+   */
+static network_pool_circuit_t
+_switch_id_to_network_circuit(SwitchId const id)
 {
-    for (auto idx : magic_enum::enum_values<SwitchId>()) {
-        
-        OpnPoolSwitch * const sw = this->switches_[to_index(idx)];
-        if (sw != nullptr) {
-            sw->update_switch(new_state);
-        }
-    }
+    static_assert(enum_count<SwitchId>() == enum_count<network_pool_circuit_t>(), "SwitchId and network_pool_circuit_t must have the same number of elements");
+    return static_cast<network_pool_circuit_t>(static_cast<uint8_t>(id));
 }
 
-void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
+
+void
+OpnPool::update_switches(poolstate_t const * const state)
+{
+    for (auto switch_id : magic_enum::enum_values<SwitchId>()) {
+        
+        OpnPoolSwitch * const sw = this->switches_[to_index(switch_id)];
+        if (sw != nullptr) {
+            network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+            uint8_t const circuit_idx = enum_index(circuit);
+
+            bool value = state->circuits.active[circuit_idx];
+
+            ESP_LOGVV(TAG, "Updating switch[%s] -> circuit[%s] to %s",
+                to_str(switch_id), to_str(circuit), value ? "ON" : "OFF");
+
+            sw->publish_value_if_changed(value);
+        }
+    }  
+}
+
+void
+OpnPool::update_analog_sensors(poolstate_t const * const new_state)
 {
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(SensorId::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
@@ -279,16 +318,14 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp->publish_value_if_changed(air_temp_c);    
     }
-
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(SensorId::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
         float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
         float water_temp_c = fahrenheit_to_celsius(water_temp_f);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
-        
-    }
 
+    }
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_POWER)],        new_state->pump.power);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_FLOW)],         new_state->pump.flow);
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::PUMP_SPEED)],        new_state->pump.speed);
@@ -297,7 +334,8 @@ void OpnPool::update_analog_sensors(poolstate_t const * const new_state)
     publish_if(this->sensors_[static_cast<uint8_t>(SensorId::CHLORINATOR_SALT)],  new_state->chlor.salt);
 }
 
-void OpnPool::update_binary_sensors(poolstate_t const * const new_state)
+void 
+OpnPool::update_binary_sensors(poolstate_t const * const new_state)
 {
     publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::PUMP_RUNNING)],           new_state->pump.running);
     publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_SERVICE)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]);
@@ -306,7 +344,8 @@ void OpnPool::update_binary_sensors(poolstate_t const * const new_state)
     publish_if(this->binary_sensors_[static_cast<uint8_t>(BinarySensorId::MODE_TIMEOUT)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]);
 }
 
-void OpnPool::update_text_sensors(poolstate_t const * const new_state)
+void 
+OpnPool::update_text_sensors(poolstate_t const * const new_state)
 {
     publish_schedule_if(
         this->text_sensors_[static_cast<uint8_t>(TextSensorId::POOL_SCHED)],

@@ -42,11 +42,11 @@ void OpnPoolBinarySensor::dump_config() {
  */
 void OpnPoolBinarySensor::publish_value_if_changed(bool const value)
 {
-    if (!last_value_.valid || last_value_.value != value) {
+    if (!last_.valid || last_.value != value) {
         
         this->publish_state(value);
 
-        last_value_ = {
+        last_ = {
             .valid = true,
             .value = value
         };

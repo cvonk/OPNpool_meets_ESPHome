@@ -27,6 +27,7 @@
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "pool_state.h"
+#include "opnpool_helpers.h"  // conversion helper
 
 namespace esphome {
 namespace opnpool {
@@ -53,11 +54,15 @@ void OpnPoolSwitch::dump_config()
  */
 void OpnPoolSwitch::write_state(bool state)
 {
+    SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
+    network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+    uint8_t const circuit_idx = enum_index(circuit);
+
     network_msg_t msg = {
         .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {
-                .circuit_plus_1 = static_cast<uint8_t>(this->get_idx() + uint8_t(1)),
+                .circuit_plus_1 = static_cast<uint8_t>(circuit_idx + uint8_t(1)),
                 .value = static_cast<uint8_t>(state ? 1 : 0),          
             },
         },
@@ -67,6 +72,7 @@ void OpnPoolSwitch::write_state(bool state)
     ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());    
 }
 
+#if 0
 /**
  * @brief
  * Updates the switch state from the latest pool controller feedback.
@@ -82,11 +88,15 @@ void OpnPoolSwitch::write_state(bool state)
 void
 OpnPoolSwitch::update_switch(poolstate_t const * const state)
 {
-    uint8_t const idx = get_idx();
+        // this relies on CONF_SWITCHES being in the same order as network_pool_circuit_t
+    static_assert(enum_count<SwitchId>() == enum_count<network_pool_circuit_t(), "CONF_SWITCHES size must match network_pool_circuit_t enum count");
+    uint8_t const idx = get_switch_id();  
+
     bool current_state = state->circuits.active[idx];
 
     publish_value_if_changed(current_state);
 }
+#endif
 
 /**
  * @brief
@@ -101,15 +111,18 @@ OpnPoolSwitch::update_switch(poolstate_t const * const state)
  */
 void OpnPoolSwitch::publish_value_if_changed(bool value)
 {
-    if (!last_value_.valid || last_value_.value != value) {
+    if (!last_.valid || last_.value != value) {
 
         this->publish_state(value);
 
-        last_value_ = {
+        last_ = {
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Published switch [%u]: %s", idx_, value ? "ON" : "OFF");
+        
+        SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
+        network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
+        ESP_LOGV(TAG, "Published switch %s(%u): %s", enum_str(circuit), enum_index(circuit), value ? "ON" : "OFF");
     }
 }
 

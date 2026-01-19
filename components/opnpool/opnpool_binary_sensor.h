@@ -20,10 +20,10 @@ class OpnPoolBinarySensor : public binary_sensor::BinarySensor, public Component
     uint8_t const   idx_;
     OpnPool * const parent_;
 
-    struct last_value_t {
+    struct last_t {
         bool valid{false};
         bool value{false};
-    } last_value_;
+    } last_;
 };
 
 }  // namespace opnpool

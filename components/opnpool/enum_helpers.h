@@ -3,6 +3,8 @@
 # error "Requires C++ compilation"
 #endif
 
+#include <esphome/core/log.h>
+
 #include "magic_enum.h"
 #include "to_str.h"
 

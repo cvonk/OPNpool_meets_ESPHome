@@ -44,11 +44,11 @@ void OpnPoolSensor::dump_config()
  */
 void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
 {
-    if (!last_value_.valid || fabs(last_value_.value - value) > tolerance) {
+    if (!last_.valid || fabs(last_.value - value) > tolerance) {
 
         this->publish_state(value);
         
-        last_value_ = {
+        last_ = {
             .valid = true,
             .value = value
         };

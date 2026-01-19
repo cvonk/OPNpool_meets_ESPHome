@@ -58,10 +58,12 @@ CONF_RS485_RX_PIN = "rx_pin"
 CONF_RS485_TX_PIN = "tx_pin"
 CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
 
+# MUST be in the same order as network_pool_thermo_t
 CONF_CLIMATES = [  # used to overwrite ClimateId enum in opnpool.h
     "pool_climate",
     "spa_climate"
 ]
+# MUST be in the same order as network_pool_circuit_t
 CONF_SWITCHES = [  # used to overwrite SwitchId enum in opnpool.h
     "spa", 
     "aux1",
