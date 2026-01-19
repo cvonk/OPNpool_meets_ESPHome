@@ -1,3 +1,5 @@
+#include "opnpool_ids.h"
+
 /**
  * @file opnpool_climate.cpp
  * @brief Actuates climate settings from Home Assistant on the pool controller.
@@ -46,6 +48,11 @@ constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
 inline float
 _celsius_to_fahrenheit(float c) {
     return c * 9.0f / 5.0f + 32.0f;
+}
+
+inline uint8_t 
+_combine_heat_sources(network_heat_src_t pool, network_heat_src_t spa) {
+    return static_cast<uint8_t>(enum_index(pool) | (enum_index(spa) << 2));
 }
 
 
@@ -213,8 +220,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (thermos_changed) {
 
-        uint8_t const pool_heat_src = enum_index(thermos_new[thermo_pool_idx].heat_src);
-        uint8_t const spa_heat_src = enum_index(thermos_new[thermo_spa_idx].heat_src);
+        auto combined_heat_src = _combine_heat_sources(thermos_new[thermo_pool_idx].heat_src, thermos_new[thermo_spa_idx].heat_src);
 
         network_msg_t msg = {
             .typ = network_msg_typ_t::CTRL_HEAT_SET,
@@ -222,7 +228,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
                 .ctrl_heat_set = {
                     .pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f,
                     .spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f,
-                    .combined_heat_src = static_cast<uint8_t>(pool_heat_src | (spa_heat_src << 2))
+                    .combined_heat_src = combined_heat_src
                 },
             },
         };

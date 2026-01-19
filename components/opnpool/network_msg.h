@@ -188,7 +188,7 @@ struct network_msg_ctrl_state_bcast_t {
     uint8_t UNKNOWN_04to06[3];   // 4..6   more `active` circuits on fancy controllers
     uint8_t UNKNOWN_07to08[2];   // 7..8
     uint8_t mode_bits;           // 9      bitmask for active pool modes
-    uint8_t combined_heatStatus; // 10     bit2 is for POOL, bit3 is for SPA
+    uint8_t combined_heat_status; // 10     bit2 is for POOL, bit3 is for SPA
     uint8_t UNKNOWN_11;          // 11
     uint8_t delay;               // 12     bitmask for delay status of circuits
     uint8_t UNKNOWN_13;          // 13
