@@ -37,7 +37,7 @@ void
 OpnPoolBinarySensor::dump_config() const
 {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
-    ESP_LOGCONFIG(TAG, "    Binary Sensor ID: %u", get_binary_sensor_id());
+    ESP_LOGCONFIG(TAG, "    ID: %u", get_binary_sensor_id());
     ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "<unknown>");
 }
 

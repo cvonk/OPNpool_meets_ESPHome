@@ -50,6 +50,7 @@ OpnPoolSwitch::dump_config()
     network_pool_circuit_t circuit = helpers::switch_id_to_network_circuit(switch_id);
 
     LOG_SWITCH("  ", "Switch", this);
+    ESP_LOGCONFIG(TAG, "    ID: %u", get_switch_id());
     ESP_LOGCONFIG(TAG, "    Circuit: %s (%u)", enum_str(circuit), enum_index(circuit));
     ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "Unknown");
 }

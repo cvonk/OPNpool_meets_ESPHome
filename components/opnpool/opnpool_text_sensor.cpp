@@ -38,7 +38,7 @@ void
 OpnPoolTextSensor::dump_config()
 {
     LOG_TEXT_SENSOR("  ", "Text Sensor", this);
-    ESP_LOGCONFIG(TAG, "    Text Sensor ID: %u", get_text_sensor_id());
+    ESP_LOGCONFIG(TAG, "    ID: %u", get_text_sensor_id());
     ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? last_.value.c_str() : "<unknown>");
 }
 

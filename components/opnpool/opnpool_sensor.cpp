@@ -38,7 +38,7 @@ void
 OpnPoolSensor::dump_config()
 {
     LOG_SENSOR("  ", "Sensor", this);
-    ESP_LOGCONFIG(TAG, "    Sensor ID: %u", get_sensor_id());
+    ESP_LOGCONFIG(TAG, "    ID: %u", get_sensor_id());
     ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? std::to_string(last_.value).c_str() : "<unknown>");
 }
 

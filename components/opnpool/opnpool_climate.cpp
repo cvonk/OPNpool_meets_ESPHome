@@ -54,8 +54,12 @@ constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
 
 void OpnPoolClimate::dump_config() const
 {
+    ClimateId climate_id = static_cast<ClimateId>(get_climate_id());
+    poolstate_thermo_t thermo = helpers::climate_id_to_pool_thermo(climate_id);
+
     LOG_CLIMATE("  ", "Climate", this);
-    ESP_LOGCONFIG(TAG, "    Climate ID: %u", get_idx());
+    ESP_LOGCONFIG(TAG, "    ID: %u", get_idx());
+    ESP_LOGCONFIG(TAG, "    Thermostat: %s (%u)", enum_str(thermo), enum_index(thermo));
     ESP_LOGCONFIG(TAG, "    Last current temp: %.1f°C", last_.valid ? last_.current_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last target temp: %.1f°C", last_.valid ? last_.target_temp : -999.0f);
     ESP_LOGCONFIG(TAG, "    Last mode: %s", last_.valid ? enum_str(last_.mode) : "<unknown>");
