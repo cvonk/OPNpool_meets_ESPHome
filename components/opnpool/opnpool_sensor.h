@@ -25,9 +25,11 @@ class OpnPoolSensor : public sensor::Sensor, public Component {
     sensor_id_t const id_;
 
     struct last_t {
-        bool  valid{false};
-        float value{0.0f};
-    } last_;
+        bool  valid;
+        float value;
+    } last_ = {
+        .valid = false
+    };
 };
 
 }  // namespace opnpool

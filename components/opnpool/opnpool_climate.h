@@ -33,13 +33,15 @@ class OpnPoolClimate : public climate::Climate, public Component {
     climate_id_t const id_;
     
     struct last_t {
-        bool                    valid{false};
-        float                   current_temp{0.0f};
-        float                   target_temp{0.0f};
-        char const *            custom_preset{nullptr};
-        climate::ClimateMode    mode{climate::CLIMATE_MODE_OFF};
-        climate::ClimateAction  action{climate::CLIMATE_ACTION_OFF};
-    } last_;
+        bool                    valid;
+        float                   current_temp;
+        float                   target_temp;
+        char const *            custom_preset;
+        climate::ClimateMode    mode;
+        climate::ClimateAction  action;
+    } last_ = {
+        .valid = false
+    };
 };
 
 }  // namespace opnpool

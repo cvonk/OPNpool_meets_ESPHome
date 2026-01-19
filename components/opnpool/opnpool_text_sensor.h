@@ -25,9 +25,11 @@ class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
     text_sensor_id_t const id_;
 
     struct last_t {
-        bool         valid{false};
-        std::string  value{""};
-    } last_;
+        bool         valid;
+        std::string  value;
+    } last_ = {
+        .valid = false
+    };
 };
 
 }  // namespace opnpool

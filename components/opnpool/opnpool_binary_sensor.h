@@ -26,7 +26,9 @@ class OpnPoolBinarySensor : public binary_sensor::BinarySensor, public Component
     struct last_t {
         bool valid{false};
         bool value{false};
-    } last_;
+    } last_ = {
+        .valid = false
+    };
 };
 
 }  // namespace opnpool

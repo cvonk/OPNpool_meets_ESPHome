@@ -27,9 +27,11 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
     switch_id_t const id_;
 
     struct last_t {
-        bool valid{false};
-        bool value{false};
-    } last_;
+        bool valid;
+        bool value;
+    } last_ = {
+        .valid = false
+    };
 };
 
 }  // namespace opnpool
