@@ -33,9 +33,25 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_switch";
 
-void OpnPoolSwitch::dump_config()
+/**
+ * @brief Dump the configuration and last known state of the switch entity.
+ *
+ * @details
+ * Logs the configuration details for this switch, including its mapped circuit, ID,
+ * and last known state (ON/OFF or Unknown). This information is useful for diagnostics
+ * and debugging, providing visibility into the entity's state and configuration at
+ * runtime.
+ */
+
+void
+OpnPoolSwitch::dump_config()
 {
+    SwitchId switch_id = static_cast<SwitchId>(get_switch_id());
+    network_pool_circuit_t circuit = helpers::switch_id_to_network_circuit(switch_id);
+
     LOG_SWITCH("  ", "Switch", this);
+    ESP_LOGCONFIG(TAG, "    Circuit: %s (%u)", enum_str(circuit), enum_index(circuit));
+    ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "Unknown");
 }
 
 /**
@@ -51,7 +67,8 @@ void OpnPoolSwitch::dump_config()
  *
  * @param state The desired state of the switch (true for ON, false for OFF).
  */
-void OpnPoolSwitch::write_state(bool value)
+void
+OpnPoolSwitch::write_state(bool value)
 {
     SwitchId const switch_id = static_cast<SwitchId>(get_switch_id());
     network_pool_circuit_t const circuit = helpers::switch_id_to_network_circuit(switch_id);
@@ -82,7 +99,8 @@ void OpnPoolSwitch::write_state(bool value)
  *
  * @param value The new state of the switch (true for ON, false for OFF).
  */
-void OpnPoolSwitch::publish_value_if_changed(bool value)
+void
+OpnPoolSwitch::publish_value_if_changed(bool value)
 {
     if (!last_.valid || last_.value != value) {
 

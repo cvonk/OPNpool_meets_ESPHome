@@ -25,9 +25,21 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_sensor";
 
-void OpnPoolSensor::dump_config()
+/**
+ * @brief Dump the configuration and last known state of the sensor entity.
+ *
+ * @details
+ * Logs the configuration details for this analog sensor, including its ID and last
+ * known value (if valid). This information is useful for diagnostics and debugging,
+ * providing visibility into the entity's state and configuration at runtime.
+ */
+
+void
+OpnPoolSensor::dump_config()
 {
     LOG_SENSOR("  ", "Sensor", this);
+    ESP_LOGCONFIG(TAG, "    Sensor ID: %u", get_sensor_id());
+    ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? std::to_string(last_.value).c_str() : "<unknown>");
 }
 
 /**
@@ -42,7 +54,8 @@ void OpnPoolSensor::dump_config()
  * @param value      The new sensor value to be published.
  * @param tolerance  The minimum change required to trigger a new state publication.
  */
-void OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
+void
+OpnPoolSensor::publish_value_if_changed(float value, float tolerance)
 {
     if (!last_.valid || fabs(last_.value - value) > tolerance) {
 

@@ -25,9 +25,21 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_text_sensor";
 
-void OpnPoolTextSensor::dump_config()
+/**
+ * @brief Dump the configuration and last known state of the text sensor entity.
+ *
+ * @details
+ * Logs the configuration details for this text sensor, including its ID and last
+ * known value (if valid). This information is useful for diagnostics and debugging,
+ * providing visibility into the entity's state and configuration at runtime.
+ */
+
+void
+OpnPoolTextSensor::dump_config()
 {
     LOG_TEXT_SENSOR("  ", "Text Sensor", this);
+    ESP_LOGCONFIG(TAG, "    Text Sensor ID: %u", get_text_sensor_id());
+    ESP_LOGCONFIG(TAG, "    Last value: %s", last_.valid ? last_.value.c_str() : "<unknown>");
 }
 
 /**
@@ -42,7 +54,8 @@ void OpnPoolTextSensor::dump_config()
  *
  * @param value The new text sensor value to be published.
  */
-void OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
+void
+OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
 {
     if (!last_.valid || last_.value != value) {
 

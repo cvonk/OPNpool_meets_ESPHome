@@ -25,10 +25,20 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool.binary_sensor";
 
+/**
+ * @brief Dump the configuration and last known state of the binary sensor entity.
+ *
+ * @details
+ * Logs the configuration details for this binary sensor, including its ID and last
+ * known state (ON/OFF or Unknown). This information is useful for diagnostics and
+ * debugging, providing visibility into the entity's state and configuration at runtime.
+ */
 void 
-OpnPoolBinarySensor::dump_config()
+OpnPoolBinarySensor::dump_config() const
 {
     LOG_BINARY_SENSOR("  ", "Binary Sensor", this);
+    ESP_LOGCONFIG(TAG, "    Binary Sensor ID: %u", get_binary_sensor_id());
+    ESP_LOGCONFIG(TAG, "    Last state: %s", last_.valid ? (last_.value ? "ON" : "OFF") : "<unknown>");
 }
 
 /**

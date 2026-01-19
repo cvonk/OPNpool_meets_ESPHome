@@ -42,9 +42,25 @@ constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
     return static_cast<typename std::underlying_type<E>::type>(e);
 }
 
-void OpnPoolClimate::dump_config()
+/**
+ * @brief Dump the configuration and last known state of the climate entity.
+ *
+ * @details
+ * Logs the configuration details for this climate entity, including its ID, last known
+ * current and target temperatures, last mode, last custom preset, and last action. This
+ * information is useful for diagnostics and debugging, providing visibility into the
+ * entity's state and configuration at runtime.
+ */
+
+void OpnPoolClimate::dump_config() const
 {
     LOG_CLIMATE("  ", "Climate", this);
+    ESP_LOGCONFIG(TAG, "    Climate ID: %u", get_idx());
+    ESP_LOGCONFIG(TAG, "    Last current temp: %.1f°C", last_.valid ? last_.current_temp : -999.0f);
+    ESP_LOGCONFIG(TAG, "    Last target temp: %.1f°C", last_.valid ? last_.target_temp : -999.0f);
+    ESP_LOGCONFIG(TAG, "    Last mode: %s", last_.valid ? enum_str(last_.mode) : "<unknown>");
+    ESP_LOGCONFIG(TAG, "    Last custom preset: %s", last_.valid ? last_.custom_preset : "<unknown>");
+    ESP_LOGCONFIG(TAG, "    Last action: %s", last_.valid ? enum_str(last_.action) : "<unknown>");
 }
 
 
