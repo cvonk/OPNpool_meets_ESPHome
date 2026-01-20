@@ -28,14 +28,7 @@
 #include "to_str.h"
 #include "enum_helpers.h"
 
-#ifndef ARRAY_SIZE
-# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-#ifndef ALIGN
-# define ALIGN(type) __attribute__((aligned( __alignof__(type)) ))
-#endif
 #ifndef PACK
-# define PACK(type)  __attribute__((aligned( __alignof__(type)), packed))
 # define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
 

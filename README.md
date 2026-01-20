@@ -245,9 +245,10 @@ logger:
     pool_state: WARN
     pool_state_rx: VERBOSE
     opnpool: VERBOSE
-    opnpool_climate: VERBOSE
-    opnpool_switch: VERBOSE
-    opnpool_binary_sensor: VERBOSE
+    opnpool_climate: WARN
+    opnpool_switch: WARN
+    opnpool_sensor: WARN
+    opnpool_binary_sensor: WARN
     opnpool_text_sensor: WARN
     enum_helpers: VERBOSE
 ```

@@ -45,18 +45,16 @@
 #include <iterator>
 #include "opnpool_ids.h"
 
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+
 namespace esphome {
 namespace opnpool {
 
 namespace pool_state_rx {
 
 static char const * const TAG = "pool_state_rx";
-
-    // helper to convert enum class to its underlying type
-template<typename E>
-constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
 
 inline network_heat_src_t 
 _get_pool_heat_src(uint8_t combined_heat_src)
@@ -134,8 +132,8 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
         return;
     }
 
-    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    uint8_t const  spa_idx = to_index(poolstate_thermo_typ_t::SPA);
+    uint8_t const pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const  spa_idx = enum_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
     static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
@@ -172,8 +170,8 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
         ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
-    uint8_t const pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    uint8_t const spa_idx  = to_index(poolstate_thermo_typ_t::SPA);
+    uint8_t const pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
+    uint8_t const spa_idx  = enum_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
     static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
 
@@ -355,8 +353,8 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
     _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
 
         // if both SPA and POOL bits are set, only SPA runs
-    if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
-        state->circuits.active[to_index(network_pool_circuit_t::POOL)] = false;
+    if (state->circuits.active[enum_index(network_pool_circuit_t::SPA)]) {
+        state->circuits.active[enum_index(network_pool_circuit_t::POOL)] = false;
     }
 
         // update state->circuits.delay
@@ -365,14 +363,14 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
     _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
 
         // update state->circuits.thermos (only update when the pump is running)
-    constexpr uint8_t pool_idx = to_index(poolstate_thermo_typ_t::POOL);
-    constexpr uint8_t spa_idx  = to_index(poolstate_thermo_typ_t::SPA);
+    constexpr uint8_t pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
+    constexpr uint8_t spa_idx  = enum_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_idx < ARRAY_SIZE(state->thermos) && spa_idx < ARRAY_SIZE(state->thermos), "pool_idx/spa_idx OOB for state->thermos");
 
-    if (state->circuits.active[to_index(network_pool_circuit_t::SPA)]) {
+    if (state->circuits.active[enum_index(network_pool_circuit_t::SPA)]) {
         state->thermos[spa_idx].temp_in_f = msg->pool_temp;
     }
-    if (state->circuits.active[to_index(network_pool_circuit_t::POOL)]) {
+    if (state->circuits.active[enum_index(network_pool_circuit_t::POOL)]) {
         state->thermos[pool_idx].temp_in_f = msg->pool_temp;
     }
     state->thermos[pool_idx].heating  = _get_pool_heating_status(msg->combined_heat_status);
@@ -390,8 +388,8 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
     state->system.tod.time.hour = msg->hour;
 
         // update state->temps
-    uint8_t const air_idx = to_index(poolstate_temp_typ_t::AIR);
-    uint8_t const water_idx = to_index(poolstate_temp_typ_t::WATER);
+    uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
+    uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);
     static_assert(air_idx < ARRAY_SIZE(state->temps), "size err for air_idx");
     static_assert(water_idx < ARRAY_SIZE(state->temps), "size err for water_idx");
 

@@ -65,7 +65,7 @@ bool_str(bool const value)
 }
 
 /**
- * @brief                Get a hexadecimal string representation of a uint8_t
+ * @brief                Get a hexadecimal string representation of an uint8_t
  *
  * @param value          The uint8_t value to convert
  * @return char const *  A string representing the value

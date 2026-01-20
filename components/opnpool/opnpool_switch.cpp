@@ -89,6 +89,8 @@ OpnPoolSwitch::write_state(bool value)
 
     ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit+1=%u to %u", msg.u.ctrl_circuit_set.circuit_plus_1, msg.u.ctrl_circuit_set.value);
     ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());    
+
+    // DON'T publish state here - wait for pool controller confirmation
 }
 
 /**

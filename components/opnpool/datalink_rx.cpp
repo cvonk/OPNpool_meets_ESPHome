@@ -31,6 +31,10 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+
 namespace esphome {
 namespace opnpool {
 

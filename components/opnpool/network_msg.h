@@ -34,7 +34,6 @@
 namespace esphome {
 namespace opnpool {
 
-
 /**
  * @brief Enumerates the operation modes of the pool controller.
  *
@@ -654,7 +653,7 @@ inline esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
-    if (idx < ARRAY_SIZE(network_msg_typ_sizes)) {
+    if (idx < std::size(network_msg_typ_sizes)) {
         *size = network_msg_typ_sizes[idx];
         return ESP_OK;
     }
@@ -733,7 +732,7 @@ inline const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
-    if (idx < ARRAY_SIZE(network_msg_typ_info)) {
+    if (idx < std::size(network_msg_typ_info)) {
         return &network_msg_typ_info[idx];
     }
     return nullptr;

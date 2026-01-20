@@ -43,12 +43,6 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_climate";
 
-    // helper to convert enum class to its underlying type
-template<typename E>
-constexpr auto to_index(E e) -> typename std::underlying_type<E>::type {
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-
 inline float
 _celsius_to_fahrenheit(float c) {
     return c * 9.0f / 5.0f + 32.0f;
@@ -97,7 +91,8 @@ OpnPoolClimate::dump_config()
  *
  * @return climate::ClimateTraits 
  */
-climate::ClimateTraits OpnPoolClimate::traits()
+climate::ClimateTraits
+OpnPoolClimate::traits()
 {
     auto traits = climate::ClimateTraits();  // see climate_traits.h
     
@@ -136,15 +131,16 @@ climate::ClimateTraits OpnPoolClimate::traits()
  *
  * @param call The climate call object containing requested changes from Home Assistant.
  */
-void OpnPoolClimate::control(const climate::ClimateCall &call)
+void
+OpnPoolClimate::control(const climate::ClimateCall &call)
 {
     poolstate_thermo_typ_t const thermo_typ = get_thermo_typ();
-    uint8_t const thermo_idx = to_index(thermo_typ);
+    uint8_t const thermo_idx = enum_index(thermo_typ);
 
-    uint8_t const thermo_pool_idx = to_index(climate_id_t::POOL_CLIMATE);
-    uint8_t const thermo_spa_idx = to_index(climate_id_t::SPA_CLIMATE);
+    uint8_t const thermo_pool_idx = enum_index(climate_id_t::POOL_CLIMATE);
+    uint8_t const thermo_spa_idx = enum_index(climate_id_t::SPA_CLIMATE);
 
-       // get both thermostats ('cause the change request needs to references them both)
+       // get both thermostats ('cause the resulting network_msg needs to reference both)
 
     poolstate_t state;
     parent_->get_opnpool_state()->get(&state);
@@ -157,15 +153,14 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (call.get_target_temperature().has_value()) {
 
-        float const target_temp_celsius = *call.get_target_temperature();
-        float const target_temp_fahrenheit = _celsius_to_fahrenheit(target_temp_celsius);
-        ESP_LOGV(TAG, "HA requests target temperature [%u] to %.1f°F", thermo_idx, target_temp_fahrenheit);
+        float const target_temp_c = *call.get_target_temperature();
+        float const target_temp_f = _celsius_to_fahrenheit(target_temp_c);
+        ESP_LOGV(TAG, "HA requests %s to %.1f°F", enum_str(thermo_typ), target_temp_f);
 
-        thermos_new[thermo_idx].set_point_in_f = static_cast<uint8_t>(target_temp_fahrenheit);
+        thermos_new[thermo_idx].set_point_in_f = static_cast<uint8_t>(target_temp_f);
     }
 
-        // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on or
-        // off
+        // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on/off
 
     if (call.get_mode().has_value()) {
 
@@ -173,8 +168,8 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         
         ESP_LOGV(TAG, "HA requests %s to mode=%u", enum_str(thermo_typ), static_cast<int>(requested_mode));
         uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
-                           ? to_index(switch_id_t::POOL)
-                           : to_index(switch_id_t::SPA);
+                           ? enum_index(switch_id_t::POOL)
+                           : enum_index(switch_id_t::SPA);
         
         switch (requested_mode) {
             case climate::CLIMATE_MODE_OFF:  // mode 0
@@ -186,7 +181,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
                 parent_->get_switch(switch_idx)->write_state(true);
                 break;
             default:
-                ESP_LOGW(TAG, "Unsupported climate mode: %d", static_cast<int>(requested_mode));
+                ESP_LOGW(TAG, "Unsupported requested_mode: %d", static_cast<int>(requested_mode));
                 this->mode = climate::CLIMATE_MODE_OFF;
                 this->action = climate::CLIMATE_ACTION_OFF;
                 this->publish_state();
@@ -199,7 +194,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
     char const * preset_str = call.get_custom_preset();
     if (preset_str != nullptr) {
 
-        ESP_LOGV(TAG, "HA requests %s change to %s", enum_str(thermo_typ), preset_str);
+        ESP_LOGV(TAG, "HA requests %s to %s", enum_str(thermo_typ), preset_str);
 
         for (auto heat_src : magic_enum::enum_values<network_heat_src_t>()) {
             if (strcasecmp(preset_str, enum_str(heat_src)) == 0) {
@@ -213,7 +208,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
         climate::ClimatePreset new_preset = *call.get_preset();
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
-            ESP_LOGV(TAG, "HA requests %s change to %u(NONE)", enum_str(thermo_typ), new_preset);
+            ESP_LOGV(TAG, "HA requests %s to NONE", enum_str(thermo_typ));
             thermos_new[thermo_idx].heat_src = network_heat_src_t::NONE;
         }
     }        
@@ -224,7 +219,9 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (thermos_changed) {
 
-        auto combined_heat_src = _combine_heat_sources(thermos_new[thermo_pool_idx].heat_src, thermos_new[thermo_spa_idx].heat_src);
+        auto combined_heat_src = _combine_heat_sources(
+            thermos_new[thermo_pool_idx].heat_src,
+            thermos_new[thermo_spa_idx].heat_src);
 
         network_msg_t msg = {
             .typ = network_msg_typ_t::CTRL_HEAT_SET,
@@ -237,7 +234,7 @@ void OpnPoolClimate::control(const climate::ClimateCall &call)
             },
         };
 
-        ESP_LOGV(TAG, "Sending HEAT_SET: pool_sp=%u°F, spa_sp=%u°F, heat_src=0x%02X", 
+        ESP_LOGV(TAG, "Sending HEAT_SET: pool=%u°F, spa=%u°F, heat_src=0x%02X", 
                   msg.u.ctrl_heat_set.pool_set_point, 
                   msg.u.ctrl_heat_set.spa_set_point,
                   msg.u.ctrl_heat_set.combined_heat_src);
