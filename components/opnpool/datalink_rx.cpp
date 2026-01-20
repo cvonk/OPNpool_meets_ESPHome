@@ -83,6 +83,10 @@ struct local_data_t {
 
 /**
  * @brief Reset the preamble match state for all supported protocols.
+ *
+ * Resets the internal state for all protocol preamble matchers, preparing them to
+ * detect the start of a new packet in the RS-485 byte stream. Called at the beginning
+ * of packet reception and after failed matches.
  */
 static void
 _preamble_reset()
@@ -96,6 +100,10 @@ _preamble_reset()
 
 /**
  * @brief Check if the preamble for a protocol is complete given the next byte.
+ *
+ * Examines the next byte from the RS-485 stream to determine if it matches the expected
+ * protocol preamble sequence. Advances the match index and sets a flag if the byte is
+ * part of the preamble. Returns true if the full preamble is matched.
  *
  * @param pi               Protocol info structure.
  * @param b                Next byte from the stream.
@@ -118,14 +126,12 @@ _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_prea
 }
 
 /**
- * @brief Waits until a A5/IC protocol preamble is received (or times-out).
+ * @brief Waits until a valid A5/IC protocol preamble is received (or times-out).
  *
- * This function reads bytes from the RS485 interface until a valid preamble for either
- * the A5 or IC protocol is detected. It updates the packet structure with the detected
- * protocol type and stores the received preamble bytes in the local header buffer.
- *
- * Writes the protocol type to `pkt->prot`. The bytes received are stored in `local->head[]`,
- * updates `local->head_len` and `local->tail_len`. Called from `datalink_rx_pkt`.
+ * Reads bytes from the RS-485 interface until a valid preamble for either the A5 or IC
+ * protocol is detected. Updates the packet structure with the detected protocol type and
+ * stores the received preamble bytes in the local header buffer. Also sets header/tail
+ * lengths for the detected protocol.
  *
  * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
@@ -193,8 +199,9 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
 /**
  * @brief        Returns the length of the IC network message for a given type.
  *
- * @note         This can't be a table, because the datalink_typ_chlor_t enum is non-continuous.
- * 
+ * Looks up the expected length of the IC protocol network message for the given type.
+ * This is required because the datalink_typ_chlor_t enum is non-continuous.
+ *
  * @param ic_typ The IC message type (as uint8_t/datalink_typ_chlor_t).
  * @return       The size of the corresponding network message struct, or 0 if unknown.
  */
@@ -221,8 +228,8 @@ static uint8_t _network_ic_len(uint8_t const ic_typ)
 /**
  * @brief Reads a A5/IC protocol header (or times-out).
  *
- * Writes the header details to `pkt->typ`, `pkt->src`, `pkt->dst`, `pkt->data_len`.
- * The bytes received are stored in `local->head[]`. Called from `datalink_rx_pkt`.
+ * Reads the header portion of a detected A5 or IC protocol packet from the RS-485 bus.
+ * Populates the packet structure with type, source, destination, and data length fields.
  *
  * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
@@ -281,11 +288,10 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 }
 
 /**
- * @brief Reads a A5/IC protocol data (or times-out).
+ * @brief Reads the data payload of a previously detected A5 or IC protocol packet.
  *
- * This function reads the data payload of a previously detected A5 or IC protocol packet.
- * The data is read from the RS485 interface and stored in the `pkt->data` buffer.
- * It is called from `datalink_rx_pkt` after the header has been successfully read.
+ * Reads the data section from the RS-485 bus and stores it in the packet's data buffer.
+ * Called after the header has been successfully read.
  *
  * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
@@ -312,12 +318,10 @@ _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 }
 
 /**
- * @brief Reads a A5/IC protocol tail (or times-out).
+ * @brief Reads the tail (CRC and postamble) of a previously detected A5 or IC protocol packet.
  *
- * This function reads the tail of a previously detected A5 or IC protocol packet from the
- * RS485 interface. The tail typically contains the CRC and, in the case of the IC
- * protocol, a postamble. The received bytes are stored in the `local->tail` buffer. It is
- * called from `datalink_rx_pkt` after the data payload has been successfully read.
+ * Reads the tail section from the RS-485 bus, which contains the CRC and, for IC protocol,
+ * the postamble. Stores the received bytes in the local tail buffer.
  *
  * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
@@ -350,12 +354,17 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
         default:
             break;
     }
+    
     ESP_LOGW(TAG, "unsupported pkt->prot 0x%02X !", static_cast<uint8_t>(pkt->prot));
     return ESP_FAIL;
 }
 
 /**
- * @brief       Check the CRC of the received packet.
+ * @brief Check the CRC of the received packet.
+ *
+ * Verifies the CRC of the received packet by comparing the received CRC value with the
+ * calculated CRC over the packet's contents. Updates the local CRC status and returns
+ * the result.
  *
  * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
@@ -386,10 +395,12 @@ _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
         default:
             return ESP_FAIL;
     }
+
     local->crc_ok = crc.rx == crc.calc;
     if (local->crc_ok) {
         return ESP_OK;
     }
+
     ESP_LOGW(TAG, "crc err (rx=0x%03x calc=0x%03x)", crc.rx, crc.calc);
     return ESP_FAIL;
 }
@@ -412,13 +423,20 @@ static state_transition_t state_transitions[] = {
 };
 
 /**
- * @brief       Receive a packet from the RS-485 bus using a state machine.
+ * @brief Receive a protocol packet from the RS-485 bus using a state machine.
  *
- * Uses the state machine `state_transitions[]` to process the packet. Called from `pool_task`.
+ * This function implements the main receive loop for the data link layer. It uses a state
+ * machine (see `state_transitions[]`) to detect protocol preambles, read packet headers,
+ * payloads, and tails, and verify checksums for supported protocols (A5 and IC). The
+ * function allocates a socket buffer, extracts and validates the packet, and returns the
+ * result to the caller.
  *
- * @param rs485 RS485 handle.
- * @param pkt   Packet structure to fill.
- * @return      ESP_OK if a valid packet is received, ESP_FAIL otherwise.
+ * Called from `pool_task` to process incoming RS-485 data and convert it into structured
+ * packets for higher-level network processing.
+ *
+ * @param rs485 RS485 handle for reading bytes from the bus.
+ * @param pkt   Pointer to a packet structure to fill with received data.
+ * @return      ESP_OK if a valid packet is received and CRC matches, ESP_FAIL otherwise.
  */
 esp_err_t
 datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)

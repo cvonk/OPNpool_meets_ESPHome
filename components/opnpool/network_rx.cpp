@@ -319,12 +319,21 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
 
 
 /**
- * @brief                Decode a datalink packet, to form a network message
- *  
- * @param pkt            Pointer to the datalink packet to decode
- * @param msg            Pointer to the network message structure to populate
- * @param txOpportunity  Pointer to a boolean that indicates whether the message provides a transmission opportunity
- * @return esp_err_t     ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
+ * @brief Decode a datalink packet into a network message for higher-level processing.
+ *
+ * This function translates a validated datalink packet (from RS-485) into a structured
+ * network message, supporting multiple protocol types (A5/CTRL, A5/PUMP, IC/Chlorinator).
+ * It determines the message type, populates the network message fields, and sets the
+ * transmission opportunity flag if the decoded message allows for a response.
+ *
+ * Packets with unsupported or irrelevant destination groups are ignored. The function
+ * resets the string conversion mechanism for entity names and logs decoding results for
+ * debugging.
+ *
+ * @param pkt            Pointer to the datalink packet to decode.
+ * @param msg            Pointer to the network message structure to populate.
+ * @param txOpportunity  Pointer to a boolean that indicates whether the message provides a transmission opportunity.
+ * @return esp_err_t     ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
  */
 
 esp_err_t

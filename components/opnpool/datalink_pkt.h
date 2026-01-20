@@ -33,8 +33,7 @@ struct skb_t;
 using skb_handle_t = skb_t *;
 
 /**
- * @brief
- * Enumerates the supported data link layer protocol types in the Pentair protocol.
+ * @brief Enumerates the supported data link layer protocol types in the Pentair protocol.
  *
  * @details
  * This enum class defines the protocol identifiers used at the data link layer
@@ -56,8 +55,12 @@ enum class datalink_prot_t : uint8_t {
 
 /**
  * @brief Controller messages types
+ *
+ * @details
+ * This enum class defines the message types for the A5 controller protocol.
+ * Each value corresponds to a specific request or response type used in the A5
+ * controller protocol.
  */
-
 enum class datalink_typ_ctrl_t : uint8_t {
     SET_ACK         = 0x01,
     STATE_BCAST     = 0x02,
@@ -101,8 +104,12 @@ enum class datalink_typ_ctrl_t : uint8_t {
 
 /**
  * @brief Pump message types
+ *
+ * @details
+ * This enum class defines the message types for the A5 pump protocol.
+ * Each value corresponds to a specific request or response type used in the A5
+ * pump protocol.
  */
-
 enum class datalink_typ_pump_t : uint8_t {
     REG        = 0x01,
     CTRL       = 0x04,
@@ -115,6 +122,11 @@ enum class datalink_typ_pump_t : uint8_t {
 /**
  * @brief Chlorinator message types
  * 
+ * @details
+ * This enum class defines the message types for the IntelliCenter (IC) chlorinator
+ * protocol. Each value corresponds to a specific request or response type used in the IC
+ * protocol.
+ *
  * @note  Keep in sync with _network_ic_len in datalink_rx.cpp
  */
 enum class datalink_typ_chlor_t : uint8_t {
@@ -128,8 +140,7 @@ enum class datalink_typ_chlor_t : uint8_t {
 
 
 /**
- * @brief
- * Union representing the possible message type fields in a data link layer packet.
+ * @brief Union representing the possible message type fields in a data link layer packet.
  *
  * @details
  * This union allows access to the message type as a controller, pump, or chlorinator
@@ -150,8 +161,7 @@ union datalink_typ_t {
 
 
 /**
- * @brief
- * Represents an address in the data link layer protocol.
+ * @brief Represents an address in the data link layer protocol.
  *
  * @details
  * This type is used to specify the source and destination addresses for
@@ -162,8 +172,7 @@ using datalink_address = uint8_t;
 
 
 /**
- * @brief
- * Represents a single byte of data in the data link layer protocol.
+ * @brief Represents a single byte of data in the data link layer protocol.
  *
  * @details
  * This type is used for the payload buffer in data link layer packets.
@@ -173,8 +182,7 @@ using datalink_data_t = uint8_t;
 
     
 /**
- * @brief
- * Represents a data link layer packet in the Pentair protocol.
+ * @brief Represents a data link layer packet in the Pentair protocol.
  *
  * @details
  * Encapsulates all metadata and payload required for a protocol message, 
@@ -193,7 +201,7 @@ using datalink_data_t = uint8_t;
  * @var skb_handle_t skb       Handle to the socket buffer containing the packet data.
  */
 struct datalink_pkt_t {
-    datalink_prot_t    prot;      // datalink_prot as detected by `_read_head`
+    datalink_prot_t    prot;      // datalink_prot as detected by `_read_head()`
     datalink_typ_t     typ;       // from datalink_hdr_a5->typ
     datalink_address   src;       // from datalink_hdr_a5->src
     datalink_address   dst;       // from datalink_hdr_a5->dst

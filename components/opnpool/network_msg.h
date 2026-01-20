@@ -780,12 +780,10 @@ struct network_msg_t {
     } u;
 };
 
-constexpr size_t NETWORK_MSG_TYP_SIZES_COUNT = std::size(network_msg_typ_sizes);
-constexpr size_t NETWORK_MSG_TYP_INFO_COUNT = std::size(network_msg_typ_info);
-
+    // IntelliSense doesn't evaluate constexpr functions
 #ifndef __INTELLISENSE__
-static_assert(NETWORK_MSG_TYP_SIZES_COUNT == enum_count<network_msg_typ_t>());  // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-static_assert(NETWORK_MSG_TYP_INFO_COUNT == enum_count<network_msg_typ_t>());   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
+static_assert(std::size(network_msg_typ_sizes) == enum_count<network_msg_typ_t>());  
+static_assert(std::size(network_msg_typ_info) == enum_count<network_msg_typ_t>());
 #endif
 
 }  // namespace opnpool

@@ -1,9 +1,17 @@
 /**
  * @file ipc.cpp
- * @brief Inter Process Communication: mailboxes used to exchange messages between tasks
+ * @brief Inter-Process Communication (IPC) implementation for OPNpool ESPHome Component
  *
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. 
+ * @details
+ * This file implements the IPC mechanisms for the OPNpool ESPHome component, providing
+ * message queues for communication between FreeRTOS tasks. It defines functions for
+ * sending and receiving network messages between the main task and pool task, using
+ * FreeRTOS queues for safe and efficient message passing. The IPC layer abstracts
+ * inter-task communication, enabling modular separation of protocol handling and
+ * application logic.
+ *
+ * The design assumes a single-threaded ESPHome environment and does not implement
+ * explicit thread safety beyond FreeRTOS queue guarantees.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
