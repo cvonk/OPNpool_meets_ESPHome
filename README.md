@@ -217,32 +217,41 @@ Lovelace config at [`hass-config`](https://github.com/cvonk/hass-config).
 
 ![Lovelace_view](assets/media/opnpool-lovelace.png)
 
+daughterboard.  There is an optional terminator resistor to prevent reflections on the
+document.
+directory](https://github.com/cvonk/OPNpool_meets_ESPHome/tree/main/hardware) of this
+
 ## PCB
 
-For a more permanent solution, I suggest building a printed circuit board (PCB). This can
-hold the ESP32 module, RS-485 adapter and DC/DC converter.  
+For a robust and weatherproof installation, we recommend building a custom printed circuit
+board (PCB) to house the ESP32 module, RS-485 adapter, and DC/DC converter. This approach
+ensures reliable connections, easier mounting, and long-term durability—especially for
+outdoor or poolside environments.
 
 ### Schematic
 
-A buck converter provides 5 Volts to the battery connector on the LOLIN D32 daughterboard.
-Using the battery input, helps prevent problems when it is also powered through the USB
-connector.
+The hardware design features a buck converter that supplies 5V to the battery connector on
+the LOLIN D32 daughterboard. Powering through the battery input helps prevent issues when
+the board is also powered via USB.
 
-![Schematic1](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-power.svg)
+![Power schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-power.svg)
 
-The data path is between the RS-485 connector and the ESP32 on the LOLIN D32
-daughterboard.  There is an optional terminator resistor to prevent reflections on the
-bus. The JTAG header is for debugging as detailed in the Debugging chapter of the design
-document.
+The main data path runs between the RS-485 connector and the ESP32 on the LOLIN D32. An
+optional termination resistor is included to minimize signal reflections on the RS-485
+bus. For advanced users, a JTAG header is provided for debugging, as detailed in the
+design documentation.
 
-![Schematic2](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-logic.svg)
+![Logic schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-logic.svg)
 
-### Board layout
+### Board Layout
 
-The schematic fits easily on a simple two layer PCB. We designed the PCB in the
-free AutoDesk EAGLE.  The source files and layout can be found in the [hardware
+The entire schematic fits comfortably on a compact two-layer PCB. The board was designed
+using the free version of AutoDesk EAGLE, and all source files — including layout and
+schematics — are available in the [hardware
 directory](https://github.com/cvonk/OPNpool_meets_ESPHome/tree/main/hardware) of this
-project.
+repository.
+
+![Board Layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg)
 
 ![Board layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg)
 
@@ -299,50 +308,61 @@ logger:
     enum_helpers: VERBOSE
 ```
 
-If you get stack traces, I suggest enabling the stack trace decoder
+#### Troubleshooting: Decoding Stack Traces
+
+If your ESP32 crashes and you see stack traces in the serial log, you can enable ESPHome's
+stack trace decoder to make debugging much easier. This will automatically decode
+exception addresses into readable function names and line numbers in your logs.
+
+To enable the stack trace decoder, add the following to your YAML configuration:
 
 ```yaml
 debug:
   update_interval: 5s  # for exception decoding in logs
 ```
 
+> **Tip:** If your ESP32 crashes, detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
+
 ### Development
 
 For better development experience: in VS Code, install the C/C++ and [ESPHome
 extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
 
-Clone the repository and its submodules to a local directory. The `--recursive` flag
-automatically initializes and updates the submodules in the repository.
-
+Clone the repository and its submodules to a local directory. 
 ```bash
-git clone --recursive https://github.com/cvonk/OPNpool_meets_ESPHome.git
+git clone https://github.com/cvonk/OPNpool_meets_ESPHome.git
 ```
 
 or using `ssh`
 ```bash
-git clone --recursive git@github.com:cvonk/OPNpool_meets_ESPHome.git
+git clone git@github.com:cvonk/OPNpool_meets_ESPHome.git
 ```
 
-The `tasks.json` file defines the build tasks. It will map the compile pathnames back from
-the build directory to the project directory.  You can then inspect the build output in
-the PROBLEMS tab in VS Code.
+#### Building and Developing with VS Code
 
-Short cuts:
+The `tasks.json` file in this repository defines convenient build and upload tasks for Visual Studio Code. These tasks automatically map build output paths back to your project directory, making it easy to navigate errors and warnings in the PROBLEMS tab.
 
-  * Build with ctrl-shift-b, or on mac use cmd-shift-b.  
-  * Compile & upload with ctrl-shift-p → "Run Task" → "ESPHome Upload"
-  * View logs with ctrl-shift-p → "Run Task" → "ESPHome Monitor"
+Common Shortcuts:
 
-Remember: if the ESP32 crashes, you will only see that on the serial console.
+- **Build:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (or
+  <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) to build the project.
+- **Compile & Upload:** Open the Command Palette
+  (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome
+  Upload" to compile and upload firmware.
+- **View Logs:** Open the Command Palette and select "Run Task" → "ESPHome Monitor" to
+  view device logs in real time.
 
 ![vscode_ide](assets/media/vscode-ide.png)
 
 ## Design documentation
 
-The design documentation for the (original OPNpool
-project)[https://github.com/cvonk/OPNpool] is still available at
-[https://coertvonk.com/category/sw/embedded/opnpool-design](https://coertvonk.com/category/sw/embedded/opnpool-design).
-The following chapters are relevant here:
+Comprehensive design documentation for the [original OPNpool
+project](https://github.com/cvonk/OPNpool) is available online:
+
+- [OPNpool Design Documentation
+  Overview](https://coertvonk.com/category/sw/embedded/opnpool-design)
+
+The following chapters are especially relevant for this ESPHome port:
 
 - [RS-485 bus](https://coertvonk.com/sw/embedded/opnpool-design/bus-access-31957)
 - [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
