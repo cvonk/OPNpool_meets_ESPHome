@@ -1,5 +1,7 @@
 #pragma once
 
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/component.h>
 #include <esphome/components/binary_sensor/binary_sensor.h>
 

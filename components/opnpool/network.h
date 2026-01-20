@@ -4,19 +4,14 @@
 #endif
 
 #include <esp_system.h>
-
-#include "to_str.h"
-#include "enum_helpers.h"
-#include "datalink.h"
-#include "datalink_pkt.h"
-#include "network_msg.h"
+#include <esp_types.h>
 
 namespace esphome {
 namespace opnpool {
 
-/**
- * @brief Exported functions
- */
+    // forward declarations (to avoid circular dependencies)
+struct datalink_pkt_t;
+struct network_msg_t;
 
     // network_rx.cpp
 esp_err_t network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity);

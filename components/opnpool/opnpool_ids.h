@@ -1,9 +1,14 @@
 #pragma once
+
 #include <esp_system.h>
-#include <cstdlib>
+#include <esp_types.h>
 
 namespace esphome {
 namespace opnpool {
+
+    // forward declarations (to avoid circular dependencies)
+enum class poolstate_thermo_typ_t : uint8_t;
+enum class network_pool_circuit_t : uint8_t;
 
     // IDs for array indexing (will be OVERWRITTEN by __init__.py for consistency with its CONF_*)
 
@@ -50,10 +55,6 @@ enum class text_sensor_id_t : uint8_t {
     CONTROLLER_FIRMWARE = 7,
     INTERFACE_FIRMWARE = 8
 };    
-
-    // forward declarations (to avoid circular dependencies)
-enum class poolstate_thermo_typ_t : uint8_t;
-enum class network_pool_circuit_t : uint8_t;
 
 poolstate_thermo_typ_t climate_id_to_poolstate_thermo(climate_id_t const id);
 network_pool_circuit_t switch_id_to_network_circuit(switch_id_t const id);

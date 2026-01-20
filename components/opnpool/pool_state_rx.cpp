@@ -24,8 +24,9 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <string.h>
 #include <esp_system.h>
+#include <esp_types.h>
+#include <string.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
@@ -41,8 +42,6 @@
 #include "pool_state.h"
 #include "opnpool.h"
 #include "pool_state_rx_log.h"
-
-#include <iterator>
 #include "opnpool_ids.h"
 
 #ifndef ARRAY_SIZE

@@ -17,18 +17,17 @@
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
- * @licence SPDX-License-Identifier: GPL-3.0-or-later
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <esp_system.h>
-#include <time.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 
 #include "rs485.h"
 #include "skb.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "to_str.h"
 #include "enum_helpers.h"
 
 namespace esphome {

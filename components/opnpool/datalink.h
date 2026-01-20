@@ -3,19 +3,21 @@
 # error "Requires C++ compilation"
 #endif
 
-#include <sdkconfig.h>
 #include <esp_system.h>
-
-#define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 256
-#include "magic_enum.h"
+#include <esp_types.h>
 
 namespace esphome {
 namespace opnpool {
 
-#ifndef PACK
-# define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
+#ifndef PACK8
+# define PACK8 __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
+
+    // forward declarations (to avoid circular dependencies)
+struct datalink_pkt_t;
+struct rs485_instance_t;
+using rs485_handle_t = rs485_instance_t *;
+struct datalink_pkt_t;
 
     // 0x10 = suntouch ctrl system
     // 0x20 = easytouch
@@ -32,7 +34,7 @@ enum class datalink_addrgroup_t : uint8_t {
   REMOTE = 0x02,
   CHLOR = 0x05,
   PUMP = 0x06,
-  X09 = 0x09,
+  X09 = 0x09
 };
 
 
@@ -44,12 +46,12 @@ using datalink_preamble_a5_t = uint8_t[3];
 using datalink_preamble_ic_t = uint8_t[2];
 using datalink_postamble_ic_t = uint8_t[2];
 
-using datalink_hdr_ic_t = struct {
+struct datalink_hdr_ic_t {
     uint8_t dst;  // destination
     uint8_t typ;  // message type
 } PACK8;
 
-using datalink_hdr_a5_t = struct {
+struct datalink_hdr_a5_t {
     uint8_t ver;  // protocol version id
     uint8_t dst;  // destination
     uint8_t src;  // source
@@ -57,24 +59,24 @@ using datalink_hdr_a5_t = struct {
     uint8_t len;  // # of data bytes following
 } PACK8;
 
-using datalink_hdr_t = union {
+union datalink_hdr_t {
     datalink_hdr_ic_t ic;
     datalink_hdr_a5_t a5;
 } PACK8;
 
-using datalink_head_a5_t = struct {
+struct datalink_head_a5_t {
     uint8_t                ff;
     datalink_preamble_a5_t preamble;
     datalink_hdr_a5_t      hdr;
 } PACK8;
 
-using datalink_head_ic_t = struct {
+struct datalink_head_ic_t {
     uint8_t                ff;
     datalink_preamble_ic_t preamble;
     datalink_hdr_ic_t      hdr;
 } PACK8;
 
-using datalink_head_t = union {
+union datalink_head_t {
     datalink_head_ic_t ic;
     datalink_head_a5_t a5;
 };
@@ -94,16 +96,16 @@ size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
  * @brief Data link tail structure
  */
 
-using datalink_tail_a5_t = struct {
+struct datalink_tail_a5_t {
     uint8_t  crc[2];
 } PACK8;
 
-using datalink_tail_ic_t = struct {
+struct datalink_tail_ic_t {
     uint8_t                 crc[1];
     datalink_postamble_ic_t postamble;
 } PACK8;
 
-using datalink_tail_t = union {
+union datalink_tail_t {
     datalink_tail_ic_t ic;
     datalink_tail_a5_t a5;
 };
@@ -113,13 +115,6 @@ size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 /**
  * @brief Exported functions
  */
-
-    // forward declarations
-enum class datalink_prot_t : uint8_t;
-struct datalink_pkt_t;
-struct rs485_instance_t;
-using rs485_handle_t = rs485_instance_t *;
-struct datalink_pkt_t;
 
     // datalink.cpp
 datalink_addrgroup_t datalink_groupaddr(uint16_t const addr);

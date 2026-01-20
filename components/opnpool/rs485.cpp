@@ -19,14 +19,15 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <string.h>
 #include <esp_system.h>
+#include <esp_types.h>
 #include <driver/uart.h>
 #include <driver/gpio.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <esphome/core/log.h>
 #include <esp_rom_sys.h>
+#include <string.h>
 
 #include "rs485.h"
 #include "datalink.h"

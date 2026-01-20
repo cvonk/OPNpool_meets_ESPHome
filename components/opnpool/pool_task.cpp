@@ -28,11 +28,10 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <string.h>
 #include <esp_system.h>
+#include <esp_types.h>
 #include "esphome/core/log.h"
-#include <esp_system.h>
-#include <time.h>
+#include <string.h>
 
 #include "to_str.h"
 #include "enum_helpers.h"
@@ -41,6 +40,7 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network.h"
+#include "network_msg.h"
 #include "ipc.h"
 #include "pool_task.h"
 

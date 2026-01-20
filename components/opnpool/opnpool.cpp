@@ -28,22 +28,19 @@
  */
 
 #include <esp_system.h>
-#include <cstdlib>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 #include <esphome/core/hal.h>
-#include <type_traits>
 
 #include "pool_state_rx.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "network.h"
 #include "ipc.h"
 #include "pool_task.h"
 #include "opnpool.h"
 #include "to_str.h"
-
 #include "pool_state.h"
 #include "opnpool_climate.h"
 #include "opnpool_switch.h"
@@ -51,6 +48,8 @@
 #include "opnpool_binary_sensor.h"
 #include "opnpool_text_sensor.h"
 #include "opnpool_ids.h"
+#include "network.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {

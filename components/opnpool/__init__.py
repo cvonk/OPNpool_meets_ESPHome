@@ -8,21 +8,20 @@
  
 @copyright Copyright (c) 2026, Coert Vonk
 
-@details
-This file defines the ESPHome code generation logic for the OPNpool component, which integrates
-an OPNpool interface with the ESPHome ecosystem. It declares the configuration schema, entity
-types, and code generation routines for climate, switch, sensor, binary sensor, and text sensor
-entities associated with the pool controller.
+@details This file defines the ESPHome code generation logic for the OPNpool component,
+which integrates an OPNpool interface with the ESPHome ecosystem. It declares the
+configuration schema, entity types, and code generation routines for climate, switch,
+sensor, binary sensor, and text sensor entities associated with the pool controller.
 
-Responsibilities include:
-- Defining the configuration schema for all supported pool entities and RS485 hardware settings.
-- Registering all subcomponents and their C++ counterparts for code generation.
-- Dynamically extracting the firmware version from Git or ESPHome version for build metadata.
-- Adding required build flags and source files for the C++ implementation.
-- Providing async routines to instantiate and link all entities to the main OpnPool component.
+Responsibilities include: - Defining the configuration schema for all supported pool
+entities and RS485 hardware settings. - Registering all subcomponents and their C++
+counterparts for code generation. - Dynamically extracting the firmware version from Git
+or ESPHome version for build metadata. - Adding required build flags and source files for
+the C++ implementation. - Providing async routines to instantiate and link all entities to
+the main OpnPool component.
 
-WARNING: The script directly edits the `opnpool.h` header file to keep the enums in opnpool.h 
-consistent with CONF_* in this file.
+WARNING: The script directly edits the `opnpool.h` header file to keep the enums in
+opnpool.h consistent with CONF_* in this file.
 
 This module enables seamless integration of pool automation hardware into ESPHome YAML
 configurations, supporting flexible entity mapping and robust build-time configuration.
@@ -138,7 +137,7 @@ CONFIG_SCHEMA = cv.Schema({
             cv.GenerateID(): cv.declare_id(OpnPoolSensor),
             cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSOR_META[key]["unit"]): cv.string,
             cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["device_class"]): cv.string,
-            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["state_class"]): cv.string,
+            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["state_class"]): cv.one_of(*STATE_CLASSES, lower=True),
         }) for key in CONF_ANALOG_SENSORS
     },
     **{
@@ -159,11 +158,10 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
 
-    # Add all source files to build
+    # add all source files to build
     cg.add_library("ESP32", None, "freertos")
-    #cg.add_library("OPNPool", None, "opnpool")
     
-    # Add component source files
+    # add component source files
     component_dir = os.path.dirname(__file__)
     
     # C++ entity implementation files

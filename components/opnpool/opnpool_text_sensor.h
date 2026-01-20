@@ -1,5 +1,7 @@
 #pragma once
 
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/component.h>
 #include <esphome/components/text_sensor/text_sensor.h>
 #include <string>

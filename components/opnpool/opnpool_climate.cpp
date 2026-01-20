@@ -1,5 +1,3 @@
-#include "opnpool_ids.h"
-
 /**
  * @file opnpool_climate.cpp
  * @brief Actuates climate settings from Home Assistant on the pool controller.
@@ -23,20 +21,20 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <esp_timer.h>
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 #include <type_traits>
 
 #include "to_str.h"
-#include "enum_helpers.h"
 #include "opnpool_climate.h"  // no other #includes that could make a circular dependency
 #include "opnpool.h"          // no other #includes that could make a circular dependency
 #include "ipc.h"              // no other #includes that could make a circular dependency
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "pool_state.h"
 #include "opnpool_switch.h"
-#include "opnpool_ids.h"
 #include "enum_helpers.h"
+#include "opnpool_ids.h"
 
 namespace esphome {
 namespace opnpool {

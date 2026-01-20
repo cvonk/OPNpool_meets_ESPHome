@@ -23,7 +23,7 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <esp_timer.h>
+#include <esp_system.h>
 #include <esphome/core/log.h>
 
 #include "opnpool_switch.h"   // no other #includes that could make a circular dependency

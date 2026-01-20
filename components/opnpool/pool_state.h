@@ -4,6 +4,7 @@
 #endif
 
 #include <esp_system.h>
+#include <esp_types.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <cJSON.h>
@@ -11,14 +12,13 @@
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
-
 #include "network.h"
 #include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {
 
-// Forward declarations instead of including ipc.h or FreeRTOS.h
+    // forward declarations (to avoid circular dependencies)
 struct ipc_t;
 
 struct poolstate_time_t {

@@ -3,17 +3,17 @@
 # error "Requires C++ compilation"
 #endif
 
-#include <cstddef>
 #include <esp_system.h>
 #include <esp_types.h>
 #include <driver/uart.h>
+#include <cstddef>
 
 #include "ipc.h"
 
 namespace esphome {
 namespace opnpool {
 
-    // forward declarations
+    // forward declarations (to avoid circular dependencies)
 struct datalink_pkt_t;
 using rs485_handle_t = struct rs485_instance_t *;
 

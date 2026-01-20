@@ -27,6 +27,7 @@
  */
 
 #include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 
 #include "skb.h"

@@ -16,10 +16,11 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 
 #include "opnpool_binary_sensor.h"
-#include "enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {

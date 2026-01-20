@@ -20,11 +20,8 @@
  */
 
 #include <esp_system.h>
-#include <esphome/core/log.h>
-#include <time.h>
+#include <esp_types.h>
 
-#include "rs485.h"
-#include "skb.h"
 #include "datalink.h"
 
 namespace esphome {

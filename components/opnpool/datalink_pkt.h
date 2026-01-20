@@ -10,7 +10,7 @@
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
- * @licence SPDX-License-Identifier: GPL-3.0-or-later
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -19,21 +19,18 @@
 #endif
 
 #include <esp_system.h>
-#include <strings.h>
+#include <esp_types.h>
 
-#define MAGIC_ENUM_RANGE_MIN 0
-#define MAGIC_ENUM_RANGE_MAX 256
-#include "magic_enum.h"
-#include "skb.h"
-#include "to_str.h"
-#include "enum_helpers.h"
-
-#ifndef PACK
-# define PACK8       __attribute__((aligned( __alignof__(uint8_t)), packed))
+#ifndef PACK8
+# define PACK8 __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
 
 namespace esphome {
 namespace opnpool {
+
+    // forward declarations (to avoid circular dependencies)
+struct skb_t;
+using skb_handle_t = skb_t *;
 
 /**
  * @brief
@@ -55,6 +52,7 @@ enum class datalink_prot_t : uint8_t {
     A5_PUMP = 0x02,
     NONE    = 0xFF
 };
+
 
 /**
  * @brief Controller messages types
@@ -100,6 +98,7 @@ enum class datalink_typ_ctrl_t : uint8_t {
     VERSION_REQ     = 0xFD
 };
 
+
 /**
  * @brief Pump message types
  */
@@ -112,7 +111,6 @@ enum class datalink_typ_pump_t : uint8_t {
     STATUS     = 0x07,
     UNKNOWN_FF = 0xFF
 };
-
 
 /**
  * @brief Chlorinator message types

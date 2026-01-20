@@ -3,15 +3,21 @@
 # error "Requires C++ compilation"
 #endif
 
-#include "network_msg.h"
-#include "pool_state.h"
+#include <esp_system.h>
+#include <esp_types.h>
 
 namespace esphome {
 namespace opnpool {
+
+    // forward declarations (to avoid circular dependencies)
+struct network_msg_t;
+struct poolstate_t;
+
 namespace pool_state_rx {
 
 esp_err_t update_state(network_msg_t const * const msg, poolstate_t * const state);
 
 }  // namespace pool_state_rx
+
 }  // namespace opnpool
 }  // namespace esphome

@@ -3,8 +3,8 @@
 # error "Requires C++ compilation"
 #endif
 
-#include <string.h>
 #include <esp_system.h>
+#include <esp_types.h>
 #include <cJSON.h>
 
 #define MAGIC_ENUM_RANGE_MIN 0
@@ -14,15 +14,15 @@
 namespace esphome {
 namespace opnpool {
 
-    // forward declarations
+    // forward declarations (to avoid circular dependencies)
 struct poolstate_t;
 struct poolstate_tod_t;
 struct poolstate_version_t;
 struct poolstate_thermo_t;
 struct poolstate_sched_t;
 struct poolstate_chlor_t;
-enum class network_pump_mode_t : uint8_t;
-enum class poolstate_elem_typ_t : uint8_t;
+enum network_pump_mode_t;
+enum poolstate_elem_typ_t;
 
     // namespace-scope free functions from poolstate_log.cpp
 

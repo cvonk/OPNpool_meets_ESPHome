@@ -3,6 +3,9 @@
 # error "Requires C++ compilation"
 #endif
 
+#include <esp_system.h>
+#include <esp_types.h>
+
 namespace esphome {
 namespace opnpool {
 

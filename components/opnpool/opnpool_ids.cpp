@@ -1,5 +1,5 @@
 #include <esp_system.h>
-#include <cstdlib>
+#include <esp_types.h>
 
 #include "opnpool_ids.h"
 #include "network_msg.h"

@@ -22,11 +22,12 @@
  * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include <string.h>
-#include <cstddef>
 #include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 #include <cJSON.h>
+#include <string.h>
+#include <cstddef>
 
 #include "to_str.h"
 #include "enum_helpers.h"

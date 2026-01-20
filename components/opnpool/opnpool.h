@@ -3,9 +3,10 @@
 # error "Requires C++ compilation"
 #endif
 
-#include <vector>
-#include <string>
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/component.h>
+
 #include "enum_helpers.h"
 #include "opnpool_ids.h"
 

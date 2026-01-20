@@ -3,12 +3,17 @@
 # error "Requires C++ compilation"
 #endif
 
+
+#include <esp_system.h>
 #include <esp_types.h>
-#include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
 namespace esphome {
 namespace opnpool {
+
+    // forward declarations (to avoid circular dependencies)
+struct ipc_t;
+struct network_msg_t;
 
 struct rs485_pins_t {
     uint8_t rx_pin{25};
@@ -25,9 +30,6 @@ struct ipc_t {
     QueueHandle_t to_pool_q;
     config_t      config;
 };
-
-    // forward declarations
-struct network_msg_t;
 
 void ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
 void ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc);

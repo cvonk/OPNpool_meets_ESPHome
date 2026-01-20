@@ -16,6 +16,7 @@
  */
 
 #include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 
 #include "to_str.h"
@@ -23,6 +24,7 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network.h"
+#include "network_msg.h"
 
 namespace esphome {
 namespace opnpool {

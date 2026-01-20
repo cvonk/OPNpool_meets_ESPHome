@@ -3,6 +3,8 @@
 # error "Requires C++ compilation"
 #endif
 
+#include <esp_system.h>
+#include <esp_types.h>
 #include <esphome/core/log.h>
 
 #include "magic_enum.h"
@@ -62,16 +64,6 @@ enum_index(E e) noexcept -> std::underlying_type_t<E>
     static_assert(std::is_enum<E>::value, "E must be an enum type");
     return static_cast<std::underlying_type_t<E>>(e);
 }
-
-#if 0
-    // helper to convert enum class to its underlying type
-template<typename E>
-constexpr auto 
-to_index(E e) -> typename std::underlying_type<E>::type
-{
-    return static_cast<typename std::underlying_type<E>::type>(e);
-}
-#endif
 
 } // namespace opnpool
 } // namespace esphome
