@@ -81,17 +81,6 @@ union datalink_head_t {
     datalink_head_a5_t a5;
 };
 
-size_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
-
-
-/**
- * @brief Datalink data "structure"
- **/
-
-    // using #define instead of a `const` prevents circular dependency
-#define DATALINK_MAX_DATA_SIZE (NETWORK_DATA_MAX_SIZE)
-
-
 /**
  * @brief Data link tail structure
  */
@@ -110,7 +99,8 @@ union datalink_tail_t {
     datalink_tail_a5_t a5;
 };
 
-size_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
+uint8_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
+uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
 /**
  * @brief Exported functions

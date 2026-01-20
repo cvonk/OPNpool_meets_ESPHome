@@ -41,6 +41,8 @@ namespace opnpool {
 
 static char const * const TAG = "datalink_rx";
 
+uint8_t const DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
+
 struct proto_info_t  {
     uint8_t const * const  preamble;
     uint8_t const * const  postamble;

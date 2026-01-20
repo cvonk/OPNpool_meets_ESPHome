@@ -51,12 +51,6 @@ enum class network_pool_mode_bits_t : uint8_t {
     TIMEOUT     = 4
 };
 
-#ifdef __INTELLISENSE__
-#define NETWORK_POOL_MODE_BITS_COUNT (5)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-#else
-#define NETWORK_POOL_MODE_BITS_COUNT (enum_count<network_pool_mode_bits_t>())
-#endif
-
 /**
  * @brief Enumerates the pool controller circuits and features.
  *
@@ -77,13 +71,6 @@ enum class network_pool_circuit_t : uint8_t {
     FEATURE4 = 8
 };
   
-#ifdef __INTELLISENSE__
-#define NETWORK_POOL_CIRCUIT_COUNT (9)   // IntelliSense doesn't evaluate constexpr functions, use temporary constant
-#else
-#define NETWORK_POOL_CIRCUIT_COUNT (enum_count<network_pool_circuit_t>())
-#endif
-
-
 /**
  * @brief Enumerates the operation modes of the pool pump.
  *
@@ -540,8 +527,6 @@ union network_msg_data_t {
     network_msg_data_a5_t a5;
     network_msg_data_ic_t ic;
 } PACK8;
-
-const size_t NETWORK_DATA_MAX_SIZE = sizeof(network_msg_data_t);
 
 
 /**

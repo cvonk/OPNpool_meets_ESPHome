@@ -344,7 +344,7 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
 
         // update state->circuits.active
     uint16_t const bitmask_active_circuits = ((uint16_t)msg->active_hi << 8) | msg->active_lo;
-    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.active), "size mismatch for state->circuits.active");
+    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->circuits.active), "size mismatch for state->circuits.active");
     _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
 
         // if both SPA and POOL bits are set, only SPA runs
@@ -354,7 +354,7 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
 
         // update state->circuits.delay
     uint8_t const bitmask_delay_circuits = msg->delay;
-    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->circuits.delay), "size mismatch for state->circuits.delay");
+    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->circuits.delay), "size mismatch for state->circuits.delay");
     _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
 
         // update state->circuits.thermos (only update when the pump is running)
@@ -375,8 +375,8 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
 
         // update state->modes.is_set
     uint8_t const bitmask_active_modes = msg->mode_bits;
-    static_assert(NETWORK_POOL_MODE_BITS_COUNT <= ARRAY_SIZE(state->modes.is_set), "size err for state->modes.is_set");
-    _update_bool_array_from_bits(state->modes.is_set, bitmask_active_modes, NETWORK_POOL_MODE_BITS_COUNT);
+    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->modes.is_set), "size err for state->modes.is_set");
+    _update_bool_array_from_bits(state->modes.is_set, bitmask_active_modes, enum_count<network_pool_mode_bits_t>());
 
         // update state->system (date is updated through `network_msg_ctrl_time`)
     state->system.tod.time.minute = msg->minute;
