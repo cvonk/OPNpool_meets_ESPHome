@@ -1,6 +1,6 @@
 {
   "name": "opnpool_meets_esphome",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Integrates the traditional Pool Controller into our smart home using ESPHome.",
   "repository": {
     "type": "git",
