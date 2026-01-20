@@ -1,27 +1,41 @@
-# OPNpool meets ESPHome
-
 [![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://github.com/cvonk/OPNpool_meets_ESPHome/discussions)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
+This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome
+platform.
 
-The OPNpool integrates the functionality of a traditional Pool Controller into the modern
-smart home. It keeps tabs on the status of the connected controller, pool pump and
-chlorinator. This provides not only a more convenient solution than physically interacting
-with the pool equipment, but the ability to create automations that runs the pump for a
-duration depending on the temperature.
+# OPNpool meets ESPHome
 
-Features:
+OPNpool meets ESPHome is an open-source hardware and software solution that brings
+advanced pool automation to your smart home. By bridging legacy pool controllers with
+modern IoT platforms, OPNpool enables real-time monitoring, remote control, and seamless
+integration with Home Assistant. Whether you want to automate your pool pump based on
+temperature, monitor chlorinator status, or simply enjoy the convenience of remote access,
+OPNpool provides a robust and extensible platform for pool management.
 
-  - [x] Visualizes the status of the thermostats, pump, chlorinator, circuits, and schedules.
-  - [x] Allows you adjust the thermostats and toggle circuits remotely
-  - [x] No physical connection to your LAN
-  - [x] Supports over-the-air updates
-  - [x] Integrates seamlessly with Home Assistant
-  - [x] Accessible as a webapp
-  - [x] Protected with IP68 waterproof case and connectors [^1]
-  - [x] Open source!
+## How it works
+
+At its core, OPNpool connects an ESP32 microcontroller to your pool controller’s RS-485
+bus. The ESP32 runs ESPHome firmware, which translates pool equipment data into Home
+Assistant entities. This allows you to view and control your pool’s thermostats, pumps,
+circuits, and chlorinator directly from your smart home dashboard or mobile app. The
+system is designed for reliability, safety, and ease of installation, with support for
+over-the-air updates and waterproof enclosures for outdoor use.
+
+## Features
+
+  - [x] **Smart Home Integration:** Native support for Home Assistant and ESPHome.
+  - [x] **Remote Monitoring & Control:** Access your pool’s status and controls from anywhere.
+  - [x] **Community Driven:** Built on the work of pool automation enthusiasts and reverse engineers.
+  - [x] **Open Source:** Fully transparent hardware and software—customize and extend as needed.
+
+## Getting started
+
+No prior experience with pool automation or ESPHome is required. The documentation below
+will guide you through hardware assembly, wiring, firmware installation, and Home
+Assistant integration. If you have questions or need help, join the project’s GitHub
+Discussions for community support.
 
 This device was tested with the Pentair SunTouch controller with firmware **2.080**,
 connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
@@ -61,8 +75,7 @@ environment](https://esphome.io/guides/installing_esphome/) on a beefy computer.
 case, this cut the compilation time to a minute, compared to half an hour when running it
 as an addon to Home Assistant.
 
-Create a `opnpool-1.yaml` configuration file, that contains the `external_components`,
-`logger` and `opnpool` keys.
+In an empty directory, create a `opnpool-1.yaml` configuration file as shown below.
 
 ```yaml
 substitutions:
@@ -113,7 +126,7 @@ opnpool:
     flow_control_pin: 27  # GPIO27
 ```
 
-Specify your secrets in `secrets.yaml`
+Specify your own secrets in `secrets.yaml`
 
 ```yaml
 wifi_ssid: "REDACTED"
@@ -136,7 +149,8 @@ On the serial output, you should see something like
 [16:27:55.144][E][rs485:108][pool_req_task]: tx_q full
 ```
 
-The `tx_q full` indicates that it can't transmit to the pool controller.
+In the above trace, the `tx_q full` indicates that it can't transmit to the pool
+controller.
 
 On your Home Assistant UI, under Settings > Integrations, you should find that it
 auto discovered the device.
@@ -147,9 +161,17 @@ Add it, and specify your API key.  Name the device and assign it an area. You sh
 then see the enities although their values are `unknown`.  Time to populate those
 entities by connecting it to the pool controller ;-)
 
-![Entities_unknown](assets/media/opnpool-entities-unknown.png)
-
 ### Connect
+
+At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
+roll and PCB (see later) or breadboard this using:
+
+* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
+  the Wemos LOLIN D32).
+* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
+  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (`R1`
+  to `R4`).
+* A piece of Cat5 ethernet cable to connect to the pool controller.
 
 > :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO
 > WARRANTIES. At the very least, turn off the power while you work on your pool equipment.
@@ -179,7 +201,7 @@ k&ohm; resistor, to keep it from transmiting while the ESP32 is booting.
 | DE and RE      | `GPIO#27`    |
 | GND            | `GND`        |
 
-The serial monitor will show decoded messages such as:
+The serial monitor will start to show decoded messages such as:
 
 ```json
 {CTRL_VERSION_REQ: {}}
@@ -197,12 +219,8 @@ Lovelace config at [`hass-config`](https://github.com/cvonk/hass-config).
 
 ## PCB
 
-We will build a printed circuit board (PCB) with an ESP32 module, RS-485 adapter and DC/DC
-converter.
-
-If you're in Silicon Valley, give me a ping to avoid long lead times. I have extra
-(partly) assembled units and will provide them at cost. If there is enough interest, I can
-start a project on Tindie or Crowd Supply to get some volume pricing.
+For a more permanent solution, I suggest building a printed circuit board (PCB). This can
+hold the ESP32 module, RS-485 adapter and DC/DC converter.  
 
 ### Schematic
 
@@ -221,7 +239,10 @@ document.
 
 ### Board layout
 
-The schematic fits easily on a two layer PCB. Note the cut out for the RF antenna.
+The schematic fits easily on a simple two layer PCB. We designed the PCB in the
+free AutoDesk EAGLE.  The source files and layout can be found in the [hardware
+directory](https://github.com/cvonk/OPNpool_meets_ESPHome/tree/main/hardware) of this
+project.
 
 ![Board layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg)
 
@@ -229,7 +250,7 @@ The schematic fits easily on a two layer PCB. Note the cut out for the RF antenn
 
 | Name        | Description                                             | Suggested mfr/part#        |
 |-------------|---------------------------------------------------------|----------------------------|
-| PBC r2      | Printed circuit board                                   | OSHPark                    |
+| PBC r3      | Printed circuit board                                   | OSHPark                    |
 | Enclosure   | 158x90x60mm clear plastic project enclosure, IP65       | *white label*              |
 | LOLIN D32   | Wemos LOLIN D32, based on ESP-WROOM-32 4MB              | Wemos LOLIN-D32            |
 | RS485_CONN  | Plug+socket, male+female, 5-pin, 16mm aviation, IP68    | SD 16                      | 
@@ -248,22 +269,11 @@ The schematic fits easily on a two layer PCB. Note the cut out for the RF antenn
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head              | Essentra 50M020040D016     |
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                  | Essentra 04M020040HN       |
 
-[^1]: We shared our [PCB order]() for your convenience.
-
-At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
-breadboard this using:
-
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
-  the Wemos LOLIN D32).
-* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
-  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (`R1`
-  to `R4`).
-* A piece of Cat5 ethernet cable to connect to the pool controller.
-
 ### Debugging
 
-Not all controller firmware is created equally.  If you are not using the same firmware
-version, you will need to adjust the code.
+Not all controller firmwares are created equally.  If you are not using firmware version
+2.080, you will need dive down to the byte level and to tweak the datalink layer.  If you
+succeed, please send me an pull request, and I will iinclude it in the next release.
 
 To show more (or less) debug information, specify the levels in `opnpoool-1.yaml`
 
