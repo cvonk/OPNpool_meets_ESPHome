@@ -36,9 +36,10 @@ import os
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import climate, switch, sensor, binary_sensor, text_sensor
+from esphome.components.sensor import STATE_CLASSES
 from esphome.const import (
     CONF_ID, CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS,
-    UNIT_WATT, UNIT_PERCENT, STATE_CLASS_MEASUREMENT,
+    CONF_STATE_CLASS, STATE_CLASS_MEASUREMENT,
 )
 
 DEPENDENCIES = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
@@ -86,14 +87,14 @@ CONF_ANALOG_SENSORS = [  # used to overwrite sensor_id_t enum in opnpool.h
     "pump_error"
 ]
 CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
-    "air_temperature": {"unit": "°C", "device_class": "temperature"},
-    "water_temperature": {"unit": "°C", "device_class": "temperature"},
-    "pump_power": {"unit": "W", "device_class": "power"},
-    "pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate"},
-    "pump_speed": {"unit": "rpm", "device_class": ""},
-    "chlorinator_level": {"unit": "%", "device_class": ""},
-    "chlorinator_salt": {"unit": "ppm", "device_class": ""},
-    "pump_error": {"unit": "", "device_class": ""},
+    "air_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
+    "water_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
+    "pump_power": {"unit": "W", "device_class": "power", "state_class": "measurement"},
+    "pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate", "state_class": "measurement"},
+    "pump_speed": {"unit": "rpm", "device_class": "", "state_class": "measurement"},
+    "chlorinator_level": {"unit": "%", "device_class": "", "state_class": "measurement"},
+    "chlorinator_salt": {"unit": "ppm", "device_class": "", "state_class": "measurement"},
+    "pump_error": {"unit": "", "device_class": "", "state_class": "measurement"},
 }
 CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.h
     "pump_running",
@@ -137,6 +138,7 @@ CONFIG_SCHEMA = cv.Schema({
             cv.GenerateID(): cv.declare_id(OpnPoolSensor),
             cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSOR_META[key]["unit"]): cv.string,
             cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["device_class"]): cv.string,
+            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["state_class"]): cv.string,
         }) for key in CONF_ANALOG_SENSORS
     },
     **{

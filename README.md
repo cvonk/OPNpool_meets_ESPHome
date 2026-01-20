@@ -164,12 +164,10 @@ The serial monitor will show decoded messages such as:
 {CTRL_HEAT_RESP: {"thermos":{"POOL":{"temp":54,"sp":63,"src":"NONE"},"SPA":{"temp":54,"sp"}
 ```
 
-In Home Assistant the entities should populate:
+In Home Assistant the entities should populate, and show on your Lovelace UI. You find my 
+Lovelace config at [`hass-config`](https://github.com/cvonk/hass-config).
 
-![Entities_bediening](assets/media/opnpool-bediening.png)
-![Entities_sensoren](assets/media/opnpool-sensoren.png)
-
-FYI, the [`hass-config` project](https://github.com/cvonk/hass-config) has my Lovelace dashboard configuration.
+![Lovelace_view](assets/media/opnpool-lovelace.png)
 
 ## PCB
 
