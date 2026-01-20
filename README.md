@@ -6,40 +6,60 @@
 
 This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
 
-The OPNpool integrates the functionality of a traditional Pool Controller into the modern smart home. It keeps tabs on the status of the connected controller, pool pump and chlorinator. This provides not only a more convenient solution than physically interacting with the pool equipment, but the ability to create automations that runs the pump for a duration depending on the temperature.
+The OPNpool integrates the functionality of a traditional Pool Controller into the modern
+smart home. It keeps tabs on the status of the connected controller, pool pump and
+chlorinator. This provides not only a more convenient solution than physically interacting
+with the pool equipment, but the ability to create automations that runs the pump for a
+duration depending on the temperature.
 
 Features:
 
   - [x] Visualizes the status of the thermostats, pump, chlorinator, circuits, and schedules.
   - [x] Allows you adjust the thermostats and toggle circuits remotely
   - [x] No physical connection to your LAN
-  - [x] Supports over-the-air updates [^1]
+  - [x] Supports over-the-air updates
   - [x] Integrates seamlessly with Home Assistant
   - [x] Accessible as a webapp
   - [x] Protected with IP68 waterproof case and connectors [^1]
   - [x] Open source!
 
-This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
+This device was tested with the Pentair SunTouch controller with firmware **2.080**,
+connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
 
-> This open source and hardware project is intended to comply with the October 2016 exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a controlled environment designed to avoid any harm to individuals or to the public.
+> This open source and hardware project is intended to comply with the October 2016
+> exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a
+> controlled environment designed to avoid any harm to individuals or to the public.
 
 ## Parts
 
-At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can breadboard this using:
+At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
+breadboard this using:
 
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as the Wemos LOLIN D32).
-* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (often labeled `R1` to `R4`).
+* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
+  the Wemos LOLIN D32).
+* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
+  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors
+  (often labeled `R1` to `R4`).
 * A piece of Cat5 ethernet cable to connect to the pool controller.
 
-If you want to make this a more permanent solution, I suggest rolling a printed circuit board and housing it in a IP68 waterproof case with IP68 connectors.  More about this later.
+If you prefer to make this a more permanent solution, I suggest rolling a printed circuit
+board and housing it in a IP68 waterproof case with IP68 connectors.  More about this
+later.
 
 ## Acknowledgements
 
-> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if if I forgot you.)
+> We proudly acknowledge the work of reverse engineering pioneers [Joshua
+> Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit),
+> [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and
+> [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line
+> if if I forgot you.)
 
 ## Usage
 
-Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a biefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an addon to Home Assistant.
+Start with [installing the ESPHome
+environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my
+case, this cut the compilation time to a minute, compared to half an hour when running it
+as an addon to Home Assistant.
 
 Create a `opnpool-1.yaml` configuration file, that contains the `external_components`,
 `logger` and `opnpool` keys.
@@ -131,20 +151,26 @@ entities by connecting it to the pool controller ;-)
 
 ### Connect
 
-> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO WARRENTIES. At the very least, turn off the power while you work on your pool equipment. Be careful, THERE IS ALWAYS A RISK OF BREAKING YOUR POOL EQUIPMENT.**
+> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO
+> WARRANTIES. At the very least, turn off the power while you work on your pool equipment.
+> Be careful, THERE IS ALWAYS A RISK OF BREAKING YOUR POOL EQUIPMENT.**
 
-Understanding the above warning .. the RS-485 header can be found on the back of the control board. There are probably already wires connected that go to the devices such as pump and chlorinator.
+Understanding the above warning .. the RS-485 header can be found on the back of the
+control board. There are probably already wires connected that go to the devices such as
+pump and chlorinator.
 
 ![Inside of Pool controller](assets/media/opnpool-rs485-inside.jpg)
 
-To minimize electromagnetic interference, use a twisted pairs from e.g. CAT-5 cable to connect the `A`/`B` pair to the RS-485 adapter as shown in the table below.
+To minimize electromagnetic interference, use a twisted pairs from e.g. CAT-5 cable to
+connect the `A`/`B` pair to the RS-485 adapter as shown in the table below.
 
 | Controller       | RS-485 adapter | idle state |         
 |:-----------------|:--------------:|:-----------|
 | `-DATA` (green)  |  `A`           | negative   |
 | `+DATA` (yellow) |  `B`           | positive   |
 
-Connect the RS-485 adapter to the ESP32 module.  I also pulled `GPIO#27` down with a 10 k&ohm; resistor, to keep it from transmiting while the ESP32 is booting.
+Connect the RS-485 adapter to the ESP32 module.  I also pulled `GPIO#27` down with a 10
+k&ohm; resistor, to keep it from transmiting while the ESP32 is booting.
 
 | RS-485 adapter | ESP32 module |
 |:---------------|:-------------|
@@ -171,18 +197,25 @@ Lovelace config at [`hass-config`](https://github.com/cvonk/hass-config).
 
 ## PCB
 
-We will build a printed circuit board (PCB) with an ESP32 module, RS-485 adapter and DC/DC converter.
+We will build a printed circuit board (PCB) with an ESP32 module, RS-485 adapter and DC/DC
+converter.
 
-If you're in Silicon Valley, give me a ping to avoid long lead times. I have extra (partly) assenmbled units and will provide them at cost.
-If there is enough interest, I can start a project on Tindie or Crowd Supply to get some volume pricing.
+If you're in Silicon Valley, give me a ping to avoid long lead times. I have extra
+(partly) assembled units and will provide them at cost. If there is enough interest, I can
+start a project on Tindie or Crowd Supply to get some volume pricing.
 
 ### Schematic
 
-A buck converter provides 5 Volts to the battery connector on the LOLIN D32 daughterboard. Using the battery input, helps prevent problems when it is also powered through the USB connector.
+A buck converter provides 5 Volts to the battery connector on the LOLIN D32 daughterboard.
+Using the battery input, helps prevent problems when it is also powered through the USB
+connector.
 
 ![Schematic1](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-power.svg)
 
-The data path is between the RS-485 connector and the ESP32 on the LOLIN D32 daughterboard.  There is an optional terminator resistor to prevent reflections on the bus. The JTAG header is for debugging as detailed in the Debugging chapter of the design document.
+The data path is between the RS-485 connector and the ESP32 on the LOLIN D32
+daughterboard.  There is an optional terminator resistor to prevent reflections on the
+bus. The JTAG header is for debugging as detailed in the Debugging chapter of the design
+document.
 
 ![Schematic2](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-logic.svg)
 
@@ -194,7 +227,7 @@ The schematic fits easily on a two layer PCB. Note the cut out for the RF antenn
 
 ### Bill of materials
 
-| Name        | Description                                             | Sugggested mfr/part#       |
+| Name        | Description                                             | Suggested mfr/part#        |
 |-------------|---------------------------------------------------------|----------------------------|
 | PBC r2      | Printed circuit board                                   | OSHPark                    |
 | Enclosure   | 158x90x60mm clear plastic project enclosure, IP65       | *white label*              |
@@ -215,17 +248,22 @@ The schematic fits easily on a two layer PCB. Note the cut out for the RF antenn
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head              | Essentra 50M020040D016     |
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                  | Essentra 04M020040HN       |
 
-[^1]: We shared our [PCB order]() for your convienence.
+[^1]: We shared our [PCB order]() for your convenience.
 
-At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can breadboard this using:
+At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
+breadboard this using:
 
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as the Wemos LOLIN D32).
-* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (`R1` to `R4`).
+* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
+  the Wemos LOLIN D32).
+* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
+  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (`R1`
+  to `R4`).
 * A piece of Cat5 ethernet cable to connect to the pool controller.
 
 ### Debugging
 
-Not all controller firmware is created equally.  If you are not using the same firmware version, you will need to adjust the code.
+Not all controller firmware is created equally.  If you are not using the same firmware
+version, you will need to adjust the code.
 
 To show more (or less) debug information, specify the levels in `opnpoool-1.yaml`
 
@@ -260,9 +298,11 @@ debug:
 
 ### Development
 
-For better development experience: in VS Code, install the C/C++ and [ESPHome extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
+For better development experience: in VS Code, install the C/C++ and [ESPHome
+extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
 
-Clone the repository and its submodules to a local directory. The `--recursive` flag automatically initializes and updates the submodules in the repository.
+Clone the repository and its submodules to a local directory. The `--recursive` flag
+automatically initializes and updates the submodules in the repository.
 
 ```bash
 git clone --recursive https://github.com/cvonk/OPNpool_meets_ESPHome.git
@@ -273,7 +313,9 @@ or using `ssh`
 git clone --recursive git@github.com:cvonk/OPNpool_meets_ESPHome.git
 ```
 
-The `tasks.json` file defines the build tasks. It will map the compile pathnames back from the build directory to the project directory.  You can then inspect the build output in the PROBLEMS tab in VS Code.
+The `tasks.json` file defines the build tasks. It will map the compile pathnames back from
+the build directory to the project directory.  You can then inspect the build output in
+the PROBLEMS tab in VS Code.
 
 Short cuts:
 
@@ -287,8 +329,10 @@ Remember: if the ESP32 crashes, you will only see that on the serial console.
 
 ## Design documentation
 
-The design documentation for the (original OPNpool project)[https://github.com/cvonk/OPNpool] is still available at
-[https://coertvonk.com/category/sw/embedded/opnpool-design](https://coertvonk.com/category/sw/embedded/opnpool-design). The following chapters are relevant here:
+The design documentation for the (original OPNpool
+project)[https://github.com/cvonk/OPNpool] is still available at
+[https://coertvonk.com/category/sw/embedded/opnpool-design](https://coertvonk.com/category/sw/embedded/opnpool-design).
+The following chapters are relevant here:
 
 - [RS-485 bus](https://coertvonk.com/sw/embedded/opnpool-design/bus-access-31957)
 - [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
