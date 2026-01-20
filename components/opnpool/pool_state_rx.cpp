@@ -290,10 +290,6 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     poolstate_sched_t * state_scheds = state->scheds;    
     memset(state_scheds, 0, sizeof(state->scheds));
 
-#if 0    
-    network_msg_ctrl_sched_resp_sub_t const * msg_sched = msg->scheds;
-    for (uint_least8_t ii = 0; ii < NETWORK_MSG_CTRL_SCHED_COUNT; ii++, msg_sched++) {
-#endif
     for (const auto& sched : msg->scheds) {
 
         if (sched.circuit_plus_1 == 0) {

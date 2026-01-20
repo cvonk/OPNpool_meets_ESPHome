@@ -99,14 +99,12 @@ class OpnPool : public Component {
     ipc_t * ipc_{nullptr};  // interprocess communication structure and RS485-pins
     PoolState * poolState_{nullptr};
 
-    void service_requests_from_pool(ipc_t const * const ipc);
-
         // sub classes
-    OpnPoolClimate *climates_[enum_count<climate_id_t>()]{nullptr};
-    OpnPoolSwitch *switches_[enum_count<switch_id_t>()]{nullptr};    
-    OpnPoolSensor *sensors_[enum_count<sensor_id_t>()]{nullptr};
-    OpnPoolBinarySensor *binary_sensors_[enum_count<binary_sensor_id_t>()]{nullptr};
-    OpnPoolTextSensor *text_sensors_[enum_count<text_sensor_id_t>()]{nullptr};
+    OpnPoolClimate * climates_[enum_count<climate_id_t>()]{nullptr};
+    OpnPoolSwitch * switches_[enum_count<switch_id_t>()]{nullptr};    
+    OpnPoolSensor * sensors_[enum_count<sensor_id_t>()]{nullptr};
+    OpnPoolBinarySensor * binary_sensors_[enum_count<binary_sensor_id_t>()]{nullptr};
+    OpnPoolTextSensor * text_sensors_[enum_count<text_sensor_id_t>()]{nullptr};
 };
 
 } // namespace opnpool

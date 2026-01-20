@@ -124,21 +124,6 @@ struct poolstate_pump_t {
     uint8_t              timer;
 };
 
-#if 0
-enum class poolstate_elem_pump_typ_t : uint8_t {
-    TIME = 0,
-    MODE = 1,
-    RUNNING = 2,
-    STATE = 3,
-    POWER = 4,
-    FLOW = 5,
-    SPEED = 6,
-    LEVEL = 7,
-    ERROR = 8,
-    TIMER = 9
-};
-#endif
-
 enum class poolstate_chlor_status_t : uint8_t {
     OK         = 0,
     LOW_FLOW   = 1,
@@ -155,15 +140,6 @@ struct poolstate_chlor_t {
     uint16_t                  salt;
     poolstate_chlor_status_t  status;
 };
-
-#if 0
-enum class poolstate_elem_chlor_typ_t : uint8_t {
-    NAME   = 0,
-    LEVEL  = 1,
-    SALT   = 2,
-    STATUS = 3
-};
-#endif
 
 /**
  * @brief Complete pool state structure for the pool automation system.
@@ -210,16 +186,6 @@ enum class poolstate_elem_typ_t : uint8_t {
     MODES    = 0x07,
     ALL      = 0x08
 };
-
-#if 0
-using poolstate_get_value_t = char *;
-
-struct poolstate_get_params_t {
-    poolstate_elem_typ_t elem_typ;
-    uint8_t              elem_sub_typ;
-    uint8_t const        idx;
-};
-#endif
 
 /**
  * @brief Class representing the current state of the pool system
