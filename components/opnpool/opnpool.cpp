@@ -318,22 +318,55 @@ OpnPool::update_analog_sensors(poolstate_t const * const new_state)
         water_temperature->publish_value_if_changed(water_temp_c);
 
     }
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        new_state->pump.power);
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_FLOW)],         new_state->pump.flow);
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_SPEED)],        new_state->pump.speed);
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_ERROR)],        new_state->pump.error);
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], new_state->chlor.level);
-    _publish_if(this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  new_state->chlor.salt);
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        
+        new_state->pump.power
+    );
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_FLOW)],         
+        new_state->pump.flow
+    );
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_SPEED)],        
+        new_state->pump.speed
+    );
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_ERROR)],        
+        new_state->pump.error
+    );
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
+        new_state->chlor.level
+    );
+    _publish_if(
+        this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  
+        new_state->chlor.salt
+    );
 }
 
 void 
 OpnPool::update_binary_sensors(poolstate_t const * const new_state)
 {
-    _publish_if(this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::PUMP_RUNNING)],           new_state->pump.running);
-    _publish_if(this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]);
-    _publish_if(this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]);
-    _publish_if(this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]);
-    _publish_if(this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TIMEOUT)],           new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]);
+    _publish_if(
+        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::PUMP_RUNNING)],           
+        new_state->pump.running
+    );
+    _publish_if(
+        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           
+        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]
+    );
+    _publish_if(
+        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
+        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]
+    );
+    _publish_if(
+        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
+        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]
+    );
+    _publish_if(
+        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TIMEOUT)],           
+        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]
+    );
 }
 
 void 
