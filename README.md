@@ -261,11 +261,13 @@ logger:
     enum_helpers: VERBOSE
 ```
 
+For the `logger` component, it is recommended to use the following levels: `WARN`, which shows only warnings and errors; `INFO`, which includes informational messages such as configuration details, warnings, and errors; and `VERBOSE`, which provides very detailed logs, info, warnings, and errors. Be careful not to enable too much logging, as excessive output can negatively impact the connection between Home Assistant and the ESP32.
+
 ### Decoding Stack Traces
 
-If your ESP32 crashes and you see stack traces in the serial log, you can enable ESPHome's stack trace decoder to make debugging much easier. This will automatically decode exception addresses into readable function names and line numbers in your logs.
+If your ESP32 crashes and you notice stack traces in the serial log, you can simplify debugging by enabling ESPHome's stack trace decoder. With this feature, exception addresses are automatically translated into human-readable function names and line numbers within your logs.
 
-To enable the stack trace decoder, add the following to your YAML configuration:
+To activate the stack trace decoder, add the following lines to your YAML configuration:
 
 ```yaml
 debug:
