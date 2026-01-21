@@ -1,6 +1,6 @@
 /**
- * @file pool_state_rx_log.cpp
- * @brief Pool state: log state as a JSON-formatted string
+ * @file poolstate_rx_log.cpp
+ * @brief PoolState: log state as a JSON-formatted string
  *
  * @details
  * This file provides functions to serialize the OPNpool controller's internal state and
@@ -9,7 +9,7 @@
  * pool state to a cJSON object, using type-safe enum-to-string helpers and value checks
  * to ensure clarity and correctness in the output.
  *
- * These functions are kept seperate from pool_state_rx.cpp because their purpose is
+ * These functions are kept seperate from poolstate_rx.cpp because their purpose is
  * to provide logging functionality, and separating them helps to avoid making that file
  * unwieldy large.
  * 
@@ -32,13 +32,13 @@
 #include "to_str.h"
 #include "enum_helpers.h"
 #include "network.h"
-#include "pool_state.h"
+#include "poolstate.h"
 
 namespace esphome {
 namespace opnpool {
 
-namespace pool_state_rx {
-namespace pool_state_rx_log {
+namespace poolstate_rx {
+namespace poolstate_rx_log {
 
 static cJSON *
 _create_item(cJSON * const obj, char const * const key)
@@ -499,8 +499,8 @@ state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
     return json;  // caller MUST free
 }   
 
-}  // namespace pool_state_rx_log
-}  // namespace pool_state_rx
+}  // namespace poolstate_rx_log
+}  // namespace poolstate_rx
 
 }  // namespace opnpool
 }  // namespace esphome

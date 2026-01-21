@@ -4,13 +4,17 @@
  *
  * @details
  * This file implements the RS485 hardware driver for the OPNpool component, providing
- * low-level functions to initialize, configure, and operate the RS485 transceiver on
- * ESPHome-supported hardware. It handles UART setup for half-duplex communication, GPIO
- * configuration for transmit/receive direction, and manages a transmit queue for outgoing
- * packets. The driver exposes a handle with function pointers for higher-level protocol
- * layers to interact with the RS485 interface, ensuring reliable and efficient
- * communication with pool equipment over the RS485 bus.
+ * low-level functions to initialize, configure, and operate the RS485 transceiver. It
+ * handles UART setup for half-duplex communication, GPIO configuration, and manages a
+ * transmit queue for outgoing packets. The driver exposes a handle with function pointers
+ * for higher-level protocol layers to interact with the RS485 interface, ensuring
+ * reliable and efficient communication with pool equipment over the RS485 bus.
  *
+ * The driver provides two key functions:
+ * 1. Reading bytes from the RS-485 transceiver.
+ * 2. Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485
+ *    transceiver.
+ * 
  * The design assumes a single-threaded environment (as provided by ESPHome), so no
  * explicit thread safety is implemented. 
  *
@@ -141,15 +145,14 @@ static void
 _tx_mode(bool const tx_enable)
 {
 	// messages should be sent directly after an A5 packets (and before any IC packets)
-	// 2BD: there might be a mandatory wait after enabling this pin !!!!!!! A few words on
-	// the DE signal:
+	// A note on the DE signal:
     //  - choose a GPIO that doesn't mind being pulled down during reset
 
     if (tx_enable) {
         gpio_set_level(_flow_control_pin, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
     } else {
-        _flush();  // wait until last byte starts transmitting
-        esp_rom_delay_us(1500);  // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
+        _flush();                              // wait until last byte starts transmitting
+        esp_rom_delay_us(1500);                // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
         gpio_set_level(_flow_control_pin, 0);  // enable RS485 receive
      }
 }

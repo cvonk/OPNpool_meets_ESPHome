@@ -1,15 +1,18 @@
 /**
  * @file datalink.h
- * @brief Data Link Layer Definitions for OPNpool ESPHome Component
+ * @brief Data Link Layer Definitions for OPNpool component
  *
  * @details
  * This header defines the data structures, enumerations, and function prototypes for the
- * data link layer of the OPNpool ESPHome component. The data link layer is responsible
- * for framing, parsing, and validating protocol packets exchanged between the ESP32 and
- * the Pentair pool controller over RS-485. It provides protocol-specific constants,
- * address group definitions, and forward declarations for packet and RS-485 types. This
- * layer enables reliable communication and protocol abstraction for higher-level network
- * and application logic.
+ * data link layer of the OPNpool component. The data link layer is responsible for
+ * framing, parsing, and validating packets exchanged between the ESP32 and the Pentair
+ * pool controller over RS-485. It enables reliable communication and protocol abstraction
+ * for higher-level network and application logic.
+ * 
+ * The data link layer provides two functions:
+ * 1. `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies
+ *    its integrity. 
+ * 2. `datalink_create_pkt()`: adds the header and tail to create a RS-485 byte stream.
  *
  * The design supports multiple protocol variants (A5, IC) and hardware configurations,
  * and is intended for use in a single-threaded ESPHome environment.

@@ -13,11 +13,11 @@ namespace opnpool {
 struct network_msg_t;
 struct poolstate_t;
 
-namespace pool_state_rx {
+namespace poolstate_rx {
 
 esp_err_t update_state(network_msg_t const * const msg, poolstate_t * const state);
 
-}  // namespace pool_state_rx
+}  // namespace poolstate_rx
 
 }  // namespace opnpool
 }  // namespace esphome

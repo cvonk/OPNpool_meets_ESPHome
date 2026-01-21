@@ -26,8 +26,8 @@ enum poolstate_elem_typ_t;
 
     // namespace-scope free functions from poolstate_log.cpp
 
-namespace pool_state_rx {
-namespace pool_state_rx_log {
+namespace poolstate_rx {
+namespace poolstate_rx_log {
 
 void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
@@ -43,8 +43,8 @@ void add_pump(cJSON * const obj, char const * const key, poolstate_t const * con
 void add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
 char const * state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
 
-} // namespace pool_state_rx_log
-}  // namespace pool_state_rx
+} // namespace poolstate_rx_log
+} // namespace poolstate_rx
 
 }  // namespace opnpool
 }  // namespace esphome

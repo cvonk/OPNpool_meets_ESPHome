@@ -1,3 +1,29 @@
+/**
+ * @file poolstate.h
+ * @brief Pool State data structures and Interface for OPNpool component
+ *
+ * @details
+ * This header defines the data structures and interface for representing and managing the
+ * real-time state of the pool system in the OPNpool component. It maintains a
+ * comprehensive software model of the pool controller and all connected peripherals
+ * (pump, chlorinator, circuits, sensors, etc.), enabling accurate monitoring and control.
+ *
+ * The pool state is continuously updated in response to incoming network messages,
+ * ensuring that the software state always reflects the latest equipment status and
+ * configuration. This layer provides the foundation for publishing sensor values, driving
+ * automation logic, and seamless integration with ESPHome and Home Assistant entities. By
+ * abstracting hardware details and protocol specifics, it supports modular, robust, and
+ * maintainable pool automation.
+ *
+ * The design supports modular separation of protocol, network, and application logic, and
+ * is intended for use in a single-threaded ESPHome environment. Forward declarations are
+ * provided to avoid circular dependencies.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #pragma once
 #ifndef __cplusplus
 # error "Requires C++ compilation"

@@ -451,16 +451,16 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
         for (uint_least8_t ii = 0; ii < ARRAY_SIZE(state_transitions); ii++, transition++) {
             if (state == transition->state) {
 
-                // calls the registered function for the current state. it will store
-                // head/tail in `local` and update `pkt`
+                    // calls the registered function for the current state. it will store
+                    // head/tail in `local` and update `pkt`
 
                 bool const ok = transition->fnc(rs485, &local, pkt) == ESP_OK;
 
-                // find the new state
+                    // find the new state
 
                 state_t const new_state = ok ? transition->on_ok : transition->on_err;
 
-                // claim socket buffers to store the bytes received
+                    // claim socket buffers to store the bytes received
 
                 switch (new_state) {
                     case STATE_FIND_PREAMBLE:

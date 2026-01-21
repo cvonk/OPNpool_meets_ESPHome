@@ -3,7 +3,7 @@
 
 #include "opnpool_ids.h"
 #include "network_msg.h"
-#include "pool_state.h"
+#include "poolstate.h"
 
 namespace esphome {
 namespace opnpool {

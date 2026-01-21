@@ -3,21 +3,22 @@
  * @brief Implementation of the OPNpool component for ESPHome.
  *
  * @details
- * This file contains the implementation of the OPNpool component, which provides
- * integration between an OPNpool interface and the ESPHome ecosystem. The component
- * manages communication with the Pentair pool controller via RS485, processes datalink
- * and network layer messages, and exposes pool state and controls as ESPHome entities.
+ * This file implements the OPNpool component, providing seamless, bidirectional
+ * integration between the pool controller and the ESPHome ecosystem. It follows a
+ * publish/subscribe model:
+ *   - Publishes changes in PoolState to ESPHome climate, switch, sensor, binary sensor,
+ *     and text sensor entities, ensuring Home Assistant always reflects the latest pool
+ *     state and equipment status.
+ *   - Subscribes to ESPHome entity state changes, enacting requests to set switches and
+ *     climate controls on the physical pool equipment.
+ *   - Spawns and supervises the pool_task (FreeRTOS), which manages low-level RS485
+ *     communication, protocol parsing, and network message processing for robust hardware
+ *     integration.
  *
- * The OPNpool component is responsible for:
- * - Spawning and supervising the pool_task, a FreeRTOS task that handles low-level RS485
- *   communication, datalink protocol parsing, and network message handling.
- * - Updating ESPHome climate, switch, sensor, binary sensor, and text sensor entities
- *   based on the latest pool state.
- * - Providing setter methods for associating ESPHome entities with the OPNpool component.
- *
- * The design leverages modular helper functions for each protocol layer and uses FreeRTOS
- * primitives for task scheduling and inter-task communication. Extensive logging and
- * debug output are provided for troubleshooting and protocol analysis.
+ * The design emphasizes modularity, extensibility, and maintainability, leveraging helper
+ * functions for protocol abstraction and FreeRTOS primitives for robust task scheduling
+ * and inter-task communication. Extensive logging and debug output are provided for
+ * diagnostics, troubleshooting, and protocol analysis.
  *
  * The design assumes a single-threaded environment (as provided by ESPHome), so no
  * explicit thread safety is implemented. 
@@ -32,7 +33,7 @@
 #include <esphome/core/log.h>
 #include <esphome/core/hal.h>
 
-#include "pool_state_rx.h"
+#include "poolstate_rx.h"
 #include "skb.h"
 #include "rs485.h"
 #include "datalink.h"
@@ -41,7 +42,7 @@
 #include "pool_task.h"
 #include "opnpool.h"
 #include "to_str.h"
-#include "pool_state.h"
+#include "poolstate.h"
 #include "opnpool_climate.h"
 #include "opnpool_switch.h"
 #include "opnpool_sensor.h"
@@ -192,7 +193,7 @@ OpnPool::loop() {
 
         ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
-        if (pool_state_rx::update_state(&msg, &new_state) == ESP_OK) {
+        if (poolstate_rx::update_state(&msg, &new_state) == ESP_OK) {
 
             if (poolState_->has_changed(&new_state)) {
 
