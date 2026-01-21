@@ -78,7 +78,7 @@ logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
   initial_level: WARN  # only show up to WARN globally
   logs:
-    pool_state_rx: VERBOSE
+    poolstate_rx: VERBOSE
 
 opnpool:
   id: opnpool_1
@@ -244,21 +244,22 @@ logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
   initial_level: WARN  # only show up to WARN globally
   logs:
-    RS-485: WARN
+    rs485: WARN
     datalink_rx: WARN
     datalink_tx: WARN
     network_rx: WARN
     network_create: WARN
-    pool_task: VERBOSE
-    pool_state: WARN
-    pool_state_rx: VERBOSE
-    opnpool: VERBOSE
+    pool_task: WARN
+    ipc: WARN
+    poolstate: WARN
+    poolstate_rx: VERBOSE
+    opnpool: WARN
     opnpool_climate: WARN
     opnpool_switch: WARN
     opnpool_sensor: WARN
     opnpool_binary_sensor: WARN
     opnpool_text_sensor: WARN
-    enum_helpers: VERBOSE
+    enum_helpers: WARN
 ```
 
 For the `logger` component, it is recommended to use the following levels: `WARN`, which shows only warnings and errors; `INFO`, which includes informational messages such as configuration details, warnings, and errors; and `VERBOSE`, which provides very detailed logs, info, warnings, and errors. Be careful not to enable too much logging, as excessive output can negatively impact the connection between Home Assistant and the ESP32.
