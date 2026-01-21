@@ -31,6 +31,8 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "network_msg.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -58,13 +60,13 @@ static proto_info_t _proto_descr[] = {
           .preamble = datalink_preamble_ic,
           .len = sizeof(datalink_preamble_ic),
           .prot = datalink_prot_t::IC,
-          .idx = 0,
+          .idx = 0
       },
     {
           .preamble = datalink_preamble_a5,
           .len = sizeof(datalink_preamble_a5),
           .prot = datalink_prot_t::A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
-          .idx = 0,
+          .idx = 0
     },
 };
 
@@ -146,7 +148,7 @@ static esp_err_t
 _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     uint8_t len = 0;
-    uint8_t buf_size = 40;
+    uint8_t const buf_size = 40;
     char dbg[buf_size];
 
     uint8_t byt;

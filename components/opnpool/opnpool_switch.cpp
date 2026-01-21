@@ -32,6 +32,8 @@
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "opnpool_ids.h"      // conversion helper
 #include "enum_helpers.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

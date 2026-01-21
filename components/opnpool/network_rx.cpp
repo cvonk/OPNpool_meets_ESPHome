@@ -25,6 +25,8 @@
 #include "datalink_pkt.h"
 #include "network.h"
 #include "network_msg.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {
@@ -368,6 +370,8 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             ESP_LOGW(TAG, "unknown prot %u", enum_index(pkt->prot));
             result = ESP_FAIL;
   	}
+    ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), static_cast<uint8_t>(pkt->dst), enum_str(msg->typ));
+
     *txOpportunity =
         pkt->prot == datalink_prot_t::A5_CTRL &&
         datalink_groupaddr(pkt->src) == datalink_addrgroup_t::CTRL &&

@@ -25,12 +25,14 @@
 #include <esp_types.h>
 #include <cstddef>
 
-#include "to_str.h"
-#include "enum_helpers.h"
-#include "datalink_pkt.h"
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
+
+#include "datalink_pkt.h"
+#include "to_str.h"
+#include "enum_helpers.h"
+
 
 namespace esphome {
 namespace opnpool {

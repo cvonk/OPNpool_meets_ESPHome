@@ -23,6 +23,8 @@
 #include <esp_types.h>
 
 #include "datalink.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

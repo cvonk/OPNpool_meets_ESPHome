@@ -31,6 +31,8 @@
 #include <esphome/core/log.h>
 
 #include "skb.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

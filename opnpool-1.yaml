@@ -41,16 +41,17 @@ logger:
     datalink_tx: WARN
     network_rx: WARN
     network_create: WARN
-    pool_task: VERBOSE
-    pool_state: WARN
-    pool_state_rx: VERBOSE
-    opnpool: VERBOSE
+    pool_task: WARN
+    ipc: WARN
+    poolstate: WARN
+    poolstate_rx: VERBOSE
+    opnpool: WARN
     opnpool_climate: WARN
     opnpool_switch: WARN
     opnpool_sensor: WARN
     opnpool_binary_sensor: WARN
     opnpool_text_sensor: WARN
-    enum_helpers: VERBOSE
+    enum_helpers: WARN
 
 debug:
   update_interval: 5s  # for exception decoding in logs

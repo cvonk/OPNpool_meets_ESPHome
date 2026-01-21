@@ -4,6 +4,8 @@
 #include "opnpool_ids.h"
 #include "network_msg.h"
 #include "poolstate.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

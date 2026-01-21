@@ -29,6 +29,8 @@
 #include "datalink.h"
 #include "datalink_pkt.h"
 #include "enum_helpers.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

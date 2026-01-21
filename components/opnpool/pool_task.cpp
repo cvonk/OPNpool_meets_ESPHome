@@ -43,6 +43,8 @@
 #include "network_msg.h"
 #include "ipc.h"
 #include "pool_task.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

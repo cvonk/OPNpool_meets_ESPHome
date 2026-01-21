@@ -47,6 +47,8 @@
 #include "opnpool.h"
 #include "poolstate_rx_log.h"
 #include "opnpool_ids.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))

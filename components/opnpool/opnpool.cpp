@@ -51,6 +51,8 @@
 #include "opnpool_ids.h"
 #include "network.h"
 #include "network_msg.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {
@@ -223,9 +225,9 @@ void
 OpnPool::dump_config() {
 
     ESP_LOGCONFIG(TAG, "OpnPool:");
-    ESP_LOGCONFIG(TAG, "  RS485 RX Pin: %u", this->ipc_->config.rs485_pins.rx_pin);
-    ESP_LOGCONFIG(TAG, "  RS485 TX Pin: %u", this->ipc_->config.rs485_pins.tx_pin);
-    ESP_LOGCONFIG(TAG, "  RS485 Flow Control Pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
+    ESP_LOGCONFIG(TAG, "  RS485 rx pin: %u", this->ipc_->config.rs485_pins.rx_pin);
+    ESP_LOGCONFIG(TAG, "  RS485 tx pin: %u", this->ipc_->config.rs485_pins.tx_pin);
+    ESP_LOGCONFIG(TAG, "  RS485 flow control pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
 
     for (auto idx : magic_enum::enum_values<climate_id_t>()) {
         _dump_if(this->climates_[enum_index(idx)]);

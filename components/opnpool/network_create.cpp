@@ -28,6 +28,8 @@
 #include "skb.h"
 #include "network.h"
 #include "network_msg.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

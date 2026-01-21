@@ -175,11 +175,6 @@ async def to_code(config):
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
 
-    # paranoid GCC warnings
-    #cg.add_build_flag("-Wall")
-    #cg.add_build_flag("-Wextra")
-    #cg.add_build_flag("-Wpedantic")
-
     # interface firmware version
     import subprocess    
     version = "unknown"

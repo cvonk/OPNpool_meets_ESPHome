@@ -35,6 +35,8 @@
 #include "opnpool_switch.h"
 #include "enum_helpers.h"
 #include "opnpool_ids.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

@@ -21,6 +21,8 @@
 #include <esphome/core/log.h>
 
 #include "opnpool_text_sensor.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {

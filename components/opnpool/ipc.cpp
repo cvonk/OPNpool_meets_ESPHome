@@ -27,6 +27,8 @@
 #include "ipc.h"
 #include "skb.h"
 #include "network_msg.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {
@@ -43,6 +45,8 @@ static char const * const TAG = "ipc";
 void
 ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
+    ESP_LOGV(TAG, "Queueing %s to main task", enum_str(network_msg->typ));
+
     if (xQueueSendToBack(ipc->to_main_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_main_q full");
     }
@@ -59,10 +63,13 @@ ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t
 void
 ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
+    ESP_LOGV(TAG, "Queueing %s to pool task", enum_str(network_msg->typ));
+
     if (xQueueSendToBack(ipc->to_pool_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_pool_q full");
     }
 }
+
 
 } // namespace opnpool
 } // namespace esphome

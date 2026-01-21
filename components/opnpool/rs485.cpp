@@ -36,6 +36,8 @@
 #include "rs485.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
+#pragma GCC diagnostic error "-Wall"
+#pragma GCC diagnostic error "-Wextra"
 
 namespace esphome {
 namespace opnpool {
@@ -192,7 +194,7 @@ rs485_init(rs485_pins_t const * const rs485_pins)
         .rx_flow_ctrl_thresh = 122,
         .source_clk = UART_SCLK_DEFAULT,
         .flags = {
-            .backup_before_sleep = 1
+            .backup_before_sleep = 0
         }
     };
 #pragma GCC diagnostic pop
