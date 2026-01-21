@@ -323,7 +323,70 @@ debug:
 
 > **Tip:** If your ESP32 crashes, detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
 
-### Development
+### Design documentation
+
+To help you familiarize yourself with the code, let me explain how the code it is
+structured.
+
+1. The **rs485 driver** provides low-level functions to initialize, configure, and operate the
+   RS485 transceiver. It handles UART setup for half-duplex communication, GPIO
+   configuration, and manages a transmit queue for outgoing packets. The driver exposes a
+   handle with function pointers for higher-level protocol layers to interact with the RS485
+   interface. The driver provides two key functions:
+   * Reading bytes from the RS-485 transceiver.
+   * Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485
+     transceiver.
+
+2. The **data link layer** is responsible for framing, parsing, and validating packets
+   exchanged through the rs485 driver.  The data link layer provides two functions:
+   *  `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies
+      its integrity. 
+   * `datalink_create_pkt()`: adds the header and tail to create a RS-485 byte stream.
+
+3. The **network layer** abstracts protocol translation and message construction, enabling
+   reliable communication between the ESP32 and pool controller over RS-485. Its two main
+   functions are:
+   * `network_rx_msg()`: overlays a raw datalink packet with a network message structure.
+   * `network_create_pkt()`: Creates a datalink packet from a network message.
+
+4. The **PoolState** class, maintains a comprehensive software model of the pool
+   controller and all connected peripherals (pump, chlorinator, circuits, sensors, etc.),
+   enabling accurate monitoring and control. The pool state is continuously updated in
+   response to incoming network messages, ensuring that the software state always reflects
+   the latest equipment status and configuration. This layer provides the foundation for
+   publishing sensor values.
+
+5. The **OpnPool** class acts as the bridge between the OPNpool protocol stack and the
+   ESPHome ecosystem. It synchronizes the PoolState with ESPHome, ensuring Home Assistant
+   entities always reflect the latest pool equipment status. Its main responsibilities
+   are:
+   * Publishing updates from the PoolState to ESPHome climate, switch, sensor, binary
+     sensor, and text sensor entities.
+   * Handling requests from ESPHome entities to control switches and climate settings,
+     applying changes to the pool controller as needed.
+
+Work is distributed between two FreeRTOS tasks that communicate with network messages
+exchanged via mailboxes:
+
+* The main task runs OPNPool and PoolState, handling the high-level logic and state
+  management.
+* The `pool_task` is responsible for low-level RS485 communication, protocol parsing, and
+  network message processing. It also spawns a task of its own to request updates from the
+  pool controller.
+
+Comprehensive design documentation for the [original OPNpool
+project](https://github.com/cvonk/OPNpool) is available online:
+
+- [OPNpool Design Documentation
+  Overview](https://coertvonk.com/category/sw/embedded/opnpool-design)
+
+The following chapters are especially relevant for this ESPHome port:
+
+- [RS-485 bus](https://coertvonk.com/sw/embedded/opnpool-design/bus-access-31957)
+- [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
+- [Protocol](https://coertvonk.com/sw/embedded/opnpool-design/protocol-31965)
+
+### Development with VSCode
 
 For better development experience: in VS Code, install the C/C++ and [ESPHome
 extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
@@ -338,9 +401,9 @@ or using `ssh`
 git clone git@github.com:cvonk/OPNpool_meets_ESPHome.git
 ```
 
-#### Building and Developing with VS Code
-
-The `tasks.json` file in this repository defines convenient build and upload tasks for Visual Studio Code. These tasks automatically map build output paths back to your project directory, making it easy to navigate errors and warnings in the PROBLEMS tab.
+The `tasks.json` file provides ready-made build and upload tasks for Visual Studio Code.
+With these, build output is mapped directly to your project, so you can quickly jump to
+errors and warnings in the PROBLEMS tab.
 
 Common Shortcuts:
 
@@ -353,17 +416,3 @@ Common Shortcuts:
   view device logs in real time.
 
 ![vscode_ide](assets/media/vscode-ide.png)
-
-## Design documentation
-
-Comprehensive design documentation for the [original OPNpool
-project](https://github.com/cvonk/OPNpool) is available online:
-
-- [OPNpool Design Documentation
-  Overview](https://coertvonk.com/category/sw/embedded/opnpool-design)
-
-The following chapters are especially relevant for this ESPHome port:
-
-- [RS-485 bus](https://coertvonk.com/sw/embedded/opnpool-design/bus-access-31957)
-- [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
-- [Protocol](https://coertvonk.com/sw/embedded/opnpool-design/protocol-31965)
