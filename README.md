@@ -276,27 +276,31 @@ debug:
 
 ## Design documentation
 
-To help you familiarize yourself with the code, let me explain how the code it is structured.
+The software is purposefully crafted to deliver robustness, reliability, and maintainability over the long term.
+
+Its architecture prioritizes modularity and extensibility, utilizing helper functions for protocol abstraction and FreeRTOS primitives to enable efficient cooperative task scheduling and inter-task communication. Comprehensive logging and debug output support diagnostics, troubleshooting, and protocol analysis.
+
+As ESPHome provides a single-threaded environment, explicit thread safety measures are not required.
 
 ### Protocol stack
 
+To help you familiarize yourself with the code, let me explain how the code it is structured.
+
 1. The **MAX3485CSA+** integrated circuit enables RS-485 bidirectional data transmission over twisted-pair cables. The chip converts logic-level signals from a microcontroller or other digital device into differential signals suitable for robust, long-distance communication, and vice versa.
 
-2. The **RS-485 driver** provides low-level functions to initialize, configure, and operate the RS-485 transceiver. It handles UART setup for half-duplex communication, GPIO    configuration, and manages a transmit queue for outgoing packets. The driver exposes a    handle with function pointers for higher-level protocol layers to interact with the RS-485    interface. The driver provides two key functions:
+2. An **UART** on the ESP32 acts as a Universal Asynchronous Receiver/Transmitter, converting serial bit streams from the RS-485 transceiver into data bytes for the microcontroller, and vice versa. It manages the timing of data transmission, adds start and stop bits to frame each byte, and controls the baud rate and other communication parameters.
+
+3. The **RS-485 driver** provides low-level functions to initialize, configure, and operate the RS-485 transceiver. It handles UART setup for half-duplex communication, GPIO    configuration, and manages a transmit queue for outgoing packets. The driver exposes a    handle with function pointers for higher-level protocol layers to interact with the RS-485    interface. The driver provides two key functions:
    * Reading bytes from the RS-485 transceiver.
    * Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485 transceiver.
 
-3. The **data link layer** is responsible for framing, parsing, and validating packets exchanged through the RS-485 driver.  The data link layer provides two functions:
-   *  `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies its integrity. 
-   * `datalink_create_pkt()`: adds the header and tail to create a RS-485 byte stream.
+4. The **Data Link Layer** (DLL) handles the framing, parsing, and validation of packets exchanged via the RS-485 driver. On reception, it strips the header and tail from incoming RS-485 byte streams and verifies their integrity. On transmission, it adds the appropriate header and tail to outgoing data, ensuring proper packet structure.
 
-4. The **network layer** abstracts protocol translation and message construction, enabling reliable communication between the ESP32 and pool controller over RS-485. Its two main functions are:
-   * `network_rx_msg()`: overlays a raw datalink packet with a network message structure.
-   * `network_create_pkt()`: Creates a datalink packet from a network message.
+5. The **Network Layer** manages protocol translation and message construction, facilitating reliable communication between the ESP32 and the pool controller over RS-485. When receiving, it interprets raw datalink packets as structured network messages. When transmitting, it encapsulates network messages into datalink packets for delivery.
 
-5. The **PoolState** class, maintains a comprehensive software model of the pool controller and all connected peripherals (pump, chlorinator, circuits, sensors, etc.), enabling accurate monitoring and control. The pool state is continuously updated in response to incoming network messages, ensuring that the software state always reflects the latest equipment status and configuration. This layer provides the foundation for publishing sensor values.
+6. The **PoolState** class, maintains a comprehensive software model of the pool controller and all connected peripherals (pump, chlorinator, circuits, sensors, etc.), enabling accurate monitoring and control. The pool state is continuously updated in response to incoming network messages, ensuring that the software state always reflects the latest equipment status and configuration. This layer provides the foundation for publishing sensor values.
 
-6. The **OpnPool** class acts as the bridge between the OPNpool protocol stack and the ESPHome ecosystem. It synchronizes the PoolState with ESPHome, ensuring Home Assistant entities always reflect the latest pool equipment status. Its main responsibilities are:
+7. The **OpnPool** class acts as the bridge between the OPNpool protocol stack and the ESPHome ecosystem. It synchronizes the PoolState with ESPHome, ensuring Home Assistant entities always reflect the latest pool equipment status. Its main responsibilities are:
    * Publishing updates from the PoolState to ESPHome climate, switch, sensor, binary sensor, and text sensor entities.
    * Handling requests from ESPHome entities to control switches and climate settings, applying changes to the pool controller as needed.
 
@@ -305,7 +309,7 @@ To help you familiarize yourself with the code, let me explain how the code it i
 Work is distributed between two FreeRTOS tasks that communicate with network messages exchanged via mailboxes:
 
 * The **main task** runs OpnPool and PoolState, handling the high-level logic and state management.
-* The **`pool_task`** is responsible for low-level RS-485 communication, protocol parsing, and network message processing. It also spawns a task of its own to request updates from the pool controller.
+* The **pool task** is responsible for low-level RS-485 communication, protocol parsing, and network message processing. It also spawns a task of its own to request updates from the pool controller.
 
 ### More info
 
