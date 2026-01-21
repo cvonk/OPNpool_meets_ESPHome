@@ -9,6 +9,7 @@
 namespace esphome {
 namespace opnpool {
 
+    // function prototypes for pool_task.cpp
 void pool_task(void * ipc_void);
 
 }  // namespace opnpool

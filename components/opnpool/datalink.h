@@ -138,7 +138,7 @@ union datalink_tail_t {
 uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
 /**
- * @brief Data link layer function and constant declarations.
+ * @brief Data link layer function prototypes and constant declarations.
  *
  * These declarations provide the interface for key data link layer operations and
  * protocol constants:

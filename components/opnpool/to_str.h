@@ -22,7 +22,9 @@ struct name_str_t {
 	char const * const digits;
 };
 
-    // helpers
+extern name_str_t name_str;
+
+    // function prototypes for to_str.cpp
 char const * bool_str(bool const value);
 char const * uint8_str(uint8_t const value);
 char const * uint16_str(uint16_t const value);
@@ -30,10 +32,7 @@ char const * uint32_str(uint32_t const value);
 char const * date_str(uint16_t const year, uint8_t const month, uint8_t const day);
 char const * time_str(uint8_t const hour, uint8_t const minute);
 char const * version_str(uint8_t const major, uint8_t const minor);
-
-    // management
 void name_reset_idx(void);  // should be called periodically. e.g. before work on a packet starts.
-extern name_str_t name_str;
 
 } // namespace opnpool
 } // namespace esphome

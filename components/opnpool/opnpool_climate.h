@@ -10,7 +10,7 @@
 namespace esphome {
 namespace opnpool {
 
-    // forward declarations
+    // forward declarations (to avoid circular dependencies)
 struct poolstate_t;
 class OpnPool;  
 

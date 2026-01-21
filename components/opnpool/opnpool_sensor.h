@@ -10,7 +10,8 @@
 namespace esphome {
 namespace opnpool {
 
-class OpnPool;  // Forward declaration only - don't include opnpool.h!
+    // forward declaration (to avoid circular dependencies)
+class OpnPool;
 
 class OpnPoolSensor : public sensor::Sensor, public Component {
 

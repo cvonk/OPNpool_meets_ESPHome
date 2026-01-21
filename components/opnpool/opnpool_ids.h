@@ -56,6 +56,7 @@ enum class text_sensor_id_t : uint8_t {
     INTERFACE_FIRMWARE = 8
 };    
 
+    // function prototypes for opnpool_ids.cpp
 poolstate_thermo_typ_t climate_id_to_poolstate_thermo(climate_id_t const id);
 network_pool_circuit_t switch_id_to_network_circuit(switch_id_t const id);
 

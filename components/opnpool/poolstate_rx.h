@@ -15,6 +15,7 @@ struct poolstate_t;
 
 namespace poolstate_rx {
 
+    // function prototypes for poolstate_rx.cpp
 esp_err_t update_state(network_msg_t const * const msg, poolstate_t * const state);
 
 }  // namespace poolstate_rx
