@@ -37,7 +37,8 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
         bool valid;
         bool value;
     } last_ = {
-        .valid = false
+        .valid = false,
+        .value = false
     };
 };
 

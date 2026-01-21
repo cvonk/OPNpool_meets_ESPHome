@@ -181,6 +181,8 @@ rs485_init(rs485_pins_t const * const rs485_pins)
 
     _uart_port = static_cast<uart_port_t>(2);  // UART2
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"    
     uart_config_t const uart_config = {
         .baud_rate = 9600,
         .data_bits = UART_DATA_8_BITS,
@@ -189,8 +191,12 @@ rs485_init(rs485_pins_t const * const rs485_pins)
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
         .rx_flow_ctrl_thresh = 122,
         .source_clk = UART_SCLK_DEFAULT,
+        .flags = {
+            .backup_before_sleep = 1
+        }
     };
-    
+#pragma GCC diagnostic pop
+
     gpio_config_t io_conf = {
         .pin_bit_mask = (1ULL << static_cast<uint8_t>(_flow_control_pin)),
         .mode = GPIO_MODE_OUTPUT,

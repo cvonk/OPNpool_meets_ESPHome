@@ -45,7 +45,9 @@ uint8_t const DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
 
 struct proto_info_t  {
     uint8_t const * const  preamble;
+#if 0    
     uint8_t const * const  postamble;
+#endif
     uint8_t const          len;
     datalink_prot_t const  prot;
     uint8_t                idx;
@@ -56,11 +58,13 @@ static proto_info_t _proto_descr[] = {
           .preamble = datalink_preamble_ic,
           .len = sizeof(datalink_preamble_ic),
           .prot = datalink_prot_t::IC,
+          .idx = 0,
       },
     {
           .preamble = datalink_preamble_a5,
           .len = sizeof(datalink_preamble_a5),
           .prot = datalink_prot_t::A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
+          .idx = 0,
     },
 };
 

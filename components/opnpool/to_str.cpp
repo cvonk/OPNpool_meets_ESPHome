@@ -32,8 +32,10 @@ namespace esphome {
 namespace opnpool {
 
 name_str_t name_str = {
+    .str = {0},
+    .idx = 0,
     .noMem = "sNOMEM", // increase size of str.str[]
-    .digits = "0123456789ABCDEF"
+    .digits = "0123456789ABCDEF",
 };
 
 /**
@@ -155,7 +157,7 @@ uint32_str(uint32_t const value)
 char const *
 date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 {
-    size_t const len = 11;  // 2026-01-15\0
+    size_t const len = 14;  // 2026-01-15\0
     if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
         return name_str.noMem;  // increase size of str.str[]
     }
@@ -175,7 +177,7 @@ date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 char const *
 time_str(uint8_t const hour, uint8_t const minute)
 {
-    size_t const len = 6;  // "HH:MM\0"
+    size_t const len = 8;  // "HH:MM\0"
     if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
         return name_str.noMem;  // increase size of str.str[]
     }

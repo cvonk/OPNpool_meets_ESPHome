@@ -29,7 +29,8 @@ class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
         bool         valid;
         std::string  value;
     } last_ = {
-        .valid = false
+        .valid = false,
+        .value = ""
     };
 };
 

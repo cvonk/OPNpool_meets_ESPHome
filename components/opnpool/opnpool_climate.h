@@ -52,7 +52,12 @@ class OpnPoolClimate : public climate::Climate, public Component {
         climate::ClimateMode    mode;
         climate::ClimateAction  action;
     } last_ = {
-        .valid = false
+        .valid = false,
+        .current_temp = 0.0f,
+        .target_temp = 0.0f,
+        .custom_preset = nullptr,
+        .mode = climate::CLIMATE_MODE_OFF,
+        .action = climate::CLIMATE_ACTION_OFF
     };
 };
 

@@ -365,7 +365,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             result = _decode_msg_ic_chlor(pkt, msg);
             break;
         default:
-            ESP_LOGW(TAG, "unknown prot %u", pkt->prot);
+            ESP_LOGW(TAG, "unknown prot %u", enum_index(pkt->prot));
             result = ESP_FAIL;
   	}
     *txOpportunity =

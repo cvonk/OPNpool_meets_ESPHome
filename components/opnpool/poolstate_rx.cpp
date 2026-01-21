@@ -552,7 +552,7 @@ _pump_run(cJSON * const dbg,
     bool const running     = msg->running == network_pump_running_t::ON;
     bool const not_running = msg->running == network_pump_running_t::OFF;
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->running, __func__);
+        ESP_LOGW(TAG, "running state err 0x%02X in %s", static_cast<uint8_t>(msg->running), __func__);
         return;
     }    
     state->pump.running = running;
@@ -654,14 +654,9 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
     }
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
-    if (msg->name == nullptr) {
-        ESP_LOGW(TAG, "null chlorine name");
-        state->chlor.name[0] = '\0';
-    } else {        
-        size_t name_size = sizeof(state->chlor.name);
-        strncpy(state->chlor.name, msg->name, name_size);
-        state->chlor.name[name_size - 1] = '\0';
-    }
+    size_t name_size = sizeof(state->chlor.name);
+    strncpy(state->chlor.name, msg->name, name_size);
+    state->chlor.name[name_size - 1] = '\0';
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);

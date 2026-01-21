@@ -27,7 +27,8 @@ class OpnPoolSensor : public sensor::Sensor, public Component {
         bool  valid;
         float value;
     } last_ = {
-        .valid = false
+        .valid = false,
+        .value = 0.0f
     };
 };
 

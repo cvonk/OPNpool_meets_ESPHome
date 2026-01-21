@@ -248,8 +248,7 @@ class PoolState {
 
     private:
         OpnPool * const parent_;
-        poolstate_t last_poolstate_ = { .valid = false };
-        
+        poolstate_t last_poolstate_ = {};  // sets .valid to false as well
 };
 
 }  // namespace opnpool

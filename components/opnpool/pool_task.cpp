@@ -117,9 +117,9 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
 static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
 {
-    network_msg_t msg = {
-        .typ = typ
-    };
+    network_msg_t msg = {};  // prevents -Wmissing-field-initializers
+    msg.typ = typ;
+
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
     if (network_create_pkt(&msg, pkt) == ESP_OK) {

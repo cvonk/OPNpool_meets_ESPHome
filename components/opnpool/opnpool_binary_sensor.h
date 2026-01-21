@@ -27,7 +27,8 @@ class OpnPoolBinarySensor : public binary_sensor::BinarySensor, public Component
         bool valid;
         bool value;
     } last_ = {
-        .valid = false
+        .valid = false,
+        .value = false
     };
 };
 

@@ -74,7 +74,7 @@ void
 _publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
 {
     if (sensor != nullptr) {
-        char buf[12];  // HH:MM-HH:MM\n
+        char buf[16];  // Increased size to prevent truncation: HH:MM-HH:MM\0
         snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d", start / 60, start % 60, stop / 60, stop % 60);
         sensor->publish_value_if_changed(buf);
     }
@@ -86,7 +86,7 @@ void
 _publish_date_and_time_if(OpnPoolTextSensor *sensor, TodT tod)
 {
     if (sensor != nullptr && tod != nullptr) {
-        static char time_str[17];  // 2026-01-15 22:43\n
+        static char time_str[22];  // 2026-01-15 22:43\0
         snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
             tod->date.year, tod->date.month, tod->date.day,
             tod->time.hour, tod->time.minute);
