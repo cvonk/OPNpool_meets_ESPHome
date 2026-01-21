@@ -2,26 +2,15 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome
-platform.
+This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
 
 # OPNpool meets ESPHome
 
-OPNpool meets ESPHome is an open-source hardware and software solution that brings
-advanced pool automation to your smart home. By bridging legacy pool controllers with
-modern IoT platforms, OPNpool enables real-time monitoring, remote control, and seamless
-integration with Home Assistant. Whether you want to automate your pool pump based on
-temperature, monitor chlorinator status, or simply enjoy the convenience of remote access,
-OPNpool provides a robust and extensible platform for pool management.
+OPNpool meets ESPHome is an open-source hardware and software solution that brings advanced pool automation to your smart home. By bridging legacy pool controllers with modern IoT platforms, OPNpool enables real-time monitoring, remote control, and seamless integration with Home Assistant. Whether you want to automate your pool pump based on temperature, monitor chlorinator status, or simply enjoy the convenience of remote access, OPNpool provides a robust and extensible platform for pool management.
 
 ## How it works
 
-At its core, OPNpool connects an ESP32 microcontroller to your pool controller’s RS-485
-bus. The ESP32 runs ESPHome firmware, which translates pool equipment data into Home
-Assistant entities. This allows you to view and control your pool’s thermostats, pumps,
-circuits, and chlorinator directly from your smart home dashboard or mobile app. The
-system is designed for reliability, safety, and ease of installation, with support for
-over-the-air updates and waterproof enclosures for outdoor use.
+At its core, OPNpool connects an ESP32 microcontroller to your pool controller’s RS-485 bus. The ESP32 runs ESPHome firmware, which translates pool equipment data into Home Assistant entities. This allows you to view and control your pool’s thermostats, pumps, circuits, and chlorinator directly from your smart home dashboard or mobile app. The system is designed for reliability, safety, and ease of installation, with support for over-the-air updates and waterproof enclosures for outdoor use.
 
 ## Features
 
@@ -32,48 +21,21 @@ over-the-air updates and waterproof enclosures for outdoor use.
 
 ## Getting started
 
-No prior experience with pool automation or ESPHome is required. The documentation below
-will guide you through hardware assembly, wiring, firmware installation, and Home
-Assistant integration. If you have questions or need help, join the project’s GitHub
-Discussions for community support.
+No prior experience with pool automation or ESPHome is required. The documentation below will guide you through hardware assembly, wiring, firmware installation, and Home Assistant integration. If you have questions or need help, join the project’s GitHub Discussions for community support.
 
-This device was tested with the Pentair SunTouch controller with firmware **2.080**,
-connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
+This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
 
-> This open source and hardware project is intended to comply with the October 2016
+> This open source and hardware project is intended to comply with the October 2016 
 > exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a
 > controlled environment designed to avoid any harm to individuals or to the public.
 
-## Parts
-
-At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
-breadboard this using:
-
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
-  the Wemos LOLIN D32).
-* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
-  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors
-  (often labeled `R1` to `R4`).
-* A piece of Cat5 ethernet cable to connect to the pool controller.
-
-If you prefer to make this a more permanent solution, I suggest rolling a printed circuit
-board and housing it in a IP68 waterproof case with IP68 connectors.  More about this
-later.
-
 ## Acknowledgements
 
-> We proudly acknowledge the work of reverse engineering pioneers [Joshua
-> Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit),
-> [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and
-> [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line
-> if if I forgot you.)
+> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if if I forgot you.)
 
 ## Usage
 
-Start with [installing the ESPHome
-environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my
-case, this cut the compilation time to a minute, compared to half an hour when running it
-as an addon to Home Assistant.
+Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an addon to Home Assistant.
 
 In an empty directory, create a `opnpool-1.yaml` configuration file as shown below.
 
@@ -120,7 +82,7 @@ logger:
 
 opnpool:
   id: opnpool_1
-  rs485:
+  RS-485:
     rx_pin: 25            # GPIO25
     tx_pin: 26            # GPIO26
     flow_control_pin: 27  # GPIO27
@@ -136,7 +98,15 @@ ota_password: "REDACTED"
 api_encryption_key: "REDACTED"
 ```
 
-On the serial output, you should see something like
+Compile and upload the code using
+
+```bash
+esphome run opnpool-1.yaml
+```
+
+The first time, you need to upload over USB Serial, but after that you can use over-the-air updates.
+
+In the output, you should see something like:
 
 ```text
 [16:26:54.983]I (423) boot: Loaded app from partition at offset 0x10000
@@ -145,54 +115,52 @@ On the serial output, you should see something like
 [16:26:55.268][W][component:333]: api set Warning flag: unspecified
 [16:26:55.273][W][component:342]: wifi set Warning flag: scanning for networks
 [16:27:01.293][W][component:373]: wifi cleared Warning flag
-[16:27:25.143][E][rs485:108][pool_req_task]: tx_q full
-[16:27:55.144][E][rs485:108][pool_req_task]: tx_q full
+[16:27:25.143][E][RS-485:108][pool_req_task]: tx_q full
+[16:27:55.144][E][RS-485:108][pool_req_task]: tx_q full
 ```
 
-In the above trace, the `tx_q full` indicates that it can't transmit to the pool
-controller.
+In the above trace, the `tx_q full` indicates that it can't transmit to the pool controller.
 
-On your Home Assistant UI, under Settings > Integrations, you should find that it
-auto discovered the device.
+If you haven't already, add the ESPHome integration to Home Assistant.
 
-![Discovered](assets/media/opnpool-discovered.png)
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=esphome){: style="display: block; margin-left: auto; margin-right: auto;}
 
-Add it, and specify your API key.  Name the device and assign it an area. You should
-then see the enities although their values are `unknown`.  Time to populate those
-entities by connecting it to the pool controller ;-)
+Under Integrations, you will find now notice that Home Assistant auto discovered your new device.
 
-### Connect
+[![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/){: style="display: block; margin-left: auto; margin-right: auto;}
+
+![Discovered](assets/media/opnpool-discovered.png){: style="display: block; margin-left: auto; margin-right: auto; width:300px;}
+
+Add it, and specify your API key.  Name the device and assign it an area. You should then see the enities although their values are `unknown`.  Time to populate those entities by connecting it to the pool controller ;-)
+
+## Connect
 
 At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
-roll and PCB (see later) or breadboard this using:
+breadboard this using:
 
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as
-  the Wemos LOLIN D32).
-* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a
-  MAX3485CSA+. While you're at it, you may as well remove the 10 kΩ pullup resistors (`R1`
-  to `R4`).
+* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as   the Wemos LOLIN D32).
+* Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a `MAX3485CSA+`. While you're at it, you may as well remove the 10 kΩ pullup resistors (typically labeled `R1` to `R4`).
 * A piece of Cat5 ethernet cable to connect to the pool controller.
 
-> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO
-> WARRANTIES. At the very least, turn off the power while you work on your pool equipment.
-> Be careful, THERE IS ALWAYS A RISK OF BREAKING YOUR POOL EQUIPMENT.**
+![Inside of Pool controller](assets/media/opnpool-rs485-breakout.png){: style="display: block; margin-left: auto; margin-right: auto; width:300px;}
 
-Understanding the above warning .. the RS-485 header can be found on the back of the
-control board. There are probably already wires connected that go to the devices such as
-pump and chlorinator.
 
-![Inside of Pool controller](assets/media/opnpool-rs485-inside.jpg)
+If you prefer to make this a more permanent solution, I suggest rolling a printed circuit board and housing it in a IP68 waterproof case with IP68 connectors.  More about this later.
 
-To minimize electromagnetic interference, use a twisted pairs from e.g. CAT-5 cable to
-connect the `A`/`B` pair to the RS-485 adapter as shown in the table below.
+> :warning: **THIS PROJECT IS OFFERED AS IS. IF YOU USE IT YOU ASSUME ALL RISKS. NO WARRANTIES. At the very least, turn off the power while you work on your pool equipment. Be careful, THERE IS ALWAYS A RISK OF BREAKING YOUR POOL EQUIPMENT.**
+
+Understanding the above warning .. the RS-485 header can be found on the back of the control board. There are probably already wires connected that go to the devices such as pump and chlorinator.
+
+![Inside of Pool controller](assets/media/opnpool-rs485-inside.jpg){: style="display: block; margin-left: auto; margin-right: auto; width:400px;}
+
+To minimize electromagnetic interference, use a twisted pairs from e.g. CAT-5 cable to connect the `A`/`B` pair to the RS-485 adapter as shown in the table below.
 
 | Controller       | RS-485 adapter | idle state |         
 |:-----------------|:--------------:|:-----------|
 | `-DATA` (green)  |  `A`           | negative   |
 | `+DATA` (yellow) |  `B`           | positive   |
 
-Connect the RS-485 adapter to the ESP32 module.  I also pulled `GPIO#27` down with a 10
-k&ohm; resistor, to keep it from transmiting while the ESP32 is booting.
+Connect the RS-485 adapter to the ESP32 module.  I also pulled `GPIO#27` down with a 10 k&ohm; resistor, to keep it from transmiting while the ESP32 is booting.
 
 | RS-485 adapter | ESP32 module |
 |:---------------|:-------------|
@@ -212,48 +180,35 @@ The serial monitor will start to show decoded messages such as:
 {CTRL_HEAT_RESP: {"thermos":{"POOL":{"temp":54,"sp":63,"src":"NONE"},"SPA":{"temp":54,"sp"}
 ```
 
-In Home Assistant the entities should populate, and show on your Lovelace UI. You find my 
-Lovelace config at [`hass-config`](https://github.com/cvonk/hass-config).
+> :bulb: If you don't see such messages, make sure you didn't swap the data leads, or oddly enough some people report that they do need to swap the data leads.  To debug the datalink framing, set the `datalink_rx` logger level to `VERBOSE` and build and upload the code again. See futher below.
 
-![Lovelace_view](assets/media/opnpool-lovelace.png)
+In Home Assistant the entities should populate, and show on your favorite Lovelace UI.
 
-daughterboard.  There is an optional terminator resistor to prevent reflections on the
-document.
-directory](https://github.com/cvonk/OPNpool_meets_ESPHome/tree/main/hardware) of this
+![Lovelace_view](assets/media/opnpool-lovelace.png){: style="display: block; margin-left: auto; margin-right: auto; width:500px}
+
 
 ## PCB
 
-For a robust and weatherproof installation, we recommend building a custom printed circuit
-board (PCB) to house the ESP32 module, RS-485 adapter, and DC/DC converter. This approach
-ensures reliable connections, easier mounting, and long-term durability—especially for
-outdoor or poolside environments.
+For a robust and weatherproof installation, we recommend building a custom printed circuit board (PCB) to house the ESP32 module, RS-485 adapter, and DC/DC converter. This approach ensures reliable connections, easier mounting, and long-term durability—especially for outdoor or poolside environments.
+
+![Lovelace_view](assets/media/opnpool-proto_resize.jpg){: style="display: block; margin-left: auto; margin-right: auto; width:500px}
+
 
 ### Schematic
 
-The hardware design features a buck converter that supplies 5V to the battery connector on
-the LOLIN D32 daughterboard. Powering through the battery input helps prevent issues when
-the board is also powered via USB.
+The hardware design features a buck converter that supplies 5V to the battery connector on the LOLIN D32 daughterboard. Powering through the battery input helps prevent issues when the board is also powered via USB.
 
 ![Power schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-power.svg)
 
-The main data path runs between the RS-485 connector and the ESP32 on the LOLIN D32. An
-optional termination resistor is included to minimize signal reflections on the RS-485
-bus. For advanced users, a JTAG header is provided for debugging, as detailed in the
-design documentation.
+The main data path runs between the RS-485 connector and the ESP32 on the LOLIN D32. An optional termination resistor is included to minimize signal reflections on the RS-485 bus. For advanced users, a JTAG header is provided for debugging, as detailed in the design documentation.
 
 ![Logic schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-logic.svg)
 
 ### Board Layout
 
-The entire schematic fits comfortably on a compact two-layer PCB. The board was designed
-using the free version of AutoDesk EAGLE, and all source files — including layout and
-schematics — are available in the [hardware
-directory](https://github.com/cvonk/OPNpool_meets_ESPHome/tree/main/hardware) of this
-repository.
+The entire schematic fits comfortably on a compact two-layer PCB. The board was designed using the free version of AutoDesk EAGLE, and all source files — including layout and schematics — are available in the [hardware directory](tree/main/hardware) of this repository.
 
-![Board Layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg)
-
-![Board layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg)
+![Board Layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg){: style="display: block; margin-left: auto; margin-right: auto;}
 
 ### Bill of materials
 
@@ -262,7 +217,7 @@ repository.
 | PBC r3      | Printed circuit board                                   | OSHPark                    |
 | Enclosure   | 158x90x60mm clear plastic project enclosure, IP65       | *white label*              |
 | LOLIN D32   | Wemos LOLIN D32, based on ESP-WROOM-32 4MB              | Wemos LOLIN-D32            |
-| RS485_CONN  | Plug+socket, male+female, 5-pin, 16mm aviation, IP68    | SD 16                      | 
+| RS-485_CONN  | Plug+socket, male+female, 5-pin, 16mm aviation, IP68    | SD 16                      | 
 | MAX3485     | Maxim MAX3485CSA, RS-485/UART interface IC 3.3V, 8-SOIC | Analog-Devices MAX3490ECSA |
 | DC1         | DC/DC Converter R-78E5.0-0.5, 7-28V to 5V, 0.5A, 3-SIP  | RECOM-Power R-78E5.0-0.5   |
 | D1          | Schottky Diode, 1N5818, DO-41                           | ON-Semiconductor 1N5818RLG |
@@ -272,17 +227,15 @@ repository.
 | C3          | Capacitor, 0.1 µF, 6.3 V, multi-layer ceramic, 0805     | KEMET C0805C104M3RACTU     |
 | R1, R2      | Resistor, 68 Ω, 1/8 W, 0805                             | YAGEO RC0805FR-0768RL      |
 | R3          | Not stuffed, resistor, 120 Ω, 1/4 W, 0805               | KAO SG73S2ATTD121J         |
-| RS485-TERM  | Fixed terminal block, 4-pin, screwless, 5 mm pitch      | Phoenix-Contact 1862291    |
+| RS-485-TERM  | Fixed terminal block, 4-pin, screwless, 5 mm pitch      | Phoenix-Contact 1862291    |
 | SW1         | Tactile Switch, 6x6mm, through hole                     | TE-Connectivity 1825910-4  |
 | PCB Screws  | Machine screw, #6-32 x x 3/16", panhead                 | Keystone-Electronics 9306  |
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head              | Essentra 50M020040D016     |
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                  | Essentra 04M020040HN       |
 
-### Debugging
+## Troubleshooting
 
-Not all controller firmwares are created equally.  If you are not using firmware version
-2.080, you will need dive down to the byte level and to tweak the datalink layer.  If you
-succeed, please send me an pull request, and I will iinclude it in the next release.
+Not all controller firmwares are created equally.  If you are not using firmware version 2.080, you will need dive down to the byte level and to tweak the network layer.  If you succeed, please send me an pull request, and I will iinclude it in the next release.
 
 To show more (or less) debug information, specify the levels in `opnpoool-1.yaml`
 
@@ -291,7 +244,7 @@ logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
   initial_level: WARN  # only show up to WARN globally
   logs:
-    rs485: WARN
+    RS-485: WARN
     datalink_rx: WARN
     datalink_tx: WARN
     network_rx: WARN
@@ -308,11 +261,9 @@ logger:
     enum_helpers: VERBOSE
 ```
 
-#### Troubleshooting: Decoding Stack Traces
+### Decoding Stack Traces
 
-If your ESP32 crashes and you see stack traces in the serial log, you can enable ESPHome's
-stack trace decoder to make debugging much easier. This will automatically decode
-exception addresses into readable function names and line numbers in your logs.
+If your ESP32 crashes and you see stack traces in the serial log, you can enable ESPHome's stack trace decoder to make debugging much easier. This will automatically decode exception addresses into readable function names and line numbers in your logs.
 
 To enable the stack trace decoder, add the following to your YAML configuration:
 
@@ -323,62 +274,44 @@ debug:
 
 > **Tip:** If your ESP32 crashes, detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
 
-### Design documentation
+## Design documentation
 
-To help you familiarize yourself with the code, let me explain how the code it is
-structured.
+To help you familiarize yourself with the code, let me explain how the code it is structured.
 
-1. The **rs485 driver** provides low-level functions to initialize, configure, and operate the
-   RS485 transceiver. It handles UART setup for half-duplex communication, GPIO
-   configuration, and manages a transmit queue for outgoing packets. The driver exposes a
-   handle with function pointers for higher-level protocol layers to interact with the RS485
-   interface. The driver provides two key functions:
+### Protocol stack
+
+1. The **MAX3485CSA+** integrated circuit enables RS-485 bidirectional data transmission over twisted-pair cables. The chip converts logic-level signals from a microcontroller or other digital device into differential signals suitable for robust, long-distance communication, and vice versa.
+
+2. The **RS-485 driver** provides low-level functions to initialize, configure, and operate the RS-485 transceiver. It handles UART setup for half-duplex communication, GPIO    configuration, and manages a transmit queue for outgoing packets. The driver exposes a    handle with function pointers for higher-level protocol layers to interact with the RS-485    interface. The driver provides two key functions:
    * Reading bytes from the RS-485 transceiver.
-   * Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485
-     transceiver.
+   * Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485 transceiver.
 
-2. The **data link layer** is responsible for framing, parsing, and validating packets
-   exchanged through the rs485 driver.  The data link layer provides two functions:
-   *  `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies
-      its integrity. 
+3. The **data link layer** is responsible for framing, parsing, and validating packets exchanged through the RS-485 driver.  The data link layer provides two functions:
+   *  `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies its integrity. 
    * `datalink_create_pkt()`: adds the header and tail to create a RS-485 byte stream.
 
-3. The **network layer** abstracts protocol translation and message construction, enabling
-   reliable communication between the ESP32 and pool controller over RS-485. Its two main
-   functions are:
+4. The **network layer** abstracts protocol translation and message construction, enabling reliable communication between the ESP32 and pool controller over RS-485. Its two main functions are:
    * `network_rx_msg()`: overlays a raw datalink packet with a network message structure.
    * `network_create_pkt()`: Creates a datalink packet from a network message.
 
-4. The **PoolState** class, maintains a comprehensive software model of the pool
-   controller and all connected peripherals (pump, chlorinator, circuits, sensors, etc.),
-   enabling accurate monitoring and control. The pool state is continuously updated in
-   response to incoming network messages, ensuring that the software state always reflects
-   the latest equipment status and configuration. This layer provides the foundation for
-   publishing sensor values.
+5. The **PoolState** class, maintains a comprehensive software model of the pool controller and all connected peripherals (pump, chlorinator, circuits, sensors, etc.), enabling accurate monitoring and control. The pool state is continuously updated in response to incoming network messages, ensuring that the software state always reflects the latest equipment status and configuration. This layer provides the foundation for publishing sensor values.
 
-5. The **OpnPool** class acts as the bridge between the OPNpool protocol stack and the
-   ESPHome ecosystem. It synchronizes the PoolState with ESPHome, ensuring Home Assistant
-   entities always reflect the latest pool equipment status. Its main responsibilities
-   are:
-   * Publishing updates from the PoolState to ESPHome climate, switch, sensor, binary
-     sensor, and text sensor entities.
-   * Handling requests from ESPHome entities to control switches and climate settings,
-     applying changes to the pool controller as needed.
+6. The **OpnPool** class acts as the bridge between the OPNpool protocol stack and the ESPHome ecosystem. It synchronizes the PoolState with ESPHome, ensuring Home Assistant entities always reflect the latest pool equipment status. Its main responsibilities are:
+   * Publishing updates from the PoolState to ESPHome climate, switch, sensor, binary sensor, and text sensor entities.
+   * Handling requests from ESPHome entities to control switches and climate settings, applying changes to the pool controller as needed.
 
-Work is distributed between two FreeRTOS tasks that communicate with network messages
-exchanged via mailboxes:
+### Tasks
 
-* The main task runs OPNPool and PoolState, handling the high-level logic and state
-  management.
-* The `pool_task` is responsible for low-level RS485 communication, protocol parsing, and
-  network message processing. It also spawns a task of its own to request updates from the
-  pool controller.
+Work is distributed between two FreeRTOS tasks that communicate with network messages exchanged via mailboxes:
 
-Comprehensive design documentation for the [original OPNpool
-project](https://github.com/cvonk/OPNpool) is available online:
+* The **main task** runs OpnPool and PoolState, handling the high-level logic and state management.
+* The **`pool_task`** is responsible for low-level RS-485 communication, protocol parsing, and network message processing. It also spawns a task of its own to request updates from the pool controller.
 
-- [OPNpool Design Documentation
-  Overview](https://coertvonk.com/category/sw/embedded/opnpool-design)
+### More info
+
+Comprehensive design documentation for the [original OPNpool project](https://github.com/cvonk/OPNpool) is available online:
+
+- [OPNpool Design Documentation Overview](https://coertvonk.com/category/sw/embedded/opnpool-design)
 
 The following chapters are especially relevant for this ESPHome port:
 
@@ -386,12 +319,11 @@ The following chapters are especially relevant for this ESPHome port:
 - [Hardware](https://coertvonk.com/sw/embedded/opnpool-design/hardware-3-31959)
 - [Protocol](https://coertvonk.com/sw/embedded/opnpool-design/protocol-31965)
 
-### Development with VSCode
+## Development with VSCode
 
-For better development experience: in VS Code, install the C/C++ and [ESPHome
-extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
+For better development experience: in VS Code, install the C/C++ and [ESPHome extension](https://marketplace.visualstudio.com/items?itemName=ESPHome.esphome-vscode).
 
-Clone the repository and its submodules to a local directory. 
+Clone the repository and to a local directory. 
 ```bash
 git clone https://github.com/cvonk/OPNpool_meets_ESPHome.git
 ```
@@ -401,18 +333,14 @@ or using `ssh`
 git clone git@github.com:cvonk/OPNpool_meets_ESPHome.git
 ```
 
-The `tasks.json` file provides ready-made build and upload tasks for Visual Studio Code.
-With these, build output is mapped directly to your project, so you can quickly jump to
-errors and warnings in the PROBLEMS tab.
+The `tasks.json` file provides ready-made build and upload tasks for Visual Studio Code. With these, build output is mapped directly to your project, so you can quickly jump to errors and warnings in the `Problems` tab.
 
 Common Shortcuts:
 
-- **Build:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (or
-  <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) to build the project.
-- **Compile & Upload:** Open the Command Palette
-  (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome
-  Upload" to compile and upload firmware.
-- **View Logs:** Open the Command Palette and select "Run Task" → "ESPHome Monitor" to
-  view device logs in real time.
+- **Build:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) to build the project.
+- **Compile & Upload:** Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome Upload" to compile and upload firmware.
+- **View Logs:** Open the Command Palette and select "Run Task" → "ESPHome Monitor" to view device logs in real time.
 
-![vscode_ide](assets/media/vscode-ide.png)
+![vscode_ide](assets/media/vscode-ide.png){: style="display: block; margin-left: auto; margin-right: auto; width:500px;}
+
+I hope this project brings you joy.  Keep in touch through the dicussion forum.
