@@ -15,15 +15,16 @@ class OpnPool;  // Forward declaration only - don't include opnpool.h!
 
 class OpnPoolTextSensor : public text_sensor::TextSensor, public Component {
   public:
-    OpnPoolTextSensor(OpnPool* parent) : parent_{parent} {}
+    OpnPoolTextSensor() {}
     
+        // Called by ESPHome to dump the configuration of the component.
+        // Set logger for this module to INFO or higher to see output.
     void dump_config();
     
+        // called by the OpnPool component to update the sensor value
     void publish_value_if_changed(const std::string &value);
 
   protected:
-    OpnPool * const  parent_;
-
     struct last_t {
         bool         valid;
         std::string  value;

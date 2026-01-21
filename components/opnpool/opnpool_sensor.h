@@ -10,21 +10,19 @@
 namespace esphome {
 namespace opnpool {
 
-    // forward declaration (to avoid circular dependencies)
-class OpnPool;
-
 class OpnPoolSensor : public sensor::Sensor, public Component {
 
   public:
-    OpnPoolSensor(OpnPool* parent) : parent_{parent} {}
+    OpnPoolSensor() {}
     
+        // Called by ESPHome to dump the configuration of the component.
+        // Set logger for this module to INFO or higher to see output.
     void dump_config();
     
+        // called by the OpnPool component to update the sensor value
     void publish_value_if_changed(float value, float tolerance = 0.01f);
 
   protected:
-    OpnPool * const  parent_;
-
     struct last_t {
         bool  valid;
         float value;

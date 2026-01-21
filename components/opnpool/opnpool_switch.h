@@ -18,11 +18,14 @@ class OpnPoolSwitch : public switch_::Switch, public Component {
   public:
     OpnPoolSwitch(OpnPool* parent, uint8_t id) : parent_{parent}, id_{static_cast<switch_id_t>(id)} {}
 
+        // Called by ESPHome to dump the configuration of the component.
+        // Set logger for this module to INFO or higher to see output.
     void dump_config();
-    void write_state(bool state) override;  // change triggered by Home Assistant
     
-    switch_id_t get_switch_id() const { return this->id_; }    
-    network_pool_circuit_t get_circuit() const { return this->circuit_; }
+        // called by ESPHome to change the state of the switch
+    void write_state(bool state) override;
+    
+        // called by the OpnPool component to update the switch state
     void publish_value_if_changed(bool const new_value);
 
   protected:

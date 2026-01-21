@@ -235,7 +235,7 @@ async def to_code(config):
         entity_cfg = config[sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        sensor_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
+        sensor_entity = cg.new_Pvariable(entity_cfg[CONF_ID])
         await sensor.register_sensor(sensor_entity, entity_cfg)
         cg.add(getattr(var, f"set_{sensor_key}_sensor")(sensor_entity))
 
@@ -244,7 +244,7 @@ async def to_code(config):
         entity_cfg = config[binary_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        bs_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
+        bs_entity = cg.new_Pvariable(entity_cfg[CONF_ID])
         await binary_sensor.register_binary_sensor(bs_entity, entity_cfg)
         cg.add(getattr(var, f"set_{binary_sensor_key}_binary_sensor")(bs_entity))
 
@@ -253,7 +253,7 @@ async def to_code(config):
         entity_cfg = config[text_sensor_key]
         if CONF_ID not in entity_cfg:
             entity_cfg[CONF_ID] = cg.new_id()
-        ts_entity = cg.new_Pvariable(entity_cfg[CONF_ID], var)
+        ts_entity = cg.new_Pvariable(entity_cfg[CONF_ID])
         await text_sensor.register_text_sensor(ts_entity, entity_cfg)
         cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
 
