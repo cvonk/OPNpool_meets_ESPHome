@@ -123,11 +123,11 @@ In the above trace, the `tx_q full` indicates that it can't transmit to the pool
 
 If you haven't already, add the ESPHome integration to Home Assistant.
 
-[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=esphome){: style="display: block; margin-left: auto; margin-right: auto;}
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=esphome)
 
 Under Integrations, you will find now notice that Home Assistant auto discovered your new device.
 
-[![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/){: style="display: block; margin-left: auto; margin-right: auto;}
+[![Open your Home Assistant instance and show your integrations.](https://my.home-assistant.io/badges/integrations.svg)](https://my.home-assistant.io/redirect/integrations/)
 
 ![Discovered](assets/media/opnpool-discovered.png){: style="display: block; margin-left: auto; margin-right: auto; width:300px;}
 
@@ -343,4 +343,7 @@ Common Shortcuts:
 
 ![vscode_ide](assets/media/vscode-ide.png){: style="display: block; margin-left: auto; margin-right: auto; width:500px;}
 
+#
 I hope this project brings you joy.  Keep in touch through the dicussion forum.
+
+[![Coert](assets/media/coert.svg)]
