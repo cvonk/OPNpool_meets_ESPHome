@@ -105,8 +105,10 @@ _ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolsta
         return;
     }
 
+    state->system.tod.time.valid  = true;
     state->system.tod.time.minute = msg->minute;
     state->system.tod.time.hour   = msg->hour;
+    state->system.tod.date.valid  = true;
     state->system.tod.date.day    = msg->day;
     state->system.tod.date.month  = msg->month;
     state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
@@ -139,21 +141,27 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
 
     uint8_t const pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
     uint8_t const  spa_idx = enum_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
-    static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
+    static_assert(pool_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for pool_idx");
+    static_assert( spa_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for spa_idx");
 
-    state->thermos[pool_idx].temp_in_f =  msg->pool_temp;
-    state->thermos[ spa_idx].temp_in_f =  msg->spa_temp;
-    state->thermos[pool_idx].set_point_in_f =  msg->pool_set_point;
-    state->thermos[ spa_idx].set_point_in_f =  msg->spa_set_point;
-    state->thermos[pool_idx].heat_src = _get_pool_heat_src(msg->combined_heat_src);
-    state->thermos[ spa_idx].heat_src = _get_spa_heat_src(msg->combined_heat_src);
+    poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
+    poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
+
+    pool_thermo->valid = true;
+    pool_thermo->temp_in_f =  msg->pool_temp;
+    pool_thermo->set_point_in_f =  msg->pool_set_point;
+    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_src);
+
+    spa_thermo->valid = true;
+    spa_thermo->temp_in_f =  msg->spa_temp;
+    spa_thermo->set_point_in_f =  msg->spa_set_point;
+    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_src);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
         ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
-            state->thermos[pool_idx].temp_in_f, state->thermos[spa_idx].temp_in_f, state->thermos[pool_idx].set_point_in_f, 
-            state->thermos[spa_idx].set_point_in_f, state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
+            pool_thermo->temp_in_f, spa_thermo->temp_in_f, pool_thermo->set_point_in_f, 
+            spa_thermo->set_point_in_f, pool_thermo->heat_src, spa_thermo->heat_src);
     }
 }
 
@@ -177,36 +185,52 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     }
     uint8_t const pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
     uint8_t const spa_idx  = enum_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_idx < ARRAY_SIZE(state->thermos), "size mismatch for pool_idx");
-    static_assert( spa_idx < ARRAY_SIZE(state->thermos), "size mismatch for spa_idx");
+    static_assert(pool_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for pool_idx");
+    static_assert( spa_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for spa_idx");
 
-    state->thermos[pool_idx].set_point_in_f = msg->pool_set_point;
-    state->thermos[ spa_idx].set_point_in_f = msg->spa_set_point;
-    state->thermos[pool_idx].heat_src = _get_pool_heat_src(msg->combined_heat_src);
-    state->thermos[ spa_idx].heat_src = _get_spa_heat_src(msg->combined_heat_src);
+    poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
+    poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
+    
+    pool_thermo->set_point_in_f = msg->pool_set_point;
+    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_src);
 
+    spa_thermo->set_point_in_f = msg->spa_set_point;
+    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_src);
+    
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
         ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
-            state->thermos[pool_idx].set_point_in_f, state->thermos[spa_idx].set_point_in_f, 
-            state->thermos[pool_idx].heat_src, state->thermos[spa_idx].heat_src);
+            pool_thermo->set_point_in_f, spa_thermo->set_point_in_f, 
+            pool_thermo->heat_src, spa_thermo->heat_src);
     }
 }
 
 
-/**
- * @brief      Helper to update a bool array from a bitfield value.
- *
- * @param arr      Pointer to the bool array to update.
- * @param bits     Bitfield value to extract bits from.
- * @param count    Number of bits/array elements to update.
- */
 static void 
-_update_bool_array_from_bits(bool * const arr, uint16_t const bits, uint8_t const count)
+_update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii] = (bits & mask) != 0;
-        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii]);
+        arr[ii].active = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active);
+    }
+}
+
+static void 
+_update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
+{
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        arr[ii].delay = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay);
+    }
+}
+
+
+static void 
+_update_modes_from_bits(poolstate_mode_t * modes, uint16_t const bits, uint8_t const count)
+{
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        modes[ii].value = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
     }
 }
 
@@ -261,7 +285,7 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
     }
 
     uint8_t const circuit_idx = msg->circuit_plus_1 - 1;
-    state->circuits.active[circuit_idx] = msg->value;
+    state->circuits[circuit_idx].active = msg->value;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(circuit_idx);
@@ -314,6 +338,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
 
         if (circuit_idx < std::size(state->scheds)) {
             state_scheds[circuit_idx] = (poolstate_sched_t) {
+                .valid = true,
                 .active = true,
                 .start = start,
                 .stop = stop
@@ -327,6 +352,81 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_sched(dbg, "scheds", state->scheds, true);
     }
+}
+
+static void
+_update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_circuit_t * const circuits)
+{
+    constexpr uint8_t pool_idx = enum_index(network_pool_circuit_t::POOL);
+    constexpr uint8_t spa_idx  = enum_index(network_pool_circuit_t::SPA);
+
+        // update circuits[].active
+    uint16_t const bitmask_active_circuits = ((uint16_t)msg->active_hi << 8) | msg->active_lo;
+    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
+    _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
+
+        // if both SPA and POOL bits are set, only SPA runs
+    if (circuits[spa_idx].active) {
+        circuits[pool_idx].active = false;
+    }
+
+        // update circuits[].delay
+    uint8_t const bitmask_delay_circuits = msg->delay;
+    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
+    _update_circuit_delay_from_bits(circuits, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
+
+}
+
+static void
+_update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_thermo_t * const thermos, poolstate_circuit_t const * const circuits)
+{
+        // update circuits.thermos (only update when the pump is running)
+    constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
+    constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
+    constexpr uint8_t pool_therm_idx = enum_index(poolstate_thermo_typ_t::POOL);
+    constexpr uint8_t spa_therm_idx  = enum_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_therm_idx < enum_count<poolstate_thermo_typ_t>(), "pool_therm_idx OOB");
+    static_assert(spa_therm_idx < enum_count<poolstate_thermo_typ_t>(), "spa_therm_idx OOB");
+
+    if (circuits[spa_circuit_idx].active) {
+        thermos[spa_therm_idx].temp_in_f = msg->pool_temp;
+    }
+    if (circuits[pool_circuit_idx].active) {
+        thermos[pool_therm_idx].temp_in_f = msg->pool_temp;
+    }
+
+    thermos[pool_therm_idx].heating  = _get_pool_heating_status(msg->combined_heat_status);
+    thermos[ spa_therm_idx].heating  = _get_spa_heating_status(msg->combined_heat_status);
+    thermos[pool_therm_idx].heat_src = _get_pool_heat_src(msg->combined_heat_srcs);
+    thermos[ spa_therm_idx].heat_src = _get_spa_heat_src(msg->combined_heat_srcs);
+}
+
+static void
+_update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_mode_t * const modes)
+{
+    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_mode_bits_t>(), "size err for modes->is_set");
+
+    _update_modes_from_bits(modes, msg->mode_bits, enum_count<network_pool_mode_bits_t>());
+}
+
+static void
+_update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
+{
+        // FYI date is updated through `network_msg_ctrl_time`
+    time->minute = msg->minute;
+    time->hour = msg->hour;
+}
+
+static void
+_update_temps(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_temp_t * const temps)
+{
+    uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
+    uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);
+    static_assert(air_idx < enum_count<poolstate_temp_typ_t>(), "size err for air_idx");
+    static_assert(water_idx < enum_count<poolstate_temp_typ_t>(), "size err for water_idx");
+
+    temps[air_idx].temp = msg->air_temp;
+    temps[water_idx].temp = msg->water_temp;
 }
 
 /**
@@ -348,54 +448,11 @@ _ctrl_state(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg,
         return;
     }
 
-        // update state->circuits.active
-    uint16_t const bitmask_active_circuits = ((uint16_t)msg->active_hi << 8) | msg->active_lo;
-    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->circuits.active), "size mismatch for state->circuits.active");
-    _update_bool_array_from_bits(state->circuits.active, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
-
-        // if both SPA and POOL bits are set, only SPA runs
-    if (state->circuits.active[enum_index(network_pool_circuit_t::SPA)]) {
-        state->circuits.active[enum_index(network_pool_circuit_t::POOL)] = false;
-    }
-
-        // update state->circuits.delay
-    uint8_t const bitmask_delay_circuits = msg->delay;
-    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->circuits.delay), "size mismatch for state->circuits.delay");
-    _update_bool_array_from_bits(state->circuits.delay, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
-
-        // update state->circuits.thermos (only update when the pump is running)
-    constexpr uint8_t pool_idx = enum_index(poolstate_thermo_typ_t::POOL);
-    constexpr uint8_t spa_idx  = enum_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_idx < ARRAY_SIZE(state->thermos) && spa_idx < ARRAY_SIZE(state->thermos), "pool_idx/spa_idx OOB for state->thermos");
-
-    if (state->circuits.active[enum_index(network_pool_circuit_t::SPA)]) {
-        state->thermos[spa_idx].temp_in_f = msg->pool_temp;
-    }
-    if (state->circuits.active[enum_index(network_pool_circuit_t::POOL)]) {
-        state->thermos[pool_idx].temp_in_f = msg->pool_temp;
-    }
-    state->thermos[pool_idx].heating  = _get_pool_heating_status(msg->combined_heat_status);
-    state->thermos[spa_idx ].heating  = _get_spa_heating_status(msg->combined_heat_status);
-    state->thermos[pool_idx].heat_src = _get_pool_heat_src(msg->combined_heat_srcs);
-    state->thermos[spa_idx ].heat_src = _get_spa_heat_src(msg->combined_heat_srcs);
-
-        // update state->modes.is_set
-    uint8_t const bitmask_active_modes = msg->mode_bits;
-    static_assert(enum_count<network_pool_mode_bits_t>() <= ARRAY_SIZE(state->modes.is_set), "size err for state->modes.is_set");
-    _update_bool_array_from_bits(state->modes.is_set, bitmask_active_modes, enum_count<network_pool_mode_bits_t>());
-
-        // update state->system (date is updated through `network_msg_ctrl_time`)
-    state->system.tod.time.minute = msg->minute;
-    state->system.tod.time.hour = msg->hour;
-
-        // update state->temps
-    uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
-    uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);
-    static_assert(air_idx < ARRAY_SIZE(state->temps), "size err for air_idx");
-    static_assert(water_idx < ARRAY_SIZE(state->temps), "size err for water_idx");
-
-    state->temps[air_idx].temp = msg->air_temp;
-    state->temps[water_idx].temp = msg->water_temp;
+    _update_circuits(dbg, msg, state->circuits);
+    _update_thermos(dbg, msg, state->thermos, state->circuits); 
+    _update_modes(dbg, msg, state->modes);
+    _update_system_time(dbg, msg, &state->system.tod.time);
+    _update_temps(dbg, msg, state->temps);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_state(dbg, "state", state);
@@ -423,6 +480,7 @@ _ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * co
     }
 
     state->system.version = {
+        .valid = true,
         .major = msg->major,
         .minor = msg->minor
     };
@@ -596,6 +654,7 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
 
     state->pump = {
         .time    = {
+            .valid  = true,
             .hour   = msg->clock_hr,
             .minute = msg->clock_min
         },
@@ -663,7 +722,7 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
         cJSON_AddStringToObject(dbg, "name", state->chlor.name);
-        ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
+        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
     }
 }
 
@@ -872,7 +931,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
+    bool const frequent = // msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_RESP ||

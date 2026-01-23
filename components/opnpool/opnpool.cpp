@@ -59,11 +59,20 @@ namespace opnpool {
   
 static char const * const TAG = "opnpool";
 
+    // helper to only dump_config if entity exists
+template<typename EntityT>
+inline void 
+_dump_if(EntityT * const entity)
+{
+    if (entity != nullptr) {
+        entity->dump_config();
+    }
+}
 
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
 inline void 
-_publish_if(EntityT *entity, ValueT value)
+_publish_if(EntityT * const entity, ValueT const value)
 {
     if (entity != nullptr) {
         entity->publish_value_if_changed(value);
@@ -71,35 +80,44 @@ _publish_if(EntityT *entity, ValueT value)
 }
 
     // helper to publish scheduled times if entity exists
-template<typename StartT, typename StopT>
-void 
-_publish_schedule_if(OpnPoolTextSensor *sensor, StartT start, StopT stop)
+inline void
+_publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const * const sched)
 {
-    if (sensor != nullptr) {
-        char buf[16];  // Increased size to prevent truncation: HH:MM-HH:MM\0
-        snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d", start / 60, start % 60, stop / 60, stop % 60);
-        sensor->publish_value_if_changed(buf);
+    if (sensor == nullptr || !sched->valid) {
+        return;
     }
+    char buf[16];  // HH:MM-HH:MM\0
+
+    snprintf(buf, sizeof(buf), "%02d:%02d-%02d:%02d",
+             sched->start / 60, sched->start % 60,
+             sched->stop / 60, sched->stop % 60);
+
+    sensor->publish_value_if_changed(buf);
 }
 
     // helper to publish date and time if entity exists
-template<typename TodT>
-void 
-_publish_date_and_time_if(OpnPoolTextSensor *sensor, TodT tod)
+inline void
+_publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t const * const tod)
 {
-    if (sensor != nullptr && tod != nullptr) {
-        static char time_str[22];  // 2026-01-15 22:43\0
-        snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
-            tod->date.year, tod->date.month, tod->date.day,
-            tod->time.hour, tod->time.minute);
-        sensor->publish_value_if_changed(time_str);
+    if (sensor == nullptr || tod == nullptr || !tod->time.valid) {
+        return;
     }
+    static char time_str[22];  // 2026-01-15 22:43\0
+
+    if (tod->date.valid) {
+        snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
+                 tod->date.year, tod->date.month, tod->date.day,
+                 tod->time.hour, tod->time.minute);
+    } else {
+        snprintf(time_str, sizeof(time_str), "%02d:%02d",
+                 tod->time.hour, tod->time.minute);
+    }
+    sensor->publish_value_if_changed(time_str);
 }
 
     // helper to publish version if entity exists
-template<typename VersionT>
-void
-_publish_version_if(OpnPoolTextSensor *sensor, VersionT version)
+inline void
+_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const version)
 {
     if (sensor != nullptr && version != nullptr) {
         static char fw_str[8];  // 2.80\0
@@ -108,18 +126,8 @@ _publish_version_if(OpnPoolTextSensor *sensor, VersionT version)
     }
 }
 
-    // helper to only dump_config if entity exists
-template<typename EntityT>
-inline void 
-_dump_if(EntityT *entity)
-{
-    if (entity != nullptr) {
-        entity->dump_config();
-    }
-}
-
 inline float
-_fahrenheit_to_celsius(float f) {
+_fahrenheit_to_celsius(float const f) {
     return (f - 32.0f) * 5.0f / 9.0f;
 }
 
@@ -249,7 +257,7 @@ OpnPool::dump_config() {
 }
 
 void 
-OpnPool::update_climates(const poolstate_t *new_state)
+OpnPool::update_climates(const poolstate_t * const state)
 {
     for (auto climate_id : magic_enum::enum_values<climate_id_t>()) {
 
@@ -257,10 +265,10 @@ OpnPool::update_climates(const poolstate_t *new_state)
         if (!climate) continue;
 
         auto const thermo_typ = climate->get_thermo_typ();
-        auto const thermo = &new_state->thermos[enum_index(thermo_typ)];
+        auto const thermo = &state->thermos[enum_index(thermo_typ)];
 
             // temperatures
-        float const current_temp_f = new_state->temps[enum_index(poolstate_temp_typ_t::WATER)].temp;
+        float const current_temp_f = state->temps[enum_index(poolstate_temp_typ_t::WATER)].temp;
         float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
         float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
 
@@ -269,7 +277,7 @@ OpnPool::update_climates(const poolstate_t *new_state)
                            ? enum_index(network_pool_circuit_t::POOL)
                            : enum_index(network_pool_circuit_t::SPA);
 
-        climate::ClimateMode mode = new_state->circuits.active[switch_idx]
+        climate::ClimateMode mode = state->circuits[switch_idx].active
                                   ? climate::CLIMATE_MODE_HEAT
                                   : climate::CLIMATE_MODE_OFF;
 
@@ -288,7 +296,7 @@ OpnPool::update_climates(const poolstate_t *new_state)
 }
 
 void
-OpnPool::update_switches(const poolstate_t *state)
+OpnPool::update_switches(const poolstate_t * const state)
 {
     for (auto switch_id : magic_enum::enum_values<switch_id_t>()) {
 
@@ -296,25 +304,25 @@ OpnPool::update_switches(const poolstate_t *state)
         if (!sw) continue;
 
         auto const circuit = switch_id_to_network_circuit(switch_id);
-        bool const is_active = state->circuits.active[enum_index(circuit)];
+        bool const is_active = state->circuits[enum_index(circuit)].active;
 
         sw->publish_value_if_changed(is_active);
     }
 }
 
 void
-OpnPool::update_analog_sensors(poolstate_t const * const new_state)
+OpnPool::update_analog_sensors(poolstate_t const * const state)
 {
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(sensor_id_t::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
-        float const air_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
+        float const air_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
         float air_temp_c = fahrenheit_to_celsius(air_temp_f);
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp->publish_value_if_changed(air_temp_c);    
     }
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
-        float const water_temp_f = new_state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+        float const water_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
         float water_temp_c = fahrenheit_to_celsius(water_temp_f);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
@@ -322,91 +330,89 @@ OpnPool::update_analog_sensors(poolstate_t const * const new_state)
     }
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        
-        new_state->pump.power
+        state->pump.power
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_FLOW)],         
-        new_state->pump.flow
+        state->pump.flow
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_SPEED)],        
-        new_state->pump.speed
+        state->pump.speed
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_ERROR)],        
-        new_state->pump.error
+        state->pump.error
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
-        new_state->chlor.level
+        state->chlor.level
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  
-        new_state->chlor.salt
+        state->chlor.salt
     );
 }
 
 void 
-OpnPool::update_binary_sensors(poolstate_t const * const new_state)
+OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::PUMP_RUNNING)],           
-        new_state->pump.running
+        state->pump.running
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           
-        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)].value
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
-        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)].value
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
-        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)].value
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TIMEOUT)],           
-        new_state->modes.is_set[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)].value
     );
 }
 
 void 
-OpnPool::update_text_sensors(poolstate_t const * const new_state)
+OpnPool::update_text_sensors(poolstate_t const * const state)
 {
     _publish_schedule_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::POOL_SCHED)],
-        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].start,
-        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)].stop
+        &state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)]
     );
     _publish_schedule_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SPA_SCHED)],
-        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].start,
-        new_state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)].stop
+        &state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)]
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_MODE)], 
-        enum_str(new_state->pump.mode)
+        enum_str(state->pump.mode)
     );    
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_STATE)],
-        enum_str(new_state->pump.state)
+        enum_str(state->pump.state)
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_NAME)], 
-        new_state->chlor.name
+        state->chlor.name
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_STATUS)],
-        enum_str(new_state->chlor.status)
+        enum_str(state->chlor.status)
     );
     _publish_date_and_time_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SYSTEM_TIME)],
-        &new_state->system.tod
+        &state->system.tod
     );
     _publish_version_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CONTROLLER_FIRMWARE)],
-        &new_state->system.version
+        &state->system.version
     );
 }
 

@@ -191,7 +191,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
         // handle heat source changes (based on custom preset)
 
-    char const * preset_str = call.get_custom_preset();
+    char const * preset_str = call.get_custom_preset().c_str();
     if (preset_str != nullptr) {
 
         ESP_LOGV(TAG, "HA requests %s to %s", enum_str(thermo_typ), preset_str);

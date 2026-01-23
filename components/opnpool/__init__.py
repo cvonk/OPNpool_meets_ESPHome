@@ -175,6 +175,8 @@ async def to_code(config):
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
     cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
 
+    cg.add_build_flag("-Wl,-Map=output.map")
+
     # interface firmware version
     import subprocess    
     version = "unknown"

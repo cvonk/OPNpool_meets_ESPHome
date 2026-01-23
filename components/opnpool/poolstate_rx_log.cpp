@@ -263,22 +263,33 @@ static void
 _dispatch_add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-    bool const * is_set = &state->modes.is_set[0];
+    poolstate_mode_t const * mode = state->modes;
 
     for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), *is_set);
-        ++is_set;
+        cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
+        ++mode;
     }
 }
 
 static void
-_add_circuit_detail(cJSON * const obj, char const * const key, bool const * active)
+_add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
 
     for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), *active);
-        ++active;
+        cJSON_AddBoolToObject(item, enum_str(typ), circuit->active);
+        circuit++;
+    }
+}
+
+static void
+_add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
+{
+    cJSON * const item = _create_item(obj, key);
+    (void)item;
+    for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
+        cJSON_AddBoolToObject(item, enum_str(typ), circuit->delay);
+        circuit++;
     }
 }
 
@@ -292,10 +303,10 @@ _add_circuit_detail(cJSON * const obj, char const * const key, bool const * acti
 static void
 _dispatch_add_circuits(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_circuits_t const * const circuits = &state->circuits;
+    poolstate_circuit_t const * const circuits = state->circuits;
     cJSON * const item = _create_item(obj, key);
-    _add_circuit_detail(item, "active", circuits->active);
-    _add_circuit_detail(item, "delay", circuits->delay);
+    _add_circuit_active_detail(item, "active", circuits);
+    _add_circuit_delay_detail(item, "delay", circuits);
 }
 
 /**

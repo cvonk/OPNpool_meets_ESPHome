@@ -41,6 +41,10 @@
 #include "network.h"
 #include "network_msg.h"
 
+#ifndef ARRAY_SIZE
+# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
+#endif
+
 namespace esphome {
 namespace opnpool {
 
@@ -48,11 +52,13 @@ namespace opnpool {
 struct ipc_t;
 
 struct poolstate_time_t {
+    bool     valid;
     uint8_t  hour;
     uint8_t  minute;
 };
 
 struct poolstate_date_t {
+    bool      valid;
     uint8_t   day;
     uint8_t   month;
     uint16_t  year;
@@ -64,6 +70,7 @@ struct poolstate_tod_t {
 };
 
 struct poolstate_version_t {
+    bool     valid;
     uint8_t  major;
     uint8_t  minor;
 };
@@ -73,37 +80,21 @@ struct poolstate_system_t {
     poolstate_version_t  version;
 };
 
-enum class poolstate_elem_system_typ_t : uint8_t {
-    TIME         = 0,
-    CTRL_VERSION = 1,
-    IF_VERSION   = 2
-};
-
 enum class poolstate_thermo_typ_t : uint8_t {
     POOL = 0,
     SPA  = 1
 };
 
 struct poolstate_thermo_t {
+    bool                 valid;
     uint8_t              temp_in_f;
     uint8_t              set_point_in_f;
     network_heat_src_t   heat_src;
     bool                 heating;
 };
 
-enum class poolstate_elem_thermos_typ_t : uint8_t {
-    TEMP      = 0,
-    SET_POINT = 1,
-    HEAT_SRC  = 2,
-    HEATING   = 3
-};
-
-enum class poolstate_elem_sched_typ_t : uint8_t {
-    START = 0,
-    STOP  = 1
-};
-
 struct poolstate_sched_t {
+    bool      valid;
     bool      active;
     uint16_t  start;
     uint16_t  stop;
@@ -118,24 +109,14 @@ struct poolstate_temp_t {
     uint8_t temp;
 };
 
-enum class PoolstateElemTempTyp : uint8_t {
-    TEMP = 0
+struct poolstate_mode_t {
+    bool value;  // IntelliSense flags this incorrectly
 };
 
-struct poolstate_modes_t {
-    bool  is_set[enum_count<network_pool_mode_bits_t>()];  // IntelliSense flags this incorrectly
+struct poolstate_circuit_t {
+    bool active;  // IntelliSense flags this incorrectly
+    bool delay;   // IntelliSense flags this incorrectly
 };
-
-struct poolstate_circuits_t {
-    bool  active[enum_count<network_pool_circuit_t>()];  // IntelliSense flags this incorrectly
-    bool  delay[enum_count<network_pool_circuit_t>()];   // IntelliSense flags this incorrectly
-};
-
-enum class poolstate_elem_circuits_typ_t : uint8_t {
-    ACTIVE = 0,
-    DELAY = 1
-};
-
 
 struct poolstate_pump_t {
     poolstate_time_t     time;
@@ -190,15 +171,17 @@ struct poolstate_chlor_t {
  * @var chlor    Chlorinator status (name, level, salt, status)
  */
 struct poolstate_t {
-    bool                  valid;
-    poolstate_system_t    system;
-    poolstate_temp_t      temps[enum_count<poolstate_temp_typ_t>()];
-    poolstate_thermo_t    thermos[enum_count<poolstate_thermo_typ_t>()];
-    poolstate_sched_t     scheds[enum_count<network_pool_circuit_t>()];
-    poolstate_modes_t     modes;
-    poolstate_circuits_t  circuits;
-    poolstate_pump_t      pump;
-    poolstate_chlor_t     chlor;
+    bool                 valid;  // 2BD: this should be much more granular than a single bool
+    poolstate_system_t   system;
+    poolstate_pump_t     pump;
+    uint8_t              safe1[40];  // padding to align to 4 bytes
+    poolstate_chlor_t    chlor;
+    uint8_t              safe2[40];  // padding to align to 4 bytes
+    poolstate_circuit_t  circuits[enum_count<network_pool_circuit_t>()];
+    poolstate_mode_t     modes[enum_count<network_pool_mode_bits_t>()];
+    poolstate_thermo_t   thermos[enum_count<poolstate_thermo_typ_t>()];
+    poolstate_temp_t     temps[enum_count<poolstate_temp_typ_t>()];
+    poolstate_sched_t    scheds[enum_count<network_pool_circuit_t>()];
 };
 
 enum class poolstate_elem_typ_t : uint8_t {
@@ -213,6 +196,7 @@ enum class poolstate_elem_typ_t : uint8_t {
     ALL      = 0x08
 };
 
+
 /**
  * @brief Class representing the current state of the pool system
  **/    
@@ -223,32 +207,54 @@ class OpnPool;
 class PoolState {
 
     public:
-        PoolState(OpnPool * const parent) : parent_{parent} {}
+        PoolState(OpnPool * const parent) : parent_{parent} {
+            poolstate_sanity_check(&last_, "before init memset");  /// doesn't trigger
+            memset(&last_, 0, sizeof(poolstate_t));
+            poolstate_sanity_check(&last_, "after init memset");  // doesn't trigger
+        }
         ~PoolState() {}
 
+        void poolstate_sanity_check(poolstate_t const * const state, char const * const func) {
+            for (uint8_t ii=0; ii < ARRAY_SIZE(state->safe1); ii++) {
+                if (state->safe1[ii] != 0) {
+                    ESP_LOGE("poolstate", "%s non-0 value in safe1[%02u]: 0x%02X", func, ii, state->safe1[ii]);
+                    return;
+                }
+            }
+            for (uint8_t ii=0; ii < ARRAY_SIZE(state->safe2); ii++) {
+                if (state->safe2[ii] != 0) {
+                    ESP_LOGE("poolstate", "%s non-0 value in safe2[%02u]: 0x%02X", func, ii, state->safe2[ii]);
+                    return;
+                }
+            }
+        }
+
         void set(poolstate_t const * const state) {
-            memcpy(&last_poolstate_, state, sizeof(poolstate_t));
-            last_poolstate_.valid = true;
+            poolstate_sanity_check(&last_, "before set memcpy"); // 1ST THAT TRIGGERS
+            memcpy(&last_, state, sizeof(poolstate_t));
+            poolstate_sanity_check(&last_, "after set memcpy");
+            last_.valid = true;
         }
         esp_err_t get(poolstate_t * const state) {
-            if (!last_poolstate_.valid) {
-                return ESP_ERR_INVALID_STATE;
-            }
-            memcpy(state, &last_poolstate_, sizeof(poolstate_t));
+            poolstate_sanity_check(&last_, "before get memcpy");
+                // may not be valid, but at least it is initialized
+
+                memcpy(state, &last_, sizeof(poolstate_t));
+            poolstate_sanity_check(state, "after get memcpy");
             return ESP_OK;
         }
 
         bool has_changed(poolstate_t const * const state) {
-            if (!last_poolstate_.valid) {  // redundant check
+            poolstate_sanity_check(&last_, "before get memcmp");
+            if (!last_.valid) {  // redundant check
                 return true;
             }   
-            return memcmp(&last_poolstate_, state, sizeof(poolstate_t)) != 0;
+            return memcmp(&last_, state, sizeof(poolstate_t)) != 0;
         }
-
 
     private:
         OpnPool * const parent_;
-        poolstate_t last_poolstate_ = {};  // sets .valid to false as well
+        poolstate_t last_ = {};  // sets .valid to false as well
 };
 
 }  // namespace opnpool
