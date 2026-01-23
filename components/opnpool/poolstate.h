@@ -86,11 +86,11 @@ enum class poolstate_thermo_typ_t : uint8_t {
 };
 
 struct poolstate_thermo_t {
-    bool                 valid;
-    uint8_t              temp_in_f;
-    uint8_t              set_point_in_f;
-    network_heat_src_t   heat_src;
-    bool                 heating;
+    bool                 valid;          // 2BD: make more granular
+    uint8_t              temp_in_f;      // from ctrl_state_bcast, ctrl_heat_resp
+    uint8_t              set_point_in_f; // from ctrl_heat_resp, ctrl_heat_set
+    network_heat_src_t   heat_src;       // from ctrl_state_bcast, ctrl_heat_resp, ctrl_heat_set
+    bool                 heating;        // from ctrl_state_bcast
 };
 
 struct poolstate_sched_t {
@@ -127,16 +127,16 @@ struct poolstate_circuit_t {
 
 struct poolstate_pump_t {
     bool                 valid;
-    poolstate_time_t     time;
-    network_pump_mode_t  mode;
-    bool                 running;
-    network_pump_state_t state;
-    uint16_t             power;
-    uint16_t             flow;
-    uint16_t             speed;
-    uint16_t             level;
-    uint8_t              error;
-    uint8_t              timer;
+    poolstate_time_t     time;    // pump_status_resp
+    network_pump_mode_t  mode;    // pump_status_resp, pump_mode
+    bool                 running; // pump_status_resp, pump_run
+    network_pump_state_t state;   // pump_status_resp
+    uint16_t             power;   // pump_status_resp
+    uint16_t             flow;    // pump_status_resp
+    uint16_t             speed;   // pump_status_resp
+    uint16_t             level;   // pump_status_resp
+    uint8_t              error;   // pump_status_resp
+    uint8_t              timer;   // pump_status_resp
 };
 
 enum class poolstate_chlor_status_t : uint8_t {
@@ -150,10 +150,11 @@ enum class poolstate_chlor_status_t : uint8_t {
 };
 
 struct poolstate_chlor_t {
-    char                      name[sizeof(network_msg_chlor_name_str_t) + 1];
-    uint8_t                   level;
-    uint16_t                  salt;
-    poolstate_chlor_status_t  status;
+    bool                      valid;
+    char                      name[sizeof(network_msg_chlor_name_str_t) + 1]; // chlor_name_resp
+    uint8_t                   level;   // from chlor_level_set
+    uint16_t                  salt;    // from chlor_level_resp, chlor_name_resp
+    poolstate_chlor_status_t  status;  // from chlor_level_resp
 };
 
 /**

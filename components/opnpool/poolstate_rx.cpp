@@ -62,25 +62,25 @@ namespace poolstate_rx {
 static char const * const TAG = "poolstate_rx";
 
 inline network_heat_src_t 
-_get_pool_heat_src(uint8_t combined_heat_src)
+_get_pool_heat_src(uint8_t const combined_heat_src)
 {
     return static_cast<network_heat_src_t>((combined_heat_src >> 0) & 0x03);
 }
 
 inline network_heat_src_t 
-_get_spa_heat_src(uint8_t combined_heat_src)
+_get_spa_heat_src(uint8_t const combined_heat_src)
 {
     return static_cast<network_heat_src_t>((combined_heat_src >> 2) & 0x03);
 }
 
 inline bool
-_get_pool_heating_status(uint8_t combined_heat_status)
+_get_pool_heating_status(uint8_t const combined_heat_status)
 {
     return (combined_heat_status & 0x04) != 0;  // bit2 is for POOL
 }
 
 inline bool
-_get_spa_heating_status(uint8_t combined_heat_status)
+_get_spa_heating_status(uint8_t const combined_heat_status)
 {
     return (combined_heat_status & 0x08) != 0;  // bit3 is for SPA
 }
@@ -105,13 +105,19 @@ _ctrl_time(cJSON * const dbg, network_msg_ctrl_time_t const * const msg, poolsta
         return;
     }
 
-    state->system.tod.time.valid  = true;
-    state->system.tod.time.minute = msg->minute;
-    state->system.tod.time.hour   = msg->hour;
-    state->system.tod.date.valid  = true;
-    state->system.tod.date.day    = msg->day;
-    state->system.tod.date.month  = msg->month;
-    state->system.tod.date.year   = (uint16_t)(2000) + msg->year;
+    state->system.tod = {
+        .date = {
+            .valid = true,
+            .day = msg->day,
+            .month = msg->month,
+            .year = static_cast<uint16_t>(2000 + msg->year)
+        },
+        .time = {
+            .valid = true,
+            .hour = msg->hour,
+            .minute = msg->minute
+        }
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_time_and_date(dbg, "tod", &state->system.tod);
@@ -191,9 +197,11 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
     poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
     
+    pool_thermo->valid = true;
     pool_thermo->set_point_in_f = msg->pool_set_point;
     pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_src);
 
+    spa_thermo->valid = true;
     spa_thermo->set_point_in_f = msg->spa_set_point;
     spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_src);
     
@@ -210,8 +218,10 @@ static void
 _update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].active.valid = true;
-        arr[ii].active.value = (bits & mask) != 0;
+        arr[ii].active = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
         ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active.value);
     }
 }
@@ -220,19 +230,22 @@ static void
 _update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].delay.valid = true;
-        arr[ii].delay.value = (bits & mask) != 0;
+        arr[ii].delay = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
         ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay.value);
     }
 }
-
 
 static void 
 _update_modes_from_bits(poolstate_mode_t * modes, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        modes[ii].valid = true;
-        modes[ii].value = (bits & mask) != 0;
+        modes[ii] = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
         ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
     }
 }
@@ -343,7 +356,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
         uint16_t const stop  = ( stopHi << 8) | sched.prg_stop_lo;
 
         if (circuit_idx < std::size(state->scheds)) {
-            state_scheds[circuit_idx] = (poolstate_sched_t) {
+            state_scheds[circuit_idx] = {
                 .valid = true,
                 .active = true,
                 .start = start,
@@ -427,8 +440,11 @@ static void
 _update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
 {
         // FYI date is updated through `network_msg_ctrl_time`
-    time->minute = msg->minute;
-    time->hour = msg->hour;
+    *time = {
+        .valid = true,
+        .hour = msg->hour,
+        .minute = msg->minute
+    };
 }
 
 static void
@@ -528,6 +544,8 @@ _pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg)
         return;
     }
 
+    // no change to poolstate
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         uint16_t const address = (msg->address_hi << 8) | msg->address_lo;
         uint16_t const value = (msg->value_hi << 8) | msg->value_lo;
@@ -555,6 +573,8 @@ _pump_reg_set_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const 
         return;
     }
 
+    // no change to poolstate
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         uint16_t const value_hi = msg->value_hi;
         uint16_t const value = (value_hi << 8) | msg->value_lo;
@@ -579,6 +599,8 @@ _pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg)
         return;
     }
 
+    // no change to poolstate
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
        poolstate_rx_log::add_pump_ctrl(dbg, "ctrl", msg->ctrl);
     }
@@ -602,7 +624,9 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, poolsta
         return;
     }
 
-    state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
+    // no change to poolstate
+    //state->pump.valid = true;
+    //state->pump.mode = static_cast<network_pump_mode_t>(msg->mode);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_pump_mode(dbg, "mode", state->pump.mode);
@@ -635,7 +659,10 @@ _pump_run(cJSON * const dbg,
         ESP_LOGW(TAG, "running state err 0x%02X in %s", static_cast<uint8_t>(msg->running), __func__);
         return;
     }    
-    state->pump.running = running;
+
+    // no change to poolstate
+    //state->pump.valid = true;
+    //state->pump.running = running;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_pump_running(dbg, "running", state->pump.running);
@@ -712,6 +739,10 @@ _ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
         ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
+
+    // no change to poolstate
+    //     2BD we could.., e.g. when a circuit is changed ..
+
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddStringToObject(dbg, "ack", enum_str(msg->typ));
     }
@@ -734,6 +765,8 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
         ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
+
+    state->chlor.valid = true;
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
     size_t name_size = sizeof(state->chlor.name);
@@ -765,6 +798,7 @@ _chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const 
         return;
     }   
 
+    state->chlor.valid = true;
     state->chlor.level = msg->level;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -792,6 +826,7 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
         return;
     }
 
+    state->chlor.valid = true;
     state->chlor.salt = (uint16_t)msg->salt * 50;
 
     if (msg->error & 0x01) {
@@ -839,9 +874,6 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         ESP_LOGW(TAG, "null to %s", __func__);
         return ESP_FAIL;
     }
-
-        // the new state will always be valid
-    new_state->valid = true;
 
         // adjust the new_state based on the incoming message
     cJSON * const dbg = cJSON_CreateObject();
