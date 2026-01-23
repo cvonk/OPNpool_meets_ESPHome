@@ -85,16 +85,16 @@ _get_spa_heating_status(uint8_t const combined_heat_status)
     return (combined_heat_status & 0x08) != 0;  // bit3 is for SPA
 }
 
-inline poolstate_chlor_status_t
+inline poolstate_chlor_status_typ_t
 _get_chlor_status_from_error(uint8_t const error)
 {
-    if (error & 0x01) return poolstate_chlor_status_t::LOW_FLOW;
-    if (error & 0x02) return poolstate_chlor_status_t::LOW_SALT;
-    if (error & 0x04) return poolstate_chlor_status_t::HIGH_SALT;
-    if (error & 0x10) return poolstate_chlor_status_t::CLEAN_CELL;
-    if (error & 0x40) return poolstate_chlor_status_t::COLD;
-    if (error & 0x80) return poolstate_chlor_status_t::OK;
-    return poolstate_chlor_status_t::OTHER;
+    if (error & 0x01) return poolstate_chlor_status_typ_t::LOW_FLOW;
+    if (error & 0x02) return poolstate_chlor_status_typ_t::LOW_SALT;
+    if (error & 0x04) return poolstate_chlor_status_typ_t::HIGH_SALT;
+    if (error & 0x10) return poolstate_chlor_status_typ_t::CLEAN_CELL;
+    if (error & 0x40) return poolstate_chlor_status_typ_t::COLD;
+    if (error & 0x80) return poolstate_chlor_status_typ_t::OK;
+    return poolstate_chlor_status_typ_t::OTHER;
 }
 
 /**
@@ -161,8 +161,8 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     static_assert(pool_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for pool_idx");
     static_assert( spa_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for spa_idx");
 
-    poolstate_thermo_valid_t * const pool_thermo = &state->thermos[pool_idx];
-    poolstate_thermo_valid_t * const spa_thermo  = &state->thermos[spa_idx];
+    poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
+    poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
 
     pool_thermo->valid = true;
     pool_thermo->temp_in_f =  msg->pool_temp;
@@ -205,8 +205,8 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     static_assert(pool_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for pool_idx");
     static_assert( spa_idx < enum_count<poolstate_thermo_typ_t>(), "size mismatch for spa_idx");
 
-    poolstate_thermo_valid_t * const pool_thermo = &state->thermos[pool_idx];
-    poolstate_thermo_valid_t * const spa_thermo  = &state->thermos[spa_idx];
+    poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
+    poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
     
     pool_thermo->valid = true;
     pool_thermo->set_point_in_f = msg->pool_set_point;
@@ -226,7 +226,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
 
 
 static void 
-_update_circuit_active_from_bits(poolstate_circuit_valid_t * const arr, uint16_t const bits, uint8_t const count)
+_update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         arr[ii].active = {
@@ -238,7 +238,7 @@ _update_circuit_active_from_bits(poolstate_circuit_valid_t * const arr, uint16_t
 }
 
 static void 
-_update_circuit_delay_from_bits(poolstate_circuit_valid_t * const arr, uint16_t const bits, uint8_t const count)
+_update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         arr[ii].delay = {
@@ -250,7 +250,7 @@ _update_circuit_delay_from_bits(poolstate_circuit_valid_t * const arr, uint16_t 
 }
 
 static void 
-_update_modes_from_bits(poolstate_bool_valid_t * modes, uint16_t const bits, uint8_t const count)
+_update_modes_from_bits(poolstate_bool_t * modes, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
         modes[ii] = {
@@ -347,7 +347,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
         ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
-    poolstate_sched_valid_t * state_scheds = state->scheds;    
+    poolstate_sched_t * state_scheds = state->scheds;    
     memset(state_scheds, 0, sizeof(state->scheds));
 
     for (const auto& sched : msg->scheds) {
@@ -385,7 +385,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
 }
 
 static void
-_update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_circuit_valid_t * const circuits)
+_update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_circuit_t * const circuits)
 {
     constexpr uint8_t pool_idx = enum_index(network_pool_circuit_t::POOL);
     constexpr uint8_t spa_idx  = enum_index(network_pool_circuit_t::SPA);
@@ -408,20 +408,20 @@ _update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const
 }
 
 static void
-_update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_thermo_valid_t * const thermos, poolstate_circuit_valid_t const * const circuits)
+_update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_thermo_t * const thermos, poolstate_circuit_t const * const circuits)
 {
         // update circuits.thermos (only update when the pump is running)
     constexpr uint8_t pool_therm_idx = enum_index(poolstate_thermo_typ_t::POOL);
     constexpr uint8_t spa_therm_idx  = enum_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_therm_idx < enum_count<poolstate_thermo_typ_t>(), "pool_therm_idx OOB");
     static_assert(spa_therm_idx < enum_count<poolstate_thermo_typ_t>(), "spa_therm_idx OOB");
-    poolstate_thermo_valid_t * const pool_thermo = &thermos[pool_therm_idx];
-    poolstate_thermo_valid_t * const spa_thermo  = &thermos[spa_therm_idx];
+    poolstate_thermo_t * const pool_thermo = &thermos[pool_therm_idx];
+    poolstate_thermo_t * const spa_thermo  = &thermos[spa_therm_idx];
 
     constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
     constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
-    poolstate_bool_valid_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
-    poolstate_bool_valid_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
+    poolstate_bool_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
+    poolstate_bool_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
 
         // this leaves a gap where the pump is not running, so we still update the temperature
     if (spa_circuit->valid && spa_circuit->value) {
@@ -440,7 +440,7 @@ _update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const 
 }
 
 static void
-_update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_bool_valid_t * const modes)
+_update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_bool_t * const modes)
 {
     static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_mode_bits_t>(), "size err for modes->is_set");
 
@@ -448,7 +448,7 @@ _update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const ms
 }
 
 static void
-_update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_time_valid_t * const time)
+_update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
 {
     *time = {
         .valid = true,
@@ -459,7 +459,7 @@ _update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * co
 }
 
 static void
-_update_temps(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_uint8_valid_t * const temps)
+_update_temps(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_uint8_t * const temps)
 {
     uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
     uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);

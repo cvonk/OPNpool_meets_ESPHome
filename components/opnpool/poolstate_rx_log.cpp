@@ -54,13 +54,13 @@ _create_item(cJSON * const obj, char const * const key)
 }
 
 static void
-_add_time(cJSON * const obj, char const * const key, poolstate_time_valid_t const * const time)
+_add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time)
 {
     cJSON_AddStringToObject(obj, key, time_str(time->hour, time->minute));
 }
 
 static void
-_add_date(cJSON * const obj, char const * const key, poolstate_date_valid_t const * const date)
+_add_date(cJSON * const obj, char const * const key, poolstate_date_t const * const date)
 {
     cJSON_AddStringToObject(obj, key, date_str(date->year, date->month, date->day));
 }
@@ -70,10 +70,10 @@ _add_date(cJSON * const obj, char const * const key, poolstate_date_valid_t cons
  * 
  * @param obj The parent JSON object.
  * @param key The key under which to add the time and date object.
- * @param tod Pointer to the poolstate_tod_valid_t structure containing the time and date.
+ * @param tod Pointer to the poolstate_tod_t structure containing the time and date.
  */
 void
-add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_valid_t const * const tod)
+add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
 {
     cJSON * const item = _create_item(obj, key);
     _add_time(item, "time", &tod->time);
@@ -85,10 +85,10 @@ add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_valid
  * 
  * @param obj The parent JSON object.
  * @param key The key under which to add the version string.
- * @param version Pointer to the poolstate_version_valid_t structure containing the version information.
+ * @param version Pointer to the poolstate_version_t structure containing the version information.
  */
 void
-add_version(cJSON * const obj, char const * const key, poolstate_version_valid_t const * const version)
+add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version)
 {
     cJSON_AddStringToObject(obj, key, version_str(version->major, version->minor));
 }
@@ -123,7 +123,7 @@ add_system(cJSON * const obj, char const * const key, poolstate_t const * const 
 
 static void
 _add_thermostat(cJSON * const obj, char const * const key,
-    poolstate_thermo_valid_t const * const thermostat, 
+    poolstate_thermo_t const * const thermostat, 
     bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
@@ -147,14 +147,14 @@ _add_thermostat(cJSON * const obj, char const * const key,
  *
  * @param obj          The parent JSON object.
  * @param key          The key under which to add the thermostat array.
- * @param thermos      Pointer to the array of poolstate_thermo_valid_t structures.
+ * @param thermos      Pointer to the array of poolstate_thermo_t structures.
  * @param showTemp     Whether to include temperature values.
  * @param showSp       Whether to include set point values.
  * @param showSrc      Whether to include heat source values.
  * @param showHeating  Whether to include heating status.
  */
 void
-add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_valid_t const * thermos,
+add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos,
     bool const showTemp, bool showSp, bool const showSrc, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
@@ -180,7 +180,7 @@ _dispatch_add_thermos(cJSON * const obj, char const * const key, poolstate_t con
 }
 
 static void
-_add_schedule(cJSON * const obj, char const * const key, poolstate_sched_valid_t const * const sched)
+_add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const * const sched)
 {
     if (sched->active) {
         cJSON * const item = _create_item(obj, key);
@@ -194,11 +194,11 @@ _add_schedule(cJSON * const obj, char const * const key, poolstate_sched_valid_t
  *
  * @param obj       The parent JSON object.
  * @param key       The key under which to add the schedule array.
- * @param scheds    Pointer to the array of poolstate_sched_valid_t structures.
+ * @param scheds    Pointer to the array of poolstate_sched_t structures.
  * @param showSched Whether to include schedule information.
  */
 void
-add_sched(cJSON * const obj, char const * const key, poolstate_sched_valid_t const * scheds,
+add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds,
     bool const showSched)
 {
     if (showSched) {
@@ -226,7 +226,7 @@ _dispatch_add_scheds(cJSON * const obj, char const * const key, poolstate_t cons
 }
 
 static void
-_add_temp(cJSON * const obj, char const * const key, poolstate_uint8_valid_t const * const temp)
+_add_temp(cJSON * const obj, char const * const key, poolstate_uint8_t const * const temp)
 {
     if (temp->value != 0xFF && temp->value != 0x00) {
         cJSON_AddNumberToObject(obj, key, temp->value);
@@ -244,7 +244,7 @@ static void
 _dispatch_add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 {
     cJSON * const item = _create_item(obj, key);
-    poolstate_uint8_valid_t const * temp = state->temps;
+    poolstate_uint8_t const * temp = state->temps;
     
     for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
         _add_temp(item, enum_str(typ), temp);
@@ -263,7 +263,7 @@ static void
 _dispatch_add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-    poolstate_bool_valid_t const * mode = state->modes;
+    poolstate_bool_t const * mode = state->modes;
 
     for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
         cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
@@ -272,7 +272,7 @@ _dispatch_add_modes(cJSON * const obj, char const * const key, poolstate_t const
 }
 
 static void
-_add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_circuit_valid_t const * circuit)
+_add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
 
@@ -283,7 +283,7 @@ _add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_
 }
 
 static void
-_add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_circuit_valid_t const * circuit)
+_add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
     (void)item;
@@ -303,7 +303,7 @@ _add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_c
 static void
 _dispatch_add_circuits(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_circuit_valid_t const * const circuits = state->circuits;
+    poolstate_circuit_t const * const circuits = state->circuits;
     cJSON * const item = _create_item(obj, key);
     _add_circuit_active_detail(item, "active", circuits);
     _add_circuit_delay_detail(item, "delay", circuits);
@@ -396,7 +396,7 @@ add_pump_running(cJSON * const obj, char const * const key, bool const running)
 static void
 _dispatch_add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_pump_valid_t const * const pump = &state->pump;
+    poolstate_pump_t const * const pump = &state->pump;
     cJSON * const item = _create_item(obj, key);
     _add_time(item, "time", &pump->time);
     add_pump_mode(item, "mode", pump->mode.value);
@@ -432,10 +432,10 @@ add_pump(cJSON * const obj, char const * const key, poolstate_t const * const st
  *
  * @param obj   The parent JSON object.
  * @param key   The key under which to add the chlorinator response object.
- * @param chlor Pointer to the poolstate_chlor_valid_t structure to log.
+ * @param chlor Pointer to the poolstate_chlor_t structure to log.
  */
 void
-add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_valid_t const * const chlor)
+add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
 {
     cJSON * const item = _create_item(obj, key);
     cJSON_AddNumberToObject(item, "salt", chlor->salt.value);
@@ -452,7 +452,7 @@ add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_valid_
 static void
 _dispatch_add_chlor(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_chlor_valid_t const * const chlor = &state->chlor;
+    poolstate_chlor_t const * const chlor = &state->chlor;
     cJSON * const item = _create_item(obj, key);
     cJSON_AddStringToObject(item, "name", chlor->name.value);
     cJSON_AddNumberToObject(item, "level", chlor->level.value);

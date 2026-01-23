@@ -91,7 +91,7 @@ _publish_enum_if(EntityT * const entity, ValueT const base)
 
     // helper to publish scheduled times if entity exists
 inline void
-_publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_valid_t const * const sched)
+_publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const * const sched)
 {
     if (sensor == nullptr || !sched->valid) {
         return;
@@ -107,7 +107,7 @@ _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_valid_t c
 
     // helper to publish date and time if entity exists
 inline void
-_publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_valid_t const * const tod)
+_publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t const * const tod)
 {
     if (sensor == nullptr || tod == nullptr || !tod->time.valid) {
         return;
@@ -127,7 +127,7 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_valid_
 
     // helper to publish version if entity exists
 inline void
-_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_valid_t const * const version)
+_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const version)
 {
     if (sensor != nullptr && version != nullptr) {
         static char fw_str[8];  // 2.80\0
