@@ -438,8 +438,8 @@ void
 add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
 {
     cJSON * const item = _create_item(obj, key);
-    cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", enum_str(chlor->status));
+    cJSON_AddNumberToObject(item, "salt", chlor->salt.value);
+    cJSON_AddStringToObject(item, "status", enum_str(chlor->status.value));
 }
 
 /**
@@ -454,10 +454,10 @@ _dispatch_add_chlor(cJSON * const obj, char const * const key, poolstate_t const
 {
     poolstate_chlor_t const * const chlor = &state->chlor;
     cJSON * const item = _create_item(obj, key);
-    cJSON_AddStringToObject(item, "name", chlor->name);
-    cJSON_AddNumberToObject(item, "level", chlor->level);
-    cJSON_AddNumberToObject(item, "salt", chlor->salt);
-    cJSON_AddStringToObject(item, "status", enum_str(chlor->status));
+    cJSON_AddStringToObject(item, "name", chlor->name.value);
+    cJSON_AddNumberToObject(item, "level", chlor->level.value);
+    cJSON_AddNumberToObject(item, "salt", chlor->salt.value);
+    cJSON_AddStringToObject(item, "status", enum_str(chlor->status.value));
 }
 
 /**

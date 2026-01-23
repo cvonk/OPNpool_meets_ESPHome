@@ -271,7 +271,7 @@ OpnPool::update_climates(const poolstate_t * const state)
             // temperatures
         auto const water_temp = &state->temps[enum_index(poolstate_temp_typ_t::WATER)];
         if (!water_temp->valid) continue;
-        
+
         float const current_temp_f = water_temp->temp;
         float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
         float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
@@ -353,11 +353,11 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
-        state->chlor.level
+        state->chlor.level.value
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  
-        state->chlor.salt
+        state->chlor.salt.value
     );
 }
 
@@ -407,11 +407,11 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_NAME)], 
-        state->chlor.name
+        state->chlor.name.value
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_STATUS)],
-        enum_str(state->chlor.status)
+        enum_str(state->chlor.status.value)
     );
     _publish_date_and_time_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SYSTEM_TIME)],

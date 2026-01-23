@@ -85,6 +85,17 @@ _get_spa_heating_status(uint8_t const combined_heat_status)
     return (combined_heat_status & 0x08) != 0;  // bit3 is for SPA
 }
 
+inline poolstate_chlor_status_t
+_get_chlor_status_from_error(uint8_t const error)
+{
+    if (error & 0x01) return poolstate_chlor_status_t::LOW_FLOW;
+    if (error & 0x02) return poolstate_chlor_status_t::LOW_SALT;
+    if (error & 0x04) return poolstate_chlor_status_t::HIGH_SALT;
+    if (error & 0x10) return poolstate_chlor_status_t::CLEAN_CELL;
+    if (error & 0x40) return poolstate_chlor_status_t::COLD;
+    if (error & 0x80) return poolstate_chlor_status_t::OK;
+    return poolstate_chlor_status_t::OTHER;
+}
 
 /**
  * @brief       Process a controller time message and update the pool state.
@@ -439,12 +450,12 @@ _update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const ms
 static void
 _update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
 {
-        // FYI date is updated through `network_msg_ctrl_time`
     *time = {
         .valid = true,
         .hour = msg->hour,
         .minute = msg->minute
     };
+    // PS date is updated through `network_msg_ctrl_time`
 }
 
 static void
@@ -766,17 +777,20 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
         return;
     }
 
-    state->chlor.valid = true;
-    state->chlor.salt = (uint16_t)msg->salt * 50;
+    state->chlor.salt = {
+        .valid = true,
+        .value = static_cast<uint16_t>((uint16_t)msg->salt * 50)
+    };
 
-    size_t name_size = sizeof(state->chlor.name);
-    strncpy(state->chlor.name, msg->name, name_size);
-    state->chlor.name[name_size - 1] = '\0';
+    size_t name_size = sizeof(state->chlor.name.value);
+    strncpy(state->chlor.name.value, msg->name, name_size);
+    state->chlor.name.value[name_size - 1] = '\0';
+    state->chlor.name.valid = true;
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt);
-        cJSON_AddStringToObject(dbg, "name", state->chlor.name);
-        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt, state->chlor.name);
+        cJSON_AddNumberToObject(dbg, "salt", state->chlor.salt.value);
+        cJSON_AddStringToObject(dbg, "name", state->chlor.name.value);
+        ESP_LOGV(TAG, "Chlorine status updated: salt=%u, name=%s", state->chlor.salt.value, state->chlor.name.value);
     }
 }
 
@@ -798,12 +812,14 @@ _chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const 
         return;
     }   
 
-    state->chlor.valid = true;
-    state->chlor.level = msg->level;
+    state->chlor.level = {
+        .valid = true,
+        .value = msg->level
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddNumberToObject(dbg, "level", state->chlor.level);
-        ESP_LOGVV(TAG, "Chlorine level updated: level=%u", state->chlor.level);
+        cJSON_AddNumberToObject(dbg, "level", state->chlor.level.value);
+        ESP_LOGVV(TAG, "Chlorine level updated: level=%u", state->chlor.level.value);
     }
 }
 
@@ -826,29 +842,18 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
         return;
     }
 
-    state->chlor.valid = true;
-    state->chlor.salt = (uint16_t)msg->salt * 50;
-
-    if (msg->error & 0x01) {
-        state->chlor.status = poolstate_chlor_status_t::LOW_FLOW;
-    } else if (msg->error & 0x02) {
-        state->chlor.status = poolstate_chlor_status_t::LOW_SALT;
-    } else if (msg->error & 0x04) {
-        state->chlor.status = poolstate_chlor_status_t::HIGH_SALT;
-    } else if (msg->error & 0x10) {
-        state->chlor.status = poolstate_chlor_status_t::CLEAN_CELL;
-    } else if (msg->error & 0x40) {
-        state->chlor.status = poolstate_chlor_status_t::COLD;
-    } else if (msg->error & 0x80) {
-        state->chlor.status = poolstate_chlor_status_t::OK;
-    } else {
-        state->chlor.status = poolstate_chlor_status_t::OTHER;
-        ESP_LOGW(TAG, "Unknown error code received in rx_chlor_level_set_resp: 0x%02X", msg->error);
-    }
+    state->chlor.salt = {
+        .valid = true,
+        .value = static_cast<uint16_t>((uint16_t)msg->salt * 50)
+    };
+    state->chlor.status = {
+        .valid = true,
+        .value = _get_chlor_status_from_error(msg->error)
+    };  
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_chlor_resp(dbg, "chlor", &state->chlor);
-        ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt, enum_str(state->chlor.status));
+        ESP_LOGVV(TAG, "Chlorine status updated: salt=%u, status=%s", state->chlor.salt.value, enum_str(state->chlor.status.value));
     }
 }
 
@@ -877,6 +882,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
 
         // adjust the new_state based on the incoming message
     cJSON * const dbg = cJSON_CreateObject();
+
     switch (msg->typ) {
         case network_msg_typ_t::CTRL_SET_ACK:  // response to various set requests
             _ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);

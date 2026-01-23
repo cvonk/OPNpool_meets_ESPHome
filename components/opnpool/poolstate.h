@@ -150,11 +150,22 @@ enum class poolstate_chlor_status_t : uint8_t {
 };
 
 struct poolstate_chlor_t {
-    bool                      valid;
-    char                      name[sizeof(network_msg_chlor_name_str_t) + 1]; // chlor_name_resp
-    uint8_t                   level;   // from chlor_level_set
-    uint16_t                  salt;    // from chlor_level_resp, chlor_name_resp
-    poolstate_chlor_status_t  status;  // from chlor_level_resp
+    struct poolstate_chlor_name_t {
+        bool     valid;
+        char     value[sizeof(network_msg_chlor_name_str_t) + 1]; // from chlor_name_resp
+    } name;
+    struct poolstate_chlor_level_t {
+        bool     valid;
+        uint8_t  value;   // from chlor_level_set
+    } level;
+    struct poolstate_chlor_salt_t {
+        bool     valid;
+        uint16_t value;   // from chlor_level_resp, chlor_name_resp
+    } salt;
+    struct poolstate_chlor_status_info_t {
+        bool     valid;
+        poolstate_chlor_status_t value;  // from chlor_level_resp
+    } status;
 };
 
 /**
