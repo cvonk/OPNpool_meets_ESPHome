@@ -128,17 +128,17 @@ _add_thermostat(cJSON * const obj, char const * const key,
 {
     cJSON * const item = _create_item(obj, key);
     if (showTemp) {
-        cJSON_AddNumberToObject(item, "temp", thermostat->temp_in_f);
+        cJSON_AddNumberToObject(item, "temp", thermostat->temp_in_f.value);
     }
     if (showSp) {
-        cJSON_AddNumberToObject(item, "sp", thermostat->set_point_in_f);
+        cJSON_AddNumberToObject(item, "sp", thermostat->set_point_in_f.value);
     }
     if (showSrc) {
-        network_heat_src_t src = static_cast<network_heat_src_t>(thermostat->heat_src);
+        network_heat_src_t src = thermostat->heat_src.value;
         cJSON_AddStringToObject(item, "src", enum_str(src));
     }
     if (showHeating) {
-        cJSON_AddBoolToObject(item, "heating", thermostat->heating);
+        cJSON_AddBoolToObject(item, "heating", thermostat->heating.value);
     }
 }
 

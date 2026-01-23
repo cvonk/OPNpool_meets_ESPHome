@@ -141,6 +141,20 @@ _fahrenheit_to_celsius(float const f) {
     return (f - 32.0f) * 5.0f / 9.0f;
 }
 
+inline uint8_t
+_thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
+{
+    switch (thermo_typ) {
+        case poolstate_thermo_typ_t::POOL:
+            return enum_index(network_pool_circuit_t::POOL);
+        case poolstate_thermo_typ_t::SPA:
+            return enum_index(network_pool_circuit_t::SPA);
+        default:
+            ESP_LOGE(TAG, "Invalid thermo_typ: %d", static_cast<int>(thermo_typ));
+            return -1;  // invalid index, will cause out-of-bounds access if used
+    }
+}
+
 /**
  * @brief Set up the OpnPool component.
  *
@@ -274,37 +288,39 @@ OpnPool::update_climates(const poolstate_t * const state)
         OpnPoolClimate * const climate = this->climates_[enum_index(climate_id)];
         if (!climate) continue;
 
-        auto const thermo_typ = climate->get_thermo_typ();
-        auto const thermo = &state->thermos[enum_index(thermo_typ)];
-        if (!thermo->valid) continue;
-
             // temperatures
         auto const water_temp = &state->temps[enum_index(poolstate_temp_typ_t::WATER)];
         if (!water_temp->valid) continue;
 
-        float const current_temp_f = water_temp->value;
-        float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
-        float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
+        auto const thermo_typ = climate->get_thermo_typ();
+        auto const thermo = &state->thermos[enum_index(thermo_typ)];
+        if (!thermo->set_point_in_f.valid) continue;
+        if (!thermo->heat_src.valid) continue;
+        if (!thermo->heat_src.valid) continue;
+        if (!thermo->heating.valid) continue;
+
+        auto const current_temp_f = water_temp->value;
+        auto const current_temp_c = fahrenheit_to_celsius(current_temp_f);
+        auto const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f.value);
 
             // mode
-        uint8_t switch_idx = (thermo_typ == poolstate_thermo_typ_t::POOL)
-                           ? enum_index(network_pool_circuit_t::POOL)
-                           : enum_index(network_pool_circuit_t::SPA);
-        if (!state->circuits[switch_idx].active.valid) continue;
+        auto const switch_idx = _thermo_typ_to_pool_circuit_idx(thermo_typ);
+        auto const active_circuit = &state->circuits[switch_idx].active;
+        if (!active_circuit->valid) continue;
 
-        climate::ClimateMode mode = state->circuits[switch_idx].active.value
+        climate::ClimateMode mode = active_circuit->value
                                   ? climate::CLIMATE_MODE_HEAT
                                   : climate::CLIMATE_MODE_OFF;
 
             // custom preset
-        auto const custom_preset = enum_str(thermo->heat_src);
+        auto const custom_preset = enum_str(thermo->heat_src.value);
 
             // action
-        climate::ClimateAction action = thermo->heating
-            ? climate::CLIMATE_ACTION_HEATING
-            : (mode == climate::CLIMATE_MODE_OFF
-                ? climate::CLIMATE_ACTION_OFF
-                : climate::CLIMATE_ACTION_IDLE);
+        climate::ClimateAction action = thermo->heating.value
+                                      ? climate::CLIMATE_ACTION_HEATING
+                                      : (mode == climate::CLIMATE_MODE_OFF
+                                        ? climate::CLIMATE_ACTION_OFF
+                                        : climate::CLIMATE_ACTION_IDLE);
 
         climate->publish_value_if_changed(current_temp_c, target_temp_c, mode, custom_preset, action);
     }
@@ -315,36 +331,34 @@ OpnPool::update_switches(const poolstate_t * const state)
 {
     for (auto switch_id : magic_enum::enum_values<switch_id_t>()) {
 
-        OpnPoolSwitch *sw = this->switches_[enum_index(switch_id)];
+        OpnPoolSwitch * const sw = this->switches_[enum_index(switch_id)];
         if (!sw) continue;
 
         auto const circuit = switch_id_to_network_circuit(switch_id);
-        if (!state->circuits[enum_index(circuit)].active.valid) continue;   
+        auto const active_circuit = &state->circuits[enum_index(circuit)].active;
+        if (!active_circuit->valid) continue;
 
-        bool const is_active = state->circuits[enum_index(circuit)].active.value;
-
-        sw->publish_value_if_changed(is_active);
+        sw->publish_value_if_changed(active_circuit->value);
     }
 }
 
 void
 OpnPool::update_analog_sensors(poolstate_t const * const state)
 {
-    auto * const air_temp = this->sensors_[static_cast<uint8_t>(sensor_id_t::AIR_TEMPERATURE)];
-    if (air_temp != nullptr) {
-        float const air_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].value;
-        float air_temp_c = fahrenheit_to_celsius(air_temp_f);
+    OpnPoolSensor * const air_temp_sensor = this->sensors_[static_cast<uint8_t>(sensor_id_t::AIR_TEMPERATURE)];
+    auto const air_temp = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)];
+    if (air_temp_sensor != nullptr && air_temp.valid) {
+        auto air_temp_c = fahrenheit_to_celsius(air_temp.value);
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
-        air_temp->publish_value_if_changed(air_temp_c);    
+        air_temp_sensor->publish_value_if_changed(air_temp_c);    
     }
-    auto * const water_temperature = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
-    if (water_temperature != nullptr) {    
-        float const water_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].value;
-        float water_temp_c = fahrenheit_to_celsius(water_temp_f);
+    OpnPoolSensor * const water_temperature_sensor = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
+    auto const water_temp = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)];
+    if (water_temperature_sensor != nullptr && water_temp.valid) {    
+        auto water_temp_c = fahrenheit_to_celsius(water_temp.value);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
-        water_temperature->publish_value_if_changed(water_temp_c);
-
-    }
+        water_temperature_sensor->publish_value_if_changed(water_temp_c);
+    }   
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        
         state->pump.power

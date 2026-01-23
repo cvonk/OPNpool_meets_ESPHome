@@ -164,21 +164,36 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
     poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
 
-    pool_thermo->valid = true;
-    pool_thermo->temp_in_f =  msg->pool_temp;
-    pool_thermo->set_point_in_f =  msg->pool_set_point;
-    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_src);
-
-    spa_thermo->valid = true;
-    spa_thermo->temp_in_f =  msg->spa_temp;
-    spa_thermo->set_point_in_f =  msg->spa_set_point;
-    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_src);
+    pool_thermo->temp_in_f =  {
+        .valid = true,
+        .value = msg->pool_temp
+    };
+    pool_thermo->set_point_in_f =  {
+        .valid = true,
+        .value = msg->pool_set_point
+    };
+    pool_thermo->heat_src = {
+        .valid = true,
+        .value = _get_pool_heat_src(msg->combined_heat_src)
+    };
+    spa_thermo->temp_in_f =  {
+        .valid = true,
+        .value = msg->spa_temp
+    };
+    spa_thermo->set_point_in_f =  {
+        .valid = true,
+        .value = msg->spa_set_point
+    };
+    spa_thermo->heat_src = {
+        .valid = true,
+        .value = _get_spa_heat_src(msg->combined_heat_src)
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
         ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
-            pool_thermo->temp_in_f, spa_thermo->temp_in_f, pool_thermo->set_point_in_f, 
-            spa_thermo->set_point_in_f, pool_thermo->heat_src, spa_thermo->heat_src);
+            pool_thermo->temp_in_f.value, spa_thermo->temp_in_f.value, pool_thermo->set_point_in_f.value, 
+            spa_thermo->set_point_in_f.value, pool_thermo->heat_src.value, spa_thermo->heat_src.value);
     }
 }
 
@@ -208,19 +223,28 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     poolstate_thermo_t * const pool_thermo = &state->thermos[pool_idx];
     poolstate_thermo_t * const spa_thermo  = &state->thermos[spa_idx];
     
-    pool_thermo->valid = true;
-    pool_thermo->set_point_in_f = msg->pool_set_point;
-    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_src);
-
-    spa_thermo->valid = true;
-    spa_thermo->set_point_in_f = msg->spa_set_point;
-    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_src);
+    pool_thermo->set_point_in_f = {
+        .valid = true,
+        .value = msg->pool_set_point
+    };
+    pool_thermo->heat_src = {
+        .valid = true,
+        .value = _get_pool_heat_src(msg->combined_heat_src)
+    };
+    spa_thermo->set_point_in_f = {
+        .valid = true,
+        .value = msg->spa_set_point
+    };
+    spa_thermo->heat_src = {
+        .valid = true,
+        .value = _get_spa_heat_src(msg->combined_heat_src)
+    };
     
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
         ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
-            pool_thermo->set_point_in_f, spa_thermo->set_point_in_f, 
-            pool_thermo->heat_src, spa_thermo->heat_src);
+            pool_thermo->set_point_in_f.value, spa_thermo->set_point_in_f.value, 
+            pool_thermo->heat_src.value, spa_thermo->heat_src.value);
     }
 }
 
@@ -423,20 +447,34 @@ _update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const 
     poolstate_bool_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
     poolstate_bool_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
 
-        // this leaves a gap where the pump is not running, so we still update the temperature
-    if (spa_circuit->valid && spa_circuit->value) {
-        spa_thermo->temp_in_f = msg->pool_temp;
-    }
     if (pool_circuit->valid && pool_circuit->value) {
-        pool_thermo->temp_in_f = msg->pool_temp;
+        pool_thermo->temp_in_f = {
+            .valid = true,
+            .value = msg->pool_temp
+        };
     }
-    pool_thermo->valid    = true;
-    pool_thermo->heating  = _get_pool_heating_status(msg->combined_heat_status);
-    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_srcs);
-
-    spa_thermo->valid    = true;
-    spa_thermo->heating  = _get_spa_heating_status(msg->combined_heat_status);
-    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_srcs);
+    if (spa_circuit->valid && spa_circuit->value) {
+        spa_thermo->temp_in_f = {
+            .valid = true,
+            .value = msg->spa_temp
+        };
+    }
+    pool_thermo->heating = {
+        .valid = true,
+        .value = _get_pool_heating_status(msg->combined_heat_status)
+    };
+    pool_thermo->heat_src = {
+        .valid = true,
+        .value = _get_pool_heat_src(msg->combined_heat_srcs)
+    };
+    spa_thermo->heating  = {
+        .valid = true,
+        .value = _get_spa_heating_status(msg->combined_heat_status)
+    };
+    spa_thermo->heat_src = {
+        .valid = true,
+        .value = _get_spa_heat_src(msg->combined_heat_srcs)
+    }   ;
 }
 
 static void

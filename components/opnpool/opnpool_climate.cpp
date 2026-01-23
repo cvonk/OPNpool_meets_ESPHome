@@ -157,7 +157,10 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         float const target_temp_f = _celsius_to_fahrenheit(target_temp_c);
         ESP_LOGV(TAG, "HA requests %s to %.1f°F", enum_str(thermo_typ), target_temp_f);
 
-        thermos_new[thermo_idx].set_point_in_f = static_cast<uint8_t>(target_temp_f);
+        thermos_new[thermo_idx].set_point_in_f = {
+            .valid = true,
+            .value = static_cast<uint8_t>(target_temp_f)
+        };
     }
 
         // handle mode changes (OFF, HEAT, AUTO) by turning the POOL or SPA circuit on/off
@@ -198,7 +201,10 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
         for (auto heat_src : magic_enum::enum_values<network_heat_src_t>()) {
             if (strcasecmp(preset_str, enum_str(heat_src)) == 0) {
-                thermos_new[thermo_idx].heat_src = heat_src;
+                thermos_new[thermo_idx].heat_src = {
+                    .valid = true,
+                    .value = heat_src
+                };
                 break;
             }
         }
@@ -209,7 +215,10 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         
         if (new_preset == climate::CLIMATE_PRESET_NONE) {
             ESP_LOGV(TAG, "HA requests %s to NONE", enum_str(thermo_typ));
-            thermos_new[thermo_idx].heat_src = network_heat_src_t::NONE;
+            thermos_new[thermo_idx].heat_src = {
+                .valid = true,
+                .value = network_heat_src_t::NONE
+            };
         }
     }        
 
@@ -220,14 +229,14 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
     if (thermos_changed) {
 
         auto combined_heat_src = _combine_heat_sources(
-            thermos_new[thermo_pool_idx].heat_src,
-            thermos_new[thermo_spa_idx].heat_src);
+            thermos_new[thermo_pool_idx].heat_src.value,
+            thermos_new[thermo_spa_idx].heat_src.value);
 
         network_msg_t msg = {};  // prevents -Wmissing-field-initializers
         msg.typ = network_msg_typ_t::CTRL_HEAT_SET;
         msg.u.ctrl_heat_set = {
-            .pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f,
-            .spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f,
+            .pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value,
+            .spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value,
             .combined_heat_src = combined_heat_src,
             .UNKNOWN = 0
         };

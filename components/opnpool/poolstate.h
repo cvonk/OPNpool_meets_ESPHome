@@ -51,6 +51,21 @@ namespace opnpool {
     // forward declarations (to avoid circular dependencies)
 struct ipc_t;
 
+struct poolstate_bool_t {
+    bool valid;
+    bool value;
+};
+
+struct poolstate_uint8_t {
+    bool    valid;
+    uint8_t value;
+};
+
+struct poolstate_uint16_t {
+    bool     valid;
+    uint16_t value;
+};
+
 struct poolstate_time_t {
     bool     valid;
     uint8_t  hour;
@@ -80,17 +95,21 @@ struct poolstate_system_t {
     poolstate_version_t  version;
 };
 
+struct poolstate_heat_src_t {
+    bool               valid;
+    network_heat_src_t value;
+};
+
 enum class poolstate_thermo_typ_t : uint8_t {
     POOL = 0,
     SPA  = 1
 };
 
 struct poolstate_thermo_t {
-    bool                 valid;          // 2BD: make more granular
-    uint8_t              temp_in_f;      // from ctrl_state_bcast, ctrl_heat_resp
-    uint8_t              set_point_in_f; // from ctrl_heat_resp, ctrl_heat_set
-    network_heat_src_t   heat_src;       // from ctrl_state_bcast, ctrl_heat_resp, ctrl_heat_set
-    bool                 heating;        // from ctrl_state_bcast
+    poolstate_uint8_t     temp_in_f;      // from ctrl_state_bcast, ctrl_heat_resp
+    poolstate_uint8_t     set_point_in_f; // from ctrl_heat_resp, ctrl_heat_set
+    poolstate_heat_src_t  heat_src;       // from ctrl_state_bcast, ctrl_heat_resp, ctrl_heat_set
+    poolstate_bool_t      heating;        // from ctrl_state_bcast
 };
 
 struct poolstate_sched_t {
@@ -103,21 +122,6 @@ struct poolstate_sched_t {
 enum class poolstate_temp_typ_t : uint8_t {
     AIR   = 0,
     WATER = 1
-};
-
-struct poolstate_bool_t {
-    bool valid;
-    bool value;
-};
-
-struct poolstate_uint8_t {
-    bool    valid;
-    uint8_t value;
-};
-
-struct poolstate_uint16_t {
-    bool     valid;
-    uint16_t value;
 };
 
 struct poolstate_circuit_t {
