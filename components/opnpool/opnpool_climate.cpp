@@ -144,8 +144,8 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
     poolstate_t state;
     parent_->get_opnpool_state()->get(&state);
-    poolstate_thermo_t thermos_old[enum_count<poolstate_thermo_typ_t>()];
-    poolstate_thermo_t thermos_new[enum_count<poolstate_thermo_typ_t>()];
+    poolstate_thermo_valid_t thermos_old[enum_count<poolstate_thermo_typ_t>()];
+    poolstate_thermo_valid_t thermos_new[enum_count<poolstate_thermo_typ_t>()];
     memcpy(thermos_old, state.thermos, sizeof(thermos_old));
     memcpy(thermos_new, state.thermos, sizeof(thermos_new));
 

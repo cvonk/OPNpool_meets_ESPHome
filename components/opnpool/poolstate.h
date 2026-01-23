@@ -51,33 +51,33 @@ namespace opnpool {
     // forward declarations (to avoid circular dependencies)
 struct ipc_t;
 
-struct poolstate_time_t {
+struct poolstate_time_valid_t {
     bool     valid;
     uint8_t  hour;
     uint8_t  minute;
 };
 
-struct poolstate_date_t {
+struct poolstate_date_valid_t {
     bool      valid;
     uint8_t   day;
     uint8_t   month;
     uint16_t  year;
 };
 
-struct poolstate_tod_t {
-    poolstate_date_t  date;
-    poolstate_time_t  time;
+struct poolstate_tod_valid_t {
+    poolstate_date_valid_t  date;
+    poolstate_time_valid_t  time;
 };
 
-struct poolstate_version_t {
+struct poolstate_version_valid_t {
     bool     valid;
     uint8_t  major;
     uint8_t  minor;
 };
 
-struct poolstate_system_t {
-    poolstate_tod_t      tod;
-    poolstate_version_t  version;
+struct poolstate_system_valid_t {
+    poolstate_tod_valid_t      tod;
+    poolstate_version_valid_t  version;
 };
 
 enum class poolstate_thermo_typ_t : uint8_t {
@@ -85,7 +85,7 @@ enum class poolstate_thermo_typ_t : uint8_t {
     SPA  = 1
 };
 
-struct poolstate_thermo_t {
+struct poolstate_thermo_valid_t {
     bool                 valid;          // 2BD: make more granular
     uint8_t              temp_in_f;      // from ctrl_state_bcast, ctrl_heat_resp
     uint8_t              set_point_in_f; // from ctrl_heat_resp, ctrl_heat_set
@@ -93,7 +93,7 @@ struct poolstate_thermo_t {
     bool                 heating;        // from ctrl_state_bcast
 };
 
-struct poolstate_sched_t {
+struct poolstate_sched_valid_t {
     bool      valid;
     bool      active;
     uint16_t  start;
@@ -105,38 +105,47 @@ enum class poolstate_temp_typ_t : uint8_t {
     WATER = 1
 };
 
-struct poolstate_temp_t {
-    bool    valid;
-    uint8_t temp;
-};
-
-struct poolstate_mode_t {
-    bool valid;
-    bool value;  // IntelliSense flags this incorrectly
-};
-
-struct poolstate_circuit_info_t {
+struct poolstate_bool_valid_t {
     bool valid;
     bool value;
 };
 
-struct poolstate_circuit_t {
-    poolstate_circuit_info_t active;
-    poolstate_circuit_info_t delay;
+struct poolstate_uint8_valid_t {
+    bool    valid;
+    uint8_t value;
 };
 
-struct poolstate_pump_t {
+struct poolstate_uint16_valid_t {
+    bool     valid;
+    uint16_t value;
+};
+
+struct poolstate_circuit_valid_t {
+    poolstate_bool_valid_t active;
+    poolstate_bool_valid_t delay;
+};
+
+struct poolstate_pump_mode_valid_t {
+    bool                valid;
+    network_pump_mode_t value;
+};
+
+struct poolstate_pump_state_valid_t {
     bool                 valid;
-    poolstate_time_t     time;    // pump_status_resp
-    network_pump_mode_t  mode;    // pump_status_resp, pump_mode
-    bool                 running; // pump_status_resp, pump_run
-    network_pump_state_t state;   // pump_status_resp
-    uint16_t             power;   // pump_status_resp
-    uint16_t             flow;    // pump_status_resp
-    uint16_t             speed;   // pump_status_resp
-    uint16_t             level;   // pump_status_resp
-    uint8_t              error;   // pump_status_resp
-    uint8_t              timer;   // pump_status_resp
+    network_pump_state_t value;
+};
+
+struct poolstate_pump_valid_t {
+    poolstate_time_valid_t       time;     // from pump_status_resp
+    poolstate_pump_mode_valid_t  mode;     // from pump_status_resp, pump_mode
+    poolstate_bool_valid_t       running;  // from pump_status_resp, pump_run
+    poolstate_pump_state_valid_t state;    // from pump_status_resp
+    poolstate_uint16_valid_t     power;    // from pump_status_resp 
+    poolstate_uint16_valid_t     flow;     // from pump_status_resp
+    poolstate_uint16_valid_t     speed;    // from pump_status_resp
+    poolstate_uint16_valid_t     level;    // from pump_status_resp
+    poolstate_uint8_valid_t      error;    // from pump_status_resp
+    poolstate_uint8_valid_t      timer;    // from pump_status_resp
 };
 
 enum class poolstate_chlor_status_t : uint8_t {
@@ -149,23 +158,21 @@ enum class poolstate_chlor_status_t : uint8_t {
     OTHER      = 6
 };
 
-struct poolstate_chlor_t {
-    struct poolstate_chlor_name_t {
-        bool     valid;
-        char     value[sizeof(network_msg_chlor_name_str_t) + 1]; // from chlor_name_resp
-    } name;
-    struct poolstate_chlor_level_t {
-        bool     valid;
-        uint8_t  value;   // from chlor_level_set
-    } level;
-    struct poolstate_chlor_salt_t {
-        bool     valid;
-        uint16_t value;   // from chlor_level_resp, chlor_name_resp
-    } salt;
-    struct poolstate_chlor_status_info_t {
-        bool     valid;
-        poolstate_chlor_status_t value;  // from chlor_level_resp
-    } status;
+struct poolstate_chlor_status_valid_t {
+    bool                     valid;
+    poolstate_chlor_status_t value;  // from chlor_level_resp
+};
+
+struct poolstate_chlor_name_valid_t {
+    bool     valid;
+    char     value[sizeof(network_msg_chlor_name_str_t) + 1];
+};
+
+struct poolstate_chlor_valid_t {
+    poolstate_chlor_name_valid_t   name;    // from chlor_name_resp
+    poolstate_uint8_valid_t        level;   // from chlor_level_set
+    poolstate_uint16_valid_t       salt;    // from chlor_level_resp, chlor_name_resp
+    poolstate_chlor_status_valid_t status;  // from chlor_level_resp
 };
 
 /**
@@ -191,16 +198,14 @@ struct poolstate_chlor_t {
  * @var chlor    Chlorinator status (name, level, salt, status)
  */
 struct poolstate_t {
-    poolstate_system_t   system;
-    poolstate_pump_t     pump;
-    uint8_t              safe1[40];  // padding to align to 4 bytes
-    poolstate_chlor_t    chlor;
-    uint8_t              safe2[40];  // padding to align to 4 bytes
-    poolstate_circuit_t  circuits[enum_count<network_pool_circuit_t>()];
-    poolstate_mode_t     modes[enum_count<network_pool_mode_bits_t>()];
-    poolstate_thermo_t   thermos[enum_count<poolstate_thermo_typ_t>()];
-    poolstate_temp_t     temps[enum_count<poolstate_temp_typ_t>()];
-    poolstate_sched_t    scheds[enum_count<network_pool_circuit_t>()];
+    poolstate_system_valid_t   system;
+    poolstate_pump_valid_t     pump;
+    poolstate_chlor_valid_t    chlor;
+    poolstate_circuit_valid_t  circuits[enum_count<network_pool_circuit_t>()];
+    poolstate_bool_valid_t     modes[enum_count<network_pool_mode_bits_t>()];
+    poolstate_thermo_valid_t   thermos[enum_count<poolstate_thermo_typ_t>()];
+    poolstate_uint8_valid_t    temps[enum_count<poolstate_temp_typ_t>()];
+    poolstate_sched_valid_t    scheds[enum_count<network_pool_circuit_t>()];
 };
 
 enum class poolstate_elem_typ_t : uint8_t {
@@ -227,41 +232,19 @@ class PoolState {
 
     public:
         PoolState(OpnPool * const parent) : parent_{parent} {
-            poolstate_sanity_check(&last_, "before init memset");  /// doesn't trigger
             memset(&last_, 0, sizeof(poolstate_t));
-            poolstate_sanity_check(&last_, "after init memset");  // doesn't trigger
         }
         ~PoolState() {}
 
-        void poolstate_sanity_check(poolstate_t const * const state, char const * const func) {
-            for (uint8_t ii=0; ii < ARRAY_SIZE(state->safe1); ii++) {
-                if (state->safe1[ii] != 0) {
-                    ESP_LOGE("poolstate", "%s non-0 value in safe1[%02u]: 0x%02X", func, ii, state->safe1[ii]);
-                    return;
-                }
-            }
-            for (uint8_t ii=0; ii < ARRAY_SIZE(state->safe2); ii++) {
-                if (state->safe2[ii] != 0) {
-                    ESP_LOGE("poolstate", "%s non-0 value in safe2[%02u]: 0x%02X", func, ii, state->safe2[ii]);
-                    return;
-                }
-            }
-        }
-
         void set(poolstate_t const * const state) {
-            poolstate_sanity_check(&last_, "before set memcpy"); // 1ST THAT TRIGGERS
             memcpy(&last_, state, sizeof(poolstate_t));
-            poolstate_sanity_check(&last_, "after set memcpy");
         }
         esp_err_t get(poolstate_t * const state) {
-            poolstate_sanity_check(&last_, "before get memcpy");
             memcpy(state, &last_, sizeof(poolstate_t));
-            poolstate_sanity_check(state, "after get memcpy");
             return ESP_OK;
         }
 
         bool has_changed(poolstate_t const * const state) {
-            poolstate_sanity_check(&last_, "before get memcmp");
             return memcmp(&last_, state, sizeof(poolstate_t)) != 0;
         }
 

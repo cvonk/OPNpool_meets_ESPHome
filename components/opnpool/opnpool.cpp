@@ -72,16 +72,26 @@ _dump_if(EntityT * const entity)
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
 inline void 
-_publish_if(EntityT * const entity, ValueT const value)
+_publish_if(EntityT * const entity, ValueT const base)
 {
-    if (entity != nullptr) {
-        entity->publish_value_if_changed(value);
+    if (entity != nullptr && base.valid) {
+        entity->publish_value_if_changed(base.value);
+    }
+}
+
+    // helper to only publish if entity exists
+template<typename EntityT, typename ValueT>
+inline void 
+_publish_enum_if(EntityT * const entity, ValueT const base)
+{
+    if (entity != nullptr && base.valid) {
+        entity->publish_value_if_changed(enum_str(base.value));
     }
 }
 
     // helper to publish scheduled times if entity exists
 inline void
-_publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const * const sched)
+_publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_valid_t const * const sched)
 {
     if (sensor == nullptr || !sched->valid) {
         return;
@@ -97,7 +107,7 @@ _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const *
 
     // helper to publish date and time if entity exists
 inline void
-_publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t const * const tod)
+_publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_valid_t const * const tod)
 {
     if (sensor == nullptr || tod == nullptr || !tod->time.valid) {
         return;
@@ -117,7 +127,7 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
 
     // helper to publish version if entity exists
 inline void
-_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const version)
+_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_valid_t const * const version)
 {
     if (sensor != nullptr && version != nullptr) {
         static char fw_str[8];  // 2.80\0
@@ -272,7 +282,7 @@ OpnPool::update_climates(const poolstate_t * const state)
         auto const water_temp = &state->temps[enum_index(poolstate_temp_typ_t::WATER)];
         if (!water_temp->valid) continue;
 
-        float const current_temp_f = water_temp->temp;
+        float const current_temp_f = water_temp->value;
         float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
         float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
 
@@ -322,14 +332,14 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
 {
     auto * const air_temp = this->sensors_[static_cast<uint8_t>(sensor_id_t::AIR_TEMPERATURE)];
     if (air_temp != nullptr) {
-        float const air_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].temp;
+        float const air_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)].value;
         float air_temp_c = fahrenheit_to_celsius(air_temp_f);
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp->publish_value_if_changed(air_temp_c);    
     }
     auto * const water_temperature = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
     if (water_temperature != nullptr) {    
-        float const water_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].temp;
+        float const water_temp_f = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)].value;
         float water_temp_c = fahrenheit_to_celsius(water_temp_f);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature->publish_value_if_changed(water_temp_c);
@@ -353,11 +363,11 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
-        state->chlor.level.value
+        state->chlor.level
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  
-        state->chlor.salt.value
+        state->chlor.salt
     );
 }
 
@@ -370,19 +380,19 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)].value
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)].value
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)].value
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TIMEOUT)],           
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)].value
+        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]
     );
 }
 
@@ -397,21 +407,21 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SPA_SCHED)],
         &state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)]
     );
-    _publish_if(
+    _publish_enum_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_MODE)], 
-        enum_str(state->pump.mode)
+        state->pump.mode
     );    
-    _publish_if(
+    _publish_enum_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_STATE)],
-        enum_str(state->pump.state)
+        state->pump.state
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_NAME)], 
-        state->chlor.name.value
+        state->chlor.name
     );
-    _publish_if(
+    _publish_enum_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_STATUS)],
-        enum_str(state->chlor.status.value)
+        state->chlor.status
     );
     _publish_date_and_time_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SYSTEM_TIME)],
