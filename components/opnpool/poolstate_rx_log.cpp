@@ -277,7 +277,7 @@ _add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_
     cJSON * const item = _create_item(obj, key);
 
     for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), circuit->active);
+        cJSON_AddBoolToObject(item, enum_str(typ), circuit->active.value);
         circuit++;
     }
 }
@@ -288,7 +288,7 @@ _add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_c
     cJSON * const item = _create_item(obj, key);
     (void)item;
     for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), circuit->delay);
+        cJSON_AddBoolToObject(item, enum_str(typ), circuit->delay.value);
         circuit++;
     }
 }

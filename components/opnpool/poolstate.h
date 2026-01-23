@@ -106,19 +106,27 @@ enum class poolstate_temp_typ_t : uint8_t {
 };
 
 struct poolstate_temp_t {
+    bool    valid;
     uint8_t temp;
 };
 
 struct poolstate_mode_t {
+    bool valid;
     bool value;  // IntelliSense flags this incorrectly
 };
 
+struct poolstate_circuit_info_t {
+    bool valid;
+    bool value;
+};
+
 struct poolstate_circuit_t {
-    bool active;  // IntelliSense flags this incorrectly
-    bool delay;   // IntelliSense flags this incorrectly
+    poolstate_circuit_info_t active;
+    poolstate_circuit_info_t delay;
 };
 
 struct poolstate_pump_t {
+    bool                 valid;
     poolstate_time_t     time;
     network_pump_mode_t  mode;
     bool                 running;
@@ -171,7 +179,6 @@ struct poolstate_chlor_t {
  * @var chlor    Chlorinator status (name, level, salt, status)
  */
 struct poolstate_t {
-    bool                 valid;  // 2BD: this should be much more granular than a single bool
     poolstate_system_t   system;
     poolstate_pump_t     pump;
     uint8_t              safe1[40];  // padding to align to 4 bytes
@@ -233,28 +240,22 @@ class PoolState {
             poolstate_sanity_check(&last_, "before set memcpy"); // 1ST THAT TRIGGERS
             memcpy(&last_, state, sizeof(poolstate_t));
             poolstate_sanity_check(&last_, "after set memcpy");
-            last_.valid = true;
         }
         esp_err_t get(poolstate_t * const state) {
             poolstate_sanity_check(&last_, "before get memcpy");
-                // may not be valid, but at least it is initialized
-
-                memcpy(state, &last_, sizeof(poolstate_t));
+            memcpy(state, &last_, sizeof(poolstate_t));
             poolstate_sanity_check(state, "after get memcpy");
             return ESP_OK;
         }
 
         bool has_changed(poolstate_t const * const state) {
             poolstate_sanity_check(&last_, "before get memcmp");
-            if (!last_.valid) {  // redundant check
-                return true;
-            }   
             return memcmp(&last_, state, sizeof(poolstate_t)) != 0;
         }
 
     private:
         OpnPool * const parent_;
-        poolstate_t last_ = {};  // sets .valid to false as well
+        poolstate_t last_ = {};  // sets .valid bools to false as well
 };
 
 }  // namespace opnpool

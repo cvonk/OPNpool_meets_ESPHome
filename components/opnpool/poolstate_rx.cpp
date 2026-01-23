@@ -210,8 +210,9 @@ static void
 _update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].active = (bits & mask) != 0;
-        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active);
+        arr[ii].active.valid = true;
+        arr[ii].active.value = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active.value);
     }
 }
 
@@ -219,8 +220,9 @@ static void
 _update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].delay = (bits & mask) != 0;
-        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay);
+        arr[ii].delay.valid = true;
+        arr[ii].delay.value = (bits & mask) != 0;
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay.value);
     }
 }
 
@@ -229,6 +231,7 @@ static void
 _update_modes_from_bits(poolstate_mode_t * modes, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        modes[ii].valid = true;
         modes[ii].value = (bits & mask) != 0;
         ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
     }
@@ -285,7 +288,10 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
     }
 
     uint8_t const circuit_idx = msg->circuit_plus_1 - 1;
-    state->circuits[circuit_idx].active = msg->value;
+    state->circuits[circuit_idx].active = {
+        .valid = true,
+        .value = static_cast<bool>(msg->value)
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(circuit_idx);
@@ -366,8 +372,8 @@ _update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const
     _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
 
         // if both SPA and POOL bits are set, only SPA runs
-    if (circuits[spa_idx].active) {
-        circuits[pool_idx].active = false;
+    if (circuits[spa_idx].active.value) {
+        circuits[pool_idx].active.value = false;
     }
 
         // update circuits[].delay
@@ -381,24 +387,32 @@ static void
 _update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_thermo_t * const thermos, poolstate_circuit_t const * const circuits)
 {
         // update circuits.thermos (only update when the pump is running)
-    constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
-    constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
     constexpr uint8_t pool_therm_idx = enum_index(poolstate_thermo_typ_t::POOL);
     constexpr uint8_t spa_therm_idx  = enum_index(poolstate_thermo_typ_t::SPA);
     static_assert(pool_therm_idx < enum_count<poolstate_thermo_typ_t>(), "pool_therm_idx OOB");
     static_assert(spa_therm_idx < enum_count<poolstate_thermo_typ_t>(), "spa_therm_idx OOB");
+    poolstate_thermo_t * const pool_thermo = &thermos[pool_therm_idx];
+    poolstate_thermo_t * const spa_thermo  = &thermos[spa_therm_idx];
 
-    if (circuits[spa_circuit_idx].active) {
-        thermos[spa_therm_idx].temp_in_f = msg->pool_temp;
-    }
-    if (circuits[pool_circuit_idx].active) {
-        thermos[pool_therm_idx].temp_in_f = msg->pool_temp;
-    }
+    constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
+    constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
+    poolstate_circuit_info_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
+    poolstate_circuit_info_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
 
-    thermos[pool_therm_idx].heating  = _get_pool_heating_status(msg->combined_heat_status);
-    thermos[ spa_therm_idx].heating  = _get_spa_heating_status(msg->combined_heat_status);
-    thermos[pool_therm_idx].heat_src = _get_pool_heat_src(msg->combined_heat_srcs);
-    thermos[ spa_therm_idx].heat_src = _get_spa_heat_src(msg->combined_heat_srcs);
+        // this leaves a gap where the pump is not running, so we still update the temperature
+    if (spa_circuit->valid && spa_circuit->value) {
+        spa_thermo->temp_in_f = msg->pool_temp;
+    }
+    if (pool_circuit->valid && pool_circuit->value) {
+        pool_thermo->temp_in_f = msg->pool_temp;
+    }
+    pool_thermo->valid    = true;
+    pool_thermo->heating  = _get_pool_heating_status(msg->combined_heat_status);
+    pool_thermo->heat_src = _get_pool_heat_src(msg->combined_heat_srcs);
+
+    spa_thermo->valid    = true;
+    spa_thermo->heating  = _get_spa_heating_status(msg->combined_heat_status);
+    spa_thermo->heat_src = _get_spa_heat_src(msg->combined_heat_srcs);
 }
 
 static void
@@ -425,8 +439,14 @@ _update_temps(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const ms
     static_assert(air_idx < enum_count<poolstate_temp_typ_t>(), "size err for air_idx");
     static_assert(water_idx < enum_count<poolstate_temp_typ_t>(), "size err for water_idx");
 
-    temps[air_idx].temp = msg->air_temp;
-    temps[water_idx].temp = msg->water_temp;
+    temps[air_idx] = {
+        .valid = true,
+        .temp = msg->air_temp
+    };
+    temps[water_idx] = {
+        .valid = true,
+        .temp = msg->water_temp
+    };
 }
 
 /**
@@ -653,6 +673,7 @@ _pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg
     uint16_t const speed = ((uint16_t)msg->speed_hi << 8) | msg->speed_lo;
 
     state->pump = {
+        .valid   = true,
         .time    = {
             .valid  = true,
             .hour   = msg->clock_hr,

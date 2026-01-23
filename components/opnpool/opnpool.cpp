@@ -261,14 +261,18 @@ OpnPool::update_climates(const poolstate_t * const state)
 {
     for (auto climate_id : magic_enum::enum_values<climate_id_t>()) {
 
-        OpnPoolClimate *climate = this->climates_[enum_index(climate_id)];
+        OpnPoolClimate * const climate = this->climates_[enum_index(climate_id)];
         if (!climate) continue;
 
         auto const thermo_typ = climate->get_thermo_typ();
         auto const thermo = &state->thermos[enum_index(thermo_typ)];
+        if (!thermo->valid) continue;
 
             // temperatures
-        float const current_temp_f = state->temps[enum_index(poolstate_temp_typ_t::WATER)].temp;
+        auto const water_temp = &state->temps[enum_index(poolstate_temp_typ_t::WATER)];
+        if (!water_temp->valid) continue;
+        
+        float const current_temp_f = water_temp->temp;
         float const current_temp_c = fahrenheit_to_celsius(current_temp_f);
         float const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f);
 
@@ -276,8 +280,9 @@ OpnPool::update_climates(const poolstate_t * const state)
         uint8_t switch_idx = (thermo_typ == poolstate_thermo_typ_t::POOL)
                            ? enum_index(network_pool_circuit_t::POOL)
                            : enum_index(network_pool_circuit_t::SPA);
+        if (!state->circuits[switch_idx].active.valid) continue;
 
-        climate::ClimateMode mode = state->circuits[switch_idx].active
+        climate::ClimateMode mode = state->circuits[switch_idx].active.value
                                   ? climate::CLIMATE_MODE_HEAT
                                   : climate::CLIMATE_MODE_OFF;
 
@@ -304,7 +309,9 @@ OpnPool::update_switches(const poolstate_t * const state)
         if (!sw) continue;
 
         auto const circuit = switch_id_to_network_circuit(switch_id);
-        bool const is_active = state->circuits[enum_index(circuit)].active;
+        if (!state->circuits[enum_index(circuit)].active.valid) continue;   
+
+        bool const is_active = state->circuits[enum_index(circuit)].active.value;
 
         sw->publish_value_if_changed(is_active);
     }
