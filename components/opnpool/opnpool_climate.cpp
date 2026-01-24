@@ -53,6 +53,19 @@ _combine_heat_sources(network_heat_src_t pool, network_heat_src_t spa) {
     return static_cast<uint8_t>(enum_index(pool) | (enum_index(spa) << 2));
 }
 
+inline uint8_t
+_thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
+{
+    switch (thermo_typ) {
+        case poolstate_thermo_typ_t::POOL:
+            return enum_index(network_pool_circuit_t::POOL);
+        case poolstate_thermo_typ_t::SPA:
+            return enum_index(network_pool_circuit_t::SPA);
+        default:
+            ESP_LOGE(TAG, "Invalid thermo_typ: %d", static_cast<int>(thermo_typ));
+            return -1;  // invalid index, will cause out-of-bounds access if used
+    }
+}
 
 /**
  * @brief Dump the configuration and last known state of the climate entity.
@@ -149,12 +162,19 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
     memcpy(thermos_old, state.thermos, sizeof(thermos_old));
     memcpy(thermos_new, state.thermos, sizeof(thermos_new));
 
+        // the resulting network_msg references the heat_src and set_point_in_f value of 
+        // the other thermostat. make sure they're valid before proceeding
+    if (!thermos_new[thermo_pool_idx].heat_src.valid || !thermos_new[thermo_pool_idx].set_point_in_f.valid || 
+        !thermos_new[thermo_spa_idx ].heat_src.valid || !thermos_new[thermo_spa_idx ].set_point_in_f.valid) {
+        return; // bail out (assuming user will try again later)
+    }
+
         // handle target temperature changes
 
     if (call.get_target_temperature().has_value()) {
 
-        float const target_temp_c = *call.get_target_temperature();
-        float const target_temp_f = _celsius_to_fahrenheit(target_temp_c);
+        auto const target_temp_c = *call.get_target_temperature();
+        auto const target_temp_f = _celsius_to_fahrenheit(target_temp_c);
         ESP_LOGV(TAG, "HA requests %s to %.1f°F", enum_str(thermo_typ), target_temp_f);
 
         thermos_new[thermo_idx].set_point_in_f = {
@@ -170,18 +190,17 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         climate::ClimateMode const requested_mode = *call.get_mode();
         
         ESP_LOGV(TAG, "HA requests %s to mode=%u", enum_str(thermo_typ), static_cast<int>(requested_mode));
-        uint8_t switch_idx = (thermo_idx == thermo_pool_idx) 
-                           ? enum_index(switch_id_t::POOL)
-                           : enum_index(switch_id_t::SPA);
-        
+
+        auto circuit_idx = _thermo_typ_to_pool_circuit_idx(thermo_typ);
+
         switch (requested_mode) {
             case climate::CLIMATE_MODE_OFF:  // mode 0
-                ESP_LOGVV(TAG, "Turning off switch[%u]", switch_idx);
-                parent_->get_switch(switch_idx)->write_state(false);
+                ESP_LOGVV(TAG, "Turning off switch[%u]", circuit_idx);
+                parent_->get_switch(circuit_idx)->write_state(false);
                 break;                
             case climate::CLIMATE_MODE_HEAT:  // mode 3
-                ESP_LOGVV(TAG, "Turning on switch[%u]", switch_idx);
-                parent_->get_switch(switch_idx)->write_state(true);
+                ESP_LOGVV(TAG, "Turning on switch[%u]", circuit_idx);
+                parent_->get_switch(circuit_idx)->write_state(true);
                 break;
             default:
                 ESP_LOGW(TAG, "Unsupported requested_mode: %d", static_cast<int>(requested_mode));

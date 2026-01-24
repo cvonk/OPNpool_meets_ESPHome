@@ -1059,7 +1059,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = // msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
+    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_SET ||
                           msg->typ == network_msg_typ_t::PUMP_CTRL_RESP ||
