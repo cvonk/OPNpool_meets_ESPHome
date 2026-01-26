@@ -75,17 +75,17 @@ external_components:
     components: [ opnpool ]
 
 logger:
-  level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
-  initial_level: WARN  # only show up to WARN globally
+  level: VERBOSE          # build includes ESP_LOGx up to VERBOSE
+  initial_level: WARN     # only show up to WARN globally
   logs:
-    poolstate_rx: VERBOSE
+    poolstate_rx: VERBOSE # show decoded messages
 
 opnpool:
   id: opnpool_1
   RS-485:
-    rx_pin: 25            # GPIO25
-    tx_pin: 26            # GPIO26
-    flow_control_pin: 27  # GPIO27
+    tx_pin: 21            # default GPIO21
+    rx_pin: 22            # default GPIO22
+    flow_control_pin: 23  # default GPIO23
 ```
 
 Specify your own secrets in `secrets.yaml`
@@ -138,7 +138,7 @@ Add it, and specify your API key.  Name the device and assign it an area. You sh
 At the core this project is an ESP32 module and a 3.3 Volt RS-485 adapter. You can
 breadboard this using:
 
-* Any ESP32 module that has an USB connector and `GPIO#25` to `GPIO#27` available (such as   the Wemos LOLIN D32).
+* Any ESP32 module that has an USB connector and three GPIO pins available.
 * Any "Max485 Module TTL". To make it 3.3 Volt compliant, change the chip to a `MAX3485CSA+`. While you're at it, you may as well remove the 10 kΩ pullup resistors (typically labeled `R1` to `R4`).
 * A piece of Cat5 ethernet cable to connect to the pool controller.
 
@@ -189,49 +189,48 @@ In Home Assistant the entities should populate, and show on your favorite Lovela
 
 ## PCB
 
-For a robust and weatherproof installation, we recommend building a custom printed circuit board (PCB) to house the ESP32 module, RS-485 adapter, and DC/DC converter. This approach ensures reliable connections, easier mounting, and long-term durability—especially for outdoor or poolside environments.
+For a robust and weatherproof installation, we recommend building a custom printed circuit board (PCB) to house the ESP32-C6 module, RS-485 adapter, and DC/DC converter. This approach ensures reliable connections, easier mounting, and long-term durability—especially for outdoor or poolside environments.
 
 ![Lovelace_view](assets/media/opnpool-proto_resize.jpg){: style="display: block; margin-left: auto; margin-right: auto; width:500px}
+
+Note that the photo above is from a rev 1 board.
 
 
 ### Schematic
 
-The hardware design features a buck converter that supplies 5V to the battery connector on the LOLIN D32 daughterboard. Powering through the battery input helps prevent issues when the board is also powered via USB.
+The hardware design features a buck converter that supplies 5V to the `5V0` pin on the ESP32-C6 DevKitC-1-N8 daughterboard. The scotty diode prevent issues when the board is also powered via USB.
 
-![Power schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-power.svg)
+![Schematic](assets/media/schematic-r4.svg)
 
-The main data path runs between the RS-485 connector and the ESP32 on the LOLIN D32. An optional termination resistor is included to minimize signal reflections on the RS-485 bus. For advanced users, a JTAG header is provided for debugging, as detailed in the design documentation.
-
-![Logic schematic](https://coertvonk.com/wp-content/uploads/opnpool-hardware-schematic-logic.svg)
+The main data path runs between the RS-485 connector and the ESP32-C6 on the DevKitC-1-N8. An optional termination resistor is included to minimize signal reflections on the RS-485 bus.
 
 ### Board Layout
 
 The entire schematic fits comfortably on a compact two-layer PCB. The board was designed using the free version of AutoDesk EAGLE, and all source files — including layout and schematics — are available in the [hardware directory](tree/main/hardware) of this repository.
 
-![Board Layout](https://coertvonk.com/wp-content/uploads/opnpool-hardware-layout.svg){: style="display: block; margin-left: auto; margin-right: auto;}
+![Board Layout](assets/media/r4-brd-top.png){: style="display: block; margin-left: auto; margin-right: auto;}
 
 ### Bill of materials
 
-| Name        | Description                                             | Suggested mfr/part#        |
-|-------------|---------------------------------------------------------|----------------------------|
-| PBC r3      | Printed circuit board                                   | OSHPark                    |
-| Enclosure   | 158x90x60mm clear plastic project enclosure, IP65       | *white label*              |
-| LOLIN D32   | Wemos LOLIN D32, based on ESP-WROOM-32 4MB              | Wemos LOLIN-D32            |
-| RS-485_CONN  | Plug+socket, male+female, 5-pin, 16mm aviation, IP68    | SD 16                      | 
-| MAX3485     | Maxim MAX3485CSA, RS-485/UART interface IC 3.3V, 8-SOIC | Analog-Devices MAX3490ECSA |
-| DC1         | DC/DC Converter R-78E5.0-0.5, 7-28V to 5V, 0.5A, 3-SIP  | RECOM-Power R-78E5.0-0.5   |
-| D1          | Schottky Diode, 1N5818, DO-41                           | ON-Semiconductor 1N5818RLG |
-| LED1        | LED, Green Clear 571nm, 1206                            | Lite-On LTST-C150KGKT      |
-| LED2        | LED, Amber Clear 602nm, 1206                            | Lite-On LTST-C150AKT       |
-| C1, C2      | Capacitor, 10 µF, 25 V, multi-layer ceramic, 0805       | KEMET C0805C106K3PACTU     |
-| C3          | Capacitor, 0.1 µF, 6.3 V, multi-layer ceramic, 0805     | KEMET C0805C104M3RACTU     |
-| R1, R2      | Resistor, 68 Ω, 1/8 W, 0805                             | YAGEO RC0805FR-0768RL      |
-| R3          | Not stuffed, resistor, 120 Ω, 1/4 W, 0805               | KAO SG73S2ATTD121J         |
-| RS-485-TERM  | Fixed terminal block, 4-pin, screwless, 5 mm pitch      | Phoenix-Contact 1862291    |
-| SW1         | Tactile Switch, 6x6mm, through hole                     | TE-Connectivity 1825910-4  |
-| PCB Screws  | Machine screw, #6-32 x x 3/16", panhead                 | Keystone-Electronics 9306  |
-| CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head              | Essentra 50M020040D016     |
-| CONN Nuts   | Hex nut, M2-0.4, nylon                                  | Essentra 04M020040HN       |
+| Name        | Description                                              | Suggested mfr/part#        | Price paid
+|-------------|----------------------------------------------------------|----------------------------|-----------
+| PBC r4      | Printed circuit board                                    | OSHPark                    | [$9.43](https://oshpark.com/)
+| Enclosure   | 158x90x60mm ABS Plastic Junction Box, IP65               | *white label*              | [$9.81](https://www.harfington.com/products/p-1159792)
+| RS-485_CONN | 5P Plug+socket, 5-pin, 16mm aviation, IP68               | SP16 5P                    | [$3.98](https://www.aliexpress.us/item/2251832722757291.html)
+| RS-485-TERM | Fixed terminal block, 4-pin, screwless, 5 mm pitch       | Phoenix-Contact 1862437    | [$2.02](https://www.digikey.com/en/products/detail/phoenix-contact/1862437/6605421)
+| ESP32-C6 DevKitC-1-N8 | ESP32-C6 dev board with 8MB flash, based on ESP32-C6-WROOM | ESP32-C6 DevKitC-1-N8      | [$9.00](https://www.digikey.com/en/products/detail/espressif-systems/ESP32-C6-DEVKITC-1-N8/17728861)
+| MAX3485     | Maxim MAX3485CSA, RS-485/UART interface IC 3.3V, 8-SOIC  | Analog-Devices MAX3485CSA+T | [$5.64](https://www.digikey.com/en/products/detail/analog-devices-inc-maxim-integrated/MAX3485CSA-T/1703654)
+| DC1         | DC/DC Converter R-78E5.0-0.5, 7-28V to 5V, 0.5A, 3-SIP   | RECOM-Power R-78E5.0-0.5   | [$3.30](https://www.digikey.com/en/products/detail/recom-power/R-78E5-0-0-5/2834904?s=N4IgTCBcDaIEoFEDCB5AsgWgAoHsDuApgE4AEcGA7ABwICsAdAAwaP20gC6AvkA)
+| D1, D2      | Schottky Diode, 1N5818, 30V, 1A, DO-41                   | Diodes Incorporated 1N5818-T | [$0.30](https://www.digikey.com/en/products/detail/diodes-incorporated/1N5818-T/22054)
+| LED1        | LED, Green Clear 571nm, 1206                             | Lite-On LTST-C150KGKT       | [$0.15](https://www.digikey.com/en/products/detail/diodes-incorporated/1N5818-T/22054)
+| LED2        | LED, Amber Clear 602nm, 1206                             | Lite-On LTST-C150AKT       | [$0.15](http2s://www.digikey.com/en/products/detail/liteon/LTST-C150AKT/269213?s=N4IgTCBcDaIDIEsAuBTAtAeQHYAI4BUBlfNAYQEYBWABgEEBpfEAXQF8g)
+| C1, C2      | Capacitor, 10 µF, 25 V, multi-layer ceramic, 0805        | KEMET C0805C106K3PACTU     | [$0.22](https://www.digikey.com/en/products/detail/kemet/C0805C106K3PACTU/5267604?s=N4IgTCBcDaINIFECyCAqACAwgBgBzYFZMBGbANjgGYAFAQU1QFUQBdAXyA)
+| C3          | Capacitor, 0.1 µF, 6.3 V, multi-layer ceramic, 0805      | KEMET C0805C104M3RACTU     | [$0.12](https://www.digikey.com/en/products/detail/kemet/C0805C104M3RACTU/2211748?s=N4IgTCBcDaINIFECyCAqACAwgBgBzYFZMBGbAFiQGYAlAQU1QFUQBdAXyA)
+| R1, R2      | Resistor, 68 Ω, 1/8 W, 0805                              | YAGEO RC0805FR-0768RL      | [$0.20](https://www.digikey.com/en/products/detail/yageo/RC0805FR-0768RL/728097?s=N4IgTCBcDaIJoEEDiBRA8gAgEoGEAMAHHgKwBiWAtHgOwBsBWAMiALoC%2BQA)
+| R3          | Not stuffed, resistor, 120 Ω, 1/4 W, 0805                | KAO SG73S2ATTD121J         | [$0.00](https://www.digikey.com/en/products/detail/koa-speer-electronics-inc/RK73B2ATTD121J/10236600)
+| PCB Screws  | Machine screw, #6-32 x x 3/16", panhead                  | Keystone-Electronics 9306  | [$0.10](https://www.digikey.com/en/products/detail/keystone-electronics/9306/2746085?s=N4IgjCBcpgTB0QGMoDMCGAbAzgUwDQgD2UA2iLAAwCsIAuoQA4AuUIAyswE4CWAdgHMQAX2GFYZEAGlcAT2zMifXAFoAoplxJuSnkmwACAJwBmSgDZ6woA)
+| CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head               | Essentra 50M020040D016     | [$0.28](https://www.digikey.com/en/products/detail/essentra-components/50M020040D016/11639297)
+| CONN Nuts   | Hex nut, M2-0.4, nylon                                   | Essentra 04M020040HN       | [$0.15](https://www.digikey.com/en/products/detail/essentra-components/04M020040HN/9677098)
 
 ## Troubleshooting
 
@@ -262,11 +261,11 @@ logger:
     enum_helpers: WARN
 ```
 
-For the `logger` component, it is recommended to use the following levels: `WARN`, which shows only warnings and errors; `INFO`, which includes informational messages such as configuration details, warnings, and errors; and `VERBOSE`, which provides very detailed logs, info, warnings, and errors. Be careful not to enable too much logging, as excessive output can negatively impact the connection between Home Assistant and the ESP32.
+For the `logger` component, it is recommended to use the following levels: `WARN`, which shows only warnings and errors; `INFO`, which includes informational messages such as configuration details, warnings, and errors; and `VERBOSE`, which provides very detailed logs, info, warnings, and errors. Be careful not to enable too much logging, as excessive output can negatively impact the connection between Home Assistant and the ESP32-C6.
 
 ### Decoding Stack Traces
 
-If your ESP32 crashes and you notice stack traces in the serial log, you can simplify debugging by enabling ESPHome's stack trace decoder. With this feature, exception addresses are automatically translated into human-readable function names and line numbers within your logs.
+If your ESP32-C6 crashes and you notice stack traces in the serial log, you can simplify debugging by enabling ESPHome's stack trace decoder. With this feature, exception addresses are automatically translated into human-readable function names and line numbers within your logs.
 
 To activate the stack trace decoder, add the following lines to your YAML configuration:
 
@@ -275,10 +274,10 @@ debug:
   update_interval: 5s  # for exception decoding in logs
 ```
 
-> **Tip:** If your ESP32 crashes, detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
+> **Tip:** Detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
 
 
 #
 I hope this project brings you joy.  Keep in touch through the dicussion forum.
 
-[![Coert](assets/media/coert.svg)]
+![Coert](assets/media/coert.svg)

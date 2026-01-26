@@ -68,12 +68,15 @@ The `tasks.json` file provides ready-made build and upload tasks for Visual Stud
 Common Shortcuts:
 
 - **Build:** Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (or <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> on Mac) to build the project.
-- **Compile & Upload:** Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome Upload" to compile and upload firmware.
-- **View Logs:** Open the Command Palette and select "Run Task" → "ESPHome Monitor" to view device logs in real time.
+- **Compile & Upload:** Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome Upload opnpool-1" to compile and upload firmware.
+- **Clean:** Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome Clean opnpool-1" to clean the build dir.
+- **View Logs:** Open the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>), then select "Run Task" → "ESPHome Logs opnpool-1" to clean the build dir.
 
 ![VSCode_ide](assets/media/VSCode-ide.png){: style="display: block; margin-left: auto; margin-right: auto; width:500px;}
 
-## JTAG debugging
+## JTAG debugging (on &le; r3 boards)
+
+> On &ge; r4 boards, the JTAG debugging is build-in to the newer ESP32-C6 module. I just haven't tried this yet.
 
 While traditional `ESP_LOGx` logging is useful, it leads to lengthy edit, compile, and debug cycles. The JTAG (Joint Test Action Group) hardware interface, combined with the GNU Debugger (GDB), gives you direct, real-time access to your ESP32’s internal state. This enables true source-level C++ debugging: you can set breakpoints, inspect call stacks, monitor local variables, and use watchpoints interactively. Instead of relying on print statements, you can pause execution at any point and inspect any variable or memory location instantly.
 

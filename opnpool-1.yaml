@@ -1,5 +1,4 @@
 # For better development experience: in VS Code, install the ESPHome extension.
-#
 # Compile with ctrl-shift-b, or on mac use cmd-shift-b.  
 # The `tasks.json` file defines the build tasks. It will map the compile
 # pathnames back from the build directory to the project directory.
@@ -10,25 +9,17 @@
 
 substitutions:
   device_name: opnpool-1
-  friendly_name: "OPNpool meets ESPHome"
+  friendly_name: "OPNpool meets ESPHome esp32c6"
   description: "External component, see https://github.com/cvonk/OPNpool_meets_ESPHome"
 
 esphome:
   name: ${device_name}
   comment: ${description}
   friendly_name: ${friendly_name}
-  #platformio_options:
-  #  monitor_filters:
-  #    - esp32_exception_decoder
-  #  build_flags:
-  #    - -fmax-errors=5
-  #    - -DMAGIC_ENUM_RANGE_MIN=0
-  #    - -DMAGIC_ENUM_RANGE_MAX=256      
-
 
 esp32:
-  variant: ESP32
-  board: esp32dev
+  variant: esp32c6          # or esp32    for <= r3 boards
+  board: esp32-c6-devkitc-1 # or esp32dev for <= r3 boards
   framework:
     type: esp-idf
 
@@ -94,11 +85,17 @@ external_components:
 opnpool:
   id: opnpool_1
 
-  # RS485 configuration
+  # RS485 configuration for >= r4 boards
   rs485:
-    rx_pin: 25            # default 25 (GPIO25)
-    tx_pin: 26            # default 26 (GPIO26)
-    flow_control_pin: 27  # default 27 (GPIO27)
+    tx_pin: 21            # default 21 (GPIO21)
+    rx_pin: 22            # default 22 (GPIO22)
+    flow_control_pin: 23  # default 23 (GPIO23)
+
+  ## RS485 configuration for <= r3 boards
+  #rs485:
+  #  tx_pin: 26            # default 21 (GPIO21)
+  #  rx_pin: 25            # default 22 (GPIO22)
+  #  flow_control_pin: 27  # default 23 (GPIO23)
 
   # climate thermostats
   pool_climate:

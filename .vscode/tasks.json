@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "ESPHome Build",
+            "label": "ESPHome Build opnpool-1",
             "type": "shell",
             "command": "esphome",
             "args": [
@@ -38,7 +38,7 @@
             }
         },
         {
-            "label": "ESPHome Upload",
+            "label": "ESPHome Upload opnpool-1",
             "type": "shell",
             "command": "esphome",
             "args": [
@@ -64,7 +64,7 @@
             }
         },
         {
-            "label": "ESPHome Clean",
+            "label": "ESPHome Clean opnpool-1",
             "type": "shell",
             "command": "esphome",
             "args": [
@@ -76,7 +76,7 @@
             }
         },
         {
-            "label": "ESPHome Logs",
+            "label": "ESPHome Logs opnpool-1",
             "type": "shell",
             "command": "esphome",
             "args": [

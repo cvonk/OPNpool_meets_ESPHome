@@ -118,9 +118,9 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(): cv.declare_id(OpnPool),
     # RS485 settings (required, but with defaults)
     cv.Optional(CONF_RS485, default={}): cv.Schema({
-        cv.Optional(CONF_RS485_RX_PIN, default=25): cv.int_,
-        cv.Optional(CONF_RS485_TX_PIN, default=26): cv.int_,
-        cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=27): cv.int_,
+        cv.Optional(CONF_RS485_TX_PIN, default=21): cv.int_,
+        cv.Optional(CONF_RS485_RX_PIN, default=22): cv.int_,
+        cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=23): cv.int_,
     }),
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): climate.climate_schema(OpnPoolClimate).extend({
