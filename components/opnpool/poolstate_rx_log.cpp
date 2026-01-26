@@ -33,6 +33,7 @@
 #include "enum_helpers.h"
 #include "network.h"
 #include "poolstate.h"
+#include "poolstate_rx_log.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 
