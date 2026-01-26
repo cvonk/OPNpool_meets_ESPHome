@@ -190,7 +190,7 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, true, true, true, false);
+        poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, true, true, false);
         ESP_LOGVV(TAG, "Thermostat status updated: pool_temp=%u, spa_temp=%u, pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
             pool_thermo->temp_in_f.value, spa_thermo->temp_in_f.value, pool_thermo->set_point_in_f.value, 
             spa_thermo->set_point_in_f.value, pool_thermo->heat_src.value, spa_thermo->heat_src.value);
@@ -241,7 +241,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     };
     
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, false, true, true, false);
+        poolstate_rx_log::add_thermos(dbg, "thermos", state->thermos, false, true, false);
         ESP_LOGVV(TAG, "Thermostat set updated: pool_setpoint=%u, spa_setpoint=%u, pool_heat_src=%u, spa_heat_src=%u", 
             pool_thermo->set_point_in_f.value, spa_thermo->set_point_in_f.value, 
             pool_thermo->heat_src.value, spa_thermo->heat_src.value);

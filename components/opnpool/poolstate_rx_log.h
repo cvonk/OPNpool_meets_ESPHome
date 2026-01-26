@@ -32,7 +32,7 @@ namespace poolstate_rx_log {
 void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
 void add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
-void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showSrc, bool const showHeating);
+void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showHeating);
 void add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
 void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);

@@ -153,7 +153,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
     uint8_t const thermo_pool_idx = enum_index(climate_id_t::POOL_CLIMATE);
     uint8_t const thermo_spa_idx = enum_index(climate_id_t::SPA_CLIMATE);
 
-       // get both thermostats ('cause the resulting network_msg needs to reference both)
+       // get the state of both thermostats ('cause the resulting network_msg needs to reference both)
 
     poolstate_t state;
     parent_->get_opnpool_state()->get(&state);
@@ -166,7 +166,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         // the other thermostat. make sure they're valid before proceeding
     if (!thermos_new[thermo_pool_idx].heat_src.valid || !thermos_new[thermo_pool_idx].set_point_in_f.valid || 
         !thermos_new[thermo_spa_idx ].heat_src.valid || !thermos_new[thermo_spa_idx ].set_point_in_f.valid) {
-        return; // bail out (assuming user will try again later)
+        return; // bail out (user will have to try again later)
     }
 
         // handle target temperature changes
