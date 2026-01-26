@@ -51,8 +51,8 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  variant: ESP32
-  board: esp32dev
+  variant: esp32c6          # or esp32    for <= r3 boards
+  board: esp32-c6-devkitc-1 # or esp32dev for <= r3 boards
   framework:
     type: esp-idf
 
