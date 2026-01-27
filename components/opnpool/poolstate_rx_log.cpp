@@ -84,99 +84,14 @@ _create_item(cJSON * const obj, char const * const key)
         return obj;
     }
     cJSON * const item = cJSON_CreateObject();
+
     cJSON_AddItemToObject(obj, key, item);
     return item;
 }
 
-    // add system information (time, date, firmware) to a JSON object for logging.
-static void
-_add_system_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    cJSON * const item = _create_item(obj, key);
-
-    add_time_and_date(item, KEY_TOD, &state->system.tod);
-    add_version(item, KEY_FIRMWARE, &state->system.version);
-}
-
-static void
-_add_thermostat(cJSON * const obj, char const * const key, poolstate_thermo_t const * const thermostat, 
-    bool const showTemp, bool showSp, bool const showHeating)
-{
-    cJSON * const item = _create_item(obj, key);
-    if (showTemp) {
-        cJSON_AddNumberToObject(item, KEY_TEMP, thermostat->temp_in_f.value);
-    }
-    if (showSp) {
-        cJSON_AddNumberToObject(item, KEY_SP, thermostat->set_point_in_f.value);
-    }
-    network_heat_src_t src = thermostat->heat_src.value;
-    cJSON_AddStringToObject(item, KEY_SRC, enum_str(src));
-
-    if (showHeating) {
-        cJSON_AddBoolToObject(item, KEY_HEATING, thermostat->heating.value);
-    }
-}
-
-    // add thermostat information to a JSON object for logging.
-static void
-_add_thermos_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    add_thermos(obj, key, state->thermos, true, true, true);
-}
-
-static void
-_add_schedule(cJSON * const obj, char const * const key, poolstate_sched_t const * const sched)
-{
-    if (sched->active) {
-        cJSON * const item = _create_item(obj, key);
-        cJSON_AddStringToObject(item, KEY_START, time_str(sched->start / 60, sched->start % 60));
-        cJSON_AddStringToObject(item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
-    }
-}
-
-    // add schedule information to a JSON object for logging.
-static void
-_add_scheds_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    add_sched(obj, key, state->scheds, true);
-}
-
-static void
-_add_temp(cJSON * const obj, char const * const key, poolstate_uint8_t const * const temp)
-{
-    if (temp->value != 0xFF && temp->value != 0x00) {
-        cJSON_AddNumberToObject(obj, key, temp->value);
-    }
-}
-
-    // add temperature information to a JSON object for logging.
-static void
-_add_temps_dispatch(cJSON * const obj, char const * const key, poolstate_t const * state)
-{
-    cJSON * const item = _create_item(obj, key);
-    poolstate_uint8_t const * temp = state->temps;
-    
-    for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
-        _add_temp(item, enum_str(typ), temp);
-        ++temp;
-    }
-}
-
-    // add mode information to a JSON object for logging.
-static void
-_add_modes_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    cJSON * const item = _create_item(obj, key);
-    poolstate_bool_t const * mode = state->modes;
-
-    for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
-        ++mode;
-    }
-}
-
-static void
-_add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
+    // add active circuit information to a JSON object
+inline void
+_add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
 
@@ -186,68 +101,55 @@ _add_circuit_active_detail(cJSON * const obj, char const * const key, poolstate_
     }
 }
 
-static void
-_add_circuit_delay_detail(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
+    // add delay circuit information to a JSON object
+inline void
+_add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
-    (void)item;
+
     for (auto typ : magic_enum::enum_values<network_pool_circuit_t>()) {
         cJSON_AddBoolToObject(item, enum_str(typ), circuit->delay.value);
         circuit++;
     }
 }
 
-    // add circuit information to a JSON object for logging.
-static void
-_add_circuits_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
+    // add circuit information to a JSON object
+inline void
+_add_circuits(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    poolstate_circuit_t const * const circuits = state->circuits;
-    cJSON * const item = _create_item(obj, key);
-    _add_circuit_active_detail(item, "active", circuits);
-    _add_circuit_delay_detail(item, "delay", circuits);
-}
-
-static void
-_addPumpStateToObject(cJSON * const obj, char const * const key, network_pump_state_t const state)
-{
-    cJSON_AddStringToObject(obj, key, enum_str(state));
-}
-
-    // add pump information to a JSON object for logging.
-static void
-_add_pump_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    poolstate_pump_t const * const pump = &state->pump;
     cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));    
-    add_pump_mode(item, KEY_MODE, pump->mode.value);
-    add_pump_running(item, KEY_RUNNING, pump->running.value);
-    _addPumpStateToObject(item, KEY_STATE, pump->state.value);
-    cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
-    cJSON_AddNumberToObject(item, KEY_SPEED, pump->speed.value);
-    if (pump->flow.value) {
-        cJSON_AddNumberToObject(item, KEY_FLOW, pump->flow.value);
+    _add_circuit_active(item, KEY_ACTIVE, state->circuits);
+    _add_circuit_delay(item, KEY_DELAY, state->circuits);
+}
+
+    // add mode information to a JSON object
+inline void
+_add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
+{
+    cJSON * const item = _create_item(obj, key);
+
+    poolstate_bool_t const * mode = state->modes;
+    for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
+        cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
+        mode++;
     }
-    if (pump->level.value) {
-        cJSON_AddNumberToObject(item, KEY_LEVEL, pump->level.value);
-    }
-    cJSON_AddNumberToObject(item, KEY_ERROR, pump->error.value);
-    cJSON_AddNumberToObject(item, KEY_TIMER, pump->timer.value);
 }
 
-    // add chlorinator information to a JSON object for logging.
-static void
-_add_chlor_dispatch(cJSON * const obj, char const * const key, poolstate_t const * const state)
+    // add temperatures information to a JSON object
+inline void
+_add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 {
-    poolstate_chlor_t const * const chlor = &state->chlor;
     cJSON * const item = _create_item(obj, key);
-    cJSON_AddStringToObject(item, KEY_NAME, chlor->name.value);
-    cJSON_AddNumberToObject(item, KEY_LEVEL, chlor->level.value);
-    cJSON_AddNumberToObject(item, KEY_SALT, chlor->salt.value);
-    cJSON_AddStringToObject(item, KEY_STATUS, enum_str(chlor->status.value));
+    
+    poolstate_uint8_t const * temp = state->temps;    
+    for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
+        if (temp->value != 0xFF && temp->value != 0x00) {
+            cJSON_AddNumberToObject(item, enum_str(typ), temp->value);
+        }
+        temp++;
+    }
 }
-
 
 /**
  * @brief Add time and date information to a JSON object for logging.
@@ -288,7 +190,10 @@ add_version(cJSON * const obj, char const * const key, poolstate_version_t const
 void
 add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    _add_system_dispatch(obj, key, state);
+    cJSON * const item = _create_item(obj, key);
+
+    add_time_and_date(item, KEY_TOD, &state->system.tod);
+    add_version(item, KEY_FIRMWARE, &state->system.version);
 }
 
 /**
@@ -303,13 +208,27 @@ add_system(cJSON * const obj, char const * const key, poolstate_t const * const 
  */
 void
 add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos,
-    bool const showTemp, bool showSp, bool const showHeating)
+            bool const showTemp, bool showSp, bool const showHeating)
 {
     cJSON * const item = _create_item(obj, key);
 
     for (auto typ : magic_enum::enum_values<poolstate_thermo_typ_t>()) {
-        _add_thermostat(item, enum_str(typ), thermos, showTemp, showSp, showHeating);
-        ++thermos;
+
+        cJSON * const item = _create_item(obj, enum_str(typ));
+
+        if (showTemp) {
+            cJSON_AddNumberToObject(item, KEY_TEMP, thermos->temp_in_f.value);
+        }
+
+        if (showSp) {
+            cJSON_AddNumberToObject(item, KEY_SP, thermos->set_point_in_f.value);
+        }
+        cJSON_AddStringToObject(item, KEY_SRC, enum_str(thermos->heat_src.value));
+
+        if (showHeating) {
+            cJSON_AddBoolToObject(item, KEY_HEATING, thermos->heating.value);
+        }
+        thermos++;
     }
 }
 
@@ -322,17 +241,19 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
  * @param showSched Whether to include schedule information.
  */
 void
-add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds,
-    bool const showSched)
+add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * sched)
 {
-    if (showSched) {
-        cJSON * const item = _create_item(obj, key);
-        for (auto circuit : magic_enum::enum_values<network_pool_circuit_t>()) {
-            if (scheds->active) {
-                _add_schedule(item, enum_str(circuit), scheds);
+    cJSON * const item = _create_item(obj, key);
+    for (auto circuit : magic_enum::enum_values<network_pool_circuit_t>()) {
+        if (sched->active) {
+            if (sched->active) {
+                cJSON * const item = _create_item(obj, enum_str(circuit));
+
+                cJSON_AddStringToObject(item, KEY_START, time_str(sched->start / 60, sched->start % 60));
+                cJSON_AddStringToObject(item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
             }
-            ++scheds;
         }
+        sched++;
     }
 }
 
@@ -347,12 +268,13 @@ void
 add_state(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-    _add_system_dispatch(item, "system", state);
-    _add_temps_dispatch(item, "temps", state);
-    add_thermos(item, "thermos", state->thermos, true, false, true);
-    add_sched(item, "scheds", state->scheds, true);
-    _add_modes_dispatch(item, "modes", state);
-    _add_circuits_dispatch(item, "circuits", state);
+
+    add_system(item, KEY_SYSTEM, state);
+    add_thermos(item, KEY_THERMOS, state->thermos, true, false, true);
+    add_scheds(item, KEY_SCHEDS, state->scheds);
+    _add_temps(item, KEY_TEMPS, state);
+    _add_modes(item, KEY_MODES, state);
+    _add_circuits(item, KEY_CIRCUITS, state);
 }
 
 /**
@@ -365,7 +287,24 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 void
 add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
-    _add_pump_dispatch(obj, key, state);
+    poolstate_pump_t const * const pump = &state->pump;
+    cJSON * const item = _create_item(obj, key);
+
+    add_pump_mode(item, KEY_MODE, pump->mode.value);
+    add_pump_running(item, KEY_RUNNING, pump->running.value);
+
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));    
+    cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
+    cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
+    cJSON_AddNumberToObject(item, KEY_SPEED, pump->speed.value);
+    if (pump->flow.value) {
+        cJSON_AddNumberToObject(item, KEY_FLOW, pump->flow.value);
+    }
+    if (pump->level.value) {
+        cJSON_AddNumberToObject(item, KEY_LEVEL, pump->level.value);
+    }
+    cJSON_AddNumberToObject(item, KEY_ERROR, pump->error.value);
+    cJSON_AddNumberToObject(item, KEY_TIMER, pump->timer.value);
 }   
 
 /**
@@ -431,62 +370,11 @@ void
 add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
 {
     cJSON * const item = _create_item(obj, key);
+
     cJSON_AddNumberToObject(item, KEY_SALT, chlor->salt.value);
     cJSON_AddStringToObject(item, KEY_STATUS, enum_str(chlor->status.value));
 }
 
-
-/**
- * and finally .. poolstate itself
- **/
-
-using poolstate_json_fnc_t = void (*)(
-    cJSON * const obj, char const * const key,
-    poolstate_t const * const state
-);
-
-struct poolstate_json_dispatch_t {
-    poolstate_elem_typ_t const  typ;
-    char const * const      name;
-    poolstate_json_fnc_t const  fnc;
-};
-
-static poolstate_json_dispatch_t _dispatches[] = {
-    { poolstate_elem_typ_t::SYSTEM,   "system",   _add_system_dispatch   },
-    { poolstate_elem_typ_t::TEMP,     "temps",    _add_temps_dispatch    },
-    { poolstate_elem_typ_t::THERMO,   "thermos",  _add_thermos_dispatch  },
-    { poolstate_elem_typ_t::PUMP,     "pump",     _add_pump_dispatch     },
-    { poolstate_elem_typ_t::CHLOR,    "chlor",    _add_chlor_dispatch    },
-    { poolstate_elem_typ_t::CIRCUITS, "circuits", _add_circuits_dispatch },
-    { poolstate_elem_typ_t::SCHED,    "scheds",   _add_scheds_dispatch   },
-    { poolstate_elem_typ_t::MODES,    "modes",    _add_modes_dispatch    },
-};
-
-/**
- * @brief        Generate a JSON string representing the pool state or a specific element.
- *
- * @param state  Pointer to the pool state structure.
- * @param typ    The poolstate element type to log, or ALL for the full state.
- * @return       Unformatted JSON string (caller must free).
- */
-char const *
-state(poolstate_t const * const state, poolstate_elem_typ_t const typ)
-{
-    name_reset_idx();
-
-    cJSON * const obj = cJSON_CreateObject();
-
-    for (const auto dispatch : _dispatches) {
-        bool const all_types = typ == poolstate_elem_typ_t::ALL;
-        if (typ == dispatch.typ || all_types) {
-            dispatch.fnc(obj, all_types ? dispatch.name : NULL, state);
-        }
-    }
-    
-    char const * const json = cJSON_PrintUnformatted(obj);
-    cJSON_Delete(obj);
-    return json;  // caller MUST free
-}   
 
 }  // namespace poolstate_rx_log
 }  // namespace poolstate_rx

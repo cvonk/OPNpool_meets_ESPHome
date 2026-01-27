@@ -404,7 +404,7 @@ _ctrl_sched_resp(cJSON * const dbg, network_msg_ctrl_sched_resp_t const * const 
     }
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_sched(dbg, "scheds", state->scheds, true);
+        poolstate_rx_log::add_scheds(dbg, "scheds", state->scheds);
     }
 }
 

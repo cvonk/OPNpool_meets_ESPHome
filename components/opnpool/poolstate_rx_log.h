@@ -33,7 +33,7 @@ void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
 void add_system(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showHeating);
-void add_sched(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds, bool const showSched);
+void add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds);
 void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void add_pump_program(cJSON * const obj, char const * const key, uint16_t const value);
 void add_pump_ctrl(cJSON * const obj, char const * const key,  network_pump_ctrl_t const ctrl);
@@ -41,7 +41,6 @@ void add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_
 void add_pump_running(cJSON * const obj, char const * const key, bool const running);
 void add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state);
 void add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor);
-char const * state(poolstate_t const * const state, poolstate_elem_typ_t const typ);
 
 } // namespace poolstate_rx_log
 } // namespace poolstate_rx
