@@ -80,6 +80,7 @@ OpnPoolSwitch::write_state(bool value)
     uint8_t const circuit_idx = enum_index(circuit);
 
     network_msg_t msg = {
+        .device_id = network_msg_dev_id_t::PRIMARY,
         .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
         .u = {
             .ctrl_circuit_set = {

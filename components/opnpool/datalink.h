@@ -148,8 +148,9 @@ uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
  * - Packet receive and transmit functions for RS-485 communication
  */
 
-datalink_addrgroup_t datalink_groupaddr(uint16_t const addr);
-uint8_t datalink_devaddr(datalink_addrgroup_t group, uint8_t const id);
+datalink_addrgroup_t datalink_addr_group(uint16_t const addr);
+uint8_t datalink_device_id(uint16_t const addr);
+uint8_t datalink_devaddr(datalink_addrgroup_t group, uint8_t const device_id);
 uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
 extern datalink_preamble_a5_t datalink_preamble_a5;
 extern datalink_preamble_ic_t datalink_preamble_ic;

@@ -641,6 +641,7 @@ inline esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
+
     if (idx < std::size(network_msg_typ_sizes)) {
         *size = network_msg_typ_sizes[idx];
         return ESP_OK;
@@ -726,6 +727,11 @@ network_msg_typ_get_info(network_msg_typ_t typ)
     return nullptr;
 }
 
+    // device ID within the A5 PUMP address group
+enum class network_msg_dev_id_t : uint8_t {
+    PRIMARY = 0,
+    SECONDARY = 1
+};
 
 /**
  * @brief    Represents a generic network message for the Pentair protocol.
@@ -739,7 +745,8 @@ network_msg_typ_get_info(network_msg_typ_t typ)
  */
 
 struct network_msg_t {
-    network_msg_typ_t typ;
+    network_msg_dev_id_t device_id;
+    network_msg_typ_t    typ;
     union network_msg_union_t {
         network_msg_pump_reg_set_t  pump_reg_set;
         network_msg_pump_reg_resp_t  pump_reg_set_resp;

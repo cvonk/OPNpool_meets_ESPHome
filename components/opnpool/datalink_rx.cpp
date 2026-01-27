@@ -211,7 +211,8 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
  * @param ic_typ The IC message type (as uint8_t/datalink_typ_chlor_t).
  * @return       The size of the corresponding network message struct, or 0 if unknown.
  */
-static uint8_t _network_ic_len(uint8_t const ic_typ)
+static uint8_t 
+_network_ic_len(uint8_t const ic_typ)
 {
     auto typ = static_cast<datalink_typ_chlor_t>(ic_typ);
     static const struct {
@@ -257,8 +258,8 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 if (hdr->len > DATALINK_MAX_DATA_SIZE) {
                   return ESP_FAIL;  // pkt length exceeds what we have planned for
                 }
-                if ( (datalink_groupaddr(hdr->src) == datalink_addrgroup_t::PUMP) ||
-                     (datalink_groupaddr(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
+                if ( (datalink_addr_group(hdr->src) == datalink_addrgroup_t::PUMP) ||
+                     (datalink_addr_group(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
                     pkt->prot = datalink_prot_t::A5_PUMP;
                 }
                 pkt->typ.raw  = hdr->typ;

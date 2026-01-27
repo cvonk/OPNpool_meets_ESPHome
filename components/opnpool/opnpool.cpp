@@ -352,6 +352,7 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp_sensor->publish_value_if_changed(air_temp_c);    
     }
+
     OpnPoolSensor * const water_temperature_sensor = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
     auto const water_temp = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)];
     if (water_temperature_sensor != nullptr && water_temp.valid) {    
@@ -361,19 +362,19 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     }   
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        
-        state->pump.power
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].power
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_FLOW)],         
-        state->pump.flow
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].flow
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_SPEED)],        
-        state->pump.speed
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].speed
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_ERROR)],        
-        state->pump.error
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].error
     );
     _publish_if(
         this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
@@ -390,7 +391,7 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::PUMP_RUNNING)],           
-        state->pump.running
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].running
     );
     _publish_if(
         this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           
@@ -423,11 +424,11 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
     _publish_enum_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_MODE)], 
-        state->pump.mode
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].mode
     );    
     _publish_enum_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_STATE)],
-        state->pump.state
+        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].state
     );
     _publish_if(
         this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_NAME)], 

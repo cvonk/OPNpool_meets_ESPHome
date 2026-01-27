@@ -204,24 +204,12 @@ struct poolstate_chlor_t {
 struct poolstate_t {
     poolstate_system_t   system;
     poolstate_chlor_t    chlor;
-    poolstate_pump_t     pump;  // 2BD: may need to be an array for >1 pumps
+    poolstate_pump_t     pumps[enum_count<network_msg_dev_id_t>()];
     poolstate_circuit_t  circuits[enum_count<network_pool_circuit_t>()];
     poolstate_bool_t     modes[enum_count<network_pool_mode_bits_t>()];
     poolstate_thermo_t   thermos[enum_count<poolstate_thermo_typ_t>()];
     poolstate_uint8_t    temps[enum_count<poolstate_temp_typ_t>()];
     poolstate_sched_t    scheds[enum_count<network_pool_circuit_t>()];
-};
-
-enum class poolstate_elem_typ_t : uint8_t {
-    SYSTEM   = 0x00,
-    TEMP     = 0x01,
-    THERMO   = 0x02,
-    SCHED    = 0x03,
-    CIRCUITS = 0x04,
-    PUMP     = 0x05,
-    CHLOR    = 0x06,
-    MODES    = 0x07,
-    ALL      = 0x08
 };
 
 

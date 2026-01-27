@@ -43,40 +43,6 @@ namespace opnpool {
 namespace poolstate_rx {
 namespace poolstate_rx_log {
 
-    // JSON key names
-constexpr char const * const KEY_TIME     = "time";
-constexpr char const * const KEY_DATE     = "date";
-constexpr char const * const KEY_FIRMWARE = "firmware";
-constexpr char const * const KEY_TOD      = "tod";
-constexpr char const * const KEY_TEMP     = "temp";
-constexpr char const * const KEY_SP       = "sp";
-constexpr char const * const KEY_SRC      = "src";
-constexpr char const * const KEY_HEATING  = "heating";
-constexpr char const * const KEY_START    = "start";
-constexpr char const * const KEY_STOP     = "stop";
-constexpr char const * const KEY_ACTIVE   = "active";
-constexpr char const * const KEY_DELAY    = "delay";
-constexpr char const * const KEY_SYSTEM   = "system";
-constexpr char const * const KEY_TEMPS    = "temps";
-constexpr char const * const KEY_THERMOS  = "thermos";
-constexpr char const * const KEY_PUMP     = "pump";
-constexpr char const * const KEY_CHLOR    = "chlor";
-constexpr char const * const KEY_CIRCUITS = "circuits";
-constexpr char const * const KEY_SCHEDS   = "scheds";
-constexpr char const * const KEY_MODES    = "modes";
-constexpr char const * const KEY_NAME     = "name";
-constexpr char const * const KEY_LEVEL    = "level";
-constexpr char const * const KEY_SALT     = "salt";
-constexpr char const * const KEY_STATUS   = "status";
-constexpr char const * const KEY_MODE     = "mode";
-constexpr char const * const KEY_RUNNING  = "running";
-constexpr char const * const KEY_STATE    = "state";
-constexpr char const * const KEY_POWER    = "power";
-constexpr char const * const KEY_SPEED    = "speed";
-constexpr char const * const KEY_FLOW     = "flow";
-constexpr char const * const KEY_ERROR    = "error";
-constexpr char const * const KEY_TIMER    = "timer";
-
 inline cJSON *
 _create_item(cJSON * const obj, char const * const key)
 {
@@ -94,7 +60,7 @@ void
 _add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
-
+ 
     add_time_and_date(item, KEY_TOD, &state->system.tod);
     add_version(item, KEY_FIRMWARE, &state->system.version);
 }
@@ -161,6 +127,19 @@ _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
     }
 }
 
+static void
+_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+{
+    cJSON_AddStringToObject(obj, key, enum_str(mode));
+}
+
+static void
+_add_pump_running(cJSON * const obj, char const * const key, bool const running)
+{
+    cJSON_AddBoolToObject(obj, key, running);
+}
+
+
 /**
  * @brief Add time and date information to a JSON object for logging.
  * 
@@ -208,19 +187,19 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
 
     for (auto typ : magic_enum::enum_values<poolstate_thermo_typ_t>()) {
 
-        cJSON * const item = _create_item(obj, enum_str(typ));
+        cJSON * const sub_item = _create_item(item, enum_str(typ));
 
         if (showTemp) {
-            cJSON_AddNumberToObject(item, KEY_TEMP, thermos->temp_in_f.value);
+            cJSON_AddNumberToObject(sub_item, KEY_TEMP, thermos->temp_in_f.value);
         }
 
         if (showSp) {
-            cJSON_AddNumberToObject(item, KEY_SP, thermos->set_point_in_f.value);
+            cJSON_AddNumberToObject(sub_item, KEY_SP, thermos->set_point_in_f.value);
         }
-        cJSON_AddStringToObject(item, KEY_SRC, enum_str(thermos->heat_src.value));
+        cJSON_AddStringToObject(sub_item, KEY_SRC, enum_str(thermos->heat_src.value));
 
         if (showHeating) {
-            cJSON_AddBoolToObject(item, KEY_HEATING, thermos->heating.value);
+            cJSON_AddBoolToObject(sub_item, KEY_HEATING, thermos->heating.value);
         }
         thermos++;
     }
@@ -238,13 +217,14 @@ void
 add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * sched)
 {
     cJSON * const item = _create_item(obj, key);
+
     for (auto circuit : magic_enum::enum_values<network_pool_circuit_t>()) {
         if (sched->active) {
             if (sched->active) {
-                cJSON * const item = _create_item(obj, enum_str(circuit));
+                cJSON * const sub_item = _create_item(item, enum_str(circuit));
 
-                cJSON_AddStringToObject(item, KEY_START, time_str(sched->start / 60, sched->start % 60));
-                cJSON_AddStringToObject(item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
+                cJSON_AddStringToObject(sub_item, KEY_START, time_str(sched->start / 60, sched->start % 60));
+                cJSON_AddStringToObject(sub_item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
             }
         }
         sched++;
@@ -279,13 +259,13 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
  * @param state Pointer to the poolstate_t structure containing the pump information.
  */
 void
-add_pump(cJSON * const obj, char const * const key, poolstate_t const * const state)
+add_pump(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, poolstate_pump_t const * const pump)
 {
-    poolstate_pump_t const * const pump = &state->pump;
-    cJSON * const item = _create_item(obj, key);
+    cJSON * const item1 = _create_item(obj, key);
+    cJSON * const item = _create_item(item1, key);
 
-    add_pump_mode(item, KEY_MODE, pump->mode.value);
-    add_pump_running(item, KEY_RUNNING, pump->running.value);
+    _add_pump_mode(item, KEY_MODE, pump->mode.value);
+    _add_pump_running(item, KEY_RUNNING, pump->running.value);
 
     cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));    
     cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
@@ -299,7 +279,7 @@ add_pump(cJSON * const obj, char const * const key, poolstate_t const * const st
     }
     cJSON_AddNumberToObject(item, KEY_ERROR, pump->error.value);
     cJSON_AddNumberToObject(item, KEY_TIMER, pump->timer.value);
-}   
+}
 
 /**
  * @brief       Add pump program value to a JSON object for logging.
@@ -309,9 +289,11 @@ add_pump(cJSON * const obj, char const * const key, poolstate_t const * const st
  * @param value The pump program value to log.
  */
 void
-add_pump_program(cJSON * const obj, char const * const key, uint16_t const value)
+add_pump_program(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, uint16_t const value)
 {
-    cJSON_AddNumberToObject(obj, key, value);
+    cJSON * const item = _create_item(obj, enum_str(dev_id));
+
+    cJSON_AddNumberToObject(item, key, value);
 }
 
 /**
@@ -322,9 +304,11 @@ add_pump_program(cJSON * const obj, char const * const key, uint16_t const value
  * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, network_pump_ctrl_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
 {
-    cJSON_AddStringToObject(obj, key, enum_str(ctrl));
+    cJSON * const item = _create_item(obj, enum_str(dev_id));
+
+    cJSON_AddStringToObject(item, key, enum_str(ctrl));
 }
 
 /**
@@ -335,9 +319,11 @@ add_pump_ctrl(cJSON * const obj, char const * const key, network_pump_ctrl_t con
  * @param mode The pump mode value to log (as enum).
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_mode_t const mode)
 {
-    cJSON_AddStringToObject(obj, key, enum_str(mode));
+    cJSON * const item = _create_item(obj, enum_str(dev_id));
+
+    _add_pump_mode(item, key, mode);
 }
 
 /**
@@ -348,9 +334,11 @@ add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t con
  * @param running The pump running status to log (true if running).
  */
 void
-add_pump_running(cJSON * const obj, char const * const key, bool const running)
+add_pump_running(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, bool const running)
 {
-    cJSON_AddBoolToObject(obj, key, running);
+    cJSON * const item = _create_item(obj, enum_str(dev_id));
+
+    _add_pump_running(item, key, running);
 }
 
 /**

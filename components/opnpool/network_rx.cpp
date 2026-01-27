@@ -33,15 +33,21 @@ namespace opnpool {
 
 static char const * const TAG = "network_rx";
 
-/**
- * @brief             Helper to validate the data length of a decoded message.
- * 
- * @param msg_typ     The network message type.
- * @param pkt         Pointer to the datalink packet.
- * @param tag         Protocol tag for logging.
- * @param typ_str     String representation of the protocol type for logging.
- * @return esp_err_t  ESP_OK if valid, ESP_FAIL otherwise.
- */
+    // helper to determine device_id
+inline network_msg_dev_id_t
+_datalink_to_network_dev_id(uint8_t const datalink_dev_id)
+{
+    // I only have one pump, so I have to assume that pumps are numbered sequentially starting at 0
+    // I can imagine a secondary pump for solar though
+    switch (datalink_dev_id) {
+        case 0: return network_msg_dev_id_t::PRIMARY;
+        case 1: return network_msg_dev_id_t::SECONDARY;
+    }
+    ESP_LOGE(TAG, "%s: unsupported datalink_dev_id %u", __FUNCTION__, datalink_dev_id);
+    return network_msg_dev_id_t::PRIMARY;
+}
+
+    // helper to validate the data length of a decoded message.
 static esp_err_t
 _validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pkt, char const * tag, const char * typ_str)
 {
@@ -68,6 +74,8 @@ static esp_err_t
 _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     datalink_typ_ctrl_t const network_typ_ctrl = pkt->typ.ctrl;
+
+    msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
 
     switch (network_typ_ctrl) {
 
@@ -207,8 +215,15 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    bool toPump = (datalink_groupaddr(pkt->dst) == datalink_addrgroup_t::PUMP);
+    bool toPump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
     datalink_typ_pump_t const network_typ_pump = pkt->typ.pump;
+
+    auto datalink_dev_id = toPump ? datalink_device_id(pkt->dst)
+                                  : datalink_device_id(pkt->src);
+
+    msg->device_id = _datalink_to_network_dev_id(datalink_dev_id);
+
+    // 2BD: datalink_addr_id(pkt->dst, or src) will identify the specific pump device within the PUMP address group
 
     switch (network_typ_pump) {
         case datalink_typ_pump_t::REG:
@@ -281,6 +296,8 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
 {
     datalink_typ_chlor_t const network_typ_chlor = pkt->typ.chlor;
 
+    msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
+
     switch (network_typ_chlor) {
         case datalink_typ_chlor_t::PING_REQ:
             msg->typ = network_msg_typ_t::CHLOR_PING_REQ;
@@ -345,7 +362,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
     name_reset_idx();
 
         // silently ignore packets that we can't decode
-    datalink_addrgroup_t const dst = datalink_groupaddr(pkt->dst);
+    datalink_addrgroup_t const dst = datalink_addr_group(pkt->dst);
     if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_addrgroup_t::X09) ||
         (pkt->prot == datalink_prot_t::IC && dst != datalink_addrgroup_t::ALL && dst != datalink_addrgroup_t::CHLOR)) {
 
@@ -374,8 +391,8 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
 
     *txOpportunity =
         pkt->prot == datalink_prot_t::A5_CTRL &&
-        datalink_groupaddr(pkt->src) == datalink_addrgroup_t::CTRL &&
-        datalink_groupaddr(pkt->dst) == datalink_addrgroup_t::ALL;
+        datalink_addr_group(pkt->src) == datalink_addrgroup_t::CTRL &&
+        datalink_addr_group(pkt->dst) == datalink_addrgroup_t::ALL;
 
     return result;
 }

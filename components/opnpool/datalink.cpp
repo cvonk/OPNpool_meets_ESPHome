@@ -37,15 +37,28 @@ datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 
 
 /**
- * @brief      Extracts the address group from a 16-bit address.
+ * @brief      Extracts the address group from a 16-bit A5 address.
  *
  * @param addr The full 16-bit address.
  * @return     The address group as a datalink_addrgroup_t.
  */
 datalink_addrgroup_t
-datalink_groupaddr(uint16_t const addr)
+datalink_addr_group(uint16_t const addr)
 {
     return static_cast<datalink_addrgroup_t>((addr >> 4) & 0x0F);
+}
+
+
+/**
+ * @brief      Extracts the address id from a 16-bit A5 address.
+ *
+ * @param addr The full 16-bit address.
+ * @return     The address id as a uint8_t.
+ */
+uint8_t
+datalink_device_id(uint16_t const addr)
+{
+    return static_cast<uint8_t>(addr & 0x0F);
 }
 
 
@@ -57,9 +70,9 @@ datalink_groupaddr(uint16_t const addr)
  * @return      The composed 8-bit device address.
  */
 uint8_t
-datalink_devaddr(datalink_addrgroup_t const group, uint8_t const id)
+datalink_devaddr(datalink_addrgroup_t const group, uint8_t const device_id)
 {
-    return (static_cast<uint8_t>(group) << 4) | (id & 0x0F);
+    return (static_cast<uint8_t>(group) << 4) | (device_id & 0x0F);
 }
 
 /**

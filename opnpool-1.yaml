@@ -18,8 +18,8 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  variant: esp32c6          # or esp32    for <= r3 boards
-  board: esp32-c6-devkitc-1 # or esp32dev for <= r3 boards
+  variant: esp32   # esp32 for <= r3 boards, esp32c6 for >= r4 boards
+  board: esp32dev  # esp32dev for <= r3 boards, esp32-c6-devkitc-1 for >= r4 boards
   framework:
     type: esp-idf
 
@@ -76,7 +76,6 @@ web_server:
 
 captive_portal:
     
-
 external_components:
   - source: 
       type: local
@@ -86,16 +85,16 @@ opnpool:
   id: opnpool_1
 
   # RS485 configuration for >= r4 boards
-  rs485:
-    tx_pin: 21            # default 21 (GPIO21)
-    rx_pin: 22            # default 22 (GPIO22)
-    flow_control_pin: 23  # default 23 (GPIO23)
-
-  ## RS485 configuration for <= r3 boards
   #rs485:
-  #  tx_pin: 26            # default 21 (GPIO21)
-  #  rx_pin: 25            # default 22 (GPIO22)
-  #  flow_control_pin: 27  # default 23 (GPIO23)
+  #  tx_pin: 21            # default 21 (GPIO21)
+  #  rx_pin: 22            # default 22 (GPIO22)
+  #  flow_control_pin: 23  # default 23 (GPIO23)
+
+  # RS485 configuration for <= r3 boards
+  rs485:
+    tx_pin: 26            # default 21 (GPIO21)
+    rx_pin: 25            # default 22 (GPIO22)
+    flow_control_pin: 27  # default 23 (GPIO23)
 
   # climate thermostats
   pool_climate:
