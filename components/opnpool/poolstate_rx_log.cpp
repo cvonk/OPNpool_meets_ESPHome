@@ -89,6 +89,16 @@ _create_item(cJSON * const obj, char const * const key)
     return item;
 }
 
+    // add system information (time, date, firmware) to a JSON object
+void
+_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
+{
+    cJSON * const item = _create_item(obj, key);
+
+    add_time_and_date(item, KEY_TOD, &state->system.tod);
+    add_version(item, KEY_FIRMWARE, &state->system.version);
+}
+
     // add active circuit information to a JSON object
 inline void
 _add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
@@ -181,22 +191,6 @@ add_version(cJSON * const obj, char const * const key, poolstate_version_t const
 }
 
 /**
- * @brief Add system information (time, date, firmware) to a JSON object for logging.
- * 
- * @param obj The parent JSON object.
- * @param key The key under which to add the system object.
- * @param state Pointer to the poolstate_t structure to log.
- */
-void
-add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
-{
-    cJSON * const item = _create_item(obj, key);
-
-    add_time_and_date(item, KEY_TOD, &state->system.tod);
-    add_version(item, KEY_FIRMWARE, &state->system.version);
-}
-
-/**
  * @brief              Add thermostat information to a JSON object for logging.
  *
  * @param obj          The parent JSON object.
@@ -269,9 +263,9 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 {
     cJSON * const item = _create_item(obj, key);
 
-    add_system(item, KEY_SYSTEM, state);
     add_thermos(item, KEY_THERMOS, state->thermos, true, false, true);
     add_scheds(item, KEY_SCHEDS, state->scheds);
+    _add_system(item, KEY_SYSTEM, state);
     _add_temps(item, KEY_TEMPS, state);
     _add_modes(item, KEY_MODES, state);
     _add_circuits(item, KEY_CIRCUITS, state);
