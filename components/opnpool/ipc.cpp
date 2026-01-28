@@ -50,7 +50,6 @@ ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t
     if (xQueueSendToBack(ipc->to_main_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_main_q full");
     }
-    vTaskDelay(1);  // give others a chance to catch up
 }
 
 /**
