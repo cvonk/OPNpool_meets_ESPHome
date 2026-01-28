@@ -56,7 +56,7 @@ OpnPoolTextSensor = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSenso
 CONF_RS485 = "rs485"
 CONF_RS485_RX_PIN = "rx_pin"
 CONF_RS485_TX_PIN = "tx_pin"
-CONF_RS485_FLOW_CONTROL_PIN = "flow_control_pin"
+CONF_RS485_RTS_PIN = "rts_pin"
 
 # MUST be in the same order as network_pool_thermo_t
 CONF_CLIMATES = [  # used to overwrite climate_id_t enum in opnpool.h
@@ -120,7 +120,7 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional(CONF_RS485, default={}): cv.Schema({
         cv.Optional(CONF_RS485_TX_PIN, default=21): cv.int_,
         cv.Optional(CONF_RS485_RX_PIN, default=22): cv.int_,
-        cv.Optional(CONF_RS485_FLOW_CONTROL_PIN, default=23): cv.int_,
+        cv.Optional(CONF_RS485_RTS_PIN, default=23): cv.int_,
     }),
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): climate.climate_schema(OpnPoolClimate).extend({
@@ -212,7 +212,7 @@ async def to_code(config):
     
     # RS485 configuration
     rs485_config = config[CONF_RS485]
-    cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_FLOW_CONTROL_PIN]))
+    cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_RTS_PIN]))
 
     # register climate entities (constructor injection)
     for id, climate_key in enumerate(CONF_CLIMATES):

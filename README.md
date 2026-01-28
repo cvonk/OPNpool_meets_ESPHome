@@ -83,9 +83,9 @@ logger:
 opnpool:
   id: opnpool_1
   RS-485:
-    tx_pin: 21            # default GPIO21
-    rx_pin: 22            # default GPIO22
-    flow_control_pin: 23  # default GPIO23
+    tx_pin:  21  # default GPIO21
+    rx_pin:  22  # default GPIO22
+    rts_pin: 23  # default GPIO23
 ```
 
 Specify your own secrets in `secrets.yaml`

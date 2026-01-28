@@ -27,7 +27,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "opnpool_binary_sensor";
+constexpr char TAG[] = "opnpool_binary_sensor";
 
 /**
  * @brief Dump the configuration and last known state of the binary sensor entity.

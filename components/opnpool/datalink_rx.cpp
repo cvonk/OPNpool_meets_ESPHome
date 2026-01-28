@@ -41,7 +41,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "datalink_rx";
+constexpr char TAG[] = "datalink_rx";
 
 uint8_t const DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
 

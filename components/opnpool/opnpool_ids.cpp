@@ -44,12 +44,12 @@ climate_id_to_poolstate_thermo(climate_id_t const id)
 [[nodiscard]] network_pool_circuit_t
 switch_id_to_network_circuit(switch_id_t const id)
 {
-    static_assert(enum_count<switch_id_t>() == enum_count<network_pool_circuit_t>(), "switch_id_t and network_pool_circuit_t must have the same number of elements");
-    static_assert(enum_index(switch_id_t::SPA) == enum_index(network_pool_circuit_t::SPA), "switch_id_t and network_pool_circuit_t must have matching elements");
-    static_assert(enum_index(switch_id_t::POOL) == enum_index(network_pool_circuit_t::POOL), "switch_id_t and network_pool_circuit_t must have matching elements");
-    static_assert(enum_index(switch_id_t::AUX1) == enum_index(network_pool_circuit_t::AUX1), "switch_id_t and network_pool_circuit_t must have matching elements");
-    static_assert(enum_index(switch_id_t::AUX2) == enum_index(network_pool_circuit_t::AUX2), "switch_id_t and network_pool_circuit_t must have matching elements");
-    static_assert(enum_index(switch_id_t::AUX3) == enum_index(network_pool_circuit_t::AUX3), "switch_id_t and network_pool_circuit_t must have matching elements"); 
+    static_assert(enum_count<switch_id_t>()         == enum_count<network_pool_circuit_t>(),         "switch_id_t and network_pool_circuit_t must have the same number of elements");
+    static_assert(enum_index(switch_id_t::SPA)      == enum_index(network_pool_circuit_t::SPA),      "switch_id_t and network_pool_circuit_t must have matching elements");
+    static_assert(enum_index(switch_id_t::POOL)     == enum_index(network_pool_circuit_t::POOL),     "switch_id_t and network_pool_circuit_t must have matching elements");
+    static_assert(enum_index(switch_id_t::AUX1)     == enum_index(network_pool_circuit_t::AUX1),     "switch_id_t and network_pool_circuit_t must have matching elements");
+    static_assert(enum_index(switch_id_t::AUX2)     == enum_index(network_pool_circuit_t::AUX2),     "switch_id_t and network_pool_circuit_t must have matching elements");
+    static_assert(enum_index(switch_id_t::AUX3)     == enum_index(network_pool_circuit_t::AUX3),     "switch_id_t and network_pool_circuit_t must have matching elements"); 
     static_assert(enum_index(switch_id_t::FEATURE1) == enum_index(network_pool_circuit_t::FEATURE1), "switch_id_t and network_pool_circuit_t must have matching elements");
     static_assert(enum_index(switch_id_t::FEATURE2) == enum_index(network_pool_circuit_t::FEATURE2), "switch_id_t and network_pool_circuit_t must have matching elements");
     static_assert(enum_index(switch_id_t::FEATURE3) == enum_index(network_pool_circuit_t::FEATURE3), "switch_id_t and network_pool_circuit_t must have matching elements");

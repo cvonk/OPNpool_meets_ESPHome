@@ -37,7 +37,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "skb";
+constexpr char TAG[] = "skb";
 
 skb_handle_t
 skb_alloc(size_t size)

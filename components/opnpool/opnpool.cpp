@@ -57,7 +57,11 @@
 namespace esphome {
 namespace opnpool {
   
-static char const * const TAG = "opnpool";
+constexpr char TAG[] = "opnpool";
+
+constexpr uint32_t    POOL_TASK_STACK_SIZE = 2 * 4096;
+constexpr UBaseType_t TO_POOL_QUEUE_LEN = 6;
+constexpr UBaseType_t TO_MAIN_QUEUE_LEN = 10;
 
     // helper to only dump_config if entity exists
 template<typename EntityT>
@@ -127,7 +131,7 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
 
     // helper to publish version if entity exists
 static void
-_publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const version)
+_publish_version_if(OpnPoolTextSensor * const sensor, poolstate_version_t const * const version)
 {
     if (sensor != nullptr && version != nullptr) {
         static char fw_str[8];  // 2.80\0
@@ -173,9 +177,10 @@ OpnPool::setup() {
         ESP_LOGE(TAG, "Failed to allocate IPC structure");
         return;
     }
+    ipc_->config.rs485_pins = rs485_pins_;
+    ipc_->to_pool_q = xQueueCreate(TO_POOL_QUEUE_LEN, sizeof(network_msg_t));
+    ipc_->to_main_q = xQueueCreate(TO_MAIN_QUEUE_LEN, sizeof(network_msg_t));
     
-    ipc_->to_pool_q = xQueueCreate(6, sizeof(network_msg_t));
-    ipc_->to_main_q = xQueueCreate(10, sizeof(network_msg_t));
     if (!ipc_->to_main_q || !ipc_->to_pool_q) {
         ESP_LOGE(TAG, "Failed to create IPC queue(s)");
         return;
@@ -183,7 +188,7 @@ OpnPool::setup() {
 
         // spin off a pool_task that handles RS485 communication, datalink layer and
         // network layer
-    if (xTaskCreate(&pool_task, "pool_task", 2*4096, this->ipc_, 3, NULL) != pdPASS) {
+    if (xTaskCreate(&pool_task, "pool_task", POOL_TASK_STACK_SIZE, this->ipc_, 3, NULL) != pdPASS) {
         ESP_LOGE(TAG, "Failed to create pool_task");
         return;
     }
@@ -254,7 +259,7 @@ OpnPool::dump_config() {
     ESP_LOGCONFIG(TAG, "OpnPool:");
     ESP_LOGCONFIG(TAG, "  RS485 rx pin: %u", this->ipc_->config.rs485_pins.rx_pin);
     ESP_LOGCONFIG(TAG, "  RS485 tx pin: %u", this->ipc_->config.rs485_pins.tx_pin);
-    ESP_LOGCONFIG(TAG, "  RS485 flow control pin: %u", this->ipc_->config.rs485_pins.flow_control_pin);
+    ESP_LOGCONFIG(TAG, "  RS485 rts pin: %u", this->ipc_->config.rs485_pins.rts_pin);
 
     for (auto idx : magic_enum::enum_values<climate_id_t>()) {
         _dump_if(this->climates_[enum_index(idx)]);
@@ -446,13 +451,11 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     // setters
 
 void 
-OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const flow_control_pin)
+OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const rts_pin)
 {
-    if (ipc_) {
-        ipc_->config.rs485_pins.rx_pin = rx_pin;
-        ipc_->config.rs485_pins.tx_pin = tx_pin;
-        ipc_->config.rs485_pins.flow_control_pin = flow_control_pin;
-    }
+    rs485_pins_.rx_pin = rx_pin;
+    rs485_pins_.tx_pin = tx_pin;
+    rs485_pins_.rts_pin = rts_pin;
 }
 
 void

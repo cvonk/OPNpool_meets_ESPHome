@@ -29,12 +29,11 @@
 namespace esphome {
 namespace opnpool {
 
-// static char const * const TAG = "datalink";
+// constexpr char TAG[] = "datalink";
 
-datalink_preamble_a5_t datalink_preamble_a5 = { 0x00, 0xFF, 0xA5 };  // use of 0xA5 in the preamble makes the detection more reliable
-datalink_preamble_ic_t datalink_preamble_ic = { 0x10, 0x02 };
+datalink_preamble_a5_t datalink_preamble_a5  = { 0x00, 0xFF, 0xA5 };  // use of 0xA5 in the preamble makes the detection more reliable
+datalink_preamble_ic_t datalink_preamble_ic  = { 0x10, 0x02 };
 datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
-
 
 /**
  * @brief      Extracts the address group from a 16-bit A5 address.

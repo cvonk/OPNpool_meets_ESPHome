@@ -38,7 +38,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "opnpool_switch";
+constexpr char TAG[] = "opnpool_switch";
 
 /**
  * @brief Dump the configuration and last known state of the switch entity.

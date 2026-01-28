@@ -59,7 +59,7 @@ namespace opnpool {
 
 namespace poolstate_rx {
 
-static char const * const TAG = "poolstate_rx";
+constexpr char TAG[] = "poolstate_rx";
 
 [[nodiscard]] constexpr network_heat_src_t
 _get_pool_heat_src(uint8_heat_src_t const heat_src)

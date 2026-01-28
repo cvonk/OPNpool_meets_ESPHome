@@ -53,12 +53,12 @@ struct datalink_pkt_t;
     // `addrgroup` is the high nibble of the address
 
 enum class datalink_addrgroup_t : uint8_t {
-  ALL = 0x00,
-  CTRL = 0x01,
+  ALL    = 0x00,
+  CTRL   = 0x01,
   REMOTE = 0x02,
-  CHLOR = 0x05,
-  PUMP = 0x06,
-  X09 = 0x09
+  CHLOR  = 0x05,
+  PUMP   = 0x06,
+  X09    = 0x09
 };
 
 using datalink_preamble_a5_t = uint8_t[3];

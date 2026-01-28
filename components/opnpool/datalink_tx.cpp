@@ -35,8 +35,17 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "datalink_tx";
+constexpr char TAG[] = "datalink_tx";
 
+    // debug buffer size for logging
+constexpr size_t DBG_SIZE = 128;
+
+constexpr size_t DATALINK_PREAMBLE_IC_SIZE = sizeof(datalink_preamble_ic);
+constexpr size_t DATALINK_PREAMBLE_A5_SIZE = sizeof(datalink_preamble_a5);
+
+constexpr uint8_t A5_PROTOCOL_VERSION = 0x01;
+constexpr uint8_t CTRL_ADDR = 0;
+constexpr uint8_t REMOTE_ADDR = 2;
 
 /**
  * @brief      Fills the IC protocol packet header fields for transmission.
@@ -49,10 +58,10 @@ static void
 _enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, datalink_typ_t const typ)
 {
     head->ff = 0xFF;
-    for (uint_least8_t ii = 0; ii < sizeof(datalink_preamble_ic); ii++) {
+    for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_IC_SIZE; ii++) {
         head->preamble[ii] = datalink_preamble_ic[ii];
     }
-    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
+    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, CTRL_ADDR);
     head->hdr.typ = typ.raw;
 }
 
@@ -83,12 +92,12 @@ static void
 _enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, datalink_typ_t const typ, size_t const data_len)
 {
     head->ff = 0xFF;
-    for (uint_least8_t ii = 0; ii < sizeof(datalink_preamble_a5); ii++) {
+    for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_A5_SIZE; ii++) {
         head->preamble[ii] = datalink_preamble_a5[ii];
     }
-    head->hdr.ver = 0x01;
-    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, 0);
-    head->hdr.src = datalink_devaddr(datalink_addrgroup_t::REMOTE, 2);  // 2BD 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
+    head->hdr.ver = A5_PROTOCOL_VERSION;
+    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, CTRL_ADDR);
+    head->hdr.src = datalink_devaddr(datalink_addrgroup_t::REMOTE, REMOTE_ADDR);  // 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
     head->hdr.typ = typ.raw;
     head->hdr.len = data_len;
 }
@@ -145,7 +154,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
             datalink_head_a5_t * const head = (datalink_head_a5_t *) skb_push(skb, sizeof(datalink_head_a5_t));
             _enter_a5_head(head, skb, pkt->typ, pkt->data_len);
 
-            uint8_t * crc_start = head->preamble + sizeof(datalink_preamble_a5_t) - 1;
+            uint8_t * crc_start = head->preamble + DATALINK_PREAMBLE_A5_SIZE - 1;
             uint8_t * crc_stop = skb->priv.tail;
             datalink_tail_a5_t * const tail = (datalink_tail_a5_t *) skb_put(skb, sizeof(datalink_tail_a5_t));
             _enter_a5_tail(tail, crc_start, crc_stop);
@@ -156,7 +165,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
         }
     }
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        size_t const dbg_size = 128;
+        size_t const dbg_size = DBG_SIZE;
         char dbg[dbg_size];
         (void) skb_print(TAG, skb, dbg, dbg_size);
         ESP_LOGV(TAG, " %s: { %s}", enum_str(pkt->prot), dbg);

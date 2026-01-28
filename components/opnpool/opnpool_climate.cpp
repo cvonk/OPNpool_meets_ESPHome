@@ -41,7 +41,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "opnpool_climate";
+constexpr char TAG[] = "opnpool_climate";
 
 [[nodiscard]] static float
 _celsius_to_fahrenheit(float c) {

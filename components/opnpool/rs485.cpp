@@ -42,14 +42,23 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "rs485";
+constexpr char TAG[] = "rs485";
 
-static size_t     _rxBufSize = 127;
-static TickType_t _rxTimeout = (100 / portTICK_PERIOD_MS);
-static TickType_t _txTimeout = (100 / portTICK_PERIOD_MS);
+constexpr size_t      RX_BUF_SIZE = 127;
+constexpr TickType_t  RX_TIMEOUT  = (100 / portTICK_PERIOD_MS);
+constexpr TickType_t  TX_TIMEOUT  = (100 / portTICK_PERIOD_MS);
 
-static uart_port_t _uart_port;
-static gpio_num_t _flow_control_pin;
+constexpr uart_port_t UART_PORT = static_cast<uart_port_t>(UART_NUM_1);
+
+constexpr int                   BAUD_RATE = 9600;
+constexpr uart_word_length_t    DATA_BITS = UART_DATA_8_BITS;
+constexpr uart_parity_t         PARITY    = UART_PARITY_DISABLE;
+constexpr uart_stop_bits_t      STOP_BITS = UART_STOP_BITS_1;
+constexpr uart_hw_flowcontrol_t FLOW_CTRL = UART_HW_FLOWCTRL_DISABLE; 
+constexpr uart_sclk_t           CLOCK_SRC = UART_SCLK_DEFAULT;
+constexpr uint8_t               RX_FLOW_CTRL_THRESH = 122;
+
+static gpio_num_t  _rts_pin;
 
 /**
  * @brief Returns the number of bytes available in the UART RX buffer.
@@ -58,7 +67,7 @@ static gpio_num_t _flow_control_pin;
 _available()
 {
     int length = 0;
-    ESP_ERROR_CHECK(uart_get_buffered_data_len(_uart_port, (size_t *) &length));
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT, (size_t *) &length));
     return length;
 }
 
@@ -72,7 +81,7 @@ _available()
 [[nodiscard]] static int
 _read_bytes(uint8_t * dst, uint32_t len)
 {
-    return uart_read_bytes(_uart_port, dst, len, _rxTimeout);
+    return uart_read_bytes(UART_PORT, dst, len, RX_TIMEOUT);
 }
 
 /**
@@ -85,7 +94,7 @@ _read_bytes(uint8_t * dst, uint32_t len)
 [[nodiscard]] static int
 _write_bytes(uint8_t * src, size_t len)
 {
-    return uart_write_bytes(_uart_port, (char *) src, len);
+    return uart_write_bytes(UART_PORT, (char *) src, len);
 }
 
 /**
@@ -94,8 +103,8 @@ _write_bytes(uint8_t * src, size_t len)
 static void
 _flush(void)
 {
-    ESP_ERROR_CHECK(uart_wait_tx_done(_uart_port, _txTimeout));
-    ESP_ERROR_CHECK(uart_flush_input(_uart_port));
+    ESP_ERROR_CHECK(uart_wait_tx_done(UART_PORT, TX_TIMEOUT));
+    ESP_ERROR_CHECK(uart_flush_input(UART_PORT));
 }
 
 /**
@@ -151,11 +160,11 @@ _tx_mode(bool const tx_enable)
     //  - choose a GPIO that doesn't mind being pulled down during reset
 
     if (tx_enable) {
-        gpio_set_level(_flow_control_pin, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
+        gpio_set_level(_rts_pin, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
     } else {
-        _flush();                              // wait until last byte starts transmitting
-        esp_rom_delay_us(1500);                // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
-        gpio_set_level(_flow_control_pin, 0);  // enable RS485 receive
+        _flush();                     // wait until last byte starts transmitting
+        esp_rom_delay_us(1500);       // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
+        gpio_set_level(_rts_pin, 0);  // enable RS485 receive
      }
 }
 
@@ -165,13 +174,12 @@ _tx_mode(bool const tx_enable)
  * @details
  * Configures the specified UART port and GPIO pins for RS485 half-duplex communication,
  * sets up the UART parameters (baud rate, data bits, stop bits, etc.), and initializes
- * the flow control pin for transmit/receive direction control. Allocates and initializes
- * the RS485 handle structure, sets up the transmit queue, and assigns function pointers
- * for RS485 operations. Returns a handle to the initialized RS485 interface for use by
- * higher-level protocol layers.
+ * the request-to-send (RTS) pin for transmit/receive direction control. Allocates and
+ * initializes the RS485 handle structure, sets up the transmit queue, and assigns
+ * function pointers for RS485 operations. Returns a handle to the initialized RS485
+ * interface for use by higher-level protocol layers.
  *
- * @param rs485_pins Pointer to the structure containing RX, TX, and flow control pin
- * numbers.
+ * @param rs485_pins Pointer to the structure containing RX, TX, and RTS pin numbers.
  * @return rs485_handle_t Handle to the initialized RS485 interface.
  */
 [[nodiscard]] rs485_handle_t
@@ -179,20 +187,18 @@ rs485_init(rs485_pins_t const * const rs485_pins)
 {
     gpio_num_t const rx_pin = static_cast<gpio_num_t>(rs485_pins->rx_pin);
     gpio_num_t const tx_pin = static_cast<gpio_num_t>(rs485_pins->tx_pin);
-    _flow_control_pin = static_cast<gpio_num_t>(rs485_pins->flow_control_pin);
-
-    _uart_port = static_cast<uart_port_t>(2);  // UART2
+    _rts_pin = static_cast<gpio_num_t>(rs485_pins->rts_pin);
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"    
     uart_config_t const uart_config = {
-        .baud_rate = 9600,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .rx_flow_ctrl_thresh = 122,
-        .source_clk = UART_SCLK_DEFAULT,
+        .baud_rate = BAUD_RATE,
+        .data_bits = DATA_BITS,
+        .parity = PARITY,
+        .stop_bits = STOP_BITS,
+        .flow_ctrl = FLOW_CTRL,
+        .rx_flow_ctrl_thresh = RX_FLOW_CTRL_THRESH,
+        .source_clk = CLOCK_SRC,
         .flags = {
             .backup_before_sleep = 0
         }
@@ -200,22 +206,22 @@ rs485_init(rs485_pins_t const * const rs485_pins)
 #pragma GCC diagnostic pop
 
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << static_cast<uint8_t>(_flow_control_pin)),
+        .pin_bit_mask = (1ULL << static_cast<uint8_t>(_rts_pin)),
         .mode = GPIO_MODE_OUTPUT,
         .pull_up_en = GPIO_PULLUP_DISABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
         .intr_type = GPIO_INTR_DISABLE,
     };
     ESP_ERROR_CHECK( gpio_config(&io_conf) );
-    gpio_set_level(_flow_control_pin, 0);
+    gpio_set_level(_rts_pin, 0);
 
-    ESP_LOGI(TAG, "Initializing RS485 on UART%u (RX pin %u, TX pin %u, RE/DE pin %u) ..",
-             _uart_port, rx_pin, tx_pin, _flow_control_pin);
+    ESP_LOGI(TAG, "Initializing RS485 on UART%u (RX pin %u, TX pin %u, RTS pin %u) ..",
+             UART_PORT, rx_pin, tx_pin, _rts_pin);
 
-    uart_param_config(_uart_port, &uart_config);
-    uart_set_pin(_uart_port, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(_uart_port, _rxBufSize * 2, 0, 0, NULL, 0);  // no tx buffer
-    uart_set_mode(_uart_port, UART_MODE_RS485_HALF_DUPLEX);
+    uart_param_config(UART_PORT, &uart_config);
+    uart_set_pin(UART_PORT, tx_pin, rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_PORT, RX_BUF_SIZE * 2, 0, 0, NULL, 0);  // no tx buffer
+    uart_set_mode(UART_PORT, UART_MODE_RS485_HALF_DUPLEX);
 
     QueueHandle_t const tx_q = xQueueCreate(5, sizeof(rs485_q_msg_t));
     if (tx_q == nullptr) {

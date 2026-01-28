@@ -15,7 +15,6 @@ namespace opnpool {
 
     // forward declarations (to avoid circular dependencies)
 struct ipc_t;
-struct rs485_pins_t;
 struct poolstate_t;
 struct pending_switch_t;
 struct pending_climate_t;
@@ -25,6 +24,12 @@ class OpnPoolSwitch;
 class OpnPoolSensor;
 class OpnPoolBinarySensor;
 class OpnPoolTextSensor;
+
+struct rs485_pins_t {
+    uint8_t rx_pin{21};
+    uint8_t tx_pin{22};
+    uint8_t rts_pin{23};
+};
 
     // main component
 
@@ -37,7 +42,7 @@ class OpnPool : public Component {
     void dump_config() override;
 
         // RS485 configuration
-    void set_rs485_pins(uint8_t rx_pin, uint8_t tx_pin, uint8_t flow_control_pin);
+    void set_rs485_pins(uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin);
 
         // climate setters        
     void set_pool_climate(OpnPoolClimate * const climate);
@@ -96,6 +101,7 @@ class OpnPool : public Component {
 
   protected:
 
+    rs485_pins_t rs485_pins_;
     ipc_t * ipc_{nullptr};  // interprocess communication structure and RS485-pins
     PoolState * poolState_{nullptr};
 

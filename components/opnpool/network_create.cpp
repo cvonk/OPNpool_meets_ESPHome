@@ -34,7 +34,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "network_create";
+constexpr char TAG[] = "network_create";
 
 /*
  * Create datalink_pkt from network_msg.

@@ -49,7 +49,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "pool_task";
+constexpr char TAG[] = "pool_task";
 
 /**
  * @brief Processes incoming packets from the RS-485 bus and relays messages to the main

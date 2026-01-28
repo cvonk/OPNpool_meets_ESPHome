@@ -8,18 +8,14 @@
 #include <esp_types.h>
 #include <freertos/queue.h>
 
+#include "opnpool.h" // for rs485_pins_t
+
 namespace esphome {
 namespace opnpool {
 
     // forward declarations (to avoid circular dependencies)
 struct ipc_t;
 struct network_msg_t;
-
-struct rs485_pins_t {
-    uint8_t rx_pin{25};
-    uint8_t tx_pin{26};
-    uint8_t flow_control_pin{27};
-};
 
 struct config_t {
     rs485_pins_t rs485_pins;

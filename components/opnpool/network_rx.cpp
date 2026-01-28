@@ -31,7 +31,7 @@
 namespace esphome {
 namespace opnpool {
 
-static char const * const TAG = "network_rx";
+constexpr char TAG[] = "network_rx";
 
     // helper to determine device_id
 [[nodiscard]] static network_msg_dev_id_t
