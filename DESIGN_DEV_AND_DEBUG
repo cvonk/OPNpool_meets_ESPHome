@@ -74,9 +74,26 @@ Common Shortcuts:
 
 ![VSCode_ide](assets/media/VSCode-ide.png){: style="display: block; margin-left: auto; margin-right: auto; width:500px;}
 
-## JTAG debugging (on &le; r3 boards)
+## JTAG debugging (on &ge; r4 boards)
 
-> On &ge; r4 boards, the JTAG debugging is build-in to the newer ESP32-C6 module. I just haven't tried this yet.
+On &ge; r4 boards, the JTAG debugging is build-in to the newer ESP32-C6 module. I just haven't tried this yet.
+
+```
+build_type = debug
+monitor_speed = 115200
+debug_tool = esp-builtin
+debug_init_break = tbreak setup ; or e.g. app_main
+```
+
+maybe
+```
+debug_build_flags = -O0 -g -ggdb
+```
+
+Zadig might have to change Interface 2 to WinUSB 6.xx
+
+
+## JTAG debugging (on &le; r3 boards)
 
 While traditional `ESP_LOGx` logging is useful, it leads to lengthy edit, compile, and debug cycles. The JTAG (Joint Test Action Group) hardware interface, combined with the GNU Debugger (GDB), gives you direct, real-time access to your ESP32’s internal state. This enables true source-level C++ debugging: you can set breakpoints, inspect call stacks, monitor local variables, and use watchpoints interactively. Instead of relying on print statements, you can pause execution at any point and inspect any variable or memory location instantly.
 

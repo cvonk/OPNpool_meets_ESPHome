@@ -51,8 +51,8 @@ esphome:
   friendly_name: ${friendly_name}
 
 esp32:
-  variant: esp32c6          # or esp32    for <= r3 boards
-  board: esp32-c6-devkitc-1 # or esp32dev for <= r3 boards
+  variant: esp32c6          # or esp32     for <= r3 boards
+  board: esp32-c6-devkitc-1 # or lolin_d32 for <= r3 boards
   framework:
     type: esp-idf
 
@@ -83,9 +83,9 @@ logger:
 opnpool:
   id: opnpool_1
   RS-485:
-    tx_pin:  21  # default GPIO21
-    rx_pin:  22  # default GPIO22
-    rts_pin: 23  # default GPIO23
+    tx_pin:  21  # or 26 for <= r3 boards 
+    rx_pin:  22  # or 25 for <= r3 boards
+    rts_pin: 23  # or 27 for <= r3 boards
 ```
 
 Specify your own secrets in `secrets.yaml`

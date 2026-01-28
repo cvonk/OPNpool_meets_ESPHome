@@ -19,7 +19,7 @@ esphome:
 
 esp32:
   variant: esp32   # esp32 for <= r3 boards, esp32c6 for >= r4 boards
-  board: esp32dev  # esp32dev for <= r3 boards, esp32-c6-devkitc-1 for >= r4 boards
+  board: lolin_d32  # lolin_d32 for <= r3 boards, esp32-c6-devkitc-1 for >= r4 boards
   framework:
     type: esp-idf
 
