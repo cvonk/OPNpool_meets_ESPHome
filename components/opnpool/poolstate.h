@@ -153,14 +153,15 @@ struct poolstate_pump_t {
 };
 
 enum class poolstate_chlor_status_typ_t : uint8_t {
-    OK         = 0,
-    LOW_FLOW   = 1,
-    LOW_SALT   = 2,
-    HIGH_SALT  = 3,
-    COLD       = 4,
-    CLEAN_CELL = 5,
-    OTHER      = 6
+    OTHER     = 0x00,
+    LOW_FLOW  = 0x01,
+    LOW_SALT  = 0x02,
+    HIGH_SALT = 0x04,
+    CLEAN_CELL= 0x10,
+    COLD      = 0x40,
+    OK        = 0x80
 };
+
 
 struct poolstate_chlor_status_t {
     bool                         valid;

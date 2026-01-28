@@ -90,9 +90,9 @@ class OpnPool : public Component {
     void update_binary_sensors(poolstate_t const * const state);
     void update_all(poolstate_t const * const state);
 
-    ipc_t * get_ipc() { return ipc_; }
-    PoolState * get_opnpool_state() { return poolState_; }
-    OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }
+    [[nodiscard]] ipc_t * get_ipc() { return ipc_; }
+    [[nodiscard]] PoolState * get_opnpool_state() { return poolState_; }
+    [[nodiscard]] OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }
 
   protected:
 

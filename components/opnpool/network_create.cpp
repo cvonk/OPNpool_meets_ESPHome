@@ -36,14 +36,6 @@ namespace opnpool {
 
 static char const * const TAG = "network_create";
 
-skb_handle_t
-_skb_alloc_a5(size_t const msg_size)
-{
-    skb_handle_t const txb = skb_alloc(sizeof(datalink_head_a5_t) + msg_size + sizeof(datalink_tail_a5_t));
-    skb_reserve(txb, sizeof(datalink_head_a5_t));
-    return txb;
-}
-
 /*
  * Create datalink_pkt from network_msg.
  */

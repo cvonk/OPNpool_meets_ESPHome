@@ -43,17 +43,12 @@ namespace opnpool {
 
 static char const * const TAG = "opnpool_climate";
 
-inline float
+[[nodiscard]] static float
 _celsius_to_fahrenheit(float c) {
     return c * 9.0f / 5.0f + 32.0f;
 }
 
-inline uint8_t 
-_combine_heat_sources(network_heat_src_t pool, network_heat_src_t spa) {
-    return static_cast<uint8_t>(enum_index(pool) | (enum_index(spa) << 2));
-}
-
-inline uint8_t
+[[nodiscard]] static uint8_t
 _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 {
     switch (thermo_typ) {
@@ -247,24 +242,19 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
     if (thermos_changed) {
 
-        auto combined_heat_src = _combine_heat_sources(
-            thermos_new[thermo_pool_idx].heat_src.value,
-            thermos_new[thermo_spa_idx].heat_src.value);
-
         network_msg_t msg = {};  // prevents -Wmissing-field-initializers
         msg.device_id = network_msg_dev_id_t::PRIMARY;
         msg.typ = network_msg_typ_t::CTRL_HEAT_SET;
-        msg.u.ctrl_heat_set = {
-            .pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value,
-            .spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value,
-            .combined_heat_src = combined_heat_src,
-            .UNKNOWN = 0
-        };
+        msg.u.ctrl_heat_set.pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value;
+        msg.u.ctrl_heat_set.spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value;
+        msg.u.ctrl_heat_set.heat_src.pool = thermos_new[thermo_pool_idx].heat_src.value;
+        msg.u.ctrl_heat_set.heat_src.spa = thermos_new[thermo_spa_idx].heat_src.value;
 
-        ESP_LOGV(TAG, "Sending HEAT_SET: pool=%u°F, spa=%u°F, heat_src=0x%02X", 
+        ESP_LOGV(TAG, "Sending HEAT_SET: pool=%u°F, spa=%u°F, heat_src=%u,%u", 
                   msg.u.ctrl_heat_set.pool_set_point, 
                   msg.u.ctrl_heat_set.spa_set_point,
-                  msg.u.ctrl_heat_set.combined_heat_src);
+                  (uint8_t)msg.u.ctrl_heat_set.heat_src.pool,
+                  (uint8_t)msg.u.ctrl_heat_set.heat_src.spa);
                   
         ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc());
     }

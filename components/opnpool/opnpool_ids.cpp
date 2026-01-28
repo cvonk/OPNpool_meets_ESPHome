@@ -20,7 +20,7 @@ namespace opnpool {
  * @param id climate_id_t value to convert.
  * @return   poolstate_thermo_typ_t corresponding value.
  */
-poolstate_thermo_typ_t
+[[nodiscard]] poolstate_thermo_typ_t
 climate_id_to_poolstate_thermo(climate_id_t const id)
 {
     static_assert(enum_count<climate_id_t>() == enum_count<poolstate_thermo_typ_t>(), "climate_id_t and poolstate_thermo_typ_t must have the same number of elements");
@@ -41,7 +41,7 @@ climate_id_to_poolstate_thermo(climate_id_t const id)
    * @param id switch_id_t value to convert.
    * @return   network_pool_circuit_t corresponding value.
    */
-network_pool_circuit_t
+[[nodiscard]] network_pool_circuit_t
 switch_id_to_network_circuit(switch_id_t const id)
 {
     static_assert(enum_count<switch_id_t>() == enum_count<network_pool_circuit_t>(), "switch_id_t and network_pool_circuit_t must have the same number of elements");

@@ -43,7 +43,7 @@ namespace opnpool {
 namespace poolstate_rx {
 namespace poolstate_rx_log {
 
-inline cJSON *
+[[nodiscard]] static cJSON *
 _create_item(cJSON * const obj, char const * const key)
 {
     if (key == nullptr) {
@@ -66,7 +66,7 @@ _add_system(cJSON * const obj, char const * const key, poolstate_t const * const
 }
 
     // add active circuit information to a JSON object
-inline void
+static void
 _add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
@@ -78,7 +78,7 @@ _add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit
 }
 
     // add delay circuit information to a JSON object
-inline void
+static void
 _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
     cJSON * const item = _create_item(obj, key);
@@ -90,7 +90,7 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
 }
 
     // add circuit information to a JSON object
-inline void
+static void
 _add_circuits(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
@@ -100,7 +100,7 @@ _add_circuits(cJSON * const obj, char const * const key, poolstate_t const * con
 }
 
     // add mode information to a JSON object
-inline void
+static void
 _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
 {
     cJSON * const item = _create_item(obj, key);
@@ -113,7 +113,7 @@ _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const 
 }
 
     // add temperatures information to a JSON object
-inline void
+static void
 _add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
 {
     cJSON * const item = _create_item(obj, key);

@@ -54,7 +54,7 @@ static gpio_num_t _flow_control_pin;
 /**
  * @brief Returns the number of bytes available in the UART RX buffer.
  */
-static int
+[[nodiscard]] static int
 _available()
 {
     int length = 0;
@@ -69,7 +69,7 @@ _available()
  * @param len Number of bytes to read.
  * @return    Number of bytes read.
  */
-static int
+[[nodiscard]] static int
 _read_bytes(uint8_t * dst, uint32_t len)
 {
     return uart_read_bytes(_uart_port, dst, len, _rxTimeout);
@@ -82,7 +82,7 @@ _read_bytes(uint8_t * dst, uint32_t len)
  * @param len Number of bytes to write.
  * @return    Number of bytes written.
  */
-static int
+[[nodiscard]] static int
 _write_bytes(uint8_t * src, size_t len)
 {
     return uart_write_bytes(_uart_port, (char *) src, len);
@@ -125,7 +125,7 @@ _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
  * @param handle RS-485 handle.
  * @return       Pointer to the dequeued packet, or NULL if none available.
  */
-static datalink_pkt_t const *
+[[nodiscard]] static datalink_pkt_t const *
 _dequeue(rs485_handle_t const handle)
 {
     rs485_q_msg_t msg{};
@@ -174,7 +174,7 @@ _tx_mode(bool const tx_enable)
  * numbers.
  * @return rs485_handle_t Handle to the initialized RS485 interface.
  */
-rs485_handle_t
+[[nodiscard]] rs485_handle_t
 rs485_init(rs485_pins_t const * const rs485_pins)
 {
     gpio_num_t const rx_pin = static_cast<gpio_num_t>(rs485_pins->rx_pin);

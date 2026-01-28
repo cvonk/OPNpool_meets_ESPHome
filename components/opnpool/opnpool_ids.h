@@ -57,8 +57,8 @@ enum class text_sensor_id_t : uint8_t {
 };    
 
     // function prototypes for opnpool_ids.cpp
-poolstate_thermo_typ_t climate_id_to_poolstate_thermo(climate_id_t const id);
-network_pool_circuit_t switch_id_to_network_circuit(switch_id_t const id);
+[[nodiscard]] poolstate_thermo_typ_t climate_id_to_poolstate_thermo(climate_id_t const id);
+[[nodiscard]] network_pool_circuit_t switch_id_to_network_circuit(switch_id_t const id);
 
-} // namespace esphome
 } // namespace opnpool
+} // namespace esphome

@@ -34,7 +34,7 @@ namespace opnpool {
 static char const * const TAG = "network_rx";
 
     // helper to determine device_id
-inline network_msg_dev_id_t
+[[nodiscard]] static network_msg_dev_id_t
 _datalink_to_network_dev_id(uint8_t const datalink_dev_id)
 {
     // I only have one pump, so I have to assume that pumps are numbered sequentially starting at 0
@@ -48,7 +48,7 @@ _datalink_to_network_dev_id(uint8_t const datalink_dev_id)
 }
 
     // helper to validate the data length of a decoded message.
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pkt, char const * tag, const char * typ_str)
 {
     size_t expected_size;
@@ -70,7 +70,7 @@ _validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pk
  * @param msg         Pointer to the network message structure to populate
  * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     datalink_typ_ctrl_t const network_typ_ctrl = pkt->typ.ctrl;
@@ -212,7 +212,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
  * @param msg         Pointer to the network message structure to populate
  * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     bool toPump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
@@ -291,7 +291,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
  * @param msg         Pointer to the network message structure to populate
  * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     datalink_typ_chlor_t const network_typ_chlor = pkt->typ.chlor;

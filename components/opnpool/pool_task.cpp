@@ -62,7 +62,7 @@ static char const * const TAG = "pool_task";
  * @param ipc   IPC structure pointer.
  * @return true if a transmit opportunity is available, false otherwise.
  */
-static bool
+[[nodiscard]] static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 {
     bool txOpportunity = false;

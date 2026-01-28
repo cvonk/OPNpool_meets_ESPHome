@@ -47,9 +47,6 @@ uint8_t const DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
 
 struct proto_info_t  {
     uint8_t const * const  preamble;
-#if 0    
-    uint8_t const * const  postamble;
-#endif
     uint8_t const          len;
     datalink_prot_t const  prot;
     uint8_t                idx;
@@ -116,7 +113,7 @@ _preamble_reset()
  * @param part_of_preamble Set true if b matches part of the preamble.
  * @return                 True if preamble is complete, false otherwise.
  */
-static bool
+[[nodiscard]] static bool
 _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_preamble)
 {
     if (b == pi->preamble[pi->idx]) {
@@ -144,7 +141,7 @@ _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_prea
  * @param pkt   Packet structure to update.
  * @return      ESP_OK if preamble found, ESP_FAIL otherwise.
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     uint8_t len = 0;
@@ -211,7 +208,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
  * @param ic_typ The IC message type (as uint8_t/datalink_typ_chlor_t).
  * @return       The size of the corresponding network message struct, or 0 if unknown.
  */
-static uint8_t 
+[[nodiscard]] static uint8_t 
 _network_ic_len(uint8_t const ic_typ)
 {
     auto typ = static_cast<datalink_typ_chlor_t>(ic_typ);
@@ -243,7 +240,7 @@ _network_ic_len(uint8_t const ic_typ)
  * @param pkt   Packet structure to update.
  * @return      ESP_OK if header read, ESP_FAIL otherwise.
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     switch (pkt->prot) {
@@ -305,7 +302,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
  * @param pkt   Packet structure to update.
  * @return      ESP_OK if data read, ESP_FAIL otherwise.
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     uint8_t len = 0;
@@ -335,7 +332,7 @@ _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
  * @param pkt   Packet structure to update.
  * @return      ESP_OK if tail read, ESP_FAIL otherwise.
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     switch (pkt->prot) {
@@ -378,7 +375,7 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
  * @param pkt   Packet structure to update.
  * @return      ESP_OK if CRC matches, ESP_FAIL otherwise.
  */
-static esp_err_t
+[[nodiscard]] static esp_err_t
 _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     struct {uint16_t rx, calc;} crc;
@@ -453,7 +450,7 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
     local_data_t local;
     local.head = (datalink_head_t *) skb_put(pkt->skb, DATALINK_MAX_HEAD_SIZE);
 
-    while (1) {
+    while (true) {
         state_transition_t * transition = state_transitions;
         for (uint_least8_t ii = 0; ii < ARRAY_SIZE(state_transitions); ii++, transition++) {
             if (state == transition->state) {

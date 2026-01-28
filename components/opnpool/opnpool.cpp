@@ -61,7 +61,7 @@ static char const * const TAG = "opnpool";
 
     // helper to only dump_config if entity exists
 template<typename EntityT>
-inline void 
+static void 
 _dump_if(EntityT * const entity)
 {
     if (entity != nullptr) {
@@ -71,7 +71,7 @@ _dump_if(EntityT * const entity)
 
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
-inline void 
+static void 
 _publish_if(EntityT * const entity, ValueT const base)
 {
     if (entity != nullptr && base.valid) {
@@ -81,7 +81,7 @@ _publish_if(EntityT * const entity, ValueT const base)
 
     // helper to only publish if entity exists
 template<typename EntityT, typename ValueT>
-inline void 
+static void 
 _publish_enum_if(EntityT * const entity, ValueT const base)
 {
     if (entity != nullptr && base.valid) {
@@ -90,7 +90,7 @@ _publish_enum_if(EntityT * const entity, ValueT const base)
 }
 
     // helper to publish scheduled times if entity exists
-inline void
+static void
 _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const * const sched)
 {
     if (sensor == nullptr || !sched->valid) {
@@ -106,7 +106,7 @@ _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const *
 }
 
     // helper to publish date and time if entity exists
-inline void
+static void
 _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t const * const tod)
 {
     if (sensor == nullptr || tod == nullptr || !tod->time.valid) {
@@ -126,7 +126,7 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
 }
 
     // helper to publish version if entity exists
-inline void
+static void
 _publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const version)
 {
     if (sensor != nullptr && version != nullptr) {
@@ -136,12 +136,7 @@ _publish_version_if(OpnPoolTextSensor *sensor, poolstate_version_t const * const
     }
 }
 
-inline float
-_fahrenheit_to_celsius(float const f) {
-    return (f - 32.0f) * 5.0f / 9.0f;
-}
-
-inline uint8_t
+[[nodiscard]] static uint8_t
 _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 {
     switch (thermo_typ) {

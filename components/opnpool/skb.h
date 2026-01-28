@@ -46,7 +46,7 @@ using skb_handle_t = skb_t *;
  * @return skb_handle_t A handle to the allocated skb, or nullptr on failure
  */
 
-skb_handle_t skb_alloc(size_t size);
+[[nodiscard]] skb_handle_t skb_alloc(size_t size);
 
 /**
  * @brief Free an `skb` (socket buffer)
@@ -102,7 +102,7 @@ void skb_reserve(skb_handle_t const skb, size_t const header_len);
  * @return uint8_t*      A pointer to the start of the newly reserved data area
  */
 
-uint8_t * skb_put(skb_handle_t const skb, size_t const user_data_len);
+[[nodiscard]] uint8_t * skb_put(skb_handle_t const skb, size_t const user_data_len);
 
 /**
  * @brief Reclaim previously allocated data space and return pointer to data
@@ -153,7 +153,7 @@ uint8_t * skb_call(skb_handle_t const skb, size_t const user_data_adj);
  * @return uint8_t*   A pointer to the start of the newly reserved header space
  */
   
-uint8_t * skb_push(skb_handle_t const skb, size_t const header_len);
+[[nodiscard]] uint8_t * skb_push(skb_handle_t const skb, size_t const header_len);
 
 /**
  * @brief Remove protocol header and return pointer to user data
@@ -177,7 +177,7 @@ uint8_t * skb_push(skb_handle_t const skb, size_t const header_len);
  * @return uint8_t*   A pointer to the start of the remaining data
  */
 
-uint8_t * skb_pull(skb_handle_t const skb, size_t const header_len);
+[[nodiscard]] uint8_t * skb_pull(skb_handle_t const skb, size_t const header_len);
 
 /**
  * @brief Reset the buffer to its initial state
@@ -217,7 +217,7 @@ void skb_reset(skb_handle_t skb);
  * @return size_t   The number of characters written to the buffer
  */
 
-size_t skb_print(char const * const tag, skb_handle_t const skb, char * const buf, size_t const buf_size);
+[[nodiscard]] size_t skb_print(char const * const tag, skb_handle_t const skb, char * const buf, size_t const buf_size);
 
 } // namespace opnpool
 } // namespace esphome

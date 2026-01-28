@@ -37,14 +37,8 @@
 namespace esphome {
 namespace opnpool {
 
-/**
- * @brief Enumerates the operation modes of the pool controller.
- *
- * @details
- * Represents the various modes in which the pool controller can operate, such as service mode,
- * temperature increase, freeze protection, and timeout. Used for status reporting and control logic.
- */
 
+    // enumerates the operation modes of the pool controller.
 enum class network_pool_mode_bits_t : uint8_t {
     SERVICE     = 0,
     UNKNOWN_01  = 1,
@@ -53,14 +47,7 @@ enum class network_pool_mode_bits_t : uint8_t {
     TIMEOUT     = 4
 };
 
-/**
- * @brief Enumerates the pool controller circuits and features.
- *
- * @details
- * Represents the various circuits and features (such as SPA, AUX, POOL, and FEATURE channels)
- * that can be controlled by the pool controller.
- */
-
+    // enumerates the pool controller circuits and features
 enum class network_pool_circuit_t : uint8_t {
     SPA      = 0,
     AUX1     = 1,
@@ -73,13 +60,7 @@ enum class network_pool_circuit_t : uint8_t {
     FEATURE4 = 8
 };
   
-/**
- * @brief Enumerates the operation modes of the pool pump.
- *
- * @details
- * Represents the various modes in which the pool pump can operate, such as filter, 
- * manual, backwash and features. Used for status reporting.
- */
+    // enumerates the operation modes of the pool pump
 enum class network_pump_mode_t : uint8_t {
     FILTER = 0,
     MAN    = 1,
@@ -101,14 +82,7 @@ enum class network_pump_ctrl_t : uint8_t {
     REMOTE   = 0xFF
 };
 
-/**
- * @brief Enumerates the states of the pool pump.
- *
- * @details
- * Represents the various states in which the pool pump can be, such as OK,
- * priming, running, and system priming.
- */
-
+    // enumerates the states of the pool pump
 enum class network_pump_state_t : uint8_t {
     OK         = 0,
     PRIMING    = 1,
@@ -117,20 +91,36 @@ enum class network_pump_state_t : uint8_t {
     SYSPRIMING = 4
 };
 
- /**
-  * @brief Enumerates the heat sources for the pool heating system.
-  *
-  * @details
-  * Represents the various heat sources that can be used for heating the pool,
-  * such as none, heater, solar preference, and solar.
-  */
-
+    // enumerates the heat sources for the pool heating system
 enum class network_heat_src_t : uint8_t {
     NONE,
     Heat,
     SolarPreferred,
     Solar
 };
+
+    // (high << 8 | low
+struct uint8_lo_hi_t {
+    uint8_t low;
+    uint8_t high;
+} PACK8;
+
+    // (high << 8 | low
+struct uint8_hi_lo_t {
+    uint8_t high;
+    uint8_t low;
+} PACK8;
+
+[[nodiscard]] constexpr uint16_t
+uint8_lo_hi_to_uint16(uint8_lo_hi_t const value) {
+    return ((uint16_t)value.high << 8) | value.low;
+}
+
+[[nodiscard]] constexpr uint16_t
+uint8_hi_lo_to_uint16(uint8_hi_lo_t const value) {
+    return ((uint16_t)value.high << 8) | value.low;
+}
+
 
 /**
  * @brief Defines the structures and unions for A5-controller messages.
@@ -151,15 +141,13 @@ struct network_msg_ctrl_circuit_set_t {
 
 struct network_msg_ctrl_sched_req_t {
     // note: sizeof(network_msg_ctrl_sched_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_sched_resp_sub_t {
-    uint8_t  circuit_plus_1;  // 0  (0 = schedule not active)
-    uint8_t  UNKNOWN_1;       // 1
-    uint8_t  prg_start_hi;    // 2 [minutes]
-    uint8_t  prg_start_lo;    // 3 [minutes]
-    uint8_t  prg_stop_hi;     // 4 [minutes]
-    uint8_t  prg_stop_lo;     // 5 [minutes]
+    uint8_t       circuit_plus_1;  // 0  (0 = schedule not active)
+    uint8_t       UNKNOWN_1;       // 1
+    uint8_hi_lo_t prg_start;       // 2..3 [minutes]
+    uint8_hi_lo_t prg_stop;        // 4..5 [minutes]
 } PACK8;
 
 constexpr size_t NETWORK_MSG_CTRL_SCHED_COUNT = 2;
@@ -169,27 +157,41 @@ struct network_msg_ctrl_sched_resp_t {
     network_msg_ctrl_sched_resp_sub_t scheds[NETWORK_MSG_CTRL_SCHED_COUNT]; // 4,5,6,7,8,9, 10,11,12,13,14,15
 } PACK8;
 
+struct uint8_heat_status_t {
+    bool    UNKNOWN_0 : 1;
+    bool    UNKNOWN_1 : 1;
+    bool    pool      : 1;  //  lowest nibble is for POOL
+    bool    spa       : 1;  // highest nibble is for SPA
+    uint8_t UNKNOWN_4 : 4;
+} PACK8;
+static_assert(sizeof(uint8_heat_status_t) == 1, "uint8_heat_status_t must be 1 byte");
+
+struct uint8_heat_src_t {
+    network_heat_src_t pool : 4;  //  lowest nibble is for POOL
+    network_heat_src_t spa  : 4;  // highest nibble is for SPA
+} PACK8;
+static_assert(sizeof(uint8_heat_src_t) == 1, "uint8_heat_src_t must be 1 byte");
+
 struct network_msg_ctrl_state_bcast_t {
-    uint8_t hour;                 // 0
-    uint8_t minute;               // 1
-    uint8_t active_lo;            // 2      (active_hi << 8 | active_lo) forms a bitmask for active circuits
-    uint8_t active_hi;            // 3
-    uint8_t UNKNOWN_04to06[3];    // 4..6   more `active` circuits on fancy controllers
-    uint8_t UNKNOWN_07to08[2];    // 7..8
-    uint8_t mode_bits;            // 9      bitmask for active pool modes
-    uint8_t combined_heat_status; // 10     bit2 is for POOL, bit3 is for SPA
-    uint8_t UNKNOWN_11;           // 11
-    uint8_t delay;                // 12     bitmask for delay status of circuits
-    uint8_t UNKNOWN_13;           // 13
-    uint8_t pool_temp;            // 14     water sensor 1
-    uint8_t spa_temp;             // 15     water sensor 2
-    uint8_t UNKNOWN_16;           // 16     unknown          (was major)
-    uint8_t water_temp;           // 17     solar sensor 1   (was minor)
-    uint8_t air_temp;             // 18     air sensor
-    uint8_t water_temp2;          // 19     solar sensor 2
-    uint8_t UNKNOWN_20to21[2];    // 20..21 more water sensors?
-    uint8_t combined_heat_srcs;   // 22     lowest nibble is for POOL, highest nibble is for SPA
-    uint8_t UNKNOWN_23to28[6];    // 23..28
+    uint8_t             hour;               // 0
+    uint8_t             minute;             // 1
+    uint8_lo_hi_t       active;             // 2..3   bitmask for active circuits
+    uint8_t             UNKNOWN_04to06[3];  // 4..6   more `active` circuits on fancy controllers
+    uint8_t             UNKNOWN_07to08[2];  // 7..8
+    uint8_t             mode_bits;          // 9      bitmask for active pool modes
+    uint8_heat_status_t heat_status;        // 10     bit2 is for POOL, bit3 is for SPA
+    uint8_t             UNKNOWN_11;         // 11
+    uint8_t             delay;              // 12     bitmask for delay status of circuits
+    uint8_t             UNKNOWN_13;         // 13
+    uint8_t             pool_temp;          // 14     water sensor 1
+    uint8_t             spa_temp;           // 15     water sensor 2
+    uint8_t             UNKNOWN_16;         // 16     unknown          (was major)
+    uint8_t             water_temp;         // 17     solar sensor 1   (was minor)
+    uint8_t             air_temp;           // 18     air sensor
+    uint8_t             water_temp2;        // 19     solar sensor 2
+    uint8_t             UNKNOWN_20to21[2];  // 20..21 more water sensors?
+    uint8_heat_src_t    heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
+    uint8_t             UNKNOWN_23to28[6];  // 23..28
 } PACK8;
 
 // just a guess
@@ -197,7 +199,7 @@ using network_msg_ctrl_state_set_t = network_msg_ctrl_state_bcast_t;
 
 struct network_msg_ctrl_time_req_t {
     // note: sizeof(network_msg_ctrl_time_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_time_t {
     uint8_t hour;       // 0
@@ -207,7 +209,7 @@ struct network_msg_ctrl_time_t {
     uint8_t month;      // 4
     uint8_t year;       // 5
     uint8_t clk_speed;  // 6
-    bool    dst_auto;   // 7 (1=auto, 0=manual)
+    bool    dst_auto;   // 7 daylight savings time (1=auto, 0=manual)
 } PACK8;
 
 using network_msg_ctrl_time_set_t = network_msg_ctrl_time_t;
@@ -216,7 +218,7 @@ using network_msg_ctrl_time_resp_t = network_msg_ctrl_time_t;
 struct network_msg_ctrl_version_req_t {
     // note: sizeof(network_msg_ctrl_version_req_t) == 1, not 0
     // uint8_t req_id;
-};
+} PACK8;
 
 struct network_msg_ctrl_version_resp_t {
     uint8_t req_id;              // 0
@@ -226,73 +228,56 @@ struct network_msg_ctrl_version_resp_t {
     uint8_t boot_major;          // 5
     uint8_t boot_minor;          // 6   
     uint8_t UNKNOWN_07to16[10];  // 7,8,9,10,11, 12,13,14,15,16
-};
+} PACK8;
 
 struct network_msg_ctrl_valve_req_t {
     // note: sizeof(network_msg_ctrl_valve_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_valve_resp_t {
     uint8_t UNKNOWN[24]; // 03 00 00 00 00 FF FF 01 02 03 04 01 48 00 00 00 03 00 00 00 04 00 00 00
-};
+} PACK8;
 
 struct network_msg_ctrl_solarpump_req_t {
     // note: sizeof(network_msg_ctrl_solarpump_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_solarpump_resp_t {
     uint8_t UNKNOWN[3];  // 05 00 00
-};
+} PACK8;
 
 struct network_msg_ctrl_delay_req_t {
     // note: sizeof(network_msg_ctrl_delay_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_delay_resp_t {
     uint8_t UNKNOWN[2];  // 10 00
-};
+} PACK8;
 
 struct network_msg_ctrl_heat_setpt_req_t {
     // note: sizeof(network_msg_ctrl_heat_setpt_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_heat_setpt_resp_t {
     uint8_t UNKNOWN[10];  // 00 00 00 00 00 00 00 00 00 00 
-};
+} PACK8;
 
 struct network_msg_ctrl_circ_names_req_t {
     uint8_t req_id;  // 0x01
-};
+} PACK8;
 
 struct network_msg_ctrl_circ_names_resp_t {
     uint8_t req_id;      // req 0x01 -> resp 01 01 48 00 00
     uint8_t UNKNOWN[5];  // req 0x02 -> resp 02 00 03 00 00
-};
+} PACK8;
 
 struct network_msg_ctrl_chem_req_t {
     uint8_t UNKNOWN;  // 0xD2
-};;
+} PACK8;
 
 struct network_msg_ctrl_scheds_req_t {
     uint8_t sched_id;  // 0x01 (1 - 12)
-};
-
-// With POOL 1/1 from 08:00 to 10:00, and
-//      SPA  1/1 from 11:00 to 12:00
-// sending [0] => no response
-// sending [1] => 01 01 08 00 00 00 3F
-// sending [2] => 02 01 0C 30 15 14 3F
-// sending [3] => 03 00 2E 38 08 25 3F
-//
-// With no POOL, no SPA, no ..
-// sending [1] => 01 00 00 00 00 00 3F
-// sending [2] => 02 01 0C 30 15 14 3F
-// sending [3] => 03 00 2E 38 08 25 3F
-//
-// With only POOL 1/1 from 08:00 to 10:00
-// sending [1] => 01 06 00 00 00 00 3F
-// sending [2] => 02 01 0C 30 15 14 3F
-// sending [3] => 03 00 2E 38 08 25 3F
+} PACK8;
 
 struct network_msg_ctrl_scheds_resp_t {
     uint8_t                sched_id;     // 0 
@@ -302,38 +287,38 @@ struct network_msg_ctrl_scheds_resp_t {
     uint8_t                stop_hr;      // 4
     uint8_t                stop_min;     // 5
     uint8_t                day_of_week;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
-};
+} PACK8;
 
 struct network_msg_ctrl_heat_req_t {
     // note: sizeof(network_msg_ctrl_heat_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_heat_resp_t {
-    uint8_t pool_temp;         // 0
-    uint8_t spa_temp;          // 1
-    uint8_t air_temp;          // 2
-    uint8_t pool_set_point;    // 3
-    uint8_t spa_set_point;     // 4
-    uint8_t combined_heat_src; // 5 bits 0-1 for POOL, bits 2-3 for SPA
-    uint8_t UNKNOWN_06;        // 6
-    uint8_t UNKNOWN_07;        // 7
-    uint8_t UNKNOWN_08;        // 8
-    uint8_t UNKNOWN_09;        // 9
-    uint8_t UNKNOWN_10;        // 10
-    uint8_t UNKNOWN_11;        // 11
-    uint8_t UNKNOWN_12;        // 12
+    uint8_t          pool_temp;       // 0
+    uint8_t          spa_temp;        // 1
+    uint8_t          air_temp;        // 2
+    uint8_t          pool_set_point;  // 3
+    uint8_t          spa_set_point;   // 4
+    uint8_heat_src_t heat_src;        // 5 bits 0-1 for POOL, bits 2-3 for SPA
+    uint8_t          UNKNOWN_06;      // 6
+    uint8_t          UNKNOWN_07;      // 7
+    uint8_t          UNKNOWN_08;      // 8
+    uint8_t          UNKNOWN_09;      // 9
+    uint8_t          UNKNOWN_10;      // 10
+    uint8_t          UNKNOWN_11;      // 11
+    uint8_t          UNKNOWN_12;      // 12
 } PACK8;
 
 struct network_msg_ctrl_heat_set_t {
-    uint8_t pool_set_point;     // 0
-    uint8_t spa_set_point;      // 1
-    uint8_t combined_heat_src;  // 2 bits 0-1 for POOL, bits 2-3 for SPA
-    uint8_t UNKNOWN;            // 3
+    uint8_t          pool_set_point;  // 0
+    uint8_t          spa_set_point;   // 1
+    uint8_heat_src_t heat_src;        // 2 bits 0-1 for POOL, bits 2-3 for SPA
+    uint8_t          UNKNOWN;         // 3
 } PACK8;
 
 struct network_msg_ctrl_layout_req_t {
     // be aware: sizeof(network_msg_ctrl_layout_req_t) == 1, not 0
-};
+} PACK8;
 
 struct network_msg_ctrl_layout_resp_t {
     network_msg_ctrl_scheds_resp_t circuit[4];  // circuits assigned to each of the 4 buttons on the remote
@@ -352,23 +337,20 @@ using network_msg_ctrl_layout_set_t = network_msg_ctrl_layout_resp_t;
  */
 
 struct network_msg_pump_reg_set_t {
-    uint8_t address_hi;   // 0
-    uint8_t address_lo;   // 1
-    uint8_t value_hi;     // 2
-    uint8_t value_lo;     // 3
+    uint8_hi_lo_t address;  // 0..1
+    uint8_hi_lo_t value;    // 2..3
 } PACK8;
 
 struct network_msg_pump_reg_resp_t {
-    uint8_t value_hi;     // 0
-    uint8_t value_lo;     // 1
+    uint8_hi_lo_t value;  // 0..1
 } PACK8;
 
 struct network_msg_pump_ctrl_t {
-    network_pump_ctrl_t ctrl;  // 0
+    network_pump_ctrl_t ctrl;
 } PACK8;
 
 struct network_msg_pump_mode_t {
-    network_pump_mode_t mode;  // 0
+    network_pump_mode_t mode;
 } PACK8;
 
 enum class network_pump_running_t : uint8_t {
@@ -377,12 +359,12 @@ enum class network_pump_running_t : uint8_t {
 };
 
 struct network_msg_pump_run_t {
-    network_pump_running_t running;  // 0
+    network_pump_running_t running;
 } PACK8;
 
 struct network_msg_pump_status_req_t {
     // note: sizeof(network_msg_pump_status_req_t) == 1, not 0
-};
+} PACK8;
 
 enum class network_pump_program_addr_t : uint16_t {
     UNKNOWN_2BF0 = 0x2BF0,
@@ -397,7 +379,7 @@ enum class network_pump_program_addr_t : uint16_t {
 };
 
     // can't use magic enum, because  enum the values that are not contiguous, and outside the range that magic_enum expects
-inline const char * 
+[[nodiscard]] constexpr const char * 
 network_pump_program_addr_str(network_pump_program_addr_t addr)
 {
     switch (addr) {
@@ -418,10 +400,8 @@ struct network_msg_pump_status_resp_t {
     network_pump_running_t running;       // 0
     network_pump_mode_t    mode;          // 1
     network_pump_state_t   state;         // 2
-    uint8_t                power_hi;      // 3
-    uint8_t                power_lo;      // 4 [Watt]
-    uint8_t                speed_hi;      // 5
-    uint8_t                speed_lo;      // 6 [rpm]
+    uint8_hi_lo_t          power;         // 3..4 [Watt]
+    uint8_hi_lo_t          speed;         // 5..6 [rpm]
     uint8_t                flow;          // 7 [G/min]
     uint8_t                level;         // 8 [%]
     uint8_t                UNKNOWN;       // 9
@@ -540,66 +520,66 @@ union network_msg_data_t {
  * including controller, pump, and chlorinator messages. Used for message dispatch, parsing, and type-safe handling.
  */
 enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] and network_msg_typ_sizes[]
-    CTRL_SET_ACK = 0,
-    CTRL_CIRCUIT_SET = 1,
-    CTRL_SCHED_REQ = 2,
-    CTRL_SCHED_RESP = 3,
-    CTRL_STATE_BCAST = 4,
-    CTRL_TIME_REQ = 5,
-    CTRL_TIME_RESP = 6,
-    CTRL_TIME_SET = 7,
-    CTRL_HEAT_REQ = 8,
-    CTRL_HEAT_RESP = 9,
-    CTRL_HEAT_SET = 10,
-    CTRL_LAYOUT_REQ = 11,
-    CTRL_LAYOUT_RESP = 12,
-    CTRL_LAYOUT_SET = 13,
-    PUMP_REG_SET = 14,
-    PUMP_REG_RESP = 15,
-    PUMP_CTRL_SET = 16,
-    PUMP_CTRL_RESP = 17,
-    PUMP_MODE_SET = 18,
-    PUMP_MODE_RESP = 19,
-    PUMP_RUN_SET = 20,
-    PUMP_RUN_RESP = 21,
-    PUMP_STATUS_REQ = 22,
-    PUMP_STATUS_RESP = 23,
-    CHLOR_PING_REQ = 24,
-    CHLOR_PING_RESP = 25,
-    CHLOR_NAME_RESP = 26,
-    CHLOR_LEVEL_SET = 27,
-    CHLOR_LEVEL_RESP = 28,
-    CHLOR_NAME_REQ = 29,
-    CTRL_VALVE_REQ = 30,
-    CTRL_VALVE_RESP = 31,
-    CTRL_VERSION_REQ = 32,
-    CTRL_VERSION_RESP = 33,
-    CTRL_SOLARPUMP_REQ = 34,
-    CTRL_SOLARPUMP_RESP = 35,
-    CTRL_DELAY_REQ = 36,
-    CTRL_DELAY_RESP = 37,
-    CTRL_HEAT_SETPT_REQ = 38,
+    CTRL_SET_ACK         = 0,
+    CTRL_CIRCUIT_SET     = 1,
+    CTRL_SCHED_REQ       = 2,
+    CTRL_SCHED_RESP      = 3,
+    CTRL_STATE_BCAST     = 4,
+    CTRL_TIME_REQ        = 5,
+    CTRL_TIME_RESP       = 6,
+    CTRL_TIME_SET        = 7,
+    CTRL_HEAT_REQ        = 8,
+    CTRL_HEAT_RESP       = 9,
+    CTRL_HEAT_SET        = 10,
+    CTRL_LAYOUT_REQ      = 11,
+    CTRL_LAYOUT_RESP     = 12,
+    CTRL_LAYOUT_SET      = 13,
+    PUMP_REG_SET         = 14,
+    PUMP_REG_RESP        = 15,
+    PUMP_CTRL_SET        = 16,
+    PUMP_CTRL_RESP       = 17,
+    PUMP_MODE_SET        = 18,
+    PUMP_MODE_RESP       = 19,
+    PUMP_RUN_SET         = 20,
+    PUMP_RUN_RESP        = 21,
+    PUMP_STATUS_REQ      = 22,
+    PUMP_STATUS_RESP     = 23,
+    CHLOR_PING_REQ       = 24,
+    CHLOR_PING_RESP      = 25,
+    CHLOR_NAME_RESP      = 26,
+    CHLOR_LEVEL_SET      = 27,
+    CHLOR_LEVEL_RESP     = 28,
+    CHLOR_NAME_REQ       = 29,
+    CTRL_VALVE_REQ       = 30,
+    CTRL_VALVE_RESP      = 31,
+    CTRL_VERSION_REQ     = 32,
+    CTRL_VERSION_RESP    = 33,
+    CTRL_SOLARPUMP_REQ   = 34,
+    CTRL_SOLARPUMP_RESP  = 35,
+    CTRL_DELAY_REQ       = 36,
+    CTRL_DELAY_RESP      = 37,
+    CTRL_HEAT_SETPT_REQ  = 38,
     CTRL_HEAT_SETPT_RESP = 39,
-    CTRL_CIRC_NAMES_REQ = 40,
+    CTRL_CIRC_NAMES_REQ  = 40,
     CTRL_CIRC_NAMES_RESP = 41,
-    CTRL_SCHEDS_REQ = 42,
-    CTRL_SCHEDS_RESP = 43,
-    CTRL_CHEM_REQ = 44
+    CTRL_SCHEDS_REQ      = 42,
+    CTRL_SCHEDS_RESP     = 43,
+    CTRL_CHEM_REQ        = 44
 };
 
     // size lookup table for message types
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[] = {
-    sizeof(network_msg_ctrl_set_ack_t),                                  // 0: CTRL_SET_ACK
-    sizeof(network_msg_ctrl_circuit_set_t),                              // 1: CTRL_CIRCUIT_SET
-    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       // 2: CTRL_SCHED_REQ
-    sizeof(network_msg_ctrl_sched_resp_t),                               // 3: CTRL_SCHED_RESP
-    sizeof(network_msg_ctrl_state_bcast_t),                              // 4: CTRL_STATE_BCAST
-    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        // 5: CTRL_TIME_REQ
-    sizeof(network_msg_ctrl_time_resp_t),                                // 6: CTRL_TIME_RESP
-    sizeof(network_msg_ctrl_time_set_t),                                 // 7: CTRL_TIME_SET
-    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        // 8: CTRL_HEAT_REQ
-    sizeof(network_msg_ctrl_heat_resp_t),                                // 9: CTRL_HEAT_RESP
+    sizeof(network_msg_ctrl_set_ack_t),                                  //  0: CTRL_SET_ACK
+    sizeof(network_msg_ctrl_circuit_set_t),                              //  1: CTRL_CIRCUIT_SET
+    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       //  2: CTRL_SCHED_REQ
+    sizeof(network_msg_ctrl_sched_resp_t),                               //  3: CTRL_SCHED_RESP
+    sizeof(network_msg_ctrl_state_bcast_t),                              //  4: CTRL_STATE_BCAST
+    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        //  5: CTRL_TIME_REQ
+    sizeof(network_msg_ctrl_time_resp_t),                                //  6: CTRL_TIME_RESP
+    sizeof(network_msg_ctrl_time_set_t),                                 //  7: CTRL_TIME_SET
+    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        //  8: CTRL_HEAT_REQ
+    sizeof(network_msg_ctrl_heat_resp_t),                                //  9: CTRL_HEAT_RESP
     sizeof(network_msg_ctrl_heat_set_t),                                 // 10: CTRL_HEAT_SET
     0 /* sizeof(network_msg_ctrl_layout_req_t) returns 1, not 0 */,      // 11: CTRL_LAYOUT_REQ
     sizeof(network_msg_ctrl_layout_resp_t),                              // 12: CTRL_LAYOUT_RESP
@@ -637,7 +617,7 @@ static constexpr size_t network_msg_typ_sizes[] = {
     sizeof(network_msg_ctrl_chem_req_t)                                  // 44: CTRL_CHEM_REQ
 };
 
-inline esp_err_t
+[[nodiscard]] constexpr esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
@@ -670,16 +650,16 @@ struct network_msg_typ_info_t {
     // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
     // MUST MATCH network_msg_typ_t
 constexpr network_msg_typ_info_t network_msg_typ_info[] = {
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          // 0: CTRL_SET_ACK
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRCUIT_SET},      // 1: CTRL_CIRCUIT_SET
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_REQ},        // 2: CTRL_SCHED_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_RESP},       // 3: CTRL_SCHED_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::STATE_BCAST},      // 4: CTRL_STATE_BCAST
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_REQ},         // 5: CTRL_TIME_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_RESP},        // 6: CTRL_TIME_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_SET},         // 7: CTRL_TIME_SET
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_REQ},         // 8: CTRL_HEAT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_RESP},        // 9: CTRL_HEAT_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          //  0: CTRL_SET_ACK
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRCUIT_SET},      //  1: CTRL_CIRCUIT_SET
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_REQ},        //  2: CTRL_SCHED_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_RESP},       //  3: CTRL_SCHED_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::STATE_BCAST},      //  4: CTRL_STATE_BCAST
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_REQ},         //  5: CTRL_TIME_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_RESP},        //  6: CTRL_TIME_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_SET},         //  7: CTRL_TIME_SET
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_REQ},         //  8: CTRL_HEAT_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_RESP},        //  9: CTRL_HEAT_RESP
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SET},         // 10: CTRL_HEAT_SET
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_REQ},       // 11: CTRL_LAYOUT_REQ
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_RESP},      // 12: CTRL_LAYOUT_RESP
@@ -717,7 +697,7 @@ constexpr network_msg_typ_info_t network_msg_typ_info[] = {
     {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CHEM_REQ}          // 44: CTRL_CHEM_REQ
 };
 
-inline const network_msg_typ_info_t *
+[[nodiscard]] constexpr const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
@@ -745,7 +725,7 @@ enum class network_msg_dev_id_t : uint8_t {
  */
 
 struct network_msg_t {
-    network_msg_dev_id_t device_id;
+    network_msg_dev_id_t device_id;  // only valid for A5-PUMP messages
     network_msg_typ_t    typ;
     union network_msg_union_t {
         network_msg_pump_reg_set_t  pump_reg_set;

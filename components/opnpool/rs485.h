@@ -43,7 +43,7 @@ struct  rs485_q_msg_t {
 
 
     // rs485.cpp
-rs485_handle_t rs485_init(rs485_pins_t const * const rs485_pins);
+[[nodiscard]] rs485_handle_t rs485_init(rs485_pins_t const * const rs485_pins);
 
 } // namespace opnpool
 } // namespace esphome
