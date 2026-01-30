@@ -63,20 +63,8 @@ namespace poolstate_rx {
 
 constexpr char TAG[] = "poolstate_rx";
 
-[[nodiscard]] constexpr network_heat_src_t
-_get_pool_heat_src(uint8_heat_src_t const heat_src)
-{
-    return static_cast<network_heat_src_t>(heat_src.pool);
-}
-
-[[nodiscard]] constexpr network_heat_src_t
-_get_spa_heat_src(uint8_heat_src_t const heat_src)
-{
-    return static_cast<network_heat_src_t>(heat_src.spa);
-}
-
     // returns a bitmask of all matching status flags, or OTHER if none match
-[[nodiscard]] constexpr poolstate_chlor_status_typ_t
+constexpr poolstate_chlor_status_typ_t
 _get_chlor_status_from_error(uint8_t const error)
 {
     using T = poolstate_chlor_status_typ_t;
@@ -167,7 +155,7 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     };
     pool_thermo->heat_src = {
         .valid = true,
-        .value = _get_pool_heat_src(msg->heat_src)
+        .value = msg->heat_src.get_pool()
     };
     spa_thermo->temp_in_f =  {
         .valid = true,
@@ -179,7 +167,7 @@ _ctrl_heat_resp(cJSON * const dbg, network_msg_ctrl_heat_resp_t const * const ms
     };
     spa_thermo->heat_src = {
         .valid = true,
-        .value = _get_spa_heat_src(msg->heat_src)
+        .value = msg->heat_src.get_spa()
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -222,7 +210,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     };
     pool_thermo->heat_src = {
         .valid = true,
-        .value = _get_pool_heat_src(msg->heat_src)
+        .value = msg->heat_src.get_pool()
     };
     spa_thermo->set_point_in_f = {
         .valid = true,
@@ -230,7 +218,7 @@ _ctrl_heat_set(cJSON * const dbg, network_msg_ctrl_heat_set_t const * const msg,
     };
     spa_thermo->heat_src = {
         .valid = true,
-        .value = _get_spa_heat_src(msg->heat_src)
+        .value = msg->heat_src.get_spa()
     };
     
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -451,20 +439,20 @@ _update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const 
     }
     pool_thermo->heating = {
         .valid = true,
-        .value = msg->heat_status.pool
+        .value = msg->heat_status.get_pool()
     };
     pool_thermo->heat_src = {
         .valid = true,
-        .value = _get_pool_heat_src(msg->heat_src)
+        .value = msg->heat_src.get_pool()
     };
     spa_thermo->heating  = {
         .valid = true,
-        .value = msg->heat_status.spa
+        .value = msg->heat_status.get_spa()
     };
     spa_thermo->heat_src = {
         .valid = true,
-        .value = _get_spa_heat_src(msg->heat_src)
-    }   ;
+        .value = msg->heat_src.get_spa()
+    };
 }
 
 static void

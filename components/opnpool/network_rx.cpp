@@ -141,7 +141,6 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             break;
         case datalink_ctrl_typ_t::VALVE_REQ:
             msg->typ = network_msg_typ_t::CTRL_VALVE_REQ;
-            msg->u.a5.ctrl_valve_req = *(network_msg_ctrl_valve_req_t *) pkt->data;
             break;
         case datalink_ctrl_typ_t::VALVE_RESP:
             msg->typ = network_msg_typ_t::CTRL_VALVE_RESP;
@@ -149,7 +148,6 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             break;
         case datalink_ctrl_typ_t::SOLARPUMP_REQ:
             msg->typ = network_msg_typ_t::CTRL_SOLARPUMP_REQ;
-            msg->u.a5.ctrl_solarpump_req = *(network_msg_ctrl_solarpump_req_t *) pkt->data;
             break;
         case datalink_ctrl_typ_t::SOLARPUMP_RESP:
             msg->typ = network_msg_typ_t::CTRL_SOLARPUMP_RESP;
@@ -157,7 +155,6 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             break;
         case datalink_ctrl_typ_t::DELAY_REQ:
             msg->typ = network_msg_typ_t::CTRL_DELAY_REQ;
-            msg->u.a5.ctrl_delay_req = *(network_msg_ctrl_delay_req_t *) pkt->data;
             break;
         case datalink_ctrl_typ_t::DELAY_RESP:
             msg->typ = network_msg_typ_t::CTRL_DELAY_RESP;
@@ -165,7 +162,6 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             break;
         case datalink_ctrl_typ_t::HEAT_SETPT_REQ:
             msg->typ = network_msg_typ_t::CTRL_HEAT_SETPT_REQ;
-            msg->u.a5.ctrl_heat_setpt_req = *(network_msg_ctrl_heat_setpt_req_t *) pkt->data;
             break;
         case datalink_ctrl_typ_t::HEAT_SETPT_RESP:
             msg->typ = network_msg_typ_t::CTRL_HEAT_SETPT_RESP;
@@ -270,7 +266,6 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
         case datalink_pump_typ_t::STATUS:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_STATUS_REQ;
-                msg->u.a5.pump_status_req = *(network_msg_pump_status_req_t *) pkt->data;
             } else {
                 msg->typ = network_msg_typ_t::PUMP_STATUS_RESP;
                 msg->u.a5.pump_status_resp = *(network_msg_pump_status_resp_t *) pkt->data;

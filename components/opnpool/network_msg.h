@@ -102,13 +102,13 @@ enum class network_heat_src_t : uint8_t {
     Solar
 };
 
-    // (high << 8 | low
+    // (high << 8) | low
 struct uint8_lo_hi_t {
     uint8_t low;
     uint8_t high;
 } PACK8;
 
-    // (high << 8 | low
+    // (high << 8) | low
 struct uint8_hi_lo_t {
     uint8_t high;
     uint8_t low;
@@ -144,10 +144,6 @@ struct network_msg_ctrl_circuit_set_t {
     uint8_t  value;
 } PACK8;
 
-struct network_msg_ctrl_sched_req_t {
-    // note: sizeof(network_msg_ctrl_sched_req_t) == 1, not 0
-} PACK8;
-
 struct network_msg_ctrl_sched_resp_sub_t {
     uint8_t       circuit_plus_1;  // 0  (0 = schedule not active)
     uint8_t       UNKNOWN_1;       // 1
@@ -162,19 +158,25 @@ struct network_msg_ctrl_sched_resp_t {
     network_msg_ctrl_sched_resp_sub_t scheds[NETWORK_MSG_CTRL_SCHED_COUNT]; // 4,5,6,7,8,9, 10,11,12,13,14,15
 } PACK8;
 
+    // portable bit map for combined heat status
 struct uint8_heat_status_t {
-    bool    UNKNOWN_0 : 1;
-    bool    UNKNOWN_1 : 1;
-    bool    pool      : 1;  //  lowest nibble is for POOL
-    bool    spa       : 1;  // highest nibble is for SPA
-    uint8_t UNKNOWN_4 : 4;
+    uint8_t bits;
+    bool get_pool() const { return bits & 0x04; }
+    bool get_spa()  const { return bits & 0x08; }
+    void set_pool(bool v) { bits = (bits & ~0x04) | (v ? 0x04 : 0); }
+    void set_spa( bool v) { bits = (bits & ~0x08) | (v ? 0x08 : 0); }
 } PACK8;
-static_assert(sizeof(uint8_heat_status_t) == 1, "uint8_heat_status_t must be 1 byte");
 
+    // portable bit map for heat combined heat source
 struct uint8_heat_src_t {
-    network_heat_src_t pool : 4;  //  lowest nibble is for POOL
-    network_heat_src_t spa  : 4;  // highest nibble is for SPA
+    uint8_t bits;  // lower nible is pool heat source; higher nibble is for spa
+    network_heat_src_t get_pool() const { return static_cast<network_heat_src_t>(bits & 0x0F); } 
+    network_heat_src_t get_spa()  const { return static_cast<network_heat_src_t>((bits >> 4) & 0x0F); }    
+    void set_pool(network_heat_src_t src) { bits = (bits & 0xF0) | (static_cast<uint8_t>(src) & 0x0F); }
+    void set_spa( network_heat_src_t src) { bits = (bits & 0x0F) | (static_cast<uint8_t>(src) << 4); }
 } PACK8;
+
+static_assert(sizeof(uint8_heat_status_t) == 1, "uint8_heat_status_t must be 1 byte");
 static_assert(sizeof(uint8_heat_src_t) == 1, "uint8_heat_src_t must be 1 byte");
 
 struct network_msg_ctrl_state_bcast_t {
@@ -199,10 +201,6 @@ struct network_msg_ctrl_state_bcast_t {
     uint8_t             UNKNOWN_23to28[6];  // 23..28
 } PACK8;
 
-struct network_msg_ctrl_time_req_t {
-    // note: sizeof(network_msg_ctrl_time_req_t) == 1, not 0
-} PACK8;
-
 struct network_msg_ctrl_time_t {
     uint8_t hour;        // 0
     uint8_t minute;      // 1
@@ -218,7 +216,6 @@ using network_msg_ctrl_time_set_t = network_msg_ctrl_time_t;
 using network_msg_ctrl_time_resp_t = network_msg_ctrl_time_t;
 
 struct network_msg_ctrl_version_req_t {
-    // note: sizeof(network_msg_ctrl_version_req_t) == 1, not 0
     // uint8_t req_id;
 } PACK8;
 
@@ -232,32 +229,16 @@ struct network_msg_ctrl_version_resp_t {
     uint8_t UNKNOWN_07to16[10];  // 7,8,9,10,11, 12,13,14,15,16
 } PACK8;
 
-struct network_msg_ctrl_valve_req_t {
-    // note: sizeof(network_msg_ctrl_valve_req_t) == 1, not 0
-} PACK8;
-
 struct network_msg_ctrl_valve_resp_t {
     uint8_t UNKNOWN[24]; // 03 00 00 00 00 FF FF 01 02 03 04 01 48 00 00 00 03 00 00 00 04 00 00 00
-} PACK8;
-
-struct network_msg_ctrl_solarpump_req_t {
-    // note: sizeof(network_msg_ctrl_solarpump_req_t) == 1, not 0
 } PACK8;
 
 struct network_msg_ctrl_solarpump_resp_t {
     uint8_t UNKNOWN[3];  // 05 00 00
 } PACK8;
 
-struct network_msg_ctrl_delay_req_t {
-    // note: sizeof(network_msg_ctrl_delay_req_t) == 1, not 0
-} PACK8;
-
 struct network_msg_ctrl_delay_resp_t {
     uint8_t UNKNOWN[2];  // 10 00
-} PACK8;
-
-struct network_msg_ctrl_heat_setpt_req_t {
-    // note: sizeof(network_msg_ctrl_heat_setpt_req_t) == 1, not 0
 } PACK8;
 
 struct network_msg_ctrl_heat_setpt_resp_t {
@@ -291,10 +272,6 @@ struct network_msg_ctrl_scheds_resp_t {
     uint8_t                day_of_week;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
 } PACK8;
 
-struct network_msg_ctrl_heat_req_t {
-    // note: sizeof(network_msg_ctrl_heat_req_t) == 1, not 0
-} PACK8;
-
 struct network_msg_ctrl_heat_resp_t {
     uint8_t          pool_temp;       // 0
     uint8_t          spa_temp;        // 1
@@ -316,10 +293,6 @@ struct network_msg_ctrl_heat_set_t {
     uint8_t          spa_set_point;   // 1
     uint8_heat_src_t heat_src;        // 2 bits 0-1 for POOL, bits 2-3 for SPA
     uint8_t          UNKNOWN;         // 3
-} PACK8;
-
-struct network_msg_ctrl_layout_req_t {
-    // be aware: sizeof(network_msg_ctrl_layout_req_t) == 1, not 0
 } PACK8;
 
 struct network_msg_ctrl_layout_resp_t {
@@ -369,10 +342,6 @@ struct network_msg_pump_run_set_t {
 } PACK8;
 
 using network_msg_pump_run_resp_t = network_msg_pump_run_set_t;
-
-struct network_msg_pump_status_req_t {
-    // note: sizeof(network_msg_pump_status_req_t) == 1, not 0
-} PACK8;
 
 enum class network_pump_program_addr_t : uint16_t {
     UNKNOWN_2BF0 = 0x2BF0,
@@ -469,6 +438,8 @@ struct network_msg_chlor_level_resp_t {
  * The top-level union `network_msg_data_t` enables generic handling of any protocol message
  * within the OPNpool system, simplifying encoding, decoding, and processing of network
  * messages.
+ * 
+ * This represent the messages that have non-0 length
  */
 
 union network_msg_data_a5_t {
@@ -480,31 +451,22 @@ union network_msg_data_a5_t {
     network_msg_pump_mode_resp_t       pump_mode_resp;
     network_msg_pump_run_set_t         pump_run_set;
     network_msg_pump_run_resp_t        pump_run_resp;
-    network_msg_pump_status_req_t      pump_status_req;
     network_msg_pump_status_resp_t     pump_status_resp;
     network_msg_ctrl_set_ack_t         ctrl_set_ack;
     network_msg_ctrl_circuit_set_t     ctrl_circuit_set;
-    network_msg_ctrl_sched_req_t       ctrl_sched_req;
     network_msg_ctrl_sched_resp_t      ctrl_sched_resp;
     network_msg_ctrl_state_bcast_t     ctrl_state_bcast;
-    network_msg_ctrl_time_req_t        ctrl_time_req;
     network_msg_ctrl_time_resp_t       ctrl_time_resp;
     network_msg_ctrl_time_set_t        ctrl_time_set;
-    network_msg_ctrl_heat_req_t        ctrl_heat_req;
     network_msg_ctrl_heat_resp_t       ctrl_heat_resp;
     network_msg_ctrl_heat_set_t        ctrl_heat_set;
-    network_msg_ctrl_layout_req_t      ctrl_layout_req;
     network_msg_ctrl_layout_resp_t     ctrl_layout_resp;
     network_msg_ctrl_layout_set_t      ctrl_layout_set;    
-    network_msg_ctrl_valve_req_t       ctrl_valve_req;
     network_msg_ctrl_valve_resp_t      ctrl_valve_resp;
     network_msg_ctrl_version_req_t     ctrl_version_req;
     network_msg_ctrl_version_resp_t    ctrl_version_resp;
-    network_msg_ctrl_solarpump_req_t   ctrl_solarpump_req;
     network_msg_ctrl_solarpump_resp_t  ctrl_solarpump_resp;
-    network_msg_ctrl_delay_req_t       ctrl_delay_req;
     network_msg_ctrl_delay_resp_t      ctrl_delay_resp;
-    network_msg_ctrl_heat_setpt_req_t  ctrl_heat_setpt_req;
     network_msg_ctrl_heat_setpt_resp_t ctrl_heat_setpt_resp;
     network_msg_ctrl_circ_names_req_t  ctrl_circ_names_req;
     network_msg_ctrl_circ_names_resp_t ctrl_circ_names_resp;
@@ -589,6 +551,7 @@ enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] a
 };
 
     // size lookup table for message types
+    // note: in C++ empty structs have a size of 1, not 0.  For those we use 0 in this table
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[] = {
     0,                                                                   //  0: IGNORE
@@ -600,31 +563,31 @@ static constexpr size_t network_msg_typ_sizes[] = {
     sizeof(network_msg_pump_mode_resp_t),                                //  6: PUMP_MODE_RESP
     sizeof(network_msg_pump_run_set_t),                                  //  7: PUMP_RUN_SET
     sizeof(network_msg_pump_run_resp_t),                                 //  8: PUMP_RUN_RESP
-    0 /* sizeof(network_msg_pump_status_req_t) returns 1, not 0 */,      //  9: PUMP_STATUS_REQ
+    0,                                                                   //  9: PUMP_STATUS_REQ
     sizeof(network_msg_pump_status_resp_t),                              // 10: PUMP_STATUS_RESP
     sizeof(network_msg_ctrl_set_ack_t),                                  // 11: CTRL_SET_ACK
     sizeof(network_msg_ctrl_circuit_set_t),                              // 12: CTRL_CIRCUIT_SET
-    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       // 13: CTRL_SCHED_REQ
+    0,                                                                   // 13: CTRL_SCHED_REQ
     sizeof(network_msg_ctrl_sched_resp_t),                               // 14: CTRL_SCHED_RESP
     sizeof(network_msg_ctrl_state_bcast_t),                              // 15: CTRL_STATE_BCAST
-    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        // 16: CTRL_TIME_REQ
+    0,                                                                   // 16: CTRL_TIME_REQ
     sizeof(network_msg_ctrl_time_resp_t),                                // 17: CTRL_TIME_RESP
     sizeof(network_msg_ctrl_time_set_t),                                 // 18: CTRL_TIME_SET
-    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        // 19: CTRL_HEAT_REQ
+    0,                                                                   // 19: CTRL_HEAT_REQ
     sizeof(network_msg_ctrl_heat_resp_t),                                // 20: CTRL_HEAT_RESP
     sizeof(network_msg_ctrl_heat_set_t),                                 // 21: CTRL_HEAT_SET
-    0 /* sizeof(network_msg_ctrl_layout_req_t) returns 1, not 0 */,      // 22: CTRL_LAYOUT_REQ
+    0,                                                                   // 22: CTRL_LAYOUT_REQ
     sizeof(network_msg_ctrl_layout_resp_t),                              // 23: CTRL_LAYOUT_RESP
     sizeof(network_msg_ctrl_layout_set_t),                               // 24: CTRL_LAYOUT_SET
-    0 /* sizeof(network_msg_ctrl_valve_req_t) returns 1, not 0 */,       // 25: CTRL_VALVE_REQ
+    0,                                                                   // 25: CTRL_VALVE_REQ
     sizeof(network_msg_ctrl_valve_resp_t),                               // 26: CTRL_VALVE_RESP
-    0 /* sizeof(network_msg_ctrl_version_req_t) returns 1, not 0 */,     // 27: CTRL_VERSION_REQ
+    0,                                                                   // 27: CTRL_VERSION_REQ
     sizeof(network_msg_ctrl_version_resp_t),                             // 28: CTRL_VERSION_RESP
-    0 /* sizeof(network_msg_ctrl_solarpump_req_t) returns 1, not 0 */,   // 29: CTRL_SOLARPUMP_REQ
+    0,                                                                   // 29: CTRL_SOLARPUMP_REQ
     sizeof(network_msg_ctrl_solarpump_resp_t),                           // 30: CTRL_SOLARPUMP_RESP
-    0 /* sizeof(network_msg_ctrl_delay_req_t) returns 1, not 0 */,       // 31: CTRL_DELAY_REQ
+    0,                                                                   // 31: CTRL_DELAY_REQ
     sizeof(network_msg_ctrl_delay_resp_t),                               // 32: CTRL_DELAY_RESP
-    0 /* sizeof(network_msg_ctrl_heat_setpt_req_t) returns 1, not 0 */,  // 33: CTRL_HEAT_SETPT_REQ
+    0,                                                                   // 33: CTRL_HEAT_SETPT_REQ
     sizeof(network_msg_ctrl_heat_setpt_resp_t),                          // 34: CTRL_HEAT_SETPT_RESP
     sizeof(network_msg_ctrl_circ_names_req_t),                           // 35: CTRL_CIRC_NAMES_REQ
     sizeof(network_msg_ctrl_circ_names_resp_t),                          // 36: CTRL_CIRC_NAMES_RESP
