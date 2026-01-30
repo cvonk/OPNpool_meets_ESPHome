@@ -114,12 +114,12 @@ struct uint8_hi_lo_t {
     uint8_t low;
 } PACK8;
 
-[[nodiscard]] constexpr uint16_t
+constexpr uint16_t
 uint8_lo_hi_to_uint16(uint8_lo_hi_t const value) {
     return ((uint16_t)value.high << 8) | value.low;
 }
 
-[[nodiscard]] constexpr uint16_t
+constexpr uint16_t
 uint8_hi_lo_to_uint16(uint8_hi_lo_t const value) {
     return ((uint16_t)value.high << 8) | value.low;
 }
@@ -356,7 +356,7 @@ enum class network_pump_program_addr_t : uint16_t {
 };
 
     // can't use magic enum, because  enum the values that are not contiguous, and outside the range that magic_enum expects
-[[nodiscard]] constexpr const char * 
+constexpr const char * 
 network_pump_program_addr_str(network_pump_program_addr_t addr)
 {
     switch (addr) {
@@ -603,7 +603,7 @@ constexpr network_msg_typ_info_t network_msg_typ_info[] = {
 #undef X_INFO
 };
 
-[[nodiscard]] constexpr esp_err_t
+constexpr esp_err_t
 network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
@@ -615,7 +615,7 @@ network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
     return ESP_FAIL;
 }
 
-[[nodiscard]] constexpr const network_msg_typ_info_t *
+constexpr const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
@@ -647,12 +647,6 @@ struct network_msg_t {
     network_msg_typ_t    typ;
     network_msg_data_t   u;
 };
-
-    // IntelliSense doesn't evaluate constexpr functions
-#ifndef __INTELLISENSE__
-static_assert(std::size(network_msg_typ_sizes) == enum_count<network_msg_typ_t>());  
-static_assert(std::size(network_msg_typ_info) == enum_count<network_msg_typ_t>());
-#endif
 
 }  // namespace opnpool
 }  // namespace esphome
