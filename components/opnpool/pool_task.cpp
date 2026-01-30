@@ -51,6 +51,11 @@ namespace opnpool {
 
 constexpr char TAG[] = "pool_task";
 
+constexpr uint32_t POOL_TASK_DELAY_MS = 100;
+constexpr uint32_t POOL_REQ_INTERVAL_MS = 30 * 1000;
+constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;
+
+
 /**
  * @brief Processes incoming packets from the RS-485 bus and relays messages to the main
  * task.
@@ -110,6 +115,7 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
             datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by recipient
             return;
         }
+        if (pkt->skb) free(pkt->skb);
         free(pkt);
     }
 }
@@ -136,6 +142,7 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
         datalink_tx_pkt_queue(rs485, pkt);  // pkt and pkt->skb freed by mailbox recipient
 
     } else {
+        if (pkt->skb) free(pkt->skb);
         free(pkt);
     }
 }
@@ -154,13 +161,13 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 {
     datalink_pkt_t const * const pkt = rs485->dequeue(rs485);
     if (pkt) {
-        ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", enum_str(static_cast<datalink_typ_ctrl_t>(pkt->typ)));
+        ESP_LOGVV(TAG, "forward_queue: pkt typ=%s", enum_str(static_cast<datalink_ctrl_typ_t>(pkt->typ)));
 
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
             size_t const dbg_size = 128;
             char dbg[dbg_size];
             if (pkt->skb == nullptr) {
-                ESP_LOGE(TAG, "Packet skb is null");
+                ESP_LOGW(TAG, "Packet skb is null");
             } else {
                 (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
                 ESP_LOGVV(TAG, "tx { %s}", dbg);
@@ -175,11 +182,13 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         bool txOpportunity = false;
         network_msg_t msg;
 
-        ESP_LOGVV(TAG, "pretent rx: pkt typ=%s", enum_str(static_cast<datalink_typ_ctrl_t>(pkt->typ)));
+        ESP_LOGVV(TAG, "pretend rx: pkt typ=%s", enum_str(static_cast<datalink_ctrl_typ_t>(pkt->typ)));
 
         if (network_rx_msg(pkt, &msg, &txOpportunity) == ESP_OK) {
 
-            ipc_send_network_msg_to_main_task(&msg, ipc);
+            if (ipc_send_network_msg_to_main_task(&msg, ipc) != ESP_OK) {
+                ESP_LOGW(TAG, "Failed to send network message to main task");
+            }
         }
         free(pkt->skb);
         free((void *) pkt);
@@ -202,7 +211,7 @@ pool_req_task(void * rs485_void)
     while (1) {
         _queue_req(rs485, network_msg_typ_t::CTRL_HEAT_REQ);
         _queue_req(rs485, network_msg_typ_t::CTRL_SCHED_REQ);
-        vTaskDelay((TickType_t)30 * 1000 / portTICK_PERIOD_MS);
+        vTaskDelay((TickType_t)POOL_REQ_INTERVAL_MS / portTICK_PERIOD_MS);
     }
 }
 
@@ -235,7 +244,9 @@ pool_task(void * ipc_void)
     _queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
 
         // periodically request information from controller
-    xTaskCreate(&pool_req_task, "pool_req_task", 2*4096, rs485, 5, NULL);
+    if (xTaskCreate(&pool_req_task, "pool_req_task", POOL_REQ_TASK_STACK_SIZE, rs485, 5, NULL) != pdPASS) {
+        ESP_LOGE(TAG, "Failed to create pool_req_task");
+    }
 
     while (1) {
 
@@ -254,7 +265,7 @@ pool_task(void * ipc_void)
 
             _forward_queued_pkt_to_rs485(rs485, ipc);
         }
-         vTaskDelay((TickType_t)100 / portTICK_PERIOD_MS);
+         vTaskDelay((TickType_t)POOL_TASK_DELAY_MS / portTICK_PERIOD_MS);
     }
 }
 

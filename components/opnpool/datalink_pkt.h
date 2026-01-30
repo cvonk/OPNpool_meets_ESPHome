@@ -61,7 +61,7 @@ enum class datalink_prot_t : uint8_t {
  * Each value corresponds to a specific request or response type used in the A5
  * controller protocol.
  */
-enum class datalink_typ_ctrl_t : uint8_t {
+enum class datalink_ctrl_typ_t : uint8_t {
     SET_ACK         = 0x01,
     STATE_BCAST     = 0x02,
     CANCEL_DELAY    = 0x03,
@@ -110,7 +110,7 @@ enum class datalink_typ_ctrl_t : uint8_t {
  * Each value corresponds to a specific request or response type used in the A5
  * pump protocol.
  */
-enum class datalink_typ_pump_t : uint8_t {
+enum class datalink_pump_typ_t : uint8_t {
     REG        = 0x01,
     CTRL       = 0x04,
     MODE       = 0x05,
@@ -127,17 +127,34 @@ enum class datalink_typ_pump_t : uint8_t {
  * protocol. Each value corresponds to a specific request or response type used in the IC
  * protocol.
  *
- * @note  Keep in sync with _network_ic_len in datalink_rx.cpp
+ * @note  The enum value count MUST MATCH datalink_chlor_typ_sizes[] in
+ *        datalink_rx.cpp. A compile-time assertion validates the count.
+ * @note  UNKNOWN_XX values represent message types observed in protocol
+ *        but whose purpose has not yet been identified.
  */
-enum class datalink_typ_chlor_t : uint8_t {
-    PING_REQ   = 0x00,
-    PING_RESP  = 0x01,
-    NAME_RESP  = 0x03,
-    LEVEL_SET  = 0x11,
-    LEVEL_RESP = 0x12,
-    NAME_REQ   = 0x14
+enum class datalink_chlor_typ_t : uint8_t {
+    PING_REQ    = 0x00,
+    PING_RESP   = 0x01,
+    UNKNOWN_02  = 0x02,
+    NAME_RESP   = 0x03,
+    UNKNOWN_04  = 0x04,
+    UNKNOWN_05  = 0x05,
+    UNKNOWN_06  = 0x06,
+    UNKNOWN_07  = 0x07,
+    UNKNOWN_08  = 0x08,
+    UNKNOWN_09  = 0x09,
+    UNKNOWN_0A  = 0x0A,
+    UNKNOWN_0B  = 0x0B,
+    UNKNOWN_0C  = 0x0C,
+    UNKNOWN_0D  = 0x0D,
+    UNKNOWN_0E  = 0x0E,
+    UNKNOWN_0F  = 0x0F,
+    UNKNOWN_10  = 0x10,
+    LEVEL_SET   = 0x11,
+    LEVEL_RESP  = 0x12,
+    UNKNOWN_13  = 0x13,
+    NAME_REQ    = 0x14
 };
-
 
 /**
  * @brief Union representing the possible message type fields in a data link layer packet.
@@ -147,17 +164,17 @@ enum class datalink_typ_chlor_t : uint8_t {
  * message type, depending on the protocol context. It also provides access to the
  * raw 8-bit value for generic handling.
  *
- * @var ctrl   Controller message type (datalink_typ_ctrl_t).
- * @var pump   Pump message type (datalink_typ_pump_t).
- * @var chlor  Chlorinator message type (datalink_typ_chlor_t).
+ * @var ctrl   Controller message type (datalink_ctrl_typ_t).
+ * @var pump   Pump message type (datalink_pump_typ_t).
+ * @var chlor  Chlorinator message type (datalink_chlor_typ_t).
  * @var raw    Raw 8-bit value for generic or protocol-agnostic access.
  */
 union datalink_typ_t {
-    datalink_typ_ctrl_t  ctrl;
-    datalink_typ_pump_t  pump;
-    datalink_typ_chlor_t chlor;
+    datalink_ctrl_typ_t  ctrl;
+    datalink_pump_typ_t  pump;
+    datalink_chlor_typ_t chlor;
     uint8_t              raw;
-} PACK8;
+};
 
 
 /**
@@ -208,7 +225,7 @@ struct datalink_pkt_t {
     datalink_data_t *  data;
     size_t             data_len;
     skb_handle_t       skb;
-} PACK8;
+};
 
 
 } // namespace opnpool

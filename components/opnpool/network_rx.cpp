@@ -73,121 +73,121 @@ _validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pk
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    datalink_typ_ctrl_t const network_typ_ctrl = pkt->typ.ctrl;
+    datalink_ctrl_typ_t const network_typ_ctrl = pkt->typ.ctrl;
 
     msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
 
     switch (network_typ_ctrl) {
 
-        case datalink_typ_ctrl_t::SET_ACK:
+        case datalink_ctrl_typ_t::SET_ACK:
             msg->typ = network_msg_typ_t::CTRL_SET_ACK;
             msg->u.ctrl_set_ack = *(network_msg_ctrl_set_ack_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::CIRCUIT_SET:
+        case datalink_ctrl_typ_t::CIRCUIT_SET:
             msg->typ = network_msg_typ_t::CTRL_CIRCUIT_SET;
             msg->u.ctrl_circuit_set = *(network_msg_ctrl_circuit_set_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::SCHED_REQ:
+        case datalink_ctrl_typ_t::SCHED_REQ:
             msg->typ = network_msg_typ_t::CTRL_SCHED_REQ;
             break;
-        case datalink_typ_ctrl_t::SCHED_RESP:
+        case datalink_ctrl_typ_t::SCHED_RESP:
             msg->typ = network_msg_typ_t::CTRL_SCHED_RESP;
             msg->u.ctrl_sched_resp = *(network_msg_ctrl_sched_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::STATE_BCAST:
+        case datalink_ctrl_typ_t::STATE_BCAST:
             msg->typ = network_msg_typ_t::CTRL_STATE_BCAST;
             msg->u.ctrl_state = *(network_msg_ctrl_state_bcast_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::TIME_REQ:
+        case datalink_ctrl_typ_t::TIME_REQ:
             msg->typ = network_msg_typ_t::CTRL_TIME_REQ;
             break;
-        case datalink_typ_ctrl_t::TIME_RESP:
+        case datalink_ctrl_typ_t::TIME_RESP:
             msg->typ = network_msg_typ_t::CTRL_TIME_RESP;
             msg->u.ctrl_time_resp = *(network_msg_ctrl_time_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::TIME_SET:
+        case datalink_ctrl_typ_t::TIME_SET:
             msg->typ = network_msg_typ_t::CTRL_TIME_SET;
             msg->u.ctrl_time_set = *(network_msg_ctrl_time_set_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::HEAT_REQ:
+        case datalink_ctrl_typ_t::HEAT_REQ:
             msg->typ = network_msg_typ_t::CTRL_HEAT_REQ;
             break;
-        case datalink_typ_ctrl_t::HEAT_RESP:
+        case datalink_ctrl_typ_t::HEAT_RESP:
             msg->typ = network_msg_typ_t::CTRL_HEAT_RESP;
             msg->u.ctrl_heat_resp = *(network_msg_ctrl_heat_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::HEAT_SET:
+        case datalink_ctrl_typ_t::HEAT_SET:
             msg->typ = network_msg_typ_t::CTRL_HEAT_SET;
             msg->u.ctrl_heat_set = *(network_msg_ctrl_heat_set_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::LAYOUT_REQ:
+        case datalink_ctrl_typ_t::LAYOUT_REQ:
             msg->typ = network_msg_typ_t::CTRL_LAYOUT_REQ;
             break;
-        case datalink_typ_ctrl_t::LAYOUT_RESP:
+        case datalink_ctrl_typ_t::LAYOUT_RESP:
             msg->typ = network_msg_typ_t::CTRL_LAYOUT_RESP;
             msg->u.ctrl_layout_resp = *(network_msg_ctrl_layout_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::LAYOUT_SET:
+        case datalink_ctrl_typ_t::LAYOUT_SET:
             msg->typ = network_msg_typ_t::CTRL_LAYOUT_SET;
             msg->u.ctrl_layout_set = *(network_msg_ctrl_layout_set_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::VERSION_REQ:
+        case datalink_ctrl_typ_t::VERSION_REQ:
             msg->typ = network_msg_typ_t::CTRL_VERSION_REQ;
             msg->u.ctrl_version_req = *(network_msg_ctrl_version_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::VERSION_RESP:
+        case datalink_ctrl_typ_t::VERSION_RESP:
             msg->typ = network_msg_typ_t::CTRL_VERSION_RESP;
             msg->u.ctrl_version_resp = *(network_msg_ctrl_version_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::VALVE_REQ:
+        case datalink_ctrl_typ_t::VALVE_REQ:
             msg->typ = network_msg_typ_t::CTRL_VALVE_REQ;
             msg->u.ctrl_valve_req = *(network_msg_ctrl_valve_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::VALVE_RESP:
+        case datalink_ctrl_typ_t::VALVE_RESP:
             msg->typ = network_msg_typ_t::CTRL_VALVE_RESP;
             msg->u.ctrl_valve_resp = *(network_msg_ctrl_valve_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::SOLARPUMP_REQ:
+        case datalink_ctrl_typ_t::SOLARPUMP_REQ:
             msg->typ = network_msg_typ_t::CTRL_SOLARPUMP_REQ;
             msg->u.ctrl_solarpump_req = *(network_msg_ctrl_solarpump_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::SOLARPUMP_RESP:
+        case datalink_ctrl_typ_t::SOLARPUMP_RESP:
             msg->typ = network_msg_typ_t::CTRL_SOLARPUMP_RESP;
             msg->u.ctrl_solarpump_resp = *(network_msg_ctrl_solarpump_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::DELAY_REQ:
+        case datalink_ctrl_typ_t::DELAY_REQ:
             msg->typ = network_msg_typ_t::CTRL_DELAY_REQ;
             msg->u.ctrl_delay_req = *(network_msg_ctrl_delay_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::DELAY_RESP:
+        case datalink_ctrl_typ_t::DELAY_RESP:
             msg->typ = network_msg_typ_t::CTRL_DELAY_RESP;
             msg->u.ctrl_delay_resp = *(network_msg_ctrl_delay_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::HEAT_SETPT_REQ:
+        case datalink_ctrl_typ_t::HEAT_SETPT_REQ:
             msg->typ = network_msg_typ_t::CTRL_HEAT_SETPT_REQ;
             msg->u.ctrl_heat_set_req = *(network_msg_ctrl_heat_setpt_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::HEAT_SETPT_RESP:
+        case datalink_ctrl_typ_t::HEAT_SETPT_RESP:
             msg->typ = network_msg_typ_t::CTRL_HEAT_SETPT_RESP;
             msg->u.ctrl_heat_set_resp = *(network_msg_ctrl_heat_setpt_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::SCHEDS_REQ:
+        case datalink_ctrl_typ_t::SCHEDS_REQ:
             msg->typ = network_msg_typ_t::CTRL_SCHEDS_REQ;
             msg->u.ctrl_scheds_req = *(network_msg_ctrl_scheds_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::SCHEDS_RESP:
+        case datalink_ctrl_typ_t::SCHEDS_RESP:
             msg->typ = network_msg_typ_t::CTRL_SCHEDS_RESP;
             msg->u.ctrl_scheds_resp = *(network_msg_ctrl_scheds_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::CIRC_NAMES_REQ:
+        case datalink_ctrl_typ_t::CIRC_NAMES_REQ:
             msg->typ = network_msg_typ_t::CTRL_CIRC_NAMES_REQ;
             msg->u.ctrl_circ_names_req = *(network_msg_ctrl_circ_names_req_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::CIRC_NAMES_RESP:
+        case datalink_ctrl_typ_t::CIRC_NAMES_RESP:
             msg->typ = network_msg_typ_t::CTRL_CIRC_NAMES_RESP;
             msg->u.ctrl_circ_names_resp = *(network_msg_ctrl_circ_names_resp_t *) pkt->data;
             break;
-        case datalink_typ_ctrl_t::CHEM_REQ:
+        case datalink_ctrl_typ_t::CHEM_REQ:
             msg->typ = network_msg_typ_t::CTRL_CHEM_REQ;
             msg->u.ctrl_chem_req = *(network_msg_ctrl_chem_req_t *) pkt->data;
             break;
@@ -217,7 +217,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     bool toPump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
-    datalink_typ_pump_t const network_typ_pump = pkt->typ.pump;
+    datalink_pump_typ_t const network_typ_pump = pkt->typ.pump;
 
     auto datalink_dev_id = toPump ? datalink_device_id(pkt->dst)
                                   : datalink_device_id(pkt->src);
@@ -227,7 +227,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     // 2BD: datalink_addr_id(pkt->dst, or src) will identify the specific pump device within the PUMP address group
 
     switch (network_typ_pump) {
-        case datalink_typ_pump_t::REG:
+        case datalink_pump_typ_t::REG:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_REG_SET;
                 msg->u.pump_reg_set = *(network_msg_pump_reg_set_t *) pkt->data;
@@ -236,7 +236,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
                 msg->u.pump_reg_set_resp = *(network_msg_pump_reg_resp_t *) pkt->data;
             }
             break;
-        case datalink_typ_pump_t::CTRL:
+        case datalink_pump_typ_t::CTRL:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_CTRL_SET;
             } else {
@@ -244,7 +244,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             msg->u.pump_ctrl = *(network_msg_pump_ctrl_t *) pkt->data;
             break;
-        case datalink_typ_pump_t::MODE:
+        case datalink_pump_typ_t::MODE:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_MODE_SET;
             } else {
@@ -252,7 +252,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             msg->u.pump_mode = *(network_msg_pump_mode_t *) pkt->data;
             break;
-        case datalink_typ_pump_t::RUN:
+        case datalink_pump_typ_t::RUN:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_RUN_SET;
             } else {
@@ -260,7 +260,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             msg->u.pump_run = *(network_msg_pump_run_t *) pkt->data;
             break;
-        case datalink_typ_pump_t::STATUS:
+        case datalink_pump_typ_t::STATUS:
             if (toPump) {
                 msg->typ = network_msg_typ_t::PUMP_STATUS_REQ;
             } else {
@@ -268,7 +268,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
                 msg->u.pump_status_resp = *(network_msg_pump_status_resp_t *) pkt->data;
             }
             break;
-        case datalink_typ_pump_t::UNKNOWN_FF:
+        case datalink_pump_typ_t::UNKNOWN_FF:
             msg->typ = network_msg_typ_t::IGNORE;
             ESP_LOGV(TAG, "%s: ignoring typ (UNKNOWN_FF)", __FUNCTION__);
             return ESP_OK;
@@ -297,32 +297,32 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 [[nodiscard]] static esp_err_t
 _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    datalink_typ_chlor_t const network_typ_chlor = pkt->typ.chlor;
+    datalink_chlor_typ_t const network_typ_chlor = pkt->typ.chlor;
 
     msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
 
     switch (network_typ_chlor) {
-        case datalink_typ_chlor_t::PING_REQ:
+        case datalink_chlor_typ_t::PING_REQ:
             msg->typ = network_msg_typ_t::CHLOR_PING_REQ;
             msg->u.chlor_ping_req = *(network_msg_chlor_ping_req_t *) pkt->data;
             break;
-        case datalink_typ_chlor_t::PING_RESP:
+        case datalink_chlor_typ_t::PING_RESP:
             msg->typ = network_msg_typ_t::CHLOR_PING_RESP;
             msg->u.chlor_ping_resp = *(network_msg_chlor_ping_resp_t *) pkt->data;
             break;
-        case datalink_typ_chlor_t::NAME_RESP:
+        case datalink_chlor_typ_t::NAME_RESP:
             msg->typ = network_msg_typ_t::CHLOR_NAME_RESP;
             msg->u.chlor_name_resp = *(network_msg_chlor_name_resp_t *) pkt->data;
             break;
-        case datalink_typ_chlor_t::LEVEL_SET:
+        case datalink_chlor_typ_t::LEVEL_SET:
             msg->typ = network_msg_typ_t::CHLOR_LEVEL_SET;
             msg->u.chlor_level_set = *(network_msg_chlor_level_set_t *) pkt->data;
             break;
-        case datalink_typ_chlor_t::LEVEL_RESP:
+        case datalink_chlor_typ_t::LEVEL_RESP:
             msg->typ = network_msg_typ_t::CHLOR_LEVEL_RESP;
             msg->u.chlor_level_resp = *(network_msg_chlor_level_resp_t *) pkt->data;
             break;
-        case datalink_typ_chlor_t::NAME_REQ:
+        case datalink_chlor_typ_t::NAME_REQ:
             msg->typ = network_msg_typ_t::CHLOR_NAME_REQ;
             msg->u.chlor_name_req = *(network_msg_chlor_name_req_t *) pkt->data;
             break;

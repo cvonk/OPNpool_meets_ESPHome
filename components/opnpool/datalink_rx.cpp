@@ -67,6 +67,21 @@ static proto_info_t _proto_descr[] = {
     },
 };
 
+    // size lookup table for message types
+    // MUST MATCH enum datalink_chlor_typ_t in datalink_pkt.h
+inline constexpr size_t datalink_chlor_typ_sizes[] = {
+    sizeof(network_msg_chlor_ping_req_t),   // 0x00 PING_REQ
+    sizeof(network_msg_chlor_ping_resp_t),  // 0x01 PING_RESP
+    0,                                      // 0x02 UNKNOWN_02
+    sizeof(network_msg_chlor_name_resp_t),  // 0x03 NAME_RESP
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 0x04..0x10 UNKNOWN_04..10
+    sizeof(network_msg_chlor_level_set_t),  // 0x11 LEVEL_SET
+    sizeof(network_msg_chlor_level_resp_t), // 0x12 LEVEL_RESP
+    0,                                      // 0x13 UNKNOWN_13
+    sizeof(network_msg_chlor_name_req_t)    // 0x14 NAME_REQ
+};
+static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(datalink_chlor_typ_sizes));
+
 enum state_t {
     STATE_FIND_PREAMBLE,
     STATE_READ_HEAD,
@@ -203,30 +218,42 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
  * @brief        Returns the length of the IC network message for a given type.
  *
  * Looks up the expected length of the IC protocol network message for the given type.
- * This is required because the datalink_typ_chlor_t enum is non-continuous.
+ * This is required because the datalink_chlor_typ_t enum is non-continuous.
  *
- * @param ic_typ The IC message type (as uint8_t/datalink_typ_chlor_t).
+ * @param ic_typ The IC message type (as uint8_t/datalink_chlor_typ_t).
  * @return       The size of the corresponding network message struct, or 0 if unknown.
  */
 [[nodiscard]] static uint8_t 
 _network_ic_len(uint8_t const ic_typ)
 {
-    auto typ = static_cast<datalink_typ_chlor_t>(ic_typ);
+    if (ic_typ < ARRAY_SIZE(datalink_chlor_typ_sizes)) {
+        return datalink_chlor_typ_sizes[ic_typ];
+    }
+    ESP_LOGW(TAG, "Unknown IC message type: %02X", ic_typ);
+    return 0;
+
+#if 0    
+    auto typ = static_cast<datalink_chlor_typ_t>(ic_typ);
+
     static const struct {
-        datalink_typ_chlor_t typ;
+        datalink_chlor_typ_t typ;
         uint8_t len;
     } type_lut[] = {
-        {datalink_typ_chlor_t::PING_REQ,   sizeof(network_msg_chlor_ping_req_t)},
-        {datalink_typ_chlor_t::PING_RESP,  sizeof(network_msg_chlor_ping_resp_t)},
-        {datalink_typ_chlor_t::NAME_RESP,  sizeof(network_msg_chlor_name_resp_t)},
-        {datalink_typ_chlor_t::LEVEL_SET,  sizeof(network_msg_chlor_level_set_t)},
-        {datalink_typ_chlor_t::LEVEL_RESP, sizeof(network_msg_chlor_level_resp_t)},
-        {datalink_typ_chlor_t::NAME_REQ,   sizeof(network_msg_chlor_name_req_t)},
+        {datalink_chlor_typ_t::PING_REQ,   sizeof(network_msg_chlor_ping_req_t)},
+        {datalink_chlor_typ_t::PING_RESP,  sizeof(network_msg_chlor_ping_resp_t)},
+        {datalink_chlor_typ_t::NAME_RESP,  sizeof(network_msg_chlor_name_resp_t)},
+        {datalink_chlor_typ_t::LEVEL_SET,  sizeof(network_msg_chlor_level_set_t)},
+        {datalink_chlor_typ_t::LEVEL_RESP, sizeof(network_msg_chlor_level_resp_t)},
+        {datalink_chlor_typ_t::NAME_REQ,   sizeof(network_msg_chlor_name_req_t)},
     };
+        // MUST MATCH datalink_chlor_typ_t in datalink_pkt.h
+    static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(type_lut));
+
     for (const auto& entry : type_lut) {
         if (entry.typ == typ) return entry.len;
     }
     return 0;
+#endif
 }
 
 /**
