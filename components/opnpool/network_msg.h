@@ -1,16 +1,20 @@
 /**
  * @file network_msg.h
- * @brief Defines the network message structure for the OPNpool component.
- * 
+ * @brief Defines the network message structures for the OPNpool component.
+ *
  * @details
- * This header defines the network message structures, enums, and helper functions for the OPNpool component.
- * It specifies protocol-level message types, controller operation modes, circuits, pump modes, heat sources,
- * and their string conversion utilities. The file provides packed C-style structs for all supported protocol
- * messages exchanged between the ESPHome component and pool equipment, as well as lookup tables and functions
- * for message type metadata and size validation.
- * 
- * Thread safety is not provided, because it is not required for the single-threaded nature of ESPHome.
- * 
+ * This header defines protocol-level message types, packed C-style structs for all
+ * supported protocol messages, and lookup tables for message type metadata and size
+ * validation.
+ *
+ * Message types are defined using the X-Macro pattern (NETWORK_MSG_TYP_LIST) which
+ * generates the enum, size table, and protocol info table from a single definition,
+ * ensuring they stay synchronized. To add a new message type, add a single line to
+ * NETWORK_MSG_TYP_LIST.
+ *
+ * Thread safety is not provided, because it is not required for the single-threaded
+ * nature of ESPHome.
+ *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
  * @license SPDX-License-Identifier: GPL-3.0-or-later
@@ -505,6 +509,8 @@ inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
  *   - SIZE_EXPR: sizeof(struct) for messages with data, 0 for empty messages
  *   - PROTOCOL: datalink_prot_t value (A5_PUMP, A5_CTRL, or IC)
  *   - DATALINK_TYPE: The datalink type enum value
+ * 
+ * @note in C++ empty structs have a size of 1, not 0.  For those we use 0 in this table
  */
 #define NETWORK_MSG_TYP_LIST(X) \
     X(IGNORE,               0,                                         A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
@@ -558,9 +564,10 @@ inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
  * @brief Enumerates all supported network message types for OPNpool.
  *
  * @details
- * Each value represents a specific protocol message exchanged between the ESPHome component and pool equipment,
- * including controller, pump, and chlorinator messages. Used for message dispatch, parsing, and type-safe handling.
- * Generated from NETWORK_MSG_TYP_LIST X-Macro.
+ * Each value represents a specific protocol message exchanged between the ESPHome
+ * component and pool equipment, including controller, pump, and chlorinator messages.
+ * Used for message dispatch, parsing, and type-safe handling. Generated from
+ * NETWORK_MSG_TYP_LIST X-Macro.
  */
 enum class network_msg_typ_t : uint8_t {
 #define X_ENUM(name, size, proto, typ) name,
@@ -568,9 +575,7 @@ enum class network_msg_typ_t : uint8_t {
 #undef X_ENUM
 };
 
-    // size lookup table for message types
-    // note: in C++ empty structs have a size of 1, not 0.  For those we use 0 in this table
-    // Generated from NETWORK_MSG_TYP_LIST X-Macro
+    // size lookup table for message types (generated from NETWORK_MSG_TYP_LIST X-Macro)
 static constexpr size_t network_msg_typ_sizes[] = {
 #define X_SIZE(name, size, proto, typ) size,
     NETWORK_MSG_TYP_LIST(X_SIZE)
@@ -595,8 +600,7 @@ struct network_msg_typ_info_t {
         : proto(p), typ{.chlor = ct} {}
 };
 
-    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
-    // Generated from NETWORK_MSG_TYP_LIST X-Macro
+    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t (generated from NETWORK_MSG_TYP_LIST X-Macro)
 constexpr network_msg_typ_info_t network_msg_typ_info[] = {
 #define X_INFO(name, size, proto, typ) {datalink_prot_t::proto, typ},
     NETWORK_MSG_TYP_LIST(X_INFO)
@@ -647,6 +651,9 @@ struct network_msg_t {
     network_msg_typ_t    typ;
     network_msg_data_t   u;
 };
+
+static_assert(std::size(network_msg_typ_sizes) == enum_count<network_msg_typ_t>());
+static_assert(std::size(network_msg_typ_info) == enum_count<network_msg_typ_t>());
 
 }  // namespace opnpool
 }  // namespace esphome

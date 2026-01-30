@@ -34,7 +34,7 @@ namespace opnpool {
 constexpr char TAG[] = "network_rx";
 
     // helper to determine device_id
-[[nodiscard]] static network_msg_dev_id_t
+static network_msg_dev_id_t
 _datalink_to_network_dev_id(uint8_t const datalink_dev_id)
 {
     // I only have one pump, so I have to assume that pumps are numbered sequentially starting at 0
@@ -76,6 +76,14 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     datalink_ctrl_typ_t const network_typ_ctrl = pkt->typ.ctrl;
 
     msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
+
+
+    // catch 22 : validate length before copying ..., but need to know msg->typ for that
+    // need the reverse of
+    //   const network_msg_typ_info_t * info = network_msg_typ_get_info(msg->typ);
+    // something like
+    //   (datalink_prot_t, datalink_ctrl_typ_t) => network_msg_typ_t
+
 
     switch (network_typ_ctrl) {
 
