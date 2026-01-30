@@ -73,19 +73,20 @@ _validate_data_length(network_msg_typ_t msg_typ, datalink_pkt_t const * const pk
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    datalink_ctrl_typ_t const network_typ_ctrl = pkt->typ.ctrl;
+    datalink_ctrl_typ_t const datalink_ctrl_typ = pkt->typ.ctrl;
 
     msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
 
+        // need to check the length first, because otherwise if pkt->data is shorter than
+        // the target struct, we're reading out-of-bounds memory
+    msg->typ = network_msg_typ_from_datalink(datalink_ctrl_typ);
 
-    // catch 22 : validate length before copying ..., but need to know msg->typ for that
-    // need the reverse of
-    //   const network_msg_typ_info_t * info = network_msg_typ_get_info(msg->typ);
-    // something like
-    //   (datalink_prot_t, datalink_ctrl_typ_t) => network_msg_typ_t
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(datalink_ctrl_typ)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for A5_CTRL msg typ=%s", enum_str(msg->typ));
+        return ESP_FAIL;
+    }
 
-
-    switch (network_typ_ctrl) {
+    switch (datalink_ctrl_typ) {
 
         case datalink_ctrl_typ_t::SET_ACK:
             msg->typ = network_msg_typ_t::CTRL_SET_ACK;
@@ -196,13 +197,8 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             msg->u.a5.ctrl_chem_req = *(network_msg_ctrl_chem_req_t *) pkt->data;
             break;
         default:
-            ESP_LOGW(TAG, "unknown A5_CTRL typ=%s", enum_str(network_typ_ctrl));
+            ESP_LOGW(TAG, "unknown A5_CTRL typ=%s", enum_str(datalink_ctrl_typ));
             return ESP_FAIL;
-    }
-
-    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_ctrl)) != ESP_OK) {
-        ESP_LOGW(TAG, "invalid data length for A5_CTRL msg typ=%s", enum_str(msg->typ));
-        return ESP_FAIL;
     }
 
     ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -220,23 +216,30 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    bool toPump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
-    datalink_pump_typ_t const network_typ_pump = pkt->typ.pump;
+    bool is_to_pump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
+    datalink_pump_typ_t const datalink_pump_typ = pkt->typ.pump;
 
-    auto datalink_dev_id = toPump ? datalink_device_id(pkt->dst)
-                                  : datalink_device_id(pkt->src);
+    auto datalink_dev_id = is_to_pump ? datalink_device_id(pkt->dst)
+                                      : datalink_device_id(pkt->src);
 
     msg->device_id = _datalink_to_network_dev_id(datalink_dev_id);
 
-    // 2BD: datalink_addr_id(pkt->dst, or src) will identify the specific pump device within the PUMP address group
+        // need to check the length first, because otherwise if pkt->data is shorter than
+        // the target struct, we're reading out-of-bounds memory
+    msg->typ = network_msg_typ_from_datalink(datalink_pump_typ, is_to_pump);
+    
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(datalink_pump_typ)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for A5_PUMP msg typ=%s", enum_str(msg->typ));
+        return ESP_FAIL;
+    }
 
-    switch (network_typ_pump) {
+    switch (datalink_pump_typ) {
         case datalink_pump_typ_t::UNKNOWN_FF:
             msg->typ = network_msg_typ_t::IGNORE;
             ESP_LOGV(TAG, "%s: ignoring typ (FF)", __FUNCTION__);
             return ESP_OK;
         case datalink_pump_typ_t::REG:
-            if (toPump) {
+            if (is_to_pump) {
                 msg->typ = network_msg_typ_t::PUMP_REG_SET;
                 msg->u.a5.pump_reg_set = *(network_msg_pump_reg_set_t *) pkt->data;
             } else {
@@ -245,7 +248,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         case datalink_pump_typ_t::CTRL:
-            if (toPump) {
+            if (is_to_pump) {
                 msg->typ = network_msg_typ_t::PUMP_CTRL_SET;
                 msg->u.a5.pump_ctrl_set = *(network_msg_pump_ctrl_set_t *) pkt->data;
             } else {
@@ -254,7 +257,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         case datalink_pump_typ_t::MODE:
-            if (toPump) {
+            if (is_to_pump) {
                 msg->typ = network_msg_typ_t::PUMP_MODE_SET;
                 msg->u.a5.pump_mode_set = *(network_msg_pump_mode_set_t *) pkt->data;
             } else {
@@ -263,7 +266,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         case datalink_pump_typ_t::RUN:
-            if (toPump) {
+            if (is_to_pump) {
                 msg->typ = network_msg_typ_t::PUMP_RUN_SET;
                 msg->u.a5.pump_run_set = *(network_msg_pump_run_set_t *) pkt->data;
             } else {
@@ -272,7 +275,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         case datalink_pump_typ_t::STATUS:
-            if (toPump) {
+            if (is_to_pump) {
                 msg->typ = network_msg_typ_t::PUMP_STATUS_REQ;
             } else {
                 msg->typ = network_msg_typ_t::PUMP_STATUS_RESP;
@@ -280,13 +283,8 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         default:
-            ESP_LOGW(TAG, "unknown A5_PUMP typ=%s", enum_str(network_typ_pump));
+            ESP_LOGW(TAG, "unknown A5_PUMP typ=%s", enum_str(datalink_pump_typ));
             return ESP_FAIL;
-    }
-
-    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_pump)) != ESP_OK) {
-        ESP_LOGW(TAG, "invalid data length for A5_PUMP msg typ=%s", enum_str(msg->typ));
-        return ESP_FAIL;
     }
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -304,11 +302,20 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 [[nodiscard]] static esp_err_t
 _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    datalink_chlor_typ_t const network_typ_chlor = pkt->typ.chlor;
+    datalink_chlor_typ_t const datalink_chlor_typ = pkt->typ.chlor;
 
     msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
 
-    switch (network_typ_chlor) {
+        // need to check the length first, because otherwise if pkt->data is shorter than
+        // the target struct, we're reading out-of-bounds memory
+    msg->typ = network_msg_typ_from_datalink(datalink_chlor_typ);
+
+    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(datalink_chlor_typ)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for IC msg typ=%s", enum_str(msg->typ));
+        return ESP_FAIL;
+    }
+
+    switch (datalink_chlor_typ) {
         case datalink_chlor_typ_t::PING_REQ:
             msg->typ = network_msg_typ_t::CHLOR_PING_REQ;
             msg->u.ic.chlor_ping_req = *(network_msg_chlor_ping_req_t *) pkt->data;
@@ -334,13 +341,8 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
             msg->u.ic.chlor_name_req = *(network_msg_chlor_name_req_t *) pkt->data;
             break;
         default:
-            ESP_LOGW(TAG, "unknown IC typ %s", enum_str(network_typ_chlor));
+            ESP_LOGW(TAG, "unknown IC typ %s", enum_str(datalink_chlor_typ));
             return ESP_FAIL;
-    }
-
-    if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_chlor)) != ESP_OK) {
-        ESP_LOGW(TAG, "invalid data length for IC msg typ=%s", enum_str(msg->typ));
-        return ESP_FAIL;
     }
 
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));
