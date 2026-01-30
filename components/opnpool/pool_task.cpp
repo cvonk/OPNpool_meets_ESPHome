@@ -65,17 +65,24 @@ constexpr char TAG[] = "pool_task";
 [[nodiscard]] static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 {
-    bool txOpportunity = false;
     datalink_pkt_t pkt;
     network_msg_t msg;
+    bool txOpportunity = false;
 
     if (datalink_rx_pkt(rs485, &pkt) == ESP_OK) {
 
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
 
-            ipc_send_network_msg_to_main_task(&msg, ipc);
+            if( ipc_send_network_msg_to_main_task(&msg, ipc) != ESP_OK) {
+                ESP_LOGW(TAG, "Failed to send network message to main task");
+            }
+
+        } else {
+            ESP_LOGW(TAG, "Failed to decode network message from datalink packet");
         }
         free(pkt.skb);
+    } else {
+        ESP_LOGVV(TAG, "No packet received from RS-485");
     }
     return txOpportunity;
 }

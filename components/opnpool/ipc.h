@@ -28,8 +28,8 @@ struct ipc_t {
 };
 
     // function prototypes for ipc.cpp
-void ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
-void ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
+esp_err_t ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
+esp_err_t ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc);
 
 } // namespace opnpool
 } // namespace esphome

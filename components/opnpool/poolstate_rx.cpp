@@ -948,6 +948,8 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
     cJSON * const dbg = cJSON_CreateObject();
 
     switch (msg->typ) {
+        case network_msg_typ_t::IGNORE:
+            break;
         case network_msg_typ_t::CTRL_SET_ACK:  // response to various set requests
             _ctrl_set_ack(dbg, &msg->u.ctrl_set_ack);
             break;
@@ -1055,12 +1057,13 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
     }
 
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
-                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_SET ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_RESP ||
-                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ ||
+                          msg->typ == network_msg_typ_t::IGNORE           ||   
+                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET  ||
+                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET    ||
+                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP   ||
+                          msg->typ == network_msg_typ_t::PUMP_RUN_SET     ||
+                          msg->typ == network_msg_typ_t::PUMP_RUN_RESP    ||
+                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ  ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
 
     bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;

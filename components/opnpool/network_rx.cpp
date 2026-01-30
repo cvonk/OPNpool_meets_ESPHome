@@ -197,6 +197,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_ctrl)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for A5_CTRL msg typ=%s", enum_str(msg->typ));
         return ESP_FAIL;
     }
 
@@ -268,7 +269,8 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
             }
             break;
         case datalink_typ_pump_t::UNKNOWN_FF:
-            ESP_LOGVV(TAG, "%s: ignoring typ (UNKNOWN_FF)", __FUNCTION__);
+            msg->typ = network_msg_typ_t::IGNORE;
+            ESP_LOGV(TAG, "%s: ignoring typ (UNKNOWN_FF)", __FUNCTION__);
             return ESP_OK;
         default:
             ESP_LOGW(TAG, "unknown A5_PUMP typ=%s", enum_str(network_typ_pump));
@@ -276,6 +278,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_pump)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for A5_PUMP msg typ=%s", enum_str(msg->typ));
         return ESP_FAIL;
     }
 
@@ -329,6 +332,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     if (_validate_data_length(msg->typ, pkt, TAG, enum_str(network_typ_chlor)) != ESP_OK) {
+        ESP_LOGW(TAG, "invalid data length for IC msg typ=%s", enum_str(msg->typ));
         return ESP_FAIL;
     }
 
@@ -361,14 +365,15 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
         // reset mechanism that converts various formats to string
     name_reset_idx();
 
-        // silently ignore packets that we can't decode
+        // silently ignore packets that we don't know how to decode
     datalink_addrgroup_t const dst = datalink_addr_group(pkt->dst);
     if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_addrgroup_t::X09) ||
         (pkt->prot == datalink_prot_t::IC && dst != datalink_addrgroup_t::ALL && dst != datalink_addrgroup_t::CHLOR)) {
 
         *txOpportunity = false;
-        ESP_LOGVV(TAG, "Ignoring packet with prot %u and dst group %u", pkt->prot, dst);
-        return ESP_FAIL;
+        msg->typ = network_msg_typ_t::IGNORE;
+        ESP_LOGV(TAG, "Ignoring packet with prot %s and dst group %u", enum_str(pkt->prot), static_cast<uint8_t>(dst));
+        return ESP_OK;
     }
 
     esp_err_t result;

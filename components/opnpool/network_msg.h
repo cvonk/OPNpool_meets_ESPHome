@@ -520,101 +520,103 @@ union network_msg_data_t {
  * including controller, pump, and chlorinator messages. Used for message dispatch, parsing, and type-safe handling.
  */
 enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] and network_msg_typ_sizes[]
-    CTRL_SET_ACK         = 0,
-    CTRL_CIRCUIT_SET     = 1,
-    CTRL_SCHED_REQ       = 2,
-    CTRL_SCHED_RESP      = 3,
-    CTRL_STATE_BCAST     = 4,
-    CTRL_TIME_REQ        = 5,
-    CTRL_TIME_RESP       = 6,
-    CTRL_TIME_SET        = 7,
-    CTRL_HEAT_REQ        = 8,
-    CTRL_HEAT_RESP       = 9,
-    CTRL_HEAT_SET        = 10,
-    CTRL_LAYOUT_REQ      = 11,
-    CTRL_LAYOUT_RESP     = 12,
-    CTRL_LAYOUT_SET      = 13,
-    PUMP_REG_SET         = 14,
-    PUMP_REG_RESP        = 15,
-    PUMP_CTRL_SET        = 16,
-    PUMP_CTRL_RESP       = 17,
-    PUMP_MODE_SET        = 18,
-    PUMP_MODE_RESP       = 19,
-    PUMP_RUN_SET         = 20,
-    PUMP_RUN_RESP        = 21,
-    PUMP_STATUS_REQ      = 22,
-    PUMP_STATUS_RESP     = 23,
-    CHLOR_PING_REQ       = 24,
-    CHLOR_PING_RESP      = 25,
-    CHLOR_NAME_RESP      = 26,
-    CHLOR_LEVEL_SET      = 27,
-    CHLOR_LEVEL_RESP     = 28,
-    CHLOR_NAME_REQ       = 29,
-    CTRL_VALVE_REQ       = 30,
-    CTRL_VALVE_RESP      = 31,
-    CTRL_VERSION_REQ     = 32,
-    CTRL_VERSION_RESP    = 33,
-    CTRL_SOLARPUMP_REQ   = 34,
-    CTRL_SOLARPUMP_RESP  = 35,
-    CTRL_DELAY_REQ       = 36,
-    CTRL_DELAY_RESP      = 37,
-    CTRL_HEAT_SETPT_REQ  = 38,
-    CTRL_HEAT_SETPT_RESP = 39,
-    CTRL_CIRC_NAMES_REQ  = 40,
-    CTRL_CIRC_NAMES_RESP = 41,
-    CTRL_SCHEDS_REQ      = 42,
-    CTRL_SCHEDS_RESP     = 43,
-    CTRL_CHEM_REQ        = 44
+    IGNORE               = 0,
+    CTRL_SET_ACK         = 1,
+    CTRL_CIRCUIT_SET     = 2,
+    CTRL_SCHED_REQ       = 3,
+    CTRL_SCHED_RESP      = 4,
+    CTRL_STATE_BCAST     = 5,
+    CTRL_TIME_REQ        = 6,
+    CTRL_TIME_RESP       = 7,
+    CTRL_TIME_SET        = 8,
+    CTRL_HEAT_REQ        = 9,
+    CTRL_HEAT_RESP       = 10,
+    CTRL_HEAT_SET        = 11,
+    CTRL_LAYOUT_REQ      = 12,
+    CTRL_LAYOUT_RESP     = 13,
+    CTRL_LAYOUT_SET      = 14,
+    PUMP_REG_SET         = 15,
+    PUMP_REG_RESP        = 16,
+    PUMP_CTRL_SET        = 17,
+    PUMP_CTRL_RESP       = 18,
+    PUMP_MODE_SET        = 19,
+    PUMP_MODE_RESP       = 20,
+    PUMP_RUN_SET         = 21,
+    PUMP_RUN_RESP        = 22,
+    PUMP_STATUS_REQ      = 23,
+    PUMP_STATUS_RESP     = 24,
+    CHLOR_PING_REQ       = 25,
+    CHLOR_PING_RESP      = 26,
+    CHLOR_NAME_RESP      = 27,
+    CHLOR_LEVEL_SET      = 28,
+    CHLOR_LEVEL_RESP     = 29,
+    CHLOR_NAME_REQ       = 30,
+    CTRL_VALVE_REQ       = 31,
+    CTRL_VALVE_RESP      = 32,
+    CTRL_VERSION_REQ     = 33,
+    CTRL_VERSION_RESP    = 34,
+    CTRL_SOLARPUMP_REQ   = 35,
+    CTRL_SOLARPUMP_RESP  = 36,
+    CTRL_DELAY_REQ       = 37,
+    CTRL_DELAY_RESP      = 38,
+    CTRL_HEAT_SETPT_REQ  = 39,
+    CTRL_HEAT_SETPT_RESP = 40,
+    CTRL_CIRC_NAMES_REQ  = 41,
+    CTRL_CIRC_NAMES_RESP = 42,
+    CTRL_SCHEDS_REQ      = 43,
+    CTRL_SCHEDS_RESP     = 44,
+    CTRL_CHEM_REQ        = 45
 };
 
     // size lookup table for message types
     // MUST MATCH enum network_msg_typ_t
 static constexpr size_t network_msg_typ_sizes[] = {
-    sizeof(network_msg_ctrl_set_ack_t),                                  //  0: CTRL_SET_ACK
-    sizeof(network_msg_ctrl_circuit_set_t),                              //  1: CTRL_CIRCUIT_SET
-    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       //  2: CTRL_SCHED_REQ
-    sizeof(network_msg_ctrl_sched_resp_t),                               //  3: CTRL_SCHED_RESP
-    sizeof(network_msg_ctrl_state_bcast_t),                              //  4: CTRL_STATE_BCAST
-    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        //  5: CTRL_TIME_REQ
-    sizeof(network_msg_ctrl_time_resp_t),                                //  6: CTRL_TIME_RESP
-    sizeof(network_msg_ctrl_time_set_t),                                 //  7: CTRL_TIME_SET
-    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        //  8: CTRL_HEAT_REQ
-    sizeof(network_msg_ctrl_heat_resp_t),                                //  9: CTRL_HEAT_RESP
-    sizeof(network_msg_ctrl_heat_set_t),                                 // 10: CTRL_HEAT_SET
-    0 /* sizeof(network_msg_ctrl_layout_req_t) returns 1, not 0 */,      // 11: CTRL_LAYOUT_REQ
-    sizeof(network_msg_ctrl_layout_resp_t),                              // 12: CTRL_LAYOUT_RESP
-    sizeof(network_msg_ctrl_layout_set_t),                               // 13: CTRL_LAYOUT_SET
-    sizeof(network_msg_pump_reg_set_t),                                  // 14: PUMP_REG_SET
-    sizeof(network_msg_pump_reg_resp_t),                                 // 15: PUMP_REG_RESP
-    sizeof(network_msg_pump_ctrl_t),                                     // 16: PUMP_CTRL_SET
-    sizeof(network_msg_pump_ctrl_t),                                     // 17: PUMP_CTRL_RESP
-    sizeof(network_msg_pump_mode_t),                                     // 18: PUMP_MODE_SET
-    sizeof(network_msg_pump_mode_t),                                     // 19: PUMP_MODE_RESP
-    sizeof(network_msg_pump_run_t),                                      // 20: PUMP_RUN_SET
-    sizeof(network_msg_pump_run_t),                                      // 21: PUMP_RUN_RESP
-    0 /* sizeof(network_msg_pump_status_req_t) returns 1, not 0 */,      // 22: PUMP_STATUS_REQ
-    sizeof(network_msg_pump_status_resp_t),                              // 23: PUMP_STATUS_RESP
-    sizeof(network_msg_chlor_ping_req_t),                                // 24: CHLOR_PING_REQ
-    sizeof(network_msg_chlor_ping_resp_t),                               // 25: CHLOR_PING_RESP
-    sizeof(network_msg_chlor_name_resp_t),                               // 26: CHLOR_NAME_RESP
-    sizeof(network_msg_chlor_level_set_t),                               // 27: CHLOR_LEVEL_SET
-    sizeof(network_msg_chlor_level_resp_t),                              // 28: CHLOR_LEVEL_RESP
-    sizeof(network_msg_chlor_name_req_t),                                // 29: CHLOR_NAME_REQ
-    0 /* sizeof(network_msg_ctrl_valve_req_t) returns 1, not 0 */,       // 30: CTRL_VALVE_REQ
-    sizeof(network_msg_ctrl_valve_resp_t),                               // 31: CTRL_VALVE_RESP
-    0 /* sizeof(network_msg_ctrl_version_req_t) returns 1, not 0 */,     // 32: CTRL_VERSION_REQ
-    sizeof(network_msg_ctrl_version_resp_t),                             // 33: CTRL_VERSION_RESP
-    0 /* sizeof(network_msg_ctrl_solarpump_req_t) returns 1, not 0 */,   // 34: CTRL_SOLARPUMP_REQ
-    sizeof(network_msg_ctrl_solarpump_resp_t),                           // 35: CTRL_SOLARPUMP_RESP
-    0 /* sizeof(network_msg_ctrl_delay_req_t) returns 1, not 0 */,       // 36: CTRL_DELAY_REQ
-    sizeof(network_msg_ctrl_delay_resp_t),                               // 37: CTRL_DELAY_RESP
-    0 /* sizeof(network_msg_ctrl_heat_setpt_req_t) returns 1, not 0 */,  // 38: CTRL_HEAT_SETPT_REQ
-    sizeof(network_msg_ctrl_heat_setpt_resp_t),                          // 39: CTRL_HEAT_SETPT_RESP
-    sizeof(network_msg_ctrl_circ_names_req_t),                           // 40: CTRL_CIRC_NAMES_REQ
-    sizeof(network_msg_ctrl_circ_names_resp_t),                          // 41: CTRL_CIRC_NAMES_RESP
-    sizeof(network_msg_ctrl_scheds_req_t),                               // 42: CTRL_SCHEDS_REQ
-    sizeof(network_msg_ctrl_scheds_resp_t),                              // 43: CTRL_SCHEDS_RESP
-    sizeof(network_msg_ctrl_chem_req_t)                                  // 44: CTRL_CHEM_REQ
+    0,                                                                   //  0: IGNORE
+    sizeof(network_msg_ctrl_set_ack_t),                                  //  1: CTRL_SET_ACK
+    sizeof(network_msg_ctrl_circuit_set_t),                              //  2: CTRL_CIRCUIT_SET
+    0 /* sizeof(network_msg_ctrl_sched_req_t) returns 1, not 0 */,       //  3: CTRL_SCHED_REQ
+    sizeof(network_msg_ctrl_sched_resp_t),                               //  4: CTRL_SCHED_RESP
+    sizeof(network_msg_ctrl_state_bcast_t),                              //  5: CTRL_STATE_BCAST
+    0 /* sizeof(network_msg_ctrl_time_req_t) returns 1, not 0 */,        //  6: CTRL_TIME_REQ
+    sizeof(network_msg_ctrl_time_resp_t),                                //  7: CTRL_TIME_RESP
+    sizeof(network_msg_ctrl_time_set_t),                                 //  8: CTRL_TIME_SET
+    0 /* sizeof(network_msg_ctrl_heat_req_t) returns 1, not 0 */,        //  9: CTRL_HEAT_REQ
+    sizeof(network_msg_ctrl_heat_resp_t),                                // 10: CTRL_HEAT_RESP
+    sizeof(network_msg_ctrl_heat_set_t),                                 // 11: CTRL_HEAT_SET
+    0 /* sizeof(network_msg_ctrl_layout_req_t) returns 1, not 0 */,      // 12: CTRL_LAYOUT_REQ
+    sizeof(network_msg_ctrl_layout_resp_t),                              // 13: CTRL_LAYOUT_RESP
+    sizeof(network_msg_ctrl_layout_set_t),                               // 14: CTRL_LAYOUT_SET
+    sizeof(network_msg_pump_reg_set_t),                                  // 15: PUMP_REG_SET
+    sizeof(network_msg_pump_reg_resp_t),                                 // 16: PUMP_REG_RESP
+    sizeof(network_msg_pump_ctrl_t),                                     // 17: PUMP_CTRL_SET
+    sizeof(network_msg_pump_ctrl_t),                                     // 18: PUMP_CTRL_RESP
+    sizeof(network_msg_pump_mode_t),                                     // 19: PUMP_MODE_SET
+    sizeof(network_msg_pump_mode_t),                                     // 20: PUMP_MODE_RESP
+    sizeof(network_msg_pump_run_t),                                      // 21: PUMP_RUN_SET
+    sizeof(network_msg_pump_run_t),                                      // 22: PUMP_RUN_RESP
+    0 /* sizeof(network_msg_pump_status_req_t) returns 1, not 0 */,      // 23: PUMP_STATUS_REQ
+    sizeof(network_msg_pump_status_resp_t),                              // 24: PUMP_STATUS_RESP
+    sizeof(network_msg_chlor_ping_req_t),                                // 25: CHLOR_PING_REQ
+    sizeof(network_msg_chlor_ping_resp_t),                               // 26: CHLOR_PING_RESP
+    sizeof(network_msg_chlor_name_resp_t),                               // 27: CHLOR_NAME_RESP
+    sizeof(network_msg_chlor_level_set_t),                               // 28: CHLOR_LEVEL_SET
+    sizeof(network_msg_chlor_level_resp_t),                              // 29: CHLOR_LEVEL_RESP
+    sizeof(network_msg_chlor_name_req_t),                                // 30: CHLOR_NAME_REQ
+    0 /* sizeof(network_msg_ctrl_valve_req_t) returns 1, not 0 */,       // 31: CTRL_VALVE_REQ
+    sizeof(network_msg_ctrl_valve_resp_t),                               // 32: CTRL_VALVE_RESP
+    0 /* sizeof(network_msg_ctrl_version_req_t) returns 1, not 0 */,     // 33: CTRL_VERSION_REQ
+    sizeof(network_msg_ctrl_version_resp_t),                             // 34: CTRL_VERSION_RESP
+    0 /* sizeof(network_msg_ctrl_solarpump_req_t) returns 1, not 0 */,   // 35: CTRL_SOLARPUMP_REQ
+    sizeof(network_msg_ctrl_solarpump_resp_t),                           // 36: CTRL_SOLARPUMP_RESP
+    0 /* sizeof(network_msg_ctrl_delay_req_t) returns 1, not 0 */,       // 37: CTRL_DELAY_REQ
+    sizeof(network_msg_ctrl_delay_resp_t),                               // 38: CTRL_DELAY_RESP
+    0 /* sizeof(network_msg_ctrl_heat_setpt_req_t) returns 1, not 0 */,  // 39: CTRL_HEAT_SETPT_REQ
+    sizeof(network_msg_ctrl_heat_setpt_resp_t),                          // 40: CTRL_HEAT_SETPT_RESP
+    sizeof(network_msg_ctrl_circ_names_req_t),                           // 41: CTRL_CIRC_NAMES_REQ
+    sizeof(network_msg_ctrl_circ_names_resp_t),                          // 42: CTRL_CIRC_NAMES_RESP
+    sizeof(network_msg_ctrl_scheds_req_t),                               // 43: CTRL_SCHEDS_REQ
+    sizeof(network_msg_ctrl_scheds_resp_t),                              // 44: CTRL_SCHEDS_RESP
+    sizeof(network_msg_ctrl_chem_req_t)                                  // 45: CTRL_CHEM_REQ
 };
 
 [[nodiscard]] constexpr esp_err_t
@@ -650,51 +652,52 @@ struct network_msg_typ_info_t {
     // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
     // MUST MATCH network_msg_typ_t
 constexpr network_msg_typ_info_t network_msg_typ_info[] = {
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          //  0: CTRL_SET_ACK
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRCUIT_SET},      //  1: CTRL_CIRCUIT_SET
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_REQ},        //  2: CTRL_SCHED_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_RESP},       //  3: CTRL_SCHED_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::STATE_BCAST},      //  4: CTRL_STATE_BCAST
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_REQ},         //  5: CTRL_TIME_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_RESP},        //  6: CTRL_TIME_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_SET},         //  7: CTRL_TIME_SET
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_REQ},         //  8: CTRL_HEAT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_RESP},        //  9: CTRL_HEAT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SET},         // 10: CTRL_HEAT_SET
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_REQ},       // 11: CTRL_LAYOUT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_RESP},      // 12: CTRL_LAYOUT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_SET},       // 13: CTRL_LAYOUT_SET
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::REG},              // 14: PUMP_REG_SET
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::REG},              // 15: PUMP_REG_RESP
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::CTRL},             // 16: PUMP_CTRL_SET
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::CTRL},             // 17: PUMP_CTRL_RESP
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::MODE},             // 18: PUMP_MODE_SET
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::MODE},             // 19: PUMP_MODE_RESP
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::RUN},              // 20: PUMP_RUN_SET
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::RUN},              // 21: PUMP_RUN_RESP
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 22: PUMP_STATUS_REQ
-    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 23: PUMP_STATUS_RESP
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_REQ},        // 24: CHLOR_PING_REQ
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_RESP},       // 25: CHLOR_PING_RESP
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_RESP},       // 26: CHLOR_NAME_RESP
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_SET},       // 27: CHLOR_LEVEL_SET
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_RESP},      // 28: CHLOR_LEVEL_RESP
-    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_REQ},        // 29: CHLOR_NAME_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_REQ},        // 30: CTRL_VALVE_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_RESP},       // 31: CTRL_VALVE_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VERSION_REQ},      // 32: CTRL_VERSION_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VERSION_RESP},     // 33: CTRL_VERSION_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SOLARPUMP_REQ},    // 34: CTRL_SOLARPUMP_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SOLARPUMP_RESP},   // 35: CTRL_SOLARPUMP_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::DELAY_REQ},        // 36: CTRL_DELAY_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::DELAY_RESP},       // 37: CTRL_DELAY_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SETPT_REQ},   // 38: CTRL_HEAT_SETPT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SETPT_RESP},  // 39: CTRL_HEAT_SETPT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRC_NAMES_REQ},   // 40: CTRL_CIRC_NAMES_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRC_NAMES_RESP},  // 41: CTRL_CIRC_NAMES_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHEDS_REQ},       // 42: CTRL_SCHEDS_REQ
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHEDS_RESP},      // 43: CTRL_SCHEDS_RESP
-    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CHEM_REQ}          // 44: CTRL_CHEM_REQ
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::UNKNOWN_FF},       //  0: IGNORE
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SET_ACK},          //  1: CTRL_SET_ACK
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRCUIT_SET},      //  2: CTRL_CIRCUIT_SET
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_REQ},        //  3: CTRL_SCHED_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHED_RESP},       //  4: CTRL_SCHED_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::STATE_BCAST},      //  5: CTRL_STATE_BCAST
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_REQ},         //  6: CTRL_TIME_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_RESP},        //  7: CTRL_TIME_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::TIME_SET},         //  8: CTRL_TIME_SET
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_REQ},         //  9: CTRL_HEAT_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_RESP},        // 10: CTRL_HEAT_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SET},         // 11: CTRL_HEAT_SET
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_REQ},       // 12: CTRL_LAYOUT_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_RESP},      // 13: CTRL_LAYOUT_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::LAYOUT_SET},       // 14: CTRL_LAYOUT_SET
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::REG},              // 15: PUMP_REG_SET
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::REG},              // 16: PUMP_REG_RESP
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::CTRL},             // 17: PUMP_CTRL_SET
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::CTRL},             // 18: PUMP_CTRL_RESP
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::MODE},             // 19: PUMP_MODE_SET
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::MODE},             // 20: PUMP_MODE_RESP
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::RUN},              // 21: PUMP_RUN_SET
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::RUN},              // 22: PUMP_RUN_RESP
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 23: PUMP_STATUS_REQ
+    {datalink_prot_t::A5_PUMP, datalink_typ_pump_t::STATUS},           // 24: PUMP_STATUS_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_REQ},        // 25: CHLOR_PING_REQ
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::PING_RESP},       // 26: CHLOR_PING_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_RESP},       // 27: CHLOR_NAME_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_SET},       // 28: CHLOR_LEVEL_SET
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::LEVEL_RESP},      // 29: CHLOR_LEVEL_RESP
+    {datalink_prot_t::IC,      datalink_typ_chlor_t::NAME_REQ},        // 30: CHLOR_NAME_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_REQ},        // 31: CTRL_VALVE_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VALVE_RESP},       // 32: CTRL_VALVE_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VERSION_REQ},      // 33: CTRL_VERSION_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::VERSION_RESP},     // 34: CTRL_VERSION_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SOLARPUMP_REQ},    // 35: CTRL_SOLARPUMP_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SOLARPUMP_RESP},   // 36: CTRL_SOLARPUMP_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::DELAY_REQ},        // 37: CTRL_DELAY_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::DELAY_RESP},       // 38: CTRL_DELAY_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SETPT_REQ},   // 39: CTRL_HEAT_SETPT_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::HEAT_SETPT_RESP},  // 40: CTRL_HEAT_SETPT_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRC_NAMES_REQ},   // 41: CTRL_CIRC_NAMES_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CIRC_NAMES_RESP},  // 42: CTRL_CIRC_NAMES_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHEDS_REQ},       // 43: CTRL_SCHEDS_REQ
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::SCHEDS_RESP},      // 44: CTRL_SCHEDS_RESP
+    {datalink_prot_t::A5_CTRL, datalink_typ_ctrl_t::CHEM_REQ}          // 45: CTRL_CHEM_REQ
 };
 
 [[nodiscard]] constexpr const network_msg_typ_info_t *

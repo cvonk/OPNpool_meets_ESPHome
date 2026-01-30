@@ -40,17 +40,20 @@ constexpr char TAG[] = "ipc";
  *
  * @param network_msg  Pointer to the network message to send
  * @param ipc          Pointer to the IPC structure containing the queue handles
+ * @return             ESP_OK if the message was successfully queued, ESP_FAIL otherwise
  */
 
-void
+esp_err_t
 ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
     ESP_LOGV(TAG, "Queueing %s to main task", enum_str(network_msg->typ));
 
     if (xQueueSendToBack(ipc->to_main_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_main_q full");
+        return ESP_FAIL;
     }
-    vTaskDelay(1);  // give main task a chance to catch up
+    //vTaskDelay(1);  // give main task a chance to catch up
+    return ESP_OK;
 }
 
 /**
@@ -58,16 +61,19 @@ ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t
  *
  * @param network_msg  Pointer to the network message to send
  * @param ipc          Pointer to the IPC structure containing the queue handles
+ * @return             ESP_OK if the message was successfully queued, ESP_FAIL otherwise
  **/
 
-void
+esp_err_t
 ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc)
 {
     ESP_LOGV(TAG, "Queueing %s to pool task", enum_str(network_msg->typ));
 
     if (xQueueSendToBack(ipc->to_pool_q, network_msg, 0) != pdPASS) {
         ESP_LOGW(TAG, "to_pool_q full");
+        return ESP_FAIL;
     }
+    return ESP_OK;
 }
 
 
