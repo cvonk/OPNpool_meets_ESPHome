@@ -494,112 +494,113 @@ inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
 
 
 /**
- * @brief
- * Enumerates all supported network message types for OPNpool.
+ * @brief X-Macro defining all supported network message types for OPNpool.
+ *
+ * @details
+ * This macro generates the enum values, size lookup table, and protocol info table
+ * from a single definition, ensuring they stay synchronized.
+ *
+ * Format: X(ENUM_NAME, SIZE_EXPR, PROTOCOL, DATALINK_TYPE)
+ *   - ENUM_NAME: The enum value name
+ *   - SIZE_EXPR: sizeof(struct) for messages with data, 0 for empty messages
+ *   - PROTOCOL: datalink_prot_t value (A5_PUMP, A5_CTRL, or IC)
+ *   - DATALINK_TYPE: The datalink type enum value
+ */
+#define NETWORK_MSG_TYP_LIST(X) \
+    X(IGNORE,               0,                                         A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
+    X(PUMP_REG_SET,         sizeof(network_msg_pump_reg_set_t),        A5_PUMP, datalink_pump_typ_t::REG)          \
+    X(PUMP_REG_RESP,        sizeof(network_msg_pump_reg_resp_t),       A5_PUMP, datalink_pump_typ_t::REG)          \
+    X(PUMP_CTRL_SET,        sizeof(network_msg_pump_ctrl_set_t),       A5_PUMP, datalink_pump_typ_t::CTRL)         \
+    X(PUMP_CTRL_RESP,       sizeof(network_msg_pump_ctrl_resp_t),      A5_PUMP, datalink_pump_typ_t::CTRL)         \
+    X(PUMP_MODE_SET,        sizeof(network_msg_pump_mode_set_t),       A5_PUMP, datalink_pump_typ_t::MODE)         \
+    X(PUMP_MODE_RESP,       sizeof(network_msg_pump_mode_resp_t),      A5_PUMP, datalink_pump_typ_t::MODE)         \
+    X(PUMP_RUN_SET,         sizeof(network_msg_pump_run_set_t),        A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_RUN_RESP,        sizeof(network_msg_pump_run_resp_t),       A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_STATUS_REQ,      0,                                         A5_PUMP, datalink_pump_typ_t::STATUS)       \
+    X(PUMP_STATUS_RESP,     sizeof(network_msg_pump_status_resp_t),    A5_PUMP, datalink_pump_typ_t::STATUS)       \
+    X(CTRL_SET_ACK,         sizeof(network_msg_ctrl_set_ack_t),        A5_CTRL, datalink_ctrl_typ_t::SET_ACK)      \
+    X(CTRL_CIRCUIT_SET,     sizeof(network_msg_ctrl_circuit_set_t),    A5_CTRL, datalink_ctrl_typ_t::CIRCUIT_SET)  \
+    X(CTRL_SCHED_REQ,       0,                                         A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ)    \
+    X(CTRL_SCHED_RESP,      sizeof(network_msg_ctrl_sched_resp_t),     A5_CTRL, datalink_ctrl_typ_t::SCHED_RESP)   \
+    X(CTRL_STATE_BCAST,     sizeof(network_msg_ctrl_state_bcast_t),    A5_CTRL, datalink_ctrl_typ_t::STATE_BCAST)  \
+    X(CTRL_TIME_REQ,        0,                                         A5_CTRL, datalink_ctrl_typ_t::TIME_REQ)     \
+    X(CTRL_TIME_RESP,       sizeof(network_msg_ctrl_time_resp_t),      A5_CTRL, datalink_ctrl_typ_t::TIME_RESP)    \
+    X(CTRL_TIME_SET,        sizeof(network_msg_ctrl_time_set_t),       A5_CTRL, datalink_ctrl_typ_t::TIME_SET)     \
+    X(CTRL_HEAT_REQ,        0,                                         A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ)     \
+    X(CTRL_HEAT_RESP,       sizeof(network_msg_ctrl_heat_resp_t),      A5_CTRL, datalink_ctrl_typ_t::HEAT_RESP)    \
+    X(CTRL_HEAT_SET,        sizeof(network_msg_ctrl_heat_set_t),       A5_CTRL, datalink_ctrl_typ_t::HEAT_SET)     \
+    X(CTRL_LAYOUT_REQ,      0,                                         A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ)   \
+    X(CTRL_LAYOUT_RESP,     sizeof(network_msg_ctrl_layout_resp_t),    A5_CTRL, datalink_ctrl_typ_t::LAYOUT_RESP)  \
+    X(CTRL_LAYOUT_SET,      sizeof(network_msg_ctrl_layout_set_t),     A5_CTRL, datalink_ctrl_typ_t::LAYOUT_SET)   \
+    X(CTRL_VALVE_REQ,       0,                                         A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ)    \
+    X(CTRL_VALVE_RESP,      sizeof(network_msg_ctrl_valve_resp_t),     A5_CTRL, datalink_ctrl_typ_t::VALVE_RESP)   \
+    X(CTRL_VERSION_REQ,     0,                                         A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ)  \
+    X(CTRL_VERSION_RESP,    sizeof(network_msg_ctrl_version_resp_t),   A5_CTRL, datalink_ctrl_typ_t::VERSION_RESP) \
+    X(CTRL_SOLARPUMP_REQ,   0,                                         A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ)  \
+    X(CTRL_SOLARPUMP_RESP,  sizeof(network_msg_ctrl_solarpump_resp_t), A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_RESP) \
+    X(CTRL_DELAY_REQ,       0,                                         A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ)    \
+    X(CTRL_DELAY_RESP,      sizeof(network_msg_ctrl_delay_resp_t),     A5_CTRL, datalink_ctrl_typ_t::DELAY_RESP)   \
+    X(CTRL_HEAT_SETPT_REQ,  0,                                         A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ)  \
+    X(CTRL_HEAT_SETPT_RESP, sizeof(network_msg_ctrl_heat_setpt_resp_t),A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP) \
+    X(CTRL_CIRC_NAMES_REQ,  sizeof(network_msg_ctrl_circ_names_req_t), A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ)  \
+    X(CTRL_CIRC_NAMES_RESP, sizeof(network_msg_ctrl_circ_names_resp_t),A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP) \
+    X(CTRL_SCHEDS_REQ,      sizeof(network_msg_ctrl_scheds_req_t),     A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)   \
+    X(CTRL_SCHEDS_RESP,     sizeof(network_msg_ctrl_scheds_resp_t),    A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)  \
+    X(CTRL_CHEM_REQ,        sizeof(network_msg_ctrl_chem_req_t),       A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)     \
+    X(CHLOR_PING_REQ,       sizeof(network_msg_chlor_ping_req_t),      IC,      datalink_chlor_typ_t::PING_REQ)    \
+    X(CHLOR_PING_RESP,      sizeof(network_msg_chlor_ping_resp_t),     IC,      datalink_chlor_typ_t::PING_RESP)   \
+    X(CHLOR_NAME_REQ,       sizeof(network_msg_chlor_name_req_t),      IC,      datalink_chlor_typ_t::NAME_REQ)    \
+    X(CHLOR_NAME_RESP,      sizeof(network_msg_chlor_name_resp_t),     IC,      datalink_chlor_typ_t::NAME_RESP)   \
+    X(CHLOR_LEVEL_SET,      sizeof(network_msg_chlor_level_set_t),     IC,      datalink_chlor_typ_t::LEVEL_SET)   \
+    X(CHLOR_LEVEL_RESP,     sizeof(network_msg_chlor_level_resp_t),    IC,      datalink_chlor_typ_t::LEVEL_RESP)
+
+/**
+ * @brief Enumerates all supported network message types for OPNpool.
  *
  * @details
  * Each value represents a specific protocol message exchanged between the ESPHome component and pool equipment,
  * including controller, pump, and chlorinator messages. Used for message dispatch, parsing, and type-safe handling.
+ * Generated from NETWORK_MSG_TYP_LIST X-Macro.
  */
-enum class network_msg_typ_t : uint8_t {  // MUST MATCH network_msg_typ_info[] and network_msg_typ_sizes[]
-    IGNORE               = 0,
-    PUMP_REG_SET         = 1,
-    PUMP_REG_RESP        = 2,
-    PUMP_CTRL_SET        = 3,
-    PUMP_CTRL_RESP       = 4,
-    PUMP_MODE_SET        = 5,
-    PUMP_MODE_RESP       = 6,
-    PUMP_RUN_SET         = 7,
-    PUMP_RUN_RESP        = 8,
-    PUMP_STATUS_REQ      = 9,
-    PUMP_STATUS_RESP     = 10,
-    CTRL_SET_ACK         = 11,
-    CTRL_CIRCUIT_SET     = 12,
-    CTRL_SCHED_REQ       = 13,
-    CTRL_SCHED_RESP      = 14,
-    CTRL_STATE_BCAST     = 15,
-    CTRL_TIME_REQ        = 16,
-    CTRL_TIME_RESP       = 17,
-    CTRL_TIME_SET        = 18,
-    CTRL_HEAT_REQ        = 19,
-    CTRL_HEAT_RESP       = 20,
-    CTRL_HEAT_SET        = 21,
-    CTRL_LAYOUT_REQ      = 22,
-    CTRL_LAYOUT_RESP     = 23,
-    CTRL_LAYOUT_SET      = 24,
-    CTRL_VALVE_REQ       = 25,
-    CTRL_VALVE_RESP      = 26,
-    CTRL_VERSION_REQ     = 27,
-    CTRL_VERSION_RESP    = 28,
-    CTRL_SOLARPUMP_REQ   = 29,
-    CTRL_SOLARPUMP_RESP  = 30,
-    CTRL_DELAY_REQ       = 31,
-    CTRL_DELAY_RESP      = 32,
-    CTRL_HEAT_SETPT_REQ  = 33,
-    CTRL_HEAT_SETPT_RESP = 34,
-    CTRL_CIRC_NAMES_REQ  = 35,
-    CTRL_CIRC_NAMES_RESP = 36,
-    CTRL_SCHEDS_REQ      = 37,
-    CTRL_SCHEDS_RESP     = 38,
-    CTRL_CHEM_REQ        = 39,
-    CHLOR_PING_REQ       = 40,
-    CHLOR_PING_RESP      = 41,
-    CHLOR_NAME_REQ       = 42,
-    CHLOR_NAME_RESP      = 43,
-    CHLOR_LEVEL_SET      = 44,
-    CHLOR_LEVEL_RESP     = 45
+enum class network_msg_typ_t : uint8_t {
+#define X_ENUM(name, size, proto, typ) name,
+    NETWORK_MSG_TYP_LIST(X_ENUM)
+#undef X_ENUM
 };
 
     // size lookup table for message types
     // note: in C++ empty structs have a size of 1, not 0.  For those we use 0 in this table
-    // MUST MATCH enum network_msg_typ_t
+    // Generated from NETWORK_MSG_TYP_LIST X-Macro
 static constexpr size_t network_msg_typ_sizes[] = {
-    0,                                                                   //  0: IGNORE
-    sizeof(network_msg_pump_reg_set_t),                                  //  1: PUMP_REG_SET
-    sizeof(network_msg_pump_reg_resp_t),                                 //  2: PUMP_REG_RESP
-    sizeof(network_msg_pump_ctrl_set_t),                                 //  3: PUMP_CTRL_SET
-    sizeof(network_msg_pump_ctrl_resp_t),                                //  4: PUMP_CTRL_RESP
-    sizeof(network_msg_pump_mode_set_t),                                 //  5: PUMP_MODE_SET
-    sizeof(network_msg_pump_mode_resp_t),                                //  6: PUMP_MODE_RESP
-    sizeof(network_msg_pump_run_set_t),                                  //  7: PUMP_RUN_SET
-    sizeof(network_msg_pump_run_resp_t),                                 //  8: PUMP_RUN_RESP
-    0,                                                                   //  9: PUMP_STATUS_REQ
-    sizeof(network_msg_pump_status_resp_t),                              // 10: PUMP_STATUS_RESP
-    sizeof(network_msg_ctrl_set_ack_t),                                  // 11: CTRL_SET_ACK
-    sizeof(network_msg_ctrl_circuit_set_t),                              // 12: CTRL_CIRCUIT_SET
-    0,                                                                   // 13: CTRL_SCHED_REQ
-    sizeof(network_msg_ctrl_sched_resp_t),                               // 14: CTRL_SCHED_RESP
-    sizeof(network_msg_ctrl_state_bcast_t),                              // 15: CTRL_STATE_BCAST
-    0,                                                                   // 16: CTRL_TIME_REQ
-    sizeof(network_msg_ctrl_time_resp_t),                                // 17: CTRL_TIME_RESP
-    sizeof(network_msg_ctrl_time_set_t),                                 // 18: CTRL_TIME_SET
-    0,                                                                   // 19: CTRL_HEAT_REQ
-    sizeof(network_msg_ctrl_heat_resp_t),                                // 20: CTRL_HEAT_RESP
-    sizeof(network_msg_ctrl_heat_set_t),                                 // 21: CTRL_HEAT_SET
-    0,                                                                   // 22: CTRL_LAYOUT_REQ
-    sizeof(network_msg_ctrl_layout_resp_t),                              // 23: CTRL_LAYOUT_RESP
-    sizeof(network_msg_ctrl_layout_set_t),                               // 24: CTRL_LAYOUT_SET
-    0,                                                                   // 25: CTRL_VALVE_REQ
-    sizeof(network_msg_ctrl_valve_resp_t),                               // 26: CTRL_VALVE_RESP
-    0,                                                                   // 27: CTRL_VERSION_REQ
-    sizeof(network_msg_ctrl_version_resp_t),                             // 28: CTRL_VERSION_RESP
-    0,                                                                   // 29: CTRL_SOLARPUMP_REQ
-    sizeof(network_msg_ctrl_solarpump_resp_t),                           // 30: CTRL_SOLARPUMP_RESP
-    0,                                                                   // 31: CTRL_DELAY_REQ
-    sizeof(network_msg_ctrl_delay_resp_t),                               // 32: CTRL_DELAY_RESP
-    0,                                                                   // 33: CTRL_HEAT_SETPT_REQ
-    sizeof(network_msg_ctrl_heat_setpt_resp_t),                          // 34: CTRL_HEAT_SETPT_RESP
-    sizeof(network_msg_ctrl_circ_names_req_t),                           // 35: CTRL_CIRC_NAMES_REQ
-    sizeof(network_msg_ctrl_circ_names_resp_t),                          // 36: CTRL_CIRC_NAMES_RESP
-    sizeof(network_msg_ctrl_scheds_req_t),                               // 37: CTRL_SCHEDS_REQ
-    sizeof(network_msg_ctrl_scheds_resp_t),                              // 38: CTRL_SCHEDS_RESP
-    sizeof(network_msg_ctrl_chem_req_t),                                 // 39: CTRL_CHEM_REQ
-    sizeof(network_msg_chlor_ping_req_t),                                // 40: CHLOR_PING_REQ
-    sizeof(network_msg_chlor_ping_resp_t),                               // 41: CHLOR_PING_RESP
-    sizeof(network_msg_chlor_name_req_t),                                // 42: CHLOR_NAME_REQ
-    sizeof(network_msg_chlor_name_resp_t),                               // 43: CHLOR_NAME_RESP
-    sizeof(network_msg_chlor_level_set_t),                               // 44: CHLOR_LEVEL_SET
-    sizeof(network_msg_chlor_level_resp_t)                               // 45: CHLOR_LEVEL_RESP
+#define X_SIZE(name, size, proto, typ) size,
+    NETWORK_MSG_TYP_LIST(X_SIZE)
+#undef X_SIZE
+};
+
+    // structure to hold message type metadata
+struct network_msg_typ_info_t {
+    datalink_prot_t  proto;
+    datalink_typ_t   typ;
+
+    constexpr network_msg_typ_info_t(datalink_prot_t p, uint8_t pt)
+        : proto(p), typ{.raw = pt} {}
+
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_ctrl_typ_t ct)
+        : proto(p), typ{.ctrl = ct} {}
+
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_pump_typ_t pt)
+        : proto(p), typ{.pump = pt} {}
+
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_chlor_typ_t ct)
+        : proto(p), typ{.chlor = ct} {}
+};
+
+    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
+    // Generated from NETWORK_MSG_TYP_LIST X-Macro
+constexpr network_msg_typ_info_t network_msg_typ_info[] = {
+#define X_INFO(name, size, proto, typ) {datalink_prot_t::proto, typ},
+    NETWORK_MSG_TYP_LIST(X_INFO)
+#undef X_INFO
 };
 
 [[nodiscard]] constexpr esp_err_t
@@ -613,75 +614,6 @@ network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
     }
     return ESP_FAIL;
 }
-
-    // structure to hold message type metadata
-struct network_msg_typ_info_t {
-    datalink_prot_t  proto;
-    datalink_typ_t   typ;
-    
-    constexpr network_msg_typ_info_t(datalink_prot_t p, uint8_t pt) 
-        : proto(p), typ{.raw = pt} {}
-    
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_ctrl_typ_t ct)
-        : proto(p), typ{.ctrl = ct} {}
-    
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_pump_typ_t pt)
-        : proto(p), typ{.pump = pt} {}
-    
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_chlor_typ_t ct)
-        : proto(p), typ{.chlor = ct} {}
-};
-
-    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t
-    // MUST MATCH network_msg_typ_t
-constexpr network_msg_typ_info_t network_msg_typ_info[] = {
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF},       //  0: IGNORE
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::REG},              //  1: PUMP_REG_SET
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::REG},              //  2: PUMP_REG_RESP
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::CTRL},             //  3: PUMP_CTRL_SET
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::CTRL},             //  4: PUMP_CTRL_RESP
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::MODE},             //  5: PUMP_MODE_SET
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::MODE},             //  6: PUMP_MODE_RESP
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::RUN},              //  7: PUMP_RUN_SET
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::RUN},              //  8: PUMP_RUN_RESP
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::STATUS},           //  9: PUMP_STATUS_REQ
-    {datalink_prot_t::A5_PUMP, datalink_pump_typ_t::STATUS},           // 10: PUMP_STATUS_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SET_ACK},          // 11: CTRL_SET_ACK
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::CIRCUIT_SET},      // 12: CTRL_CIRCUIT_SET
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ},        // 13: CTRL_SCHED_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SCHED_RESP},       // 14: CTRL_SCHED_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::STATE_BCAST},      // 15: CTRL_STATE_BCAST
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::TIME_REQ},         // 16: CTRL_TIME_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::TIME_RESP},        // 17: CTRL_TIME_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::TIME_SET},         // 18: CTRL_TIME_SET
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ},         // 19: CTRL_HEAT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::HEAT_RESP},        // 20: CTRL_HEAT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::HEAT_SET},         // 21: CTRL_HEAT_SET
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ},       // 22: CTRL_LAYOUT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::LAYOUT_RESP},      // 23: CTRL_LAYOUT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::LAYOUT_SET},       // 24: CTRL_LAYOUT_SET
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ},        // 25: CTRL_VALVE_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::VALVE_RESP},       // 26: CTRL_VALVE_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ},      // 27: CTRL_VERSION_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::VERSION_RESP},     // 28: CTRL_VERSION_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ},    // 29: CTRL_SOLARPUMP_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_RESP},   // 30: CTRL_SOLARPUMP_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ},        // 31: CTRL_DELAY_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::DELAY_RESP},       // 32: CTRL_DELAY_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ},   // 33: CTRL_HEAT_SETPT_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP},  // 34: CTRL_HEAT_SETPT_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ},   // 35: CTRL_CIRC_NAMES_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP},  // 36: CTRL_CIRC_NAMES_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ},       // 37: CTRL_SCHEDS_REQ
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP},      // 38: CTRL_SCHEDS_RESP
-    {datalink_prot_t::A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ},         // 39: CTRL_CHEM_REQ
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::PING_REQ},        // 40: CHLOR_PING_REQ
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::PING_RESP},       // 41: CHLOR_PING_RESP
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::NAME_REQ},        // 42: CHLOR_NAME_REQ
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::NAME_RESP},       // 43: CHLOR_NAME_RESP
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::LEVEL_SET},       // 44: CHLOR_LEVEL_SET
-    {datalink_prot_t::IC,      datalink_chlor_typ_t::LEVEL_RESP}       // 45: CHLOR_LEVEL_RESP
-};
 
 [[nodiscard]] constexpr const network_msg_typ_info_t *
 network_msg_typ_get_info(network_msg_typ_t typ)
