@@ -621,7 +621,7 @@ _pump_reg_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg,
  * is enabled.
  */
 static void
-_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_set_t const * const msg, network_msg_dev_id_t const device_id)
+_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg, network_msg_dev_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -647,7 +647,7 @@ _pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_set_t const * const msg, net
  * JSON object if verbose logging is enabled.
  */
 static void
-_pump_mode(cJSON * const dbg, network_msg_pump_mode_set_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -679,7 +679,7 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_set_t const * const msg, net
  * status to the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_run(cJSON * const dbg, network_msg_pump_run_set_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -947,22 +947,16 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             _pump_reg_resp(dbg, &msg->u.a5.pump_reg_resp, msg->device_id);
             break;
         case network_typ_t::PUMP_CTRL_SET:
-            _pump_ctrl(dbg, &msg->u.a5.pump_ctrl_set, msg->device_id);
-            break;
         case network_typ_t::PUMP_CTRL_RESP:
-            _pump_ctrl(dbg, &msg->u.a5.pump_ctrl_resp, msg->device_id);
+            _pump_ctrl(dbg, &msg->u.a5.pump_ctrl, msg->device_id);
             break;
         case network_typ_t::PUMP_MODE_SET:
-            _pump_mode(dbg, &msg->u.a5.pump_mode_set, msg->device_id, new_state->pumps);
-            break;
         case network_typ_t::PUMP_MODE_RESP:
-            _pump_mode(dbg, &msg->u.a5.pump_mode_resp, msg->device_id, new_state->pumps);
+            _pump_mode(dbg, &msg->u.a5.pump_mode, msg->device_id, new_state->pumps);
             break;
         case network_typ_t::PUMP_RUN_SET:
-            _pump_run(dbg, &msg->u.a5.pump_run_set, msg->device_id, new_state->pumps);
-            break;
         case network_typ_t::PUMP_RUN_RESP:
-            _pump_run(dbg, &msg->u.a5.pump_run_resp, msg->device_id, new_state->pumps);
+            _pump_run(dbg, &msg->u.a5.pump_run, msg->device_id, new_state->pumps);
             break;
         case network_typ_t::PUMP_STATUS_REQ:
              break;
@@ -985,11 +979,9 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
         case network_typ_t::CTRL_TIME_REQ:
             break;
-        case network_typ_t::CTRL_TIME_RESP:
-            _ctrl_time(dbg, &msg->u.a5.ctrl_time_resp, new_state);
-            break;
         case network_typ_t::CTRL_TIME_SET:
-            _ctrl_time(dbg, &msg->u.a5.ctrl_time_set, new_state);
+        case network_typ_t::CTRL_TIME_RESP:
+            _ctrl_time(dbg, &msg->u.a5.ctrl_time, new_state);
             break;
         case network_typ_t::CTRL_HEAT_REQ:
             break;

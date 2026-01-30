@@ -61,14 +61,14 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 
     datalink_pump_typ_t const datalink_pump_typ = pkt->typ.pump;
 
-    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_pump_typ, is_to_pump);
+    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_pump_typ, is_to_pump);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported pump_typ (%s) ", enum_str(datalink_pump_typ));
         return ESP_FAIL;
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %u, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -96,14 +96,14 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     datalink_ctrl_typ_t const datalink_ctrl_typ = pkt->typ.ctrl;
 
-    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_ctrl_typ);
+    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_ctrl_typ);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported ctrl_typ (%s) ", enum_str(datalink_ctrl_typ));
         return ESP_FAIL;
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %u, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -128,14 +128,14 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
 {
     datalink_chlor_typ_t const datalink_chlor_typ = pkt->typ.chlor;
 
-    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_chlor_typ);
+    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_chlor_typ);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported chlor_typ (%s) ", enum_str(datalink_chlor_typ));
         return ESP_FAIL;
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %u, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 

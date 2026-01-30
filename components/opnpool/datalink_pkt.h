@@ -223,7 +223,7 @@ struct datalink_pkt_t {
     datalink_address   src;       // from datalink_hdr_a5->src
     datalink_address   dst;       // from datalink_hdr_a5->dst
     datalink_data_t *  data;
-    size_t             data_len;
+    uint32_t           data_len;
     skb_handle_t       skb;
 };
 
