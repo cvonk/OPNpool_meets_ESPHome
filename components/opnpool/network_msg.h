@@ -569,7 +569,7 @@ inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
  * Used for message dispatch, parsing, and type-safe handling. Generated from
  * NETWORK_MSG_TYP_LIST X-Macro.
  */
-enum class network_msg_typ_t : uint8_t {
+enum class network_typ_t : uint8_t {
 #define X_ENUM(name, size, proto, typ) name,
     NETWORK_MSG_TYP_LIST(X_ENUM)
 #undef X_ENUM
@@ -584,31 +584,33 @@ static constexpr size_t network_msg_typ_sizes[] = {
 
     // structure to hold message type metadata
 struct network_msg_typ_info_t {
-    datalink_prot_t  proto;
-    datalink_typ_t   typ;
+    datalink_prot_t   proto;
+    datalink_typ_t    datalink_typ;
+    size_t            size;
+    network_typ_t network_typ;
+    
+    constexpr network_msg_typ_info_t(datalink_prot_t p, uint8_t pt, size_t s, network_typ_t nt)
+        : proto(p), datalink_typ{.raw = pt}, size(s), network_typ(nt) {}
 
-    constexpr network_msg_typ_info_t(datalink_prot_t p, uint8_t pt)
-        : proto(p), typ{.raw = pt} {}
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_ctrl_typ_t dct, size_t s, network_typ_t nt)
+        : proto(p), datalink_typ{.ctrl = dct}, size(s), network_typ(nt) {}
 
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_ctrl_typ_t ct)
-        : proto(p), typ{.ctrl = ct} {}
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_pump_typ_t dpt, size_t s, network_typ_t nt)
+        : proto(p), datalink_typ{.pump = dpt}, size(s), network_typ(nt) {}
 
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_pump_typ_t pt)
-        : proto(p), typ{.pump = pt} {}
-
-    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_chlor_typ_t ct)
-        : proto(p), typ{.chlor = ct} {}
+    constexpr network_msg_typ_info_t(datalink_prot_t p, datalink_chlor_typ_t dct, size_t s, network_typ_t nt)
+        : proto(p), datalink_typ{.chlor = dct}, size(s), network_typ(nt) {}
 };
 
-    // maps {datalink_prot and datalink_typ_t} to network_msg_typ_t (generated from NETWORK_MSG_TYP_LIST X-Macro)
+    // maps {datalink_prot and datalink_typ_t} to network_typ_t (generated from NETWORK_MSG_TYP_LIST X-Macro)
 constexpr network_msg_typ_info_t network_msg_typ_info[] = {
-#define X_INFO(name, size, proto, typ) {datalink_prot_t::proto, typ},
+#define X_INFO(name, size, proto, typ) {datalink_prot_t::proto, typ, size, network_typ_t::name},
     NETWORK_MSG_TYP_LIST(X_INFO)
 #undef X_INFO
 };
 
 constexpr esp_err_t
-network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
+network_msg_typ_get_size(network_typ_t typ, size_t * size)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
 
@@ -619,8 +621,8 @@ network_msg_typ_get_size(network_msg_typ_t typ, size_t * size)
     return ESP_FAIL;
 }
 
-constexpr const network_msg_typ_info_t *
-network_msg_typ_get_info(network_msg_typ_t typ)
+constexpr network_msg_typ_info_t const *
+network_msg_typ_get_info(network_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
     if (idx < std::size(network_msg_typ_info)) {
@@ -630,65 +632,65 @@ network_msg_typ_get_info(network_msg_typ_t typ)
 }
 
 /**
- * @brief Reverse lookup from (datalink_prot_t, datalink_ctrl_typ_t) to network_msg_typ_t.
+ * @brief          Reverse lookup from (datalink_prot_t, datalink_ctrl_typ_t) to network_msg_typ_info_t.
  *
  * @param ctrl_typ The datalink controller message type
- * @return         The matching network_msg_typ_t, or network_msg_typ_t::IGNORE if not found
+ * @return         The matching network_msg_typ_info_t, or nullptr if not found
  */
-constexpr network_msg_typ_t
-network_msg_typ_from_datalink(datalink_ctrl_typ_t const ctrl_typ)
+constexpr network_msg_typ_info_t const *
+network_msg_typ_get_info(datalink_ctrl_typ_t const ctrl_typ)
 {
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ++ii) {
-        const auto& info = network_msg_typ_info[ii];
-        if (info.proto == datalink_prot_t::A5_CTRL && info.typ.ctrl == ctrl_typ) {
-            return static_cast<network_msg_typ_t>(ii);
+    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
+        network_msg_typ_info_t const * const info = &network_msg_typ_info[ii];
+        if (info->proto == datalink_prot_t::A5_CTRL && info->datalink_typ.ctrl == ctrl_typ) {
+            return info;
         }
     }
-    return network_msg_typ_t::IGNORE;
+    return nullptr;
 }
 
 /**
- * @brief Reverse lookup from (datalink_prot_t, datalink_pump_typ_t) to network_msg_typ_t.
+ * @brief            Reverse lookup from (datalink_prot_t, datalink_pump_typ_t) to network_msg_typ_info_t.
  *
  * @param pump_typ   The datalink pump message type
  * @param is_to_pump True if message is directed to pump (SET/REQ), false if from pump (RESP)
- * @return           The matching network_msg_typ_t, or network_msg_typ_t::IGNORE if not found
+ * @return           The matching network_msg_typ_info_t, or nullptr if not found
  *
  * @note Pump messages have pairs (SET/RESP or REQ/RESP) sharing the same datalink type.
  *       The X-Macro lists SET/REQ first, then RESP, so is_to_pump selects the first match.
  */
-constexpr network_msg_typ_t
-network_msg_typ_from_datalink(datalink_pump_typ_t const pump_typ, bool const is_to_pump)
+constexpr network_msg_typ_info_t const *
+network_msg_typ_get_info(datalink_pump_typ_t const pump_typ, bool const is_to_pump)
 {
-    network_msg_typ_t result = network_msg_typ_t::IGNORE;
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ++ii) {
-        const auto& info = network_msg_typ_info[ii];
-        if (info.proto == datalink_prot_t::A5_PUMP && info.typ.pump == pump_typ) {
+    network_msg_typ_info_t const * result = nullptr;
+    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
+        network_msg_typ_info_t const * const info = &network_msg_typ_info[ii];
+        if (info->proto == datalink_prot_t::A5_PUMP && info->datalink_typ.pump == pump_typ) {
             if (is_to_pump) {
-                return static_cast<network_msg_typ_t>(ii);  // first match = SET/REQ
+                return info;  // first match = SET/REQ
             }
-            result = static_cast<network_msg_typ_t>(ii);    // keep searching for last = RESP
+            result = info;    // last match = RESP
         }
     }
     return result;
 }
 
 /**
- * @brief Reverse lookup from (datalink_prot_t, datalink_chlor_typ_t) to network_msg_typ_t.
+ * @brief            Reverse lookup from (datalink_prot_t, datalink_chlor_typ_t) to network_msg_typ_info_t.
  *
  * @param chlor_typ The datalink chlorinator message type
- * @return          The matching network_msg_typ_t, or network_msg_typ_t::IGNORE if not found
+ * @return          The matching network_msg_typ_info_t, or nullptr if not found
  */
-constexpr network_msg_typ_t
-network_msg_typ_from_datalink(datalink_chlor_typ_t const chlor_typ)
+constexpr network_msg_typ_info_t const *
+network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
 {
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ++ii) {
-        const auto& info = network_msg_typ_info[ii];
-        if (info.proto == datalink_prot_t::IC && info.typ.chlor == chlor_typ) {
-            return static_cast<network_msg_typ_t>(ii);
+    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
+        network_msg_typ_info_t const * const info = &network_msg_typ_info[ii];
+        if (info->proto == datalink_prot_t::IC && info->datalink_typ.chlor == chlor_typ) {
+            return info;
         }
     }
-    return network_msg_typ_t::IGNORE;
+    return nullptr;
 }
 
     // device ID within the A5 PUMP address group
@@ -710,19 +712,18 @@ enum class network_msg_dev_id_t : uint8_t {
 
 struct network_msg_t {
     network_msg_dev_id_t device_id;  // only valid for A5-PUMP messages
-    network_msg_typ_t    typ;
+    network_typ_t    typ;
     network_msg_data_t   u;
 };
 
-static_assert(std::size(network_msg_typ_sizes) == enum_count<network_msg_typ_t>());
-static_assert(std::size(network_msg_typ_info) == enum_count<network_msg_typ_t>());
+    // verify X-macros work correctly
+static_assert(std::size(network_msg_typ_sizes) == enum_count<network_typ_t>());
+static_assert(std::size(network_msg_typ_info) == enum_count<network_typ_t>());
 
-// verify constexpr reverse lookups work correctly
-static_assert(network_msg_typ_from_datalink(datalink_ctrl_typ_t::STATE_BCAST) == network_msg_typ_t::CTRL_STATE_BCAST);
-static_assert(network_msg_typ_from_datalink(datalink_ctrl_typ_t::TIME_RESP) == network_msg_typ_t::CTRL_TIME_RESP);
-static_assert(network_msg_typ_from_datalink(datalink_pump_typ_t::STATUS, true) == network_msg_typ_t::PUMP_STATUS_REQ);
-static_assert(network_msg_typ_from_datalink(datalink_pump_typ_t::STATUS, false) == network_msg_typ_t::PUMP_STATUS_RESP);
-static_assert(network_msg_typ_from_datalink(datalink_chlor_typ_t::LEVEL_RESP) == network_msg_typ_t::CHLOR_LEVEL_RESP);
+    // verify constexpr reverse lookups work correctly
+static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, true)  == &network_msg_typ_info[enum_index(network_typ_t::PUMP_STATUS_REQ)]);
+static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, false) == &network_msg_typ_info[enum_index(network_typ_t::PUMP_STATUS_RESP)]);
+static_assert(network_msg_typ_get_info(datalink_chlor_typ_t::LEVEL_RESP)   == &network_msg_typ_info[enum_index(network_typ_t::CHLOR_LEVEL_RESP)]);
 
 }  // namespace opnpool
 }  // namespace esphome

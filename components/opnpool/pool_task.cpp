@@ -130,7 +130,7 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
  * @param typ   Network message type to send.
  */
 static void
-_queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
+_queue_req(rs485_handle_t const rs485, network_typ_t const typ)
 {
     network_msg_t msg = {};  // prevents -Wmissing-field-initializers
     msg.typ = typ;
@@ -209,8 +209,8 @@ pool_req_task(void * rs485_void)
     rs485_handle_t const rs485 = (rs485_handle_t)rs485_void;
 
     while (1) {
-        _queue_req(rs485, network_msg_typ_t::CTRL_HEAT_REQ);
-        _queue_req(rs485, network_msg_typ_t::CTRL_SCHED_REQ);
+        _queue_req(rs485, network_typ_t::CTRL_HEAT_REQ);
+        _queue_req(rs485, network_typ_t::CTRL_SCHED_REQ);
         vTaskDelay((TickType_t)POOL_REQ_INTERVAL_MS / portTICK_PERIOD_MS);
     }
 }
@@ -240,8 +240,8 @@ pool_task(void * ipc_void)
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
 
         // request some initial information from the controller
-    _queue_req(rs485, network_msg_typ_t::CTRL_VERSION_REQ);
-    _queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
+    _queue_req(rs485, network_typ_t::CTRL_VERSION_REQ);
+    _queue_req(rs485, network_typ_t::CTRL_TIME_REQ);
 
         // periodically request information from controller
     if (xTaskCreate(&pool_req_task, "pool_req_task", POOL_REQ_TASK_STACK_SIZE, rs485, 5, NULL) != pdPASS) {

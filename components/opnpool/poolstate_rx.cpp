@@ -938,121 +938,121 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
     cJSON * const dbg = cJSON_CreateObject();
 
     switch (msg->typ) {
-        case network_msg_typ_t::IGNORE:
+        case network_typ_t::IGNORE:
             break;
-        case network_msg_typ_t::PUMP_REG_SET:
+        case network_typ_t::PUMP_REG_SET:
             _pump_reg_set(dbg, &msg->u.a5.pump_reg_set, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_REG_RESP:
+        case network_typ_t::PUMP_REG_RESP:
             _pump_reg_resp(dbg, &msg->u.a5.pump_reg_resp, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_CTRL_SET:
+        case network_typ_t::PUMP_CTRL_SET:
             _pump_ctrl(dbg, &msg->u.a5.pump_ctrl_set, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_CTRL_RESP:
+        case network_typ_t::PUMP_CTRL_RESP:
             _pump_ctrl(dbg, &msg->u.a5.pump_ctrl_resp, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_MODE_SET:
+        case network_typ_t::PUMP_MODE_SET:
             _pump_mode(dbg, &msg->u.a5.pump_mode_set, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_MODE_RESP:
+        case network_typ_t::PUMP_MODE_RESP:
             _pump_mode(dbg, &msg->u.a5.pump_mode_resp, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_RUN_SET:
+        case network_typ_t::PUMP_RUN_SET:
             _pump_run(dbg, &msg->u.a5.pump_run_set, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_RUN_RESP:
+        case network_typ_t::PUMP_RUN_RESP:
             _pump_run(dbg, &msg->u.a5.pump_run_resp, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_STATUS_REQ:
+        case network_typ_t::PUMP_STATUS_REQ:
              break;
-        case network_msg_typ_t::PUMP_STATUS_RESP:
+        case network_typ_t::PUMP_STATUS_RESP:
             _pump_status(dbg, &msg->u.a5.pump_status_resp, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::CTRL_SET_ACK:  // response to various set requests
+        case network_typ_t::CTRL_SET_ACK:  // response to various set requests
             _ctrl_set_ack(dbg, &msg->u.a5.ctrl_set_ack);
             break;
-        case network_msg_typ_t::CTRL_CIRCUIT_SET:
+        case network_typ_t::CTRL_CIRCUIT_SET:
             _ctrl_circuit_set(dbg, &msg->u.a5.ctrl_circuit_set, new_state);
             break;
-        case network_msg_typ_t::CTRL_SCHED_REQ:
+        case network_typ_t::CTRL_SCHED_REQ:
             break;
-        case network_msg_typ_t::CTRL_SCHED_RESP:
+        case network_typ_t::CTRL_SCHED_RESP:
             _ctrl_sched_resp(dbg, &msg->u.a5.ctrl_sched_resp, new_state);
             break;
-        case network_msg_typ_t::CTRL_STATE_BCAST:
+        case network_typ_t::CTRL_STATE_BCAST:
             _ctrl_state(dbg, &msg->u.a5.ctrl_state_bcast, new_state);
             break;
-        case network_msg_typ_t::CTRL_TIME_REQ:
+        case network_typ_t::CTRL_TIME_REQ:
             break;
-        case network_msg_typ_t::CTRL_TIME_RESP:
+        case network_typ_t::CTRL_TIME_RESP:
             _ctrl_time(dbg, &msg->u.a5.ctrl_time_resp, new_state);
             break;
-        case network_msg_typ_t::CTRL_TIME_SET:
+        case network_typ_t::CTRL_TIME_SET:
             _ctrl_time(dbg, &msg->u.a5.ctrl_time_set, new_state);
             break;
-        case network_msg_typ_t::CTRL_HEAT_REQ:
+        case network_typ_t::CTRL_HEAT_REQ:
             break;
-        case network_msg_typ_t::CTRL_HEAT_RESP:
+        case network_typ_t::CTRL_HEAT_RESP:
             _ctrl_heat_resp(dbg, &msg->u.a5.ctrl_heat_resp, new_state);
             break;
-        case network_msg_typ_t::CTRL_HEAT_SET:
+        case network_typ_t::CTRL_HEAT_SET:
             _ctrl_heat_set(dbg, &msg->u.a5.ctrl_heat_set, new_state);
             break;
-        case network_msg_typ_t::CTRL_LAYOUT_REQ:
-        case network_msg_typ_t::CTRL_LAYOUT_RESP:
-        case network_msg_typ_t::CTRL_LAYOUT_SET:
+        case network_typ_t::CTRL_LAYOUT_REQ:
+        case network_typ_t::CTRL_LAYOUT_RESP:
+        case network_typ_t::CTRL_LAYOUT_SET:
             break;
-        case network_msg_typ_t::CTRL_VALVE_REQ:
+        case network_typ_t::CTRL_VALVE_REQ:
             break;
-        case network_msg_typ_t::CTRL_VALVE_RESP:
+        case network_typ_t::CTRL_VALVE_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_valve_resp_t));
             break;
-        case network_msg_typ_t::CTRL_VERSION_REQ:
+        case network_typ_t::CTRL_VERSION_REQ:
             break;
-        case network_msg_typ_t::CTRL_VERSION_RESP:
+        case network_typ_t::CTRL_VERSION_RESP:
             _ctrl_version_resp(dbg, &msg->u.a5.ctrl_version_resp, new_state);
             break;
-        case network_msg_typ_t::CTRL_SOLARPUMP_REQ:
+        case network_typ_t::CTRL_SOLARPUMP_REQ:
             break;
-        case network_msg_typ_t::CTRL_SOLARPUMP_RESP:
+        case network_typ_t::CTRL_SOLARPUMP_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
             break;
-        case network_msg_typ_t::CTRL_DELAY_REQ:
+        case network_typ_t::CTRL_DELAY_REQ:
             break;
-        case network_msg_typ_t::CTRL_DELAY_RESP:
+        case network_typ_t::CTRL_DELAY_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_delay_resp_t));
             break;
-        case network_msg_typ_t::CTRL_HEAT_SETPT_REQ:
+        case network_typ_t::CTRL_HEAT_SETPT_REQ:
             break;
-        case network_msg_typ_t::CTRL_HEAT_SETPT_RESP:
+        case network_typ_t::CTRL_HEAT_SETPT_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
             break;
-        case network_msg_typ_t::CTRL_CIRC_NAMES_REQ:
+        case network_typ_t::CTRL_CIRC_NAMES_REQ:
             break;
-        case network_msg_typ_t::CTRL_CIRC_NAMES_RESP:
+        case network_typ_t::CTRL_CIRC_NAMES_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
             break;
-        case network_msg_typ_t::CTRL_SCHEDS_REQ:
+        case network_typ_t::CTRL_SCHEDS_REQ:
             break;
-        case network_msg_typ_t::CTRL_SCHEDS_RESP:
+        case network_typ_t::CTRL_SCHEDS_RESP:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_scheds_resp_t));
             break;
-        case network_msg_typ_t::CTRL_CHEM_REQ:
+        case network_typ_t::CTRL_CHEM_REQ:
             break;
-        case network_msg_typ_t::CHLOR_PING_REQ:
-        case network_msg_typ_t::CHLOR_PING_RESP:
+        case network_typ_t::CHLOR_PING_REQ:
+        case network_typ_t::CHLOR_PING_RESP:
             break;
-        case network_msg_typ_t::CHLOR_NAME_REQ:
+        case network_typ_t::CHLOR_NAME_REQ:
             _ctrl_hex_bytes(dbg, msg->u.raw, new_state, 1);
             break;
-        case network_msg_typ_t::CHLOR_NAME_RESP:
+        case network_typ_t::CHLOR_NAME_RESP:
             _chlor_name_resp(dbg, &msg->u.ic.chlor_name_resp, &new_state->chlor);
             break;
-        case network_msg_typ_t::CHLOR_LEVEL_SET:
+        case network_typ_t::CHLOR_LEVEL_SET:
             _chlor_level_set(dbg, &msg->u.ic.chlor_level_set, &new_state->chlor);
             break;
-        case network_msg_typ_t::CHLOR_LEVEL_RESP:
+        case network_typ_t::CHLOR_LEVEL_RESP:
             _chlor_level_set_resp(dbg, &msg->u.ic.chlor_level_resp, &new_state->chlor);
             break;
         default:
@@ -1060,15 +1060,15 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
-                          msg->typ == network_msg_typ_t::IGNORE           ||   
-                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET  ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET    ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP   ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_SET     ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_RESP    ||
-                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ  ||
-                          msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
+    bool const frequent = msg->typ == network_typ_t::CTRL_STATE_BCAST ||
+                          msg->typ == network_typ_t::IGNORE           ||   
+                          msg->typ == network_typ_t::CHLOR_LEVEL_SET  ||
+                          msg->typ == network_typ_t::PUMP_CTRL_SET    ||
+                          msg->typ == network_typ_t::PUMP_CTRL_RESP   ||
+                          msg->typ == network_typ_t::PUMP_RUN_SET     ||
+                          msg->typ == network_typ_t::PUMP_RUN_RESP    ||
+                          msg->typ == network_typ_t::PUMP_STATUS_REQ  ||
+                          msg->typ == network_typ_t::PUMP_STATUS_RESP;
 
     bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
     bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
