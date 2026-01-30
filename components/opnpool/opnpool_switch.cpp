@@ -79,18 +79,17 @@ OpnPoolSwitch::write_state(bool value)
     network_pool_circuit_t const circuit = circuit_;
     uint8_t const circuit_idx = enum_index(circuit);
 
-    network_msg_t msg = {
-        .device_id = network_msg_dev_id_t::PRIMARY,
-        .typ = network_msg_typ_t::CTRL_CIRCUIT_SET,
-        .u = {
-            .ctrl_circuit_set = {
-                .circuit_plus_1 = static_cast<uint8_t>(circuit_idx + uint8_t(1)),
-                .value = static_cast<uint8_t>(value ? 1 : 0),          
-            },
-        },
+    network_msg_t msg;
+    msg.device_id = network_msg_dev_id_t::PRIMARY;
+    msg.typ = network_msg_typ_t::CTRL_CIRCUIT_SET;
+    msg.u.a5 = {
+        .ctrl_circuit_set = {
+            .circuit_plus_1 = static_cast<uint8_t>(circuit_idx + uint8_t(1)),
+            .value = static_cast<uint8_t>(value ? 1 : 0)          
+        }
     };
 
-    ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit+1=%u to %u", msg.u.ctrl_circuit_set.circuit_plus_1, msg.u.ctrl_circuit_set.value);
+    ESP_LOGVV(TAG, "Sending CIRCUIT_SET command: circuit+1=%u to %u", msg.u.a5.ctrl_circuit_set.circuit_plus_1, msg.u.ctrl_circuit_set.value);
     if (ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc()) != ESP_OK) {
         ESP_LOGW(TAG, "Failed to send CIRCUIT_SET message to pool task");
     }

@@ -63,7 +63,7 @@ network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
     pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
     skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
     pkt->data = skb_put(pkt->skb, data_len);
-    memcpy(pkt->data, msg->u.bytes, data_len);    
+    memcpy(pkt->data, msg->u.raw, data_len);    
     return ESP_OK;
 }
 

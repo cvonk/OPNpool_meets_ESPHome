@@ -245,16 +245,16 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         network_msg_t msg = {};  // prevents -Wmissing-field-initializers
         msg.device_id = network_msg_dev_id_t::PRIMARY;
         msg.typ = network_msg_typ_t::CTRL_HEAT_SET;
-        msg.u.ctrl_heat_set.pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value;
-        msg.u.ctrl_heat_set.spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value;
-        msg.u.ctrl_heat_set.heat_src.pool = thermos_new[thermo_pool_idx].heat_src.value;
-        msg.u.ctrl_heat_set.heat_src.spa = thermos_new[thermo_spa_idx].heat_src.value;
+        msg.u.a5.ctrl_heat_set.pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value;
+        msg.u.a5.ctrl_heat_set.spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value;
+        msg.u.a5.ctrl_heat_set.heat_src.pool = thermos_new[thermo_pool_idx].heat_src.value;
+        msg.u.a5.ctrl_heat_set.heat_src.spa = thermos_new[thermo_spa_idx].heat_src.value;
 
         ESP_LOGV(TAG, "Sending HEAT_SET: pool=%u°F, spa=%u°F, heat_src=%u,%u", 
-                  msg.u.ctrl_heat_set.pool_set_point, 
-                  msg.u.ctrl_heat_set.spa_set_point,
-                  (uint8_t)msg.u.ctrl_heat_set.heat_src.pool,
-                  (uint8_t)msg.u.ctrl_heat_set.heat_src.spa);
+                  msg.u.a5.ctrl_heat_set.pool_set_point, 
+                  msg.u.a5.ctrl_heat_set.spa_set_point,
+                  (uint8_t)msg.u.a5.ctrl_heat_set.heat_src.pool,
+                  (uint8_t)msg.u.a5.ctrl_heat_set.heat_src.spa);
                   
         if (ipc_send_network_msg_to_pool_task(&msg, this->parent_->get_ipc()) != ESP_OK) {
             ESP_LOGW(TAG, "Failed to send HEAT_SET message to pool task");
