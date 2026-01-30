@@ -40,6 +40,7 @@ class OpnPool : public Component {
     void setup() override;
     void loop() override;
     void dump_config() override;
+    ~OpnPool();
 
         // RS485 configuration
     void set_rs485_pins(uint8_t rx_pin, uint8_t tx_pin, uint8_t rts_pin);
@@ -62,15 +63,15 @@ class OpnPool : public Component {
         // sensor setters
     void set_air_temperature_sensor(OpnPoolSensor * const s);
     void set_water_temperature_sensor(OpnPoolSensor * const s);
-    void set_pump_power_sensor(OpnPoolSensor * const s);
-    void set_pump_flow_sensor(OpnPoolSensor * const s);
-    void set_pump_speed_sensor(OpnPoolSensor * const s);
-    void set_pump_error_sensor(OpnPoolSensor * const s);
+    void set_primary_pump_power_sensor(OpnPoolSensor * const s);
+    void set_primary_pump_flow_sensor(OpnPoolSensor * const s);
+    void set_primary_pump_speed_sensor(OpnPoolSensor * const s);
+    void set_primary_pump_error_sensor(OpnPoolSensor * const s);
     void set_chlorinator_level_sensor(OpnPoolSensor * const s);
     void set_chlorinator_salt_sensor(OpnPoolSensor * const s);
 
         // binary sensor setters
-    void set_pump_running_binary_sensor(OpnPoolBinarySensor * const bs);
+    void set_primary_pump_running_binary_sensor(OpnPoolBinarySensor * const bs);
     void set_mode_service_binary_sensor(OpnPoolBinarySensor * const bs);
     void set_mode_temperature_inc_binary_sensor(OpnPoolBinarySensor * const bs);
     void set_mode_freeze_protection_binary_sensor(OpnPoolBinarySensor * const bs);
@@ -79,8 +80,8 @@ class OpnPool : public Component {
         // text sensor setters
     void set_pool_sched_text_sensor(OpnPoolTextSensor * const ts);
     void set_spa_sched_text_sensor(OpnPoolTextSensor * const ts);
-    void set_pump_mode_text_sensor(OpnPoolTextSensor * const ts);
-    void set_pump_state_text_sensor(OpnPoolTextSensor * const ts);
+    void set_primary_pump_mode_text_sensor(OpnPoolTextSensor * const ts);
+    void set_primary_pump_state_text_sensor(OpnPoolTextSensor * const ts);
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor * const ts);
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor * const ts);
     void set_system_time_text_sensor(OpnPoolTextSensor * const ts);
@@ -104,6 +105,7 @@ class OpnPool : public Component {
     rs485_pins_t rs485_pins_;
     ipc_t * ipc_{nullptr};  // interprocess communication structure and RS485-pins
     PoolState * poolState_{nullptr};
+    TaskHandle_t pool_task_handle_{nullptr};
 
         // sub classes
     OpnPoolClimate * climates_[enum_count<climate_id_t>()]{nullptr};

@@ -7,9 +7,9 @@
  * reporting of various pool controller string values (such as schedules, firmware
  * versions, and status messages) to Home Assistant.
  *
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. The maximum number of text sensors is limited
- * by the use of uint8_t for indexing.
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the main task context. The maximum number of climates is
+ * limited by the use of uint8_t for indexing.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk

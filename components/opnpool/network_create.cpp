@@ -8,8 +8,8 @@
  * buffers, set protocol headers, and serialize network message data into the appropriate
  * datalink packet format for transmission over RS-485.
  *
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. 
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the pool_task context.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk

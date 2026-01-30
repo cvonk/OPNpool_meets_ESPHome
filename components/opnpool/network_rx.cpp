@@ -7,8 +7,8 @@
  * It translates lower-level datalink packets (from RS-485) into higher-level network
  * messages, supporting multiple protocol types (A5/CTRL, A5/PUMP, IC/Chlorinator).
  * 
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. 
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the pool_task context.
  * 
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk

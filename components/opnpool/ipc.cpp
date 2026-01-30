@@ -10,8 +10,8 @@
  * inter-task communication, enabling modular separation of protocol handling and
  * application logic.
  *
- * The design assumes a single-threaded ESPHome environment and does not implement
- * explicit thread safety beyond FreeRTOS queue guarantees.
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required beyond FreeRTOS queue guarantees.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk

@@ -78,25 +78,25 @@ CONF_SWITCHES = [  # used to overwrite switch_id_t enum in opnpool.h
 CONF_ANALOG_SENSORS = [  # used to overwrite sensor_id_t enum in opnpool.h
     "air_temperature",
     "water_temperature",
-    "pump_power",
-    "pump_flow",
-    "pump_speed",
+    "primary_pump_power",
+    "primary_pump_flow",
+    "primary_pump_speed",
     "chlorinator_level",
     "chlorinator_salt",
-    "pump_error"
+    "primary_pump_error"
 ]
 CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
     "air_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
     "water_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
-    "pump_power": {"unit": "W", "device_class": "power", "state_class": "measurement"},
-    "pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate", "state_class": "measurement"},
-    "pump_speed": {"unit": "rpm", "device_class": "", "state_class": "measurement"},
+    "primary_pump_power": {"unit": "W", "device_class": "power", "state_class": "measurement"},
+    "primary_pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate", "state_class": "measurement"},
+    "primary_pump_speed": {"unit": "rpm", "device_class": "", "state_class": "measurement"},
     "chlorinator_level": {"unit": "%", "device_class": "", "state_class": "measurement"},
     "chlorinator_salt": {"unit": "ppm", "device_class": "", "state_class": "measurement"},
-    "pump_error": {"unit": "", "device_class": "", "state_class": "measurement"},
+    "primary_pump_error": {"unit": "", "device_class": "", "state_class": "measurement"},
 }
 CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.h
-    "pump_running",
+    "primary_pump_running",
     "mode_service",
     "mode_temperature_inc", 
     "mode_freeze_protection",
@@ -105,8 +105,8 @@ CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.
 CONF_TEXT_SENSORS = [  # used to overwrite text_sensor_id_t enum in opnpool.h
     "pool_sched",
     "spa_sched",
-    "pump_mode",
-    "pump_state",
+    "primary_pump_mode",
+    "primary_pump_state",
     "chlorinator_name",
     "chlorinator_status",
     "system_time",

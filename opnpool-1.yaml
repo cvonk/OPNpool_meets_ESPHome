@@ -131,17 +131,17 @@ opnpool:
     state_class: "measurement"
     device_class: "temperature"
     unit_of_measurement: "°F"
-  pump_power:
+  primary_pump_power:
     name: "Pump power"
     state_class: "measurement"
     device_class: "power"
     unit_of_measurement: "W"
-  pump_flow:
+  primary_pump_flow:
     name: "Pump flow"
     state_class: "measurement"
     device_class: "volume_flow_rate"
     unit_of_measurement: "gal/min"
-  pump_speed:
+  primary_pump_speed:
     name: "Pump speed"
     state_class: "measurement"
     unit_of_measurement: "rpm"
@@ -154,7 +154,7 @@ opnpool:
     unit_of_measurement: "ppm"
 
   # binary sensors
-  pump_running:
+  primary_pump_running:
     name: "Pump running"
     device_class: "running"
   mode_service:
@@ -171,11 +171,11 @@ opnpool:
     name: "Pool schedule"
   spa_sched:
     name: "Spa schedule"
-  pump_mode:
+  primary_pump_mode:
     name: "Pump mode"
-  pump_state:
+  primary_pump_state:
     name: "Pump state"
-  pump_error:
+  primary_pump_error:
     name: "Pump error"
   chlorinator_name:
     name: "Chlorinator name"

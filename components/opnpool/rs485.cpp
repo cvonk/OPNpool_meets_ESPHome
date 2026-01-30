@@ -15,8 +15,8 @@
  * 2. Queueing outgoing byte streams, and dequeuing them to write the bytes to the RS-485
  *    transceiver.
  * 
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. 
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the pool_task context.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk

@@ -10,9 +10,9 @@
  * based on controller feedback. The implementation ensures that only meaningful state
  * changes are published to Home Assistant, avoiding redundant updates.
  *
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. The maximum number of switches is limited
- * by the use of uint8_t for indexing.
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the main task context. The maximum number of climates is
+ * limited by the use of uint8_t for indexing.
  *
  * restore_mode is ignored because state is always synchronized from the pool controller.
  * The component will always reflect the actual state of the pool circuits as reported by

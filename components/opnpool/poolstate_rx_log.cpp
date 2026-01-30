@@ -13,9 +13,8 @@
  * to provide logging functionality, and separating them helps to avoid making that file
  * unwieldy large.
  * 
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. The code emphasizes maintainability, clear
- * mapping between C++ structures and JSON.
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the pool_task context.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk

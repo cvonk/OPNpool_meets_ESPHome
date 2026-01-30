@@ -4,20 +4,22 @@
  *
  * @details
  * This file implements the core logic for updating and maintaining the pool system state
- * in the OPNpool component. The pool state update layer acts as the bridge between low-level
- * protocol/network messages and the high-level software model of the pool controller and its
- * peripherals (pump, chlorinator, circuits, sensors, etc.).
+ * in the OPNpool component. The pool state update layer acts as the bridge between
+ * low-level protocol/network messages and the high-level software model of the pool
+ * controller and its peripherals (pump, chlorinator, circuits, sensors, etc.).
  *
- * Each supported message type is processed by a dedicated handler function, ensuring modular,
- * robust, and maintainable state updates. The updated state is used for publishing sensor values,
- * driving automation, and integrating with ESPHome and Home Assistant entities.
+ * Each supported message type is processed by a dedicated handler function, ensuring
+ * modular, robust, and maintainable state updates. The updated state is used for
+ * publishing sensor values, driving automation, and integrating with ESPHome and Home
+ * Assistant entities.
  *
- * Verbose debug logging and diagnostics are supported via cJSON objects, allowing detailed
- * inspection of state changes and message processing for troubleshooting and development.
+ * Verbose debug logging and diagnostics are supported via cJSON objects, allowing
+ * detailed inspection of state changes and message processing for troubleshooting and
+ * development.
  *
  * Design notes:
- * - Assumes a single-threaded environment (as provided by ESPHome); no explicit thread
- *   safety.
+ * - ESPHome operates in a single-threaded environment, so explicit thread safety
+ *   measures are not required within the pool_task context.
  * - Closely coupled with pool_state.h, network_msg.h, and poolstate_rx_log.h for data
  *   structures and logging.
  * - Intended as the main entry point for protocol-driven state updates in the OPNpool

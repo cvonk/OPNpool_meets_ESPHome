@@ -20,8 +20,8 @@
  * and inter-task communication. Extensive logging and debug output are provided for
  * diagnostics, troubleshooting, and protocol analysis.
  *
- * The design assumes a single-threaded environment (as provided by ESPHome), so no
- * explicit thread safety is implemented. 
+ * ESPHome operates in a single-threaded environment, so explicit thread safety measures
+ * are not required within the main task context. 
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2026 Coert Vonk
@@ -149,8 +149,8 @@ _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
         case poolstate_thermo_typ_t::SPA:
             return enum_index(network_pool_circuit_t::SPA);
         default:
-            ESP_LOGE(TAG, "Invalid thermo_typ: %d", static_cast<int>(thermo_typ));
-            return -1;  // invalid index, will cause out-of-bounds access if used
+            ESP_LOGE(TAG, "Invalid thermo_typ: %u", static_cast<unsigned int>(thermo_typ));
+            return 0;  // incorrect, but at least will prevent OOB array access if used
     }
 }
 
@@ -166,34 +166,45 @@ OpnPool::setup() {
     
     ESP_LOGI(TAG, "Setting up OpnPool...");
 
+        // instantiate Poolstate
     poolState_ = new PoolState(this);
     if (!poolState_) {
-        ESP_LOGE(TAG, "Failed to initialize PoolState");
+        ESP_LOGE(TAG, "Failed to instantiate PoolState");
         return;
     }
 
+        // alloc IPC struct
     ipc_ = new ipc_t{};
     if (ipc_ == nullptr) {
-        ESP_LOGE(TAG, "Failed to allocate IPC structure");
+        ESP_LOGE(TAG, "Failed to allocate IPC struct");
+        delete poolState_;
         return;
     }
+
+        // assign in IPC struct
     ipc_->config.rs485_pins = rs485_pins_;
     ipc_->to_pool_q = xQueueCreate(TO_POOL_QUEUE_LEN, sizeof(network_msg_t));
     ipc_->to_main_q = xQueueCreate(TO_MAIN_QUEUE_LEN, sizeof(network_msg_t));
-    
     if (!ipc_->to_main_q || !ipc_->to_pool_q) {
         ESP_LOGE(TAG, "Failed to create IPC queue(s)");
+        if (ipc_->to_main_q) vQueueDelete(ipc_->to_main_q);
+        if (ipc_->to_pool_q) vQueueDelete(ipc_->to_pool_q);
+        delete ipc_;
+        delete poolState_;
         return;
     }
 
-        // spin off a pool_task that handles RS485 communication, datalink layer and
-        // network layer
-    if (xTaskCreate(&pool_task, "pool_task", POOL_TASK_STACK_SIZE, this->ipc_, 3, NULL) != pdPASS) {
+        // spin off a pool_task to handle RS485 communication, datalink layer and network layer
+    if (xTaskCreate(&pool_task, "pool_task", POOL_TASK_STACK_SIZE, this->ipc_, 3, &pool_task_handle_) != pdPASS) {
         ESP_LOGE(TAG, "Failed to create pool_task");
+        if (ipc_->to_main_q) vQueueDelete(ipc_->to_main_q);
+        if (ipc_->to_pool_q) vQueueDelete(ipc_->to_pool_q);
+        delete ipc_;
+        delete poolState_;
         return;
     }
 
-        // publish interface firmware version
+        // publish our firmware version
     auto * const interface_firmware = this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::INTERFACE_FIRMWARE)];
     if (interface_firmware != nullptr) {
 #ifdef GIT_HASH
@@ -203,6 +214,20 @@ OpnPool::setup() {
 #endif
     }
 }
+
+OpnPool::~OpnPool() 
+{
+    if (pool_task_handle_) {
+        vTaskDelete(pool_task_handle_);
+    }
+    if (ipc_ != nullptr) {
+        if (ipc_->to_main_q) vQueueDelete(ipc_->to_main_q);
+        if (ipc_->to_pool_q) vQueueDelete(ipc_->to_pool_q);
+        delete ipc_;
+    }
+    delete poolState_;
+}
+
 
 /**
  * @brief Main loop for the OpnPool component.
@@ -224,8 +249,6 @@ OpnPool::loop() {
             // start with new_state being the current state
         poolstate_t new_state;
         poolState_->get(&new_state);
-
-        ESP_LOGVV(TAG, "Handling msg typ=%s", enum_str(msg.typ));
 
         if (poolstate_rx::update_state(&msg, &new_state) == ESP_OK) {
 
@@ -288,20 +311,17 @@ OpnPool::update_climates(const poolstate_t * const state)
         OpnPoolClimate * const climate = this->climates_[enum_index(climate_id)];
         if (!climate) continue;
 
-            // temperatures
         auto const water_temp = &state->temps[enum_index(poolstate_temp_typ_t::WATER)];
-        if (!water_temp->valid) continue;
-
         auto const thermo_typ = climate->get_thermo_typ();
         auto const thermo = &state->thermos[enum_index(thermo_typ)];
+        if (!water_temp->valid) continue;
         if (!thermo->set_point_in_f.valid) continue;
-        if (!thermo->heat_src.valid) continue;
         if (!thermo->heat_src.valid) continue;
         if (!thermo->heating.valid) continue;
 
         auto const current_temp_f = water_temp->value;
-        auto const current_temp_c = fahrenheit_to_celsius(current_temp_f);
-        auto const target_temp_c = fahrenheit_to_celsius(thermo->set_point_in_f.value);
+        auto const current_temp_c = std::round(fahrenheit_to_celsius(current_temp_f) * 10.0f) / 10.0f;
+        auto const target_temp_c = std::round(fahrenheit_to_celsius(thermo->set_point_in_f.value) * 10.0f) / 10.0f;
 
             // mode
         auto const switch_idx = _thermo_typ_to_pool_circuit_idx(thermo_typ);
@@ -345,43 +365,43 @@ OpnPool::update_switches(const poolstate_t * const state)
 void
 OpnPool::update_analog_sensors(poolstate_t const * const state)
 {
-    OpnPoolSensor * const air_temp_sensor = this->sensors_[static_cast<uint8_t>(sensor_id_t::AIR_TEMPERATURE)];
-    auto const air_temp = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::AIR)];
+    OpnPoolSensor * const air_temp_sensor = this->sensors_[enum_index(sensor_id_t::AIR_TEMPERATURE)];
+    auto const air_temp = state->temps[enum_index(poolstate_temp_typ_t::AIR)];
     if (air_temp_sensor != nullptr && air_temp.valid) {
         auto air_temp_c = fahrenheit_to_celsius(air_temp.value);
         air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
         air_temp_sensor->publish_value_if_changed(air_temp_c);    
     }
 
-    OpnPoolSensor * const water_temperature_sensor = this->sensors_[static_cast<uint8_t>(sensor_id_t::WATER_TEMPERATURE)];
-    auto const water_temp = state->temps[static_cast<uint8_t>(poolstate_temp_typ_t::WATER)];
+    OpnPoolSensor * const water_temperature_sensor = this->sensors_[enum_index(sensor_id_t::WATER_TEMPERATURE)];
+    auto const water_temp = state->temps[enum_index(poolstate_temp_typ_t::WATER)];
     if (water_temperature_sensor != nullptr && water_temp.valid) {    
         auto water_temp_c = fahrenheit_to_celsius(water_temp.value);
         water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
         water_temperature_sensor->publish_value_if_changed(water_temp_c);
     }   
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_POWER)],        
+        this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_POWER)],        
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].power
     );
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_FLOW)],         
+        this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_FLOW)],         
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].flow
     );
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_SPEED)],        
+        this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_SPEED)],        
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].speed
     );
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::PUMP_ERROR)],        
+        this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_ERROR)],        
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].error
     );
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_LEVEL)], 
+        this->sensors_[enum_index(sensor_id_t::CHLORINATOR_LEVEL)], 
         state->chlor.level
     );
     _publish_if(
-        this->sensors_[static_cast<uint8_t>(sensor_id_t::CHLORINATOR_SALT)],  
+        this->sensors_[enum_index(sensor_id_t::CHLORINATOR_SALT)],  
         state->chlor.salt
     );
 }
@@ -390,24 +410,24 @@ void
 OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
-        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::PUMP_RUNNING)],           
+        this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)],           
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].running
     );
     _publish_if(
-        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_SERVICE)],           
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::SERVICE)]
+        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_SERVICE)],           
+        state->modes[enum_index(network_pool_mode_bits_t::SERVICE)]
     );
     _publish_if(
-        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TEMP_INC)]
+        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
+        state->modes[enum_index(network_pool_mode_bits_t::TEMP_INC)]
     );
     _publish_if(
-        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::FREEZE_PROT)]
+        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
+        state->modes[enum_index(network_pool_mode_bits_t::FREEZE_PROT)]
     );
     _publish_if(
-        this->binary_sensors_[static_cast<uint8_t>(binary_sensor_id_t::MODE_TIMEOUT)],           
-        state->modes[static_cast<uint8_t>(network_pool_mode_bits_t::TIMEOUT)]
+        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_TIMEOUT)],           
+        state->modes[enum_index(network_pool_mode_bits_t::TIMEOUT)]
     );
 }
 
@@ -415,40 +435,40 @@ void
 OpnPool::update_text_sensors(poolstate_t const * const state)
 {
     _publish_schedule_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::POOL_SCHED)],
-        &state->scheds[static_cast<uint8_t>(network_pool_circuit_t::POOL)]
+        this->text_sensors_[enum_index(text_sensor_id_t::POOL_SCHED)],
+        &state->scheds[enum_index(network_pool_circuit_t::POOL)]
     );
     _publish_schedule_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SPA_SCHED)],
-        &state->scheds[static_cast<uint8_t>(network_pool_circuit_t::SPA)]
+        this->text_sensors_[enum_index(text_sensor_id_t::SPA_SCHED)],
+        &state->scheds[enum_index(network_pool_circuit_t::SPA)]
     );
     _publish_enum_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_MODE)], 
+        this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)], 
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].mode
     );    
     _publish_enum_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::PUMP_STATE)],
+        this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_STATE)],
         state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].state
     );
     _publish_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_NAME)], 
+        this->text_sensors_[enum_index(text_sensor_id_t::CHLORINATOR_NAME)], 
         state->chlor.name
     );
     _publish_enum_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CHLORINATOR_STATUS)],
+        this->text_sensors_[enum_index(text_sensor_id_t::CHLORINATOR_STATUS)],
         state->chlor.status
     );
     _publish_date_and_time_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::SYSTEM_TIME)],
+        this->text_sensors_[enum_index(text_sensor_id_t::SYSTEM_TIME)],
         &state->system.tod
     );
     _publish_version_if(
-        this->text_sensors_[static_cast<uint8_t>(text_sensor_id_t::CONTROLLER_FIRMWARE)],
+        this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_FIRMWARE)],
         &state->system.version
     );
 }
 
-    // setters
+    // setters (required by ESPHome's component model)
 
 void 
 OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const rts_pin)
@@ -461,67 +481,67 @@ OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t cons
 void
 OpnPool::set_pool_climate(OpnPoolClimate * const climate)
 { 
-    this->climates_[static_cast<uint8_t>(poolstate_thermo_typ_t::POOL)] = climate; 
+    this->climates_[enum_index(poolstate_thermo_typ_t::POOL)] = climate; 
 }
 
 void
 OpnPool::set_spa_climate(OpnPoolClimate * const climate)
 { 
-    this->climates_[static_cast<uint8_t>(poolstate_thermo_typ_t::SPA)] = climate; 
+    this->climates_[enum_index(poolstate_thermo_typ_t::SPA)] = climate; 
 }
 
 void
 OpnPool::set_pool_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::POOL)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::POOL)] = sw; 
 }
 
 void
 OpnPool::set_spa_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::SPA)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::SPA)] = sw; 
 }
 
 void
 OpnPool::set_aux1_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX1)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::AUX1)] = sw; 
 }
 
 void
 OpnPool::set_aux2_switch(OpnPoolSwitch * const sw) 
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX2)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::AUX2)] = sw; 
 }
 
 void
 OpnPool::set_aux3_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::AUX3)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::AUX3)] = sw; 
 }
 
 void
 OpnPool::set_feature1_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE1)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::FEATURE1)] = sw; 
 }
 
 void
 OpnPool::set_feature2_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE2)] = sw;
+    this->switches_[enum_index(network_pool_circuit_t::FEATURE2)] = sw;
 }
 
 void
 OpnPool::set_feature3_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE3)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::FEATURE3)] = sw; 
 }
 
 void
 OpnPool::set_feature4_switch(OpnPoolSwitch * const sw)
 { 
-    this->switches_[static_cast<uint8_t>(network_pool_circuit_t::FEATURE4)] = sw; 
+    this->switches_[enum_index(network_pool_circuit_t::FEATURE4)] = sw; 
 }
 
 void
@@ -537,27 +557,27 @@ OpnPool::set_water_temperature_sensor(OpnPoolSensor * const s)
 }
 
 void
-OpnPool::set_pump_power_sensor(OpnPoolSensor * const s)
+OpnPool::set_primary_pump_power_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[enum_index(sensor_id_t::PUMP_POWER)] = s; 
+    this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_POWER)] = s; 
 }
 
 void
-OpnPool::set_pump_flow_sensor(OpnPoolSensor * const s)
+OpnPool::set_primary_pump_flow_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[enum_index(sensor_id_t::PUMP_FLOW)] = s; 
+    this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_FLOW)] = s; 
 }
 
 void
-OpnPool::set_pump_speed_sensor(OpnPoolSensor * const s)
+OpnPool::set_primary_pump_speed_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[enum_index(sensor_id_t::PUMP_SPEED)] = s; 
+    this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_SPEED)] = s; 
 }
 
 void
-OpnPool::set_pump_error_sensor(OpnPoolSensor * const s)
+OpnPool::set_primary_pump_error_sensor(OpnPoolSensor * const s)
 { 
-    this->sensors_[enum_index(sensor_id_t::PUMP_ERROR)] = s; 
+    this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_ERROR)] = s; 
 }
 
 void
@@ -573,9 +593,9 @@ OpnPool::set_chlorinator_salt_sensor(OpnPoolSensor * const s)
 }
 
 void
-OpnPool::set_pump_running_binary_sensor(OpnPoolBinarySensor * const bs)
+OpnPool::set_primary_pump_running_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[enum_index(binary_sensor_id_t::PUMP_RUNNING)] = bs; 
+    this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)] = bs; 
 }
 
 void
@@ -615,15 +635,15 @@ OpnPool::set_spa_sched_text_sensor(OpnPoolTextSensor * const ts)
 }
 
 void
-OpnPool::set_pump_mode_text_sensor(OpnPoolTextSensor * const ts)
+OpnPool::set_primary_pump_mode_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[enum_index(text_sensor_id_t::PUMP_MODE)] = ts; 
+    this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)] = ts; 
 }
 
 void
-OpnPool::set_pump_state_text_sensor(OpnPoolTextSensor * const ts)
+OpnPool::set_primary_pump_state_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[enum_index(text_sensor_id_t::PUMP_STATE)] = ts; 
+    this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_STATE)] = ts; 
 }
 
 void
@@ -641,7 +661,7 @@ OpnPool::set_chlorinator_status_text_sensor(OpnPoolTextSensor * const ts)
 void
 OpnPool::set_system_time_text_sensor(OpnPoolTextSensor * const ts)
 { 
-     this->text_sensors_[enum_index(text_sensor_id_t::SYSTEM_TIME)] = ts;  
+    this->text_sensors_[enum_index(text_sensor_id_t::SYSTEM_TIME)] = ts;  
 }
 
 void

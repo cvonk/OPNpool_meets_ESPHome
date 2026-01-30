@@ -29,17 +29,17 @@ enum class switch_id_t : uint8_t {
     FEATURE4 = 8
 };
 enum class sensor_id_t : uint8_t {
-    AIR_TEMPERATURE   = 0,
-    WATER_TEMPERATURE = 1,
-    PUMP_POWER        = 2,
-    PUMP_FLOW         = 3,
-    PUMP_SPEED        = 4,
-    CHLORINATOR_LEVEL = 5,
-    CHLORINATOR_SALT  = 6,
-    PUMP_ERROR        = 7
+    AIR_TEMPERATURE    = 0,
+    WATER_TEMPERATURE  = 1,
+    PRIMARY_PUMP_POWER = 2,
+    PRIMARY_PUMP_FLOW  = 3,
+    PRIMARY_PUMP_SPEED = 4,
+    CHLORINATOR_LEVEL  = 5,
+    CHLORINATOR_SALT   = 6,
+    PRIMARY_PUMP_ERROR = 7
 };
 enum class binary_sensor_id_t : uint8_t {
-    PUMP_RUNNING           = 0,
+    PRIMARY_PUMP_RUNNING   = 0,
     MODE_SERVICE           = 1,
     MODE_TEMPERATURE_INC   = 2,
     MODE_FREEZE_PROTECTION = 3,
@@ -48,8 +48,8 @@ enum class binary_sensor_id_t : uint8_t {
 enum class text_sensor_id_t : uint8_t {
     POOL_SCHED          = 0,
     SPA_SCHED           = 1,
-    PUMP_MODE           = 2,
-    PUMP_STATE          = 3,
+    PRIMARY_PUMP_MODE   = 2,
+    PRIMARY_PUMP_STATE  = 3,
     CHLORINATOR_NAME    = 4,
     CHLORINATOR_STATUS  = 5,
     SYSTEM_TIME         = 6,
