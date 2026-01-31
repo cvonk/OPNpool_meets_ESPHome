@@ -1,6 +1,6 @@
 /**
  * @file rs485.cpp
- * @brief RS485 driver: receive/sent bytes to/from the RS485 transceiver
+ * @brief RS485 driver: receive/send bytes to/from the RS485 transceiver
  *
  * @details
  * This file implements the RS485 hardware driver for the OPNpool component, providing
@@ -49,8 +49,7 @@ constexpr size_t      RX_BUF_SIZE = 127;
 constexpr TickType_t  RX_TIMEOUT  = (100 / portTICK_PERIOD_MS);
 constexpr TickType_t  TX_TIMEOUT  = (100 / portTICK_PERIOD_MS);
 
-constexpr uart_port_t UART_PORT = static_cast<uart_port_t>(UART_NUM_1);
-
+constexpr uart_port_t           UART_PORT = static_cast<uart_port_t>(UART_NUM_1);
 constexpr int                   BAUD_RATE = 9600;
 constexpr uart_word_length_t    DATA_BITS = UART_DATA_8_BITS;
 constexpr uart_parity_t         PARITY    = UART_PARITY_DISABLE;
@@ -67,9 +66,9 @@ static gpio_num_t  _rts_pin;
 [[nodiscard]] static int
 _available()
 {
-    int length = 0;
-    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT, (size_t *) &length));
-    return length;
+    size_t length = 0;
+    ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_PORT, &length));
+    return static_cast<int>(length);
 }
 
 /**
@@ -145,7 +144,7 @@ _dequeue(rs485_handle_t const handle)
         }
         return msg.pkt;
     }
-    return NULL;
+    return nullptr;
 }
 
 /**
@@ -156,17 +155,17 @@ _dequeue(rs485_handle_t const handle)
 static void
 _tx_mode(bool const tx_enable)
 {
-	// messages should be sent directly after an A5 packets (and before any IC packets)
-	// A note on the DE signal:
+    // messages should be sent directly after an A5 packets (and before any IC packets)
+    // A note on the DE signal:
     //  - choose a GPIO that doesn't mind being pulled down during reset
 
     if (tx_enable) {
         gpio_set_level(_rts_pin, 1);  // enable RS485 transmit DE=1 and RE*=1 (DE=driver enable, RE*=inverted receive enable)
     } else {
         _flush();                     // wait until last byte starts transmitting
-        esp_rom_delay_us(1500);       // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 ms)
+        esp_rom_delay_us(1500);       // wait until last byte is transmitted (10 bits / 9600 baud =~ 1042 µs)
         gpio_set_level(_rts_pin, 0);  // enable RS485 receive
-     }
+    }
 }
 
 /**
@@ -233,6 +232,7 @@ rs485_init(rs485_pins_t const * const rs485_pins)
     rs485_handle_t handle = static_cast<rs485_handle_t>(calloc(1, sizeof(rs485_instance_t)));
     if (handle == nullptr) {
         ESP_LOGE(TAG, "Failed to allocate RS485 handle");
+        vQueueDelete(tx_q);
         return nullptr;
     }
 

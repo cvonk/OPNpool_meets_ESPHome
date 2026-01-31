@@ -32,7 +32,6 @@
 #include <esp_system.h>
 #include <esp_types.h>
 #include <freertos/FreeRTOS.h>
-#include <cJSON.h>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
@@ -40,15 +39,8 @@
 #include "network.h"
 #include "network_msg.h"
 
-#ifndef ARRAY_SIZE
-# define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
-#endif
-
 namespace esphome {
 namespace opnpool {
-
-    // forward declarations (to avoid circular dependencies)
-struct ipc_t;
 
 struct poolstate_bool_t {
     bool valid;
@@ -194,13 +186,13 @@ struct poolstate_chlor_t {
  * - Chlorinator status (name, level, salt, status)
  *
  * @var system   System information (date, time, firmware version)
- * @var temps    Array of temperature readings (e.g., air, water)
- * @var thermos  Array of thermostat states (pool, spa)
- * @var scheds   Array of schedules for each circuit
- * @var modes    Mode bitsets (which pool modes are active)
- * @var circuits Circuit states (active/delay for each circuit)
- * @var pump     Pump status (mode, running, power, speed, etc.)
  * @var chlor    Chlorinator status (name, level, salt, status)
+ * @var pumps    Pump status (mode, running, power, speed, etc.)
+ * @var circuits Circuit states (active/delay for each circuit)
+ * @var modes    Mode bitsets (which pool modes are active)
+ * @var thermos  Array of thermostat states (pool, spa)
+ * @var temps    Array of temperature readings (e.g., air, water)
+ * @var scheds   Array of schedules for each circuit
  */
 struct poolstate_t {
     poolstate_system_t   system;
@@ -224,7 +216,7 @@ class OpnPool;
 class PoolState {
 
     public:
-        PoolState(OpnPool * const parent) {
+        PoolState() {
             memset(&last_, 0, sizeof(poolstate_t));
         }
         ~PoolState() {}

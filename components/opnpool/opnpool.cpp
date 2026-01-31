@@ -168,7 +168,7 @@ OpnPool::setup() {
     ESP_LOGI(TAG, "Setting up OpnPool...");
 
         // instantiate Poolstate
-    poolState_ = new PoolState(this);
+    poolState_ = new PoolState();
     if (!poolState_) {
         ESP_LOGE(TAG, "Failed to instantiate PoolState");
         return;
