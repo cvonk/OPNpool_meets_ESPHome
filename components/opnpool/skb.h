@@ -210,14 +210,13 @@ void skb_reset(skb_handle_t skb);
  * is written to the provided buffer. If the output exceeds the buffer capacity,
  * the function stops writing to prevent overflow.
  * 
- * @param  tag      A tag string for logging purposes (typically used by ESP_LOGx)
  * @param  skb      The handle to the `skb` to format
  * @param  buf      A buffer where the formatted hex string will be written
  * @param  buf_size The size of the output buffer in bytes
  * @return size_t   The number of characters written to the buffer
  */
 
-[[nodiscard]] size_t skb_print(char const * const tag, skb_handle_t const skb, char * const buf, size_t const buf_size);
+[[nodiscard]] size_t skb_print(skb_handle_t const skb, char * const buf, size_t const buf_size);
 
 } // namespace opnpool
 } // namespace esphome

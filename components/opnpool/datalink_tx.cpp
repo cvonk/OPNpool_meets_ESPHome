@@ -31,6 +31,7 @@
 #include "enum_helpers.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 namespace esphome {
 namespace opnpool {
@@ -55,7 +56,7 @@ constexpr uint8_t REMOTE_ADDR = 2;
  * @param typ  Message type union for the packet.
  */
 static void
-_enter_ic_head(datalink_head_ic_t * const head, skb_handle_t const txb, datalink_typ_t const typ)
+_enter_ic_head(datalink_head_ic_t * const head, datalink_typ_t const typ)
 {
     head->ff = 0xFF;
     for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_IC_SIZE; ii++) {
@@ -89,7 +90,7 @@ _enter_ic_tail(datalink_tail_ic_t * const tail, uint8_t const * const start, uin
  * @param data_len Length of the data payload.
  */
 static void
-_enter_a5_head(datalink_head_a5_t * const head, skb_handle_t const txb, datalink_typ_t const typ, size_t const data_len)
+_enter_a5_head(datalink_head_a5_t * const head, datalink_typ_t const typ, size_t const data_len)
 {
     head->ff = 0xFF;
     for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_A5_SIZE; ii++) {
@@ -141,7 +142,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
     switch (pkt->prot) {
         case datalink_prot_t::IC: {
             datalink_head_ic_t * const head = (datalink_head_ic_t *) skb_push(skb, sizeof(datalink_head_ic_t));
-            _enter_ic_head(head, skb, pkt->typ);
+            _enter_ic_head(head, pkt->typ);
 
             uint8_t * crc_start = head->preamble;
             uint8_t * crc_stop = skb->priv.tail;
@@ -152,7 +153,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
         case datalink_prot_t::A5_CTRL:
         case datalink_prot_t::A5_PUMP: {
             datalink_head_a5_t * const head = (datalink_head_a5_t *) skb_push(skb, sizeof(datalink_head_a5_t));
-            _enter_a5_head(head, skb, pkt->typ, pkt->data_len);
+            _enter_a5_head(head, pkt->typ, pkt->data_len);
 
             uint8_t * crc_start = head->preamble + DATALINK_PREAMBLE_A5_SIZE - 1;
             uint8_t * crc_stop = skb->priv.tail;
@@ -167,7 +168,7 @@ datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const p
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         size_t const dbg_size = DBG_SIZE;
         char dbg[dbg_size];
-        (void) skb_print(TAG, skb, dbg, dbg_size);
+        (void) skb_print(skb, dbg, dbg_size);
         ESP_LOGV(TAG, " %s: { %s}", enum_str(pkt->prot), dbg);
     }
 

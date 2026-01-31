@@ -51,6 +51,7 @@
 #include "opnpool_ids.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -63,7 +64,7 @@ namespace poolstate_rx {
 
 constexpr char TAG[] = "poolstate_rx";
 
-    // returns a bitmask of all matching status flags, or OTHER if none match
+    // returns the first matching status flag, or OTHER if none match
 constexpr poolstate_chlor_status_typ_t
 _get_chlor_status_from_error(uint8_t const error)
 {
@@ -270,14 +271,13 @@ _update_modes_from_bits(poolstate_bool_t * modes, uint16_t const bits, uint8_t c
  *
  * @param dbg         Optional JSON object for verbose debug logging.
  * @param bytes       Pointer to the array of bytes received from the controller.
- * @param state       Pointer to the poolstate_t structure to update.
  * @param no_of_bytes Number of bytes in the array.
  *
  * This function logs the received bytes in hexadecimal format to the debug JSON object
  * if verbose logging is enabled. It does not modify the pool state.
  */
 static void
-_ctrl_hex_bytes(cJSON * const dbg,  uint8_t const * const bytes, poolstate_t * const state, uint8_t no_of_bytes)
+_ctrl_hex_bytes(cJSON * const dbg, uint8_t const * const bytes, uint8_t no_of_bytes)
 {
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON * const array = cJSON_CreateArray();
@@ -316,6 +316,12 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
     }
 
     uint8_t const circuit_idx = msg->circuit_plus_1 - 1;
+
+    if (circuit_idx >= enum_count<network_pool_circuit_t>()) {
+        ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, enum_count<network_pool_circuit_t>());
+        return;
+    }
+
     state->circuits[circuit_idx].active = {
         .valid = true,
         .value = static_cast<bool>(msg->value)
@@ -324,11 +330,7 @@ _ctrl_circuit_set(cJSON * const dbg, network_msg_ctrl_circuit_set_t const * cons
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         network_pool_circuit_t const circuit = static_cast<network_pool_circuit_t>(circuit_idx);
 
-        if (circuit_idx < enum_count<network_pool_circuit_t>()) {
-            cJSON_AddNumberToObject(dbg, enum_str(circuit), msg->value);
-        } else {
-            ESP_LOGW(TAG, "circuit %u>=%u", circuit_idx, enum_count<network_pool_circuit_t>());
-        }
+        cJSON_AddNumberToObject(dbg, enum_str(circuit), msg->value);
         ESP_LOGVV(TAG, "Circuit %u set to %u", circuit_idx, msg->value);
     }
 }
@@ -404,9 +406,11 @@ _update_circuits(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const
 
         // update circuits[].delay
     uint8_t const bitmask_delay_circuits = msg->delay;
-    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
     _update_circuit_delay_from_bits(circuits, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
 
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_circuits(dbg, poolstate_rx_log::KEY_CIRCUITS, circuits);
+    }
 }
 
 static void
@@ -453,14 +457,21 @@ _update_thermos(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const 
         .valid = true,
         .value = msg->heat_src.get_spa()
     };
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_thermos(dbg, poolstate_rx_log::KEY_THERMOS, thermos, true, true, true);
+    }    
 }
 
 static void
 _update_modes(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const msg, poolstate_bool_t * const modes)
 {
-    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_mode_bits_t>(), "size err for modes->is_set");
-
     _update_modes_from_bits(modes, msg->mode_bits, enum_count<network_pool_mode_bits_t>());
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_modes(dbg, poolstate_rx_log::KEY_MODES, modes);
+        ESP_LOGVV(TAG, "Mode updated" );
+    }
 }
 
 static void
@@ -472,6 +483,11 @@ _update_system_time(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * co
         .minute = msg->minute
     };
     // PS date is updated through `network_msg_ctrl_time`
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_time(dbg, poolstate_rx_log::KEY_TIME, time);
+        ESP_LOGVV(TAG, "Time-of-day updated: %02u:%02u", time->hour, time->minute);
+    }
 }
 
 static void
@@ -490,6 +506,11 @@ _update_temps(cJSON * const dbg, network_msg_ctrl_state_bcast_t const * const ms
         .valid = true,
         .value = msg->water_temp
     };
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_temps(dbg, poolstate_rx_log::KEY_TEMPS, temps);
+        ESP_LOGVV(TAG, "Temperatures updated: air=%u, water=%u", temps[air_idx].value, temps[water_idx].value);
+    }
 }
 
 /**
@@ -818,7 +839,7 @@ _ctrl_set_ack(cJSON * const dbg, network_msg_ctrl_set_ack_t const * const msg)
  *
  * @param dbg   Optional JSON object for verbose debug logging.
  * @param msg   Pointer to the received network_msg_chlor_name_resp_t message.
- * @param state Pointer to the poolstate_t structure to update.
+ * @param chlor Pointer to the poolstate_chlor_t structure to update.
  *
  * This function updates the chlorine generator name and salt level in the pool state and
  * logs the status to the debug JSON object if verbose logging is enabled.
@@ -833,10 +854,10 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
 
     chlor->salt = {
         .valid = true,
-        .value = static_cast<uint16_t>((uint16_t)msg->salt * 50)
+        .value = static_cast<uint16_t>(msg->salt * 50)
     };
 
-    size_t name_size = sizeof(chlor->name.value);
+    uint32_t name_size = sizeof(chlor->name.value);
     strncpy(chlor->name.value, msg->name, name_size);
     chlor->name.value[name_size - 1] = '\0';
     chlor->name.valid = true;
@@ -853,7 +874,7 @@ _chlor_name_resp(cJSON * const dbg, network_msg_chlor_name_resp_t const * const 
  *
  * @param dbg   Optional JSON object for verbose debug logging.
  * @param msg   Pointer to the received network_msg_chlor_level_set_t message.
- * @param state Pointer to the poolstate_t structure to update.
+ * @param chlor Pointer to the poolstate_chlor_t structure to update.
  *
  * This function updates the chlorine generator level in the pool state and logs the
  * status to the debug JSON object if verbose logging is enabled.
@@ -882,7 +903,7 @@ _chlor_level_set(cJSON * const dbg, network_msg_chlor_level_set_t const * const 
  *
  * @param dbg   Optional JSON object for verbose debug logging.
  * @param msg   Pointer to the received network_msg_chlor_level_resp_t message.
- * @param state Pointer to the poolstate_t structure to update.
+ * @param chlor Pointer to the poolstate_chlor_t structure to update.
  *
  * This function updates the chlorine generator salt level and status in the pool state and logs the status to
  * the debug JSON object if verbose logging is enabled.
@@ -898,7 +919,7 @@ _chlor_level_set_resp(cJSON * const dbg, network_msg_chlor_level_resp_t const * 
 
     chlor->salt = {
         .valid = true,
-        .value = static_cast<uint16_t>((uint16_t)msg->salt * 50)
+        .value = static_cast<uint16_t>(msg->salt * 50)
     };
     chlor->status = {
         .valid = true,
@@ -934,8 +955,11 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         return ESP_FAIL;
     }
 
+    bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
+    bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
+
         // adjust the new_state based on the incoming message
-    cJSON * const dbg = cJSON_CreateObject();
+    cJSON * const dbg = verbose ? cJSON_CreateObject() : nullptr; 
 
     switch (msg->typ) {
         case network_typ_t::IGNORE:
@@ -998,7 +1022,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_typ_t::CTRL_VALVE_REQ:
             break;
         case network_typ_t::CTRL_VALVE_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_valve_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_valve_resp_t));
             break;
         case network_typ_t::CTRL_VERSION_REQ:
             break;
@@ -1008,27 +1032,27 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_typ_t::CTRL_SOLARPUMP_REQ:
             break;
         case network_typ_t::CTRL_SOLARPUMP_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_solarpump_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_solarpump_resp_t));
             break;
         case network_typ_t::CTRL_DELAY_REQ:
             break;
         case network_typ_t::CTRL_DELAY_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_delay_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_delay_resp_t));
             break;
         case network_typ_t::CTRL_HEAT_SETPT_REQ:
             break;
         case network_typ_t::CTRL_HEAT_SETPT_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_heat_setpt_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_heat_setpt_resp_t));
             break;
         case network_typ_t::CTRL_CIRC_NAMES_REQ:
             break;
         case network_typ_t::CTRL_CIRC_NAMES_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_circ_names_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_circ_names_resp_t));
             break;
         case network_typ_t::CTRL_SCHEDS_REQ:
             break;
         case network_typ_t::CTRL_SCHEDS_RESP:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, sizeof(network_msg_ctrl_scheds_resp_t));
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_msg_ctrl_scheds_resp_t));
             break;
         case network_typ_t::CTRL_CHEM_REQ:
             break;
@@ -1036,7 +1060,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_typ_t::CHLOR_PING_RESP:
             break;
         case network_typ_t::CHLOR_NAME_REQ:
-            _ctrl_hex_bytes(dbg, msg->u.raw, new_state, 1);
+            _ctrl_hex_bytes(dbg, msg->u.raw, 1);
             break;
         case network_typ_t::CHLOR_NAME_RESP:
             _chlor_name_resp(dbg, &msg->u.ic.chlor_name_resp, &new_state->chlor);
@@ -1061,9 +1085,6 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
                           msg->typ == network_typ_t::PUMP_RUN_RESP    ||
                           msg->typ == network_typ_t::PUMP_STATUS_REQ  ||
                           msg->typ == network_typ_t::PUMP_STATUS_RESP;
-
-    bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
-    bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
 
     if ((verbose && !frequent) || very_verbose) {
         size_t const json_size = 1024;

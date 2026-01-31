@@ -45,6 +45,7 @@
 #include "pool_task.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 namespace esphome {
 namespace opnpool {
@@ -169,7 +170,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
             if (pkt->skb == nullptr) {
                 ESP_LOGW(TAG, "Packet skb is null");
             } else {
-                (void) skb_print(TAG, pkt->skb, dbg, dbg_size);
+                (void) skb_print(pkt->skb, dbg, dbg_size);
                 ESP_LOGVV(TAG, "tx { %s}", dbg);
             }
         }

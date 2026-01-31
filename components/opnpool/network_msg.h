@@ -29,6 +29,7 @@
 #include <esp_types.h>
 #include <cstddef>
 #include <cstdint>
+#include <algorithm>
 
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
@@ -345,7 +346,7 @@ enum class network_pump_program_addr_t : uint16_t {
     ERPM3        = 0x032A   // program ext program RPM3
 };
 
-    // can't use magic enum, because  enum the values that are not contiguous, and outside the range that magic_enum expects
+    // can't use magic enum, because the enum values that are not contiguous, and outside the range that magic_enum expects
 constexpr const char * 
 network_pump_program_addr_str(network_pump_program_addr_t addr)
 {
@@ -469,13 +470,14 @@ union network_msg_data_ic_t {
     network_msg_chlor_level_resp_t  chlor_level_resp;
 } PACK8;
 
+inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = std::max(sizeof(network_msg_data_a5_t), sizeof(network_msg_data_ic_t));
+
 union network_msg_data_t {
     network_msg_data_a5_t a5;
     network_msg_data_ic_t ic;
-    uint8_t               raw[sizeof(network_msg_data_t)];
+    uint8_t               raw[DATALINK_MAX_DATA_SIZE];
 } PACK8;
 
-inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = sizeof(network_msg_data_t);
 
 /**
  * @brief X-Macro defining all supported network message types for OPNpool.
@@ -578,7 +580,7 @@ struct network_typ_info_t {
 };
 
     // maps {datalink_prot and datalink_typ_t} to network_typ_t.
-constexpr network_typ_info_t network_msg_typ_info[] = {
+constexpr network_typ_info_t network_typ_info[] = {
 #define X_INFO(name, size, proto, typ) {datalink_prot_t::proto, typ, size, network_typ_t::name},
     NETWORK_MSG_TYP_LIST(X_INFO)
 #undef X_INFO
@@ -588,8 +590,8 @@ constexpr network_typ_info_t const *
 network_msg_typ_get_info(network_typ_t typ)
 {
     uint8_t idx = static_cast<uint8_t>(typ);
-    if (idx < std::size(network_msg_typ_info)) {
-        return &network_msg_typ_info[idx];
+    if (idx < std::size(network_typ_info)) {
+        return &network_typ_info[idx];
     }
     return nullptr;
 }
@@ -603,8 +605,8 @@ network_msg_typ_get_info(network_typ_t typ)
 constexpr network_typ_info_t const *
 network_msg_typ_get_info(datalink_ctrl_typ_t const ctrl_typ)
 {
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
-        network_typ_info_t const * const info = &network_msg_typ_info[ii];
+    for (size_t ii = 0; ii < std::size(network_typ_info); ii++) {
+        network_typ_info_t const * const info = &network_typ_info[ii];
         if (info->proto == datalink_prot_t::A5_CTRL && info->datalink_typ.ctrl == ctrl_typ) {
             return info;
         }
@@ -626,8 +628,8 @@ constexpr network_typ_info_t const *
 network_msg_typ_get_info(datalink_pump_typ_t const pump_typ, bool const is_to_pump)
 {
     network_typ_info_t const * result = nullptr;
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
-        network_typ_info_t const * const info = &network_msg_typ_info[ii];
+    for (size_t ii = 0; ii < std::size(network_typ_info); ii++) {
+        network_typ_info_t const * const info = &network_typ_info[ii];
         if (info->proto == datalink_prot_t::A5_PUMP && info->datalink_typ.pump == pump_typ) {
             if (is_to_pump) {
                 return info;  // first match = SET/REQ
@@ -647,8 +649,8 @@ network_msg_typ_get_info(datalink_pump_typ_t const pump_typ, bool const is_to_pu
 constexpr network_typ_info_t const *
 network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
 {
-    for (size_t ii = 0; ii < std::size(network_msg_typ_info); ii++) {
-        network_typ_info_t const * const info = &network_msg_typ_info[ii];
+    for (size_t ii = 0; ii < std::size(network_typ_info); ii++) {
+        network_typ_info_t const * const info = &network_typ_info[ii];
         if (info->proto == datalink_prot_t::IC && info->datalink_typ.chlor == chlor_typ) {
             return info;
         }
@@ -681,11 +683,11 @@ struct network_msg_t {
 
     // sanity checks
 static_assert(sizeof(network_msg_data_t) <= UINT8_MAX, "network_msg_data_t size exceeds UINT8_MAX");
-static_assert(std::size(network_msg_typ_info) == enum_count<network_typ_t>());
-static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, true)  == &network_msg_typ_info[enum_index(network_typ_t::PUMP_STATUS_REQ)]);
-static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, false) == &network_msg_typ_info[enum_index(network_typ_t::PUMP_STATUS_RESP)]);
-static_assert(network_msg_typ_get_info(datalink_ctrl_typ_t::STATE_BCAST)   == &network_msg_typ_info[enum_index(network_typ_t::CTRL_STATE_BCAST)]);
-static_assert(network_msg_typ_get_info(datalink_chlor_typ_t::LEVEL_RESP)   == &network_msg_typ_info[enum_index(network_typ_t::CHLOR_LEVEL_RESP)]);
+static_assert(std::size(network_typ_info) == enum_count<network_typ_t>());
+static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, true)  == &network_typ_info[enum_index(network_typ_t::PUMP_STATUS_REQ)]);
+static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, false) == &network_typ_info[enum_index(network_typ_t::PUMP_STATUS_RESP)]);
+static_assert(network_msg_typ_get_info(datalink_ctrl_typ_t::STATE_BCAST)   == &network_typ_info[enum_index(network_typ_t::CTRL_STATE_BCAST)]);
+static_assert(network_msg_typ_get_info(datalink_chlor_typ_t::LEVEL_RESP)   == &network_typ_info[enum_index(network_typ_t::CHLOR_LEVEL_RESP)]);
 
 }  // namespace opnpool
 }  // namespace esphome

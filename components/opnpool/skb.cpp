@@ -33,6 +33,7 @@
 #include "skb.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 namespace esphome {
 namespace opnpool {
@@ -117,7 +118,7 @@ skb_reset(skb_handle_t skb)
 }
 
 size_t
-skb_print(char const * const tag, skb_handle_t const skb, char * const buf, size_t const buf_size)
+skb_print(skb_handle_t const skb, char * const buf, size_t const buf_size)
 {
     size_t len = 0;
     for (size_t ii = 0; ii < skb->len; ii++) {

@@ -35,6 +35,7 @@
 #include "poolstate_rx_log.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 namespace esphome {
 namespace opnpool {
@@ -56,12 +57,12 @@ _create_item(cJSON * const obj, char const * const key)
 
     // add system information (time, date, firmware) to a JSON object
 void
-_add_system(cJSON * const obj, char const * const key, poolstate_t const * const state)
+_add_system(cJSON * const obj, char const * const key, poolstate_system_t const * const system)
 {
     cJSON * const item = _create_item(obj, key);
  
-    add_time_and_date(item, KEY_TOD, &state->system.tod);
-    add_version(item, KEY_FIRMWARE, &state->system.version);
+    add_time_and_date(item, KEY_TOD, &system->tod);
+    add_version(item, KEY_FIRMWARE, &system->version);
 }
 
     // add active circuit information to a JSON object
@@ -89,22 +90,22 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
 }
 
     // add circuit information to a JSON object
-static void
-_add_circuits(cJSON * const obj, char const * const key, poolstate_t const * const state)
+void
+add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t const * const circuits)
 {
     cJSON * const item = _create_item(obj, key);
 
-    _add_circuit_active(item, KEY_ACTIVE, state->circuits);
-    _add_circuit_delay(item, KEY_DELAY, state->circuits);
+    _add_circuit_active(item, KEY_ACTIVE, circuits);
+    _add_circuit_delay(item, KEY_DELAY, circuits);
 }
 
     // add mode information to a JSON object
-static void
-_add_modes(cJSON * const obj, char const * const key, poolstate_t const * const state)
+void
+add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes)
 {
     cJSON * const item = _create_item(obj, key);
 
-    poolstate_bool_t const * mode = state->modes;
+    poolstate_bool_t const * mode = modes;
     for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
         cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
         mode++;
@@ -112,12 +113,12 @@ _add_modes(cJSON * const obj, char const * const key, poolstate_t const * const 
 }
 
     // add temperatures information to a JSON object
-static void
-_add_temps(cJSON * const obj, char const * const key, poolstate_t const * state)
+void
+add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * temps)
 {
     cJSON * const item = _create_item(obj, key);
     
-    poolstate_uint8_t const * temp = state->temps;    
+    poolstate_uint8_t const * temp = temps;    
     for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
         if (temp->value != 0xFF && temp->value != 0x00) {
             cJSON_AddNumberToObject(item, enum_str(typ), temp->value);
@@ -140,7 +141,22 @@ _add_pump_running(cJSON * const obj, char const * const key, bool const running)
 
 
 /**
- * @brief Add time and date information to a JSON object for logging.
+ * @brief      Add time and date information to a JSON object for logging.
+ * 
+ * @param obj  The parent JSON object.
+ * @param key  The key under which to add the time and date object.
+ * @param time Pointer to the poolstate_time_t structure containing the time.
+ */
+void
+add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time)
+{
+    cJSON * const item = _create_item(obj, key);
+
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(time->hour, time->minute));    
+}
+
+/**
+ * @brief     Add time and date information to a JSON object for logging.
  * 
  * @param obj The parent JSON object.
  * @param key The key under which to add the time and date object.
@@ -244,10 +260,10 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 
     add_thermos(item, KEY_THERMOS, state->thermos, true, false, true);
     add_scheds(item, KEY_SCHEDS, state->scheds);
-    _add_system(item, KEY_SYSTEM, state);
-    _add_temps(item, KEY_TEMPS, state);
-    _add_modes(item, KEY_MODES, state);
-    _add_circuits(item, KEY_CIRCUITS, state);
+    add_modes(item, KEY_MODES, state->modes);
+    add_temps(item, KEY_TEMPS, state->temps);
+    add_circuits(item, KEY_CIRCUITS, state->circuits);
+    _add_system(item, KEY_SYSTEM, &state->system);
 }
 
 /**
@@ -268,6 +284,7 @@ add_pump(cJSON * const obj, char const * const key, network_msg_dev_id_t const d
 
     cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));    
     cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
+    cJSON_AddStringToObject(item, KEY_DEVID, enum_str(dev_id));
     cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
     cJSON_AddNumberToObject(item, KEY_SPEED, pump->speed.value);
     if (pump->flow.value) {

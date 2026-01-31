@@ -65,12 +65,18 @@ constexpr char const * const KEY_TIMER    = "timer";
 constexpr char const * const KEY_RESP     = "resp";
 constexpr char const * const KEY_CTRL     = "ctrl";
 constexpr char const * const KEY_ACK      = "ack";
+constexpr char const * const KEY_DEVID    = "devid";
 
+void add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time);
 void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
 void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showHeating);
 void add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds);
+void add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes);
+void add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * temps);
+void add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t const * const circuits);
 void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
+
 void add_pump_program(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, uint16_t const value);
 void add_pump_ctrl(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_ctrl_t const ctrl);
 void add_pump_mode(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_mode_t const mode);

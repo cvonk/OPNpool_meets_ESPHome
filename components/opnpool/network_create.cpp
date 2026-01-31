@@ -30,6 +30,7 @@
 #include "network_msg.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 namespace esphome {
 namespace opnpool {
@@ -43,7 +44,7 @@ constexpr char TAG[] = "network_create";
 esp_err_t
 network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 {
-        // get protocol info from the lookup table network_msg_typ_info[] in network_msg.h
+        // get protocol info from the lookup table network_typ_info[] in network_msg.h
     const network_typ_info_t * info = network_msg_typ_get_info(msg->typ);
     if (info == nullptr) {
         ESP_LOGE(TAG, "unknown msg typ(%s)", enum_str(msg->typ));
