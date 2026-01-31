@@ -1,6 +1,6 @@
 /**
  * @file datalink_tx.cpp
- * @brief Data Link layer: bytes from the RS485 transceiver from data packets
+ * @brief Data Link layer: data packets to bytes for the RS485 transceiver
  *
  * @details
  * This file implements the data link layer transmitter for the OPNpool component,
@@ -45,14 +45,11 @@ constexpr size_t DATALINK_PREAMBLE_IC_SIZE = sizeof(datalink_preamble_ic);
 constexpr size_t DATALINK_PREAMBLE_A5_SIZE = sizeof(datalink_preamble_a5);
 
 constexpr uint8_t A5_PROTOCOL_VERSION = 0x01;
-constexpr uint8_t CTRL_ADDR = 0;
-constexpr uint8_t REMOTE_ADDR = 2;
 
 /**
  * @brief      Fills the IC protocol packet header fields for transmission.
  *
  * @param head Pointer to the IC protocol header structure to fill.
- * @param txb  Socket buffer handle for the outgoing packet.
  * @param typ  Message type union for the packet.
  */
 static void
@@ -62,10 +59,9 @@ _enter_ic_head(datalink_head_ic_t * const head, datalink_typ_t const typ)
     for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_IC_SIZE; ii++) {
         head->preamble[ii] = datalink_preamble_ic[ii];
     }
-    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, CTRL_ADDR);
+    head->hdr.dst = datalink_dev_id(datalink_group_addr_t::CTRL, datalink_dev_id_t::PRIMARY);
     head->hdr.typ = typ.raw;
 }
-
 
 /**
  * @brief       Fills the IC protocol packet tail (CRC) for transmission.
@@ -80,12 +76,10 @@ _enter_ic_tail(datalink_tail_ic_t * const tail, uint8_t const * const start, uin
     tail->crc[0] = (uint8_t) datalink_calc_crc(start, stop);
 }
 
-
 /**
  * @brief          Fills the A5 protocol packet header fields for transmission.
  *
  * @param head     Pointer to the A5 protocol header structure to fill.
- * @param txb      Socket buffer handle for the outgoing packet.
  * @param typ      Message type union for the packet.
  * @param data_len Length of the data payload.
  */
@@ -97,12 +91,11 @@ _enter_a5_head(datalink_head_a5_t * const head, datalink_typ_t const typ, size_t
         head->preamble[ii] = datalink_preamble_a5[ii];
     }
     head->hdr.ver = A5_PROTOCOL_VERSION;
-    head->hdr.dst = datalink_devaddr(datalink_addrgroup_t::CTRL, CTRL_ADDR);
-    head->hdr.src = datalink_devaddr(datalink_addrgroup_t::REMOTE, REMOTE_ADDR);  // 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
+    head->hdr.dst = datalink_dev_id(datalink_group_addr_t::CTRL, datalink_dev_id_t::PRIMARY);
+    head->hdr.src = datalink_dev_id(datalink_group_addr_t::REMOTE, datalink_dev_id_t::REMOTE);  // 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
     head->hdr.typ = typ.raw;
     head->hdr.len = data_len;
 }
-
 
 /**
  * @brief       Fills the A5 protocol packet tail (CRC) for transmission.
@@ -119,10 +112,8 @@ _enter_a5_tail(datalink_tail_a5_t * const tail, uint8_t const * const start, uin
     tail->crc[1] = crcVal & 0xFF;
 }
 
-
 /**
- * @brief
- * Adds protocol headers and tails to a data packet and queues it for RS485 transmission.
+ * @brief Adds protocol headers and tails to a data packet and queues it for RS485 transmission.
  *
  * @details
  * This function constructs a protocol-compliant packet by adding the appropriate header

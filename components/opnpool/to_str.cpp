@@ -20,7 +20,6 @@
 #include <esp_system.h>
 #include <esp_types.h>
 #include <string.h>
-#include <esphome/core/log.h>
 
 #include "to_str.h"
 #pragma GCC diagnostic error "-Wall"
@@ -42,37 +41,39 @@ name_str_t name_str = {
 };
 
 /**
- * @brief
- * Resets the index of the shared string buffer used for value-to-string conversions.
+ * @brief Resets the index of the shared string buffer used for value-to-string conversions.
  *
  * @details
  * This function should be called periodically to avoid running out of buffer space.
  */
 void
-name_reset_idx(void) {
-  	name_str.idx = 0;
+name_reset_idx()
+{
+    name_str.idx = 0;
 }
 
 /**
- * @brief                Get a hexadecimal string representation of a bool
+ * @brief                Get a string representation of a bool
  *
  * @param value          The bool value to convert
- * @return char const *  A string representing the value
+ * @return char const *  A string representing the value ("true" or "false")
  */
 char const *
 bool_str(bool const value)
 {
     char const * const value_str = value ? "true" : "false";
-    uint8_t len = strlen(value_str);
+    uint8_t const len = strlen(value_str) + 1;  // +1 for null terminator
+    if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
+        return name_str.noMem;
+    }
     char * s = name_str.str + name_str.idx;
     strcpy(s, value_str);
-    s[len++] = '\0';
     name_str.idx += len;
     return s;
 }
 
 /**
- * @brief                Get a hexadecimal string representation of an uint8_t
+ * @brief                Get a hexadecimal string representation of a uint8_t
  *
  * @param value          The uint8_t value to convert
  * @return char const *  A string representing the value
@@ -105,13 +106,13 @@ uint16_str(uint16_t const value)
     uint_least8_t const nrdigits = sizeof(value) << 1;
 
     if (name_str.idx + nrdigits + 1U >= ARRAY_SIZE(name_str.str)) {
-      return name_str.noMem;  // to prevent this, increase the size of str.str[]
+        return name_str.noMem;  // to prevent this, increase the size of str.str[]
     }
     char * s = name_str.str + name_str.idx;
     s[0] = name_str.digits[(value & 0xF000) >> 12];
     s[1] = name_str.digits[(value & 0x0F00) >>  8];
     s[2] = name_str.digits[(value & 0x00F0) >>  4];
-    s[3] = name_str.digits[(value & 0x000F) >>  0];
+    s[3] = name_str.digits[(value & 0x000F)];
     s[nrdigits] = '\0';
     name_str.idx += nrdigits + 1U;
     return s;
@@ -124,30 +125,26 @@ uint16_str(uint16_t const value)
  * @return char const *  A string representing the value
  */
 char const *
-uint32_str(uint32_t const value) 
+uint32_str(uint32_t const value)
 {
     uint_least8_t const nrdigits = sizeof(value) << 1;
 
     if (name_str.idx + nrdigits + 1U >= ARRAY_SIZE(name_str.str)) {
-      return name_str.noMem;  // to prevent this, increase the size of str.str[]
+        return name_str.noMem;  // to prevent this, increase the size of str.str[]
     }
     char * s = name_str.str + name_str.idx;
-    s[0]  = name_str.digits[(value & 0xF0000000) >> 28];
-    s[1]  = name_str.digits[(value & 0x0F000000) >> 24];
-    s[2]  = name_str.digits[(value & 0x00F00000) >> 20];
-    s[3]  = name_str.digits[(value & 0x000F0000) >> 16];
-    s[4]  = name_str.digits[(value & 0x0000F000) >> 12];
-    s[5]  = name_str.digits[(value & 0x00000F00) >>  8];
-    s[6]  = name_str.digits[(value & 0x000000F0) >>  4];
-    s[7]  = name_str.digits[(value & 0x0000000F) >>  0];
-    s[8]  = name_str.digits[(value & 0x00000F00) >>  8];
-    s[9]  = name_str.digits[(value & 0x000000F0) >>  4];
-    s[10] = name_str.digits[(value & 0x0000000F) >>  0];
+    s[0] = name_str.digits[(value & 0xF0000000) >> 28];
+    s[1] = name_str.digits[(value & 0x0F000000) >> 24];
+    s[2] = name_str.digits[(value & 0x00F00000) >> 20];
+    s[3] = name_str.digits[(value & 0x000F0000) >> 16];
+    s[4] = name_str.digits[(value & 0x0000F000) >> 12];
+    s[5] = name_str.digits[(value & 0x00000F00) >>  8];
+    s[6] = name_str.digits[(value & 0x000000F0) >>  4];
+    s[7] = name_str.digits[(value & 0x0000000F)];
     s[nrdigits] = '\0';
     name_str.idx += nrdigits + 1U;
     return s;
 }
-
 
 /**
  * @brief                Get a string representation of the controller date
@@ -160,7 +157,7 @@ uint32_str(uint32_t const value)
 char const *
 date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 {
-    size_t const len = 14;  // 2026-01-15\0
+    size_t const len = 14;  // worst case: "65535-255-255\0"
     if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
         return name_str.noMem;  // increase size of str.str[]
     }
@@ -180,7 +177,7 @@ date_str(uint16_t const year, uint8_t const month, uint8_t const day)
 char const *
 time_str(uint8_t const hour, uint8_t const minute)
 {
-    size_t const len = 8;  // "HH:MM\0"
+    size_t const len = 8;  // worst case: "255:255\0"
     if (name_str.idx + len >= ARRAY_SIZE(name_str.str)) {
         return name_str.noMem;  // increase size of str.str[]
     }
@@ -209,7 +206,6 @@ version_str(uint8_t const major, uint8_t const minor)
     name_str.idx += len;
     return s;
 }
-
 
 } // namespace opnpool
 } // namespace esphome

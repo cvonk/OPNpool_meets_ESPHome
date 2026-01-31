@@ -1,9 +1,27 @@
 /**
- * @brief Linux sk_buff inspired continuous memory
- * the removed header. The assertion ensures that the data pointer doesn't move before
- * the head pointer, preventing underflow and preserving the reserved headroom boundary.
- * pointer to a single `skb`, modifying its internal pointers to "strip" or "add"
- * headers.
+ * @file skb.h
+ * @brief Linux sk_buff inspired socket buffer for zero-copy packet handling
+ *
+ * @details
+ * This module provides a socket buffer (skb) abstraction inspired by Linux's sk_buff,
+ * enabling efficient packet construction and parsing without data copying. The buffer
+ * maintains four internal pointers (head, data, tail, end) that define the buffer's
+ * structure and allow protocol layers to prepend headers or strip them as packets
+ * traverse the network stack.
+ *
+ * Key operations:
+ * - skb_reserve(): Reserve headroom for protocol headers to be added later
+ * - skb_put(): Append data to the buffer (moves tail forward)
+ * - skb_push(): Prepend a header (moves data backward toward head)
+ * - skb_pull(): Strip a header (moves data forward toward tail)
+ * - skb_trim(): Shrink data from the end (moves tail backward)
+ *
+ * This design allows building packets from the inside out (payload first, then headers)
+ * and parsing packets by progressively stripping headers, all without copying data.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -46,7 +64,7 @@ using skb_handle_t = skb_t *;
  * @return skb_handle_t A handle to the allocated skb, or nullptr on failure
  */
 
-[[nodiscard]] skb_handle_t skb_alloc(size_t size);
+[[nodiscard]] skb_handle_t skb_alloc(size_t const size);
 
 /**
  * @brief Free an `skb` (socket buffer)
@@ -126,7 +144,7 @@ void skb_reserve(skb_handle_t const skb, size_t const header_len);
  * @return uint8_t*      A pointer to the start of the (adjusted) data area
  */
 
-uint8_t * skb_call(skb_handle_t const skb, size_t const user_data_adj);
+uint8_t * skb_trim(skb_handle_t const skb, size_t const user_data_adj);
 
 /**
  * @brief Prepend protocol header and return pointer to write location
@@ -152,7 +170,6 @@ uint8_t * skb_call(skb_handle_t const skb, size_t const user_data_adj);
  * @param  header_len The length of the header to prepend
  * @return uint8_t*   A pointer to the start of the newly reserved header space
  */
-  
 [[nodiscard]] uint8_t * skb_push(skb_handle_t const skb, size_t const header_len);
 
 /**
@@ -194,7 +211,7 @@ uint8_t * skb_call(skb_handle_t const skb, size_t const user_data_adj);
  * @param skb The handle to the `skb` to reset
  */
 
-void skb_reset(skb_handle_t skb);
+void skb_reset(skb_handle_t const skb);
 
     // debugging
 

@@ -21,6 +21,8 @@
 #include <esp_system.h>
 #include <esp_types.h>
 
+#include "datalink.h"
+
 #ifndef PACK8
 # define PACK8 __attribute__((aligned( __alignof__(uint8_t)), packed))
 #endif
@@ -38,7 +40,7 @@ using skb_handle_t = skb_t *;
  * @details
  * This enum class defines the protocol identifiers used at the data link layer
  * for communication between the ESPHome component and pool equipment. It
- * distinguishes between the IC protocol, A5 controller protocol, A5 pump protocol.
+ * distinguishes between the IC protocol, A5 controller protocol, and A5 pump protocol.
  *
  * @var IC      Protocol type for the IntelliCenter (IC) protocol (e.g. Chlorinator).
  * @var A5_CTRL Protocol type for the A5 controller protocol.
@@ -52,9 +54,8 @@ enum class datalink_prot_t : uint8_t {
     NONE    = 0xFF
 };
 
-
 /**
- * @brief Controller messages types
+ * @brief Controller message types
  *
  * @details
  * This enum class defines the message types for the A5 controller protocol.
@@ -100,7 +101,6 @@ enum class datalink_ctrl_typ_t : uint8_t {
     VERSION_RESP    = 0xFC,
     VERSION_REQ     = 0xFD
 };
-
 
 /**
  * @brief Pump message types
@@ -176,18 +176,6 @@ union datalink_typ_t {
     uint8_t              raw;
 };
 
-
-/**
- * @brief Represents an address in the data link layer protocol.
- *
- * @details
- * This type is used to specify the source and destination addresses for
- * protocol packets exchanged between the ESPHome component and pool equipment.
- * Each address uniquely identifies a device or endpoint on the RS485 network.
- */
-using datalink_address = uint8_t;
-
-
 /**
  * @brief Represents a single byte of data in the data link layer protocol.
  *
@@ -197,36 +185,26 @@ using datalink_address = uint8_t;
  */
 using datalink_data_t = uint8_t;
 
-    
 /**
  * @brief Represents a data link layer packet in the Pentair protocol.
  *
  * @details
- * Encapsulates all metadata and payload required for a protocol message, 
+ * Encapsulates all metadata and payload required for a protocol message,
  * including protocol type, message type (controller, pump, or chlorinator),
  * source and destination addresses, a pointer to the data payload, payload
  * length, and a handle to the associated socket buffer. This structure
  * is used throughout the data link layer for both receiving and transmitting
  * packets.
- *
- * @var datalink_prot_t prot   Protocol type as detected by the header parser.
- * @var datalink_typ_t typ     Message type (controller, pump, or chlorinator) as extracted from the protocol header.
- * @var datalink_address src   Source address of the packet.
- * @var datalink_address dst   Destination address of the packet.
- * @var datalink_data_t* data  Pointer to the data payload buffer.
- * @var size_t data_len        Length of the data payload.
- * @var skb_handle_t skb       Handle to the socket buffer containing the packet data.
  */
 struct datalink_pkt_t {
-    datalink_prot_t    prot;      // datalink_prot as detected by `_read_head()`
-    datalink_typ_t     typ;       // from datalink_hdr_a5->typ
-    datalink_address   src;       // from datalink_hdr_a5->src
-    datalink_address   dst;       // from datalink_hdr_a5->dst
-    datalink_data_t *  data;
-    uint32_t           data_len;
-    skb_handle_t       skb;
+    datalink_prot_t    prot;      // protocol type as detected by `_read_head()`
+    datalink_typ_t     typ;       // message type from datalink_hdr_a5->typ
+    datalink_addr_t    src;       // source address from datalink_hdr_a5->src
+    datalink_addr_t    dst;       // destination address from datalink_hdr_a5->dst
+    datalink_data_t *  data;      // pointer to the data payload buffer
+    size_t             data_len;  // length of the data payload
+    skb_handle_t       skb;       // handle to the socket buffer containing the packet data
 };
-
 
 } // namespace opnpool
 } // namespace esphome

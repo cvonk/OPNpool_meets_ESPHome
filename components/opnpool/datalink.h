@@ -52,7 +52,7 @@ struct datalink_pkt_t;
     // 
     // `addrgroup` is the high nibble of the address
 
-enum class datalink_addrgroup_t : uint8_t {
+enum class datalink_group_addr_t : uint8_t {
   ALL    = 0x00,
   CTRL   = 0x01,
   REMOTE = 0x02,
@@ -61,21 +61,36 @@ enum class datalink_addrgroup_t : uint8_t {
   X09    = 0x09
 };
 
+enum class datalink_dev_id_t : uint8_t {
+    PRIMARY    = 0x00,
+    SECONDARY  = 0x01,
+    REMOTE     = 0x02
+};
+
 using datalink_preamble_a5_t = uint8_t[3];
 using datalink_preamble_ic_t = uint8_t[2];
 using datalink_postamble_ic_t = uint8_t[2];
 
+struct datalink_addr_t {
+    uint8_t byte;  // lower nibble is device address; higher nibble is group address
+    datalink_dev_id_t   get_dev_id()    const { return static_cast<datalink_dev_id_t>(byte & 0x0F); } 
+    datalink_group_addr_t get_group_addr()  const { return static_cast<datalink_group_addr_t>((byte >> 4) & 0x0F); }    
+    void set_dev_id(datalink_dev_id_t dev)      { byte = (byte & 0xF0) | (static_cast<uint8_t>(dev) & 0x0F); }
+    void set_group_addr( datalink_group_addr_t grp) { byte = (byte & 0x0F) | (static_cast<uint8_t>(grp) << 4); }
+} PACK8;
+static_assert(sizeof(datalink_addr_t) == 1, "datalink_addr_t must be 1 byte");
+
 struct datalink_hdr_ic_t {
-    uint8_t dst;  // destination
-    uint8_t typ;  // message type
+    datalink_addr_t dst;  // destination address
+    uint8_t         typ;  // message type
 } PACK8;
 
 struct datalink_hdr_a5_t {
-    uint8_t ver;  // protocol version id
-    uint8_t dst;  // destination
-    uint8_t src;  // source
-    uint8_t typ;  // message type
-    uint8_t len;  // # of data bytes following
+    uint8_t         ver;  // protocol version id
+    datalink_addr_t dst;  // destination address
+    datalink_addr_t src;  // source address
+    uint8_t         typ;  // message type
+    uint8_t         len;  // # of data bytes following
 } PACK8;
 
 union datalink_hdr_t {
@@ -148,10 +163,10 @@ uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
  * - Packet receive and transmit functions for RS-485 communication
  */
 
-[[nodiscard]] datalink_addrgroup_t datalink_addr_group(uint16_t const addr);
-[[nodiscard]] uint8_t datalink_device_id(uint16_t const addr);
-[[nodiscard]] uint8_t datalink_devaddr(datalink_addrgroup_t group, uint8_t const device_id);
-[[nodiscard]] uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
+datalink_group_addr_t datalink_group_addr(uint8_t const addr);
+uint8_t datalink_device_id(uint8_t const addr);
+datalink_addr_t datalink_dev_id(datalink_group_addr_t const group, datalink_dev_id_t const device_id);
+uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
 extern datalink_preamble_a5_t datalink_preamble_a5;
 extern datalink_preamble_ic_t datalink_preamble_ic;
 extern datalink_postamble_ic_t datalink_postamble_ic;

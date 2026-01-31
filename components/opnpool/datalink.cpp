@@ -8,8 +8,7 @@
  * provides utilities for handling protocol preambles and postambles, address group
  * extraction and composition, and CRC calculation for packet integrity. These
  * foundational routines are used by both the transmitter and receiver to ensure reliable
- * and standards- compliant communication between the ESPHome component and pool equipment
- * over the RS485 bus.
+ * communication between the ESPHome component and pool equipment over the RS485 bus.
  *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
  * are not required within the pool_task context.
@@ -37,26 +36,26 @@ datalink_preamble_ic_t datalink_preamble_ic  = { 0x10, 0x02 };
 datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 
 /**
- * @brief      Extracts the address group from a 16-bit A5 address.
+ * @brief      Extracts the address group from a 8-bit A5 address.
  *
- * @param addr The full 16-bit address.
- * @return     The address group as a datalink_addrgroup_t.
+ * @param addr The full 8-bit address.
+ * @return     The address group as a datalink_group_addr_t.
  */
-datalink_addrgroup_t
-datalink_addr_group(uint16_t const addr)
+datalink_group_addr_t
+datalink_group_addr(uint8_t const addr)
 {
-    return static_cast<datalink_addrgroup_t>((addr >> 4) & 0x0F);
+    return static_cast<datalink_group_addr_t>((addr >> 4) & 0x0F);
 }
 
 
 /**
- * @brief      Extracts the address id from a 16-bit A5 address.
+ * @brief      Extracts the address id from a 8-bit A5 address.
  *
- * @param addr The full 16-bit address.
+ * @param addr The full 8-bit address.
  * @return     The address id as a uint8_t.
  */
 uint8_t
-datalink_device_id(uint16_t const addr)
+datalink_device_id(uint8_t const addr)
 {
     return static_cast<uint8_t>(addr & 0x0F);
 }
@@ -69,10 +68,14 @@ datalink_device_id(uint16_t const addr)
  * @param id    The device ID within the group.
  * @return      The composed 8-bit device address.
  */
-uint8_t
-datalink_devaddr(datalink_addrgroup_t const group, uint8_t const device_id)
+datalink_addr_t
+datalink_dev_id(datalink_group_addr_t const group, datalink_dev_id_t const device_id)
 {
-    return (static_cast<uint8_t>(group) << 4) | (device_id & 0x0F);
+    datalink_addr_t addr = {};
+    addr.set_group_addr(group);
+    addr.set_dev_id(device_id);
+
+    return addr;
 }
 
 /**

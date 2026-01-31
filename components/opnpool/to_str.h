@@ -1,3 +1,17 @@
+/**
+ * @file to_str.h
+ * @brief String conversion utilities for logging and debugging
+ *
+ * @details
+ * Provides functions to convert various data types to string representations
+ * using a shared buffer. The buffer is reset via name_reset_idx() before each
+ * packet processing cycle.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #pragma once
 #ifndef __cplusplus
 # error "Requires C++ compilation"
@@ -11,28 +25,28 @@ namespace opnpool {
 
     // should be at least ((sizeof(datalink_hdr_t) +
     // sizeof(network_msg_ctrl_state_bcast_t) + 1) * 3 + 50). that 3 bytes for each hex
-    // value when displaying raw, and another 50 for displying date/time.
-constexpr size_t TO_STR_BUF_SIZE = 200; 
+    // value when displaying raw, and another 50 for displaying date/time.
+constexpr size_t TO_STR_BUF_SIZE = 200;
 
-    // reusable global string
+    // reusable global string buffer
 struct name_str_t {
-	char str[TO_STR_BUF_SIZE];  //  this is str.str[]
-	uint_least8_t idx;
-	char const * const noMem;
-	char const * const digits;
+    char str[TO_STR_BUF_SIZE];
+    uint_least8_t idx;
+    char const * const noMem;
+    char const * const digits;
 };
 
 extern name_str_t name_str;
 
     // function prototypes for to_str.cpp
-char const * bool_str(bool const value);
-char const * uint8_str(uint8_t const value);
-char const * uint16_str(uint16_t const value);
-char const * uint32_str(uint32_t const value);
-char const * date_str(uint16_t const year, uint8_t const month, uint8_t const day);
-char const * time_str(uint8_t const hour, uint8_t const minute);
-char const * version_str(uint8_t const major, uint8_t const minor);
-void name_reset_idx(void);  // should be called periodically. e.g. before work on a packet starts.
+[[nodiscard]] char const * bool_str(bool const value);
+[[nodiscard]] char const * uint8_str(uint8_t const value);
+[[nodiscard]] char const * uint16_str(uint16_t const value);
+[[nodiscard]] char const * uint32_str(uint32_t const value);
+[[nodiscard]] char const * date_str(uint16_t const year, uint8_t const month, uint8_t const day);
+[[nodiscard]] char const * time_str(uint8_t const hour, uint8_t const minute);
+[[nodiscard]] char const * version_str(uint8_t const major, uint8_t const minor);
+void name_reset_idx();  // should be called periodically, e.g. before work on a packet starts
 
 } // namespace opnpool
 } // namespace esphome

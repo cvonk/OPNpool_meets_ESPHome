@@ -1,31 +1,17 @@
 /**
- * @brief Linux sk_buff inspired continuous memory for tx
+ * @file skb.cpp
+ * @brief Implementation of Linux sk_buff inspired socket buffer
  *
- *   Since this code originated from code which is public domain, I
- *   hereby declare this code to be public domain as well.
+ * @details
+ * Originally based on http://www.keil.com/download/docs/200.asp by Dave Hylands.
+ * Rewritten as C++ by Coert Vonk, 2015, 2019, 2026.
  *
- *   Rewite as C code instead of macros.
- *   Coert Vonk, 2015, 2019, 2026.
- *
- *   Loosely based on http://www.keil.com/download/docs/200.asp
- ****************************************************************************
- *
- *   Since this code originated from code which is public domain, I
- *   hereby declare this code to be public domain as well.
- *
- *   Dave Hylands - dhylands@gmail.com
- *
- ****************************************************************************
- * 
- * To the extent possible under law, the author(s) have dedicated all copyright
- * and related and neighboring rights to this software to the public domain
- * worldwide. This software is distributed without any warranty. You should have
- * received a copy of the CC0 Public Domain Dedication along with this software.
- * If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
- * 
- * SPDX-License-Identifier: CC0-1.0
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Public Domain (CC0-1.0)
+ * @license SPDX-License-Identifier: CC0-1.0
  */
 
+#include <cassert>
 #include <esp_system.h>
 #include <esp_types.h>
 #include <esphome/core/log.h>
@@ -41,7 +27,7 @@ namespace opnpool {
 constexpr char TAG[] = "skb";
 
 skb_handle_t
-skb_alloc(size_t size)
+skb_alloc(size_t const size)
 {
     skb_t * const skb = static_cast<skb_t *>(calloc(1, sizeof(skb_t) + size));
     if (skb == nullptr) {
@@ -83,7 +69,7 @@ skb_put(skb_handle_t const skb, size_t const user_data_len)
 }
 
 uint8_t *
-skb_call(skb_handle_t const skb, size_t const user_data_adj)
+skb_trim(skb_handle_t const skb, size_t const user_data_adj)
 {
     assert(skb->priv.tail - user_data_adj >= skb->priv.head);
     skb->len -= user_data_adj;
@@ -108,9 +94,9 @@ skb_pull(skb_handle_t const skb, size_t const header_len)
 }
 
 void
-skb_reset(skb_handle_t skb)
+skb_reset(skb_handle_t const skb)
 {
-    skb->len  = 0;
+    skb->len       = 0;
     skb->priv.head =
     skb->priv.data =
     skb->priv.tail = skb->buf;

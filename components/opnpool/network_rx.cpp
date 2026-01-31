@@ -36,15 +36,16 @@ constexpr char TAG[] = "network_rx";
 
     // helper to determine device_id
 static network_msg_dev_id_t
-_get_network_dev_id(uint8_t const datalink_dev_id)
+_network_dev_id(datalink_dev_id_t const datalink_dev_id)
 {
     // I only have one pump, so I have to assume that pumps are numbered sequentially starting at 0
     // I can imagine a secondary pump for solar though
     switch (datalink_dev_id) {
-        case 0: return network_msg_dev_id_t::PRIMARY;
-        case 1: return network_msg_dev_id_t::SECONDARY;
+        case datalink_dev_id_t::PRIMARY:   return network_msg_dev_id_t::PRIMARY;
+        case datalink_dev_id_t::SECONDARY: return network_msg_dev_id_t::SECONDARY;
+        case datalink_dev_id_t::REMOTE:    break;  // roll through to unsupported
     }
-    ESP_LOGE(TAG, "%s: unsupported datalink_dev_id %u", __FUNCTION__, datalink_dev_id);
+    ESP_LOGE(TAG, "%s: unsupported datalink_dev_id %u", __FUNCTION__, static_cast<uint8_t>(datalink_dev_id));
     return network_msg_dev_id_t::PRIMARY;
 }
 
@@ -58,7 +59,7 @@ _get_network_dev_id(uint8_t const datalink_dev_id)
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    bool is_to_pump = (datalink_addr_group(pkt->dst) == datalink_addrgroup_t::PUMP);
+    bool is_to_pump = (pkt->dst.get_group_addr()) == datalink_group_addr_t::PUMP;
 
     datalink_pump_typ_t const datalink_pump_typ = pkt->typ.pump;
 
@@ -69,15 +70,15 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
-    auto datalink_dev_id = is_to_pump ? datalink_device_id(pkt->dst)
-                                      : datalink_device_id(pkt->src);
+    auto datalink_dev_id = is_to_pump ? pkt->dst.get_dev_id()
+                                      : pkt->src.get_dev_id();
 
     msg->typ       = info->network_typ;
-    msg->device_id = _get_network_dev_id(datalink_dev_id);
+    msg->device_id = _network_dev_id(datalink_dev_id);
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // honoring the union types would require a big switch() statement
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -104,7 +105,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -136,7 +137,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %lu", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -174,13 +175,13 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
     name_reset_idx();
 
         // silently ignore packets that we don't know how to decode
-    datalink_addrgroup_t const dst = datalink_addr_group(pkt->dst);
-    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_addrgroup_t::X09) ||
-        (pkt->prot == datalink_prot_t::IC && dst != datalink_addrgroup_t::ALL && dst != datalink_addrgroup_t::CHLOR)) {
+    datalink_group_addr_t const dst = pkt->dst.get_group_addr();
+    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_group_addr_t::X09) ||
+        (pkt->prot == datalink_prot_t::IC && dst != datalink_group_addr_t::ALL && dst != datalink_group_addr_t::CHLOR)) {
 
         *txOpportunity = false;
         msg->typ = network_typ_t::IGNORE;
-        ESP_LOGV(TAG, "Ignoring packet with prot %s and dst group %u", enum_str(pkt->prot), static_cast<uint8_t>(dst));
+        ESP_LOGV(TAG, "Ignoring packet with prot %s and dst group addr %u", enum_str(pkt->prot), enum_index(dst));
         return ESP_OK;
     }
 
@@ -200,12 +201,12 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             ESP_LOGW(TAG, "unknown prot %u", enum_index(pkt->prot));
             result = ESP_FAIL;
   	}
-    ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), static_cast<uint8_t>(pkt->dst), enum_str(msg->typ));
+    ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), pkt->dst.byte, enum_str(msg->typ));
 
     *txOpportunity =
         pkt->prot == datalink_prot_t::A5_CTRL &&
-        datalink_addr_group(pkt->src) == datalink_addrgroup_t::CTRL &&
-        datalink_addr_group(pkt->dst) == datalink_addrgroup_t::ALL;
+        pkt->src.get_group_addr() == datalink_group_addr_t::CTRL &&
+        pkt->dst.get_group_addr() == datalink_group_addr_t::ALL;
 
     return result;
 }

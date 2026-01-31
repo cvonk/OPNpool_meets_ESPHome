@@ -33,6 +33,7 @@
 #include "network_msg.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
+#pragma GCC diagnostic error "-Wunused-parameter"
 
 #ifndef ARRAY_SIZE
 # define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
@@ -43,7 +44,8 @@ namespace opnpool {
 
 constexpr char TAG[] = "datalink_rx";
 
-struct proto_info_t  {
+    // protocol preamble matching state
+struct proto_info_t {
     uint8_t const * const  preamble;
     uint8_t const          len;
     datalink_prot_t const  prot;
@@ -52,16 +54,16 @@ struct proto_info_t  {
 
 static proto_info_t _proto_descr[] = {
     {
-          .preamble = datalink_preamble_ic,
-          .len = sizeof(datalink_preamble_ic),
-          .prot = datalink_prot_t::IC,
-          .idx = 0
-      },
+        .preamble = datalink_preamble_ic,
+        .len = sizeof(datalink_preamble_ic),
+        .prot = datalink_prot_t::IC,
+        .idx = 0
+    },
     {
-          .preamble = datalink_preamble_a5,
-          .len = sizeof(datalink_preamble_a5),
-          .prot = datalink_prot_t::A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
-          .idx = 0
+        .preamble = datalink_preamble_a5,
+        .len = sizeof(datalink_preamble_a5),
+        .prot = datalink_prot_t::A5_CTRL,  // distinction between A5_CTRL and A5_PUMP is based on src/dst in hdr
+        .idx = 0
     },
 };
 
@@ -80,6 +82,7 @@ inline constexpr size_t datalink_chlor_typ_sizes[] = {
 };
 static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(datalink_chlor_typ_sizes));
 
+    // state machine states for packet reception
 enum state_t {
     STATE_FIND_PREAMBLE,
     STATE_READ_HEAD,
@@ -89,6 +92,7 @@ enum state_t {
     STATE_DONE,
 };
 
+    // temporary storage for packet header/tail during reception
 struct local_data_t {
     size_t             head_len;
     size_t             tail_len;
@@ -130,13 +134,13 @@ _preamble_reset()
 _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_preamble)
 {
     if (b == pi->preamble[pi->idx]) {
-      *part_of_preamble = true;
-      pi->idx++;
-      if (pi->idx == pi->len) {
-          return true;
-      }
+        *part_of_preamble = true;
+        pi->idx++;
+        if (pi->idx == pi->len) {
+            return true;
+        }
     } else {
-          *part_of_preamble = false;
+        *part_of_preamble = false;
     }
     return false;
 }
@@ -173,7 +177,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
             if (_preamble_complete(info, byt, &part_of_preamble)) {
                 ESP_LOGV(TAG, "%s (preamble)", dbg);
                 pkt->prot = info->prot;
-                uint8_t * preamble = NULL;
+                uint8_t * preamble = nullptr;
                 switch (pkt->prot) {
                     case datalink_prot_t::A5_CTRL:
                     case datalink_prot_t::A5_PUMP:
@@ -211,7 +215,6 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
     return ESP_FAIL;
 }
 
-
 /**
  * @brief        Returns the length of the IC network message for a given type.
  *
@@ -221,7 +224,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
  * @param ic_typ The IC message type (as uint8_t/datalink_chlor_typ_t).
  * @return       The size of the corresponding network message struct, or 0 if unknown.
  */
-[[nodiscard]] static uint8_t 
+[[nodiscard]] static uint8_t
 _network_ic_len(uint8_t const ic_typ)
 {
     if (ic_typ < ARRAY_SIZE(datalink_chlor_typ_sizes)) {
@@ -275,13 +278,13 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_a5_t)) == sizeof(datalink_hdr_a5_t)) {
 
-                ESP_LOGV(TAG, " %02X %02X %02X %02X %02X (header)", hdr->ver, hdr->dst, hdr->src, hdr->typ, hdr->len);
+                ESP_LOGV(TAG, " %02X %02X %02X %02X %02X (header)", hdr->ver, hdr->dst.byte, hdr->src.byte, hdr->typ, hdr->len);
 
                 if (hdr->len > DATALINK_MAX_DATA_SIZE) {
-                  return ESP_FAIL;  // pkt length exceeds what we have planned for
+                    return ESP_FAIL;  // pkt length exceeds what we have planned for
                 }
-                if ( (datalink_addr_group(hdr->src) == datalink_addrgroup_t::PUMP) ||
-                     (datalink_addr_group(hdr->dst) == datalink_addrgroup_t::PUMP) ) {
+                if ( (hdr->src.get_group_addr() == datalink_group_addr_t::PUMP) ||
+                     (hdr->dst.get_group_addr() == datalink_group_addr_t::PUMP) ) {
                     pkt->prot = datalink_prot_t::A5_PUMP;
                 }
                 pkt->typ.raw  = hdr->typ;
@@ -299,10 +302,12 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             datalink_hdr_ic_t * const hdr = &local->head->ic.hdr;
             
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_ic_t)) == sizeof(datalink_hdr_ic_t)) {
-                ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst, hdr->typ);
+                ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst.byte, hdr->typ);
+
+                auto dummy_addr = datalink_dev_id(datalink_group_addr_t::ALL, datalink_dev_id_t::PRIMARY);
 
                 pkt->typ.raw  = hdr->typ;
-                pkt->src      = 0;
+                pkt->src      = dummy_addr;  // made up filler
                 pkt->dst      = hdr->dst;
                 pkt->data_len = _network_ic_len(hdr->typ);
                 return ESP_OK;
@@ -313,7 +318,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             break;
     }
     ESP_LOGW(TAG, "unsupported pkt->prot 0x%02X", static_cast<uint8_t>(pkt->prot));
-      return ESP_FAIL;
+    return ESP_FAIL;
 }
 
 /**
@@ -330,6 +335,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 [[nodiscard]] static esp_err_t
 _read_data(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
+    (void)local;
     uint8_t len = 0;
     uint8_t buf_size = 100;
     char buf[buf_size]; *buf = '\0';
@@ -395,13 +401,12 @@ _read_tail(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
  * calculated CRC over the packet's contents. Updates the local CRC status and returns
  * the result.
  *
- * @param rs485 RS485 handle.
  * @param local Local state for header/tail.
- * @param pkt   Packet structure to update.
+ * @param pkt   Packet structure to check.
  * @return      ESP_OK if CRC matches, ESP_FAIL otherwise.
  */
 [[nodiscard]] static esp_err_t
-_check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
+_check_crc([[maybe_unused]] rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
     struct {uint16_t rx, calc;} crc;
 
@@ -434,8 +439,10 @@ _check_crc(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
     return ESP_FAIL;
 }
 
+    // state machine function signature
 using state_fnc_t = esp_err_t (*)(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt);
 
+    // state machine transition table entry
 struct state_transition_t {
     state_t     state;
     state_fnc_t fnc;
@@ -497,7 +504,7 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
                         local.head = (datalink_head_t *) skb_put(pkt->skb, DATALINK_MAX_HEAD_SIZE);
                         break;
                     case STATE_READ_HEAD:
-                        skb_call(pkt->skb, DATALINK_MAX_HEAD_SIZE - local.head_len);  // release unused bytes
+                        skb_trim(pkt->skb, DATALINK_MAX_HEAD_SIZE - local.head_len);  // release unused bytes
                         break;
                     case STATE_READ_DATA:
                         pkt->data = (datalink_data_t *) skb_put(pkt->skb, pkt->data_len);
@@ -509,11 +516,10 @@ datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt)
                         break;
                     case STATE_DONE:
                         if (!local.crc_ok) {
-                            free(pkt->skb);
+                            skb_free(pkt->skb);
                             return ESP_FAIL;
                         }
                         return ESP_OK;
-                        break;
                 }
                 state = new_state;
             }
