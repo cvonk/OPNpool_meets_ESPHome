@@ -70,7 +70,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s => %s invalid length: expected %lu, got %u", enum_str(datalink_pump_typ), enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -105,7 +105,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s => %s invalid length: expected %lu, got %u", enum_str(datalink_ctrl_typ), enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
@@ -137,7 +137,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s invalid length: expected %lu, got %u", enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "%s => %s invalid length: expected %lu, got %u", enum_str(datalink_chlor_typ), enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
