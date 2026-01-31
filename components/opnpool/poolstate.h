@@ -32,7 +32,6 @@
 #include <esp_system.h>
 #include <esp_types.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/semphr.h>
 #include <cJSON.h>
 
 #define MAGIC_ENUM_RANGE_MIN 0
@@ -153,15 +152,16 @@ struct poolstate_pump_t {
 };
 
 enum class poolstate_chlor_status_typ_t : uint8_t {
-    OTHER     = 0x00,
-    LOW_FLOW  = 0x01,
-    LOW_SALT  = 0x02,
-    HIGH_SALT = 0x04,
-    CLEAN_CELL= 0x10,
-    COLD      = 0x40,
-    OK        = 0x80
+    OTHER      = 0x00,
+    LOW_FLOW   = 0x01,
+    LOW_SALT   = 0x02,
+    HIGH_SALT  = 0x04,
+    UNKNOWN_08 = 0x08,
+    CLEAN_CELL = 0x10,
+    UNKNOWN_20 = 0x20,
+    COLD       = 0x40,
+    OK         = 0x80
 };
-
 
 struct poolstate_chlor_status_t {
     bool                         valid;
@@ -170,7 +170,7 @@ struct poolstate_chlor_status_t {
 
 struct poolstate_chlor_name_t {
     bool     valid;
-    char     value[sizeof(network_msg_chlor_name_str_t) + 1];
+    char     value[sizeof(network_msg_chlor_name_str_t) + 1];  // +1 for \0 termination
 };
 
 struct poolstate_chlor_t {
@@ -224,7 +224,7 @@ class OpnPool;
 class PoolState {
 
     public:
-        PoolState(OpnPool * const parent) : parent_{parent} {
+        PoolState(OpnPool * const parent) {
             memset(&last_, 0, sizeof(poolstate_t));
         }
         ~PoolState() {}
@@ -232,9 +232,8 @@ class PoolState {
         void set(poolstate_t const * const state) {
             memcpy(&last_, state, sizeof(poolstate_t));
         }
-        esp_err_t get(poolstate_t * const state) {
+        void get(poolstate_t * const state) {
             memcpy(state, &last_, sizeof(poolstate_t));
-            return ESP_OK;
         }
 
         bool has_changed(poolstate_t const * const state) {
@@ -242,7 +241,6 @@ class PoolState {
         }
 
     private:
-        OpnPool * const parent_;
         poolstate_t last_ = {};  // sets .valid bools to false as well
 };
 

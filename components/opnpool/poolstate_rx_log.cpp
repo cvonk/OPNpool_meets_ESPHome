@@ -9,9 +9,9 @@
  * pool state to a cJSON object, using type-safe enum-to-string helpers and value checks
  * to ensure clarity and correctness in the output.
  *
- * These functions are kept seperate from poolstate_rx.cpp because their purpose is
+ * These functions are kept separate from poolstate_rx.cpp because their purpose is
  * to provide logging functionality, and separating them helps to avoid making that file
- * unwieldy large.
+ * too large.
  * 
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
  * are not required within the pool_task context.
@@ -226,7 +226,6 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
  * @param obj       The parent JSON object.
  * @param key       The key under which to add the schedule array.
  * @param scheds    Pointer to the array of poolstate_sched_t structures.
- * @param showSched Whether to include schedule information.
  */
 void
 add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * sched)
@@ -235,12 +234,10 @@ add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * 
 
     for (auto circuit : magic_enum::enum_values<network_pool_circuit_t>()) {
         if (sched->active) {
-            if (sched->active) {
-                cJSON * const sub_item = _create_item(item, enum_str(circuit));
+            cJSON * const sub_item = _create_item(item, enum_str(circuit));
 
-                cJSON_AddStringToObject(sub_item, KEY_START, time_str(sched->start / 60, sched->start % 60));
-                cJSON_AddStringToObject(sub_item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
-            }
+            cJSON_AddStringToObject(sub_item, KEY_START, time_str(sched->start / 60, sched->start % 60));
+            cJSON_AddStringToObject(sub_item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
         }
         sched++;
     }
@@ -276,8 +273,7 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 void
 add_pump(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, poolstate_pump_t const * const pump)
 {
-    cJSON * const item1 = _create_item(obj, key);
-    cJSON * const item = _create_item(item1, key);
+    cJSON * const item = _create_item(obj, key);
 
     _add_pump_mode(item, KEY_MODE, pump->mode.value);
     _add_pump_running(item, KEY_RUNNING, pump->running.value);

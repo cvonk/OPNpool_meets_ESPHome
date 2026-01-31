@@ -17,15 +17,20 @@ namespace opnpool {
     // forward declarations (to avoid circular dependencies)
 struct poolstate_t;
 struct poolstate_tod_t;
+struct poolstate_time_t;
 struct poolstate_version_t;
 struct poolstate_thermo_t;
 struct poolstate_sched_t;
 struct poolstate_chlor_t;
-enum network_pump_mode_t;
-enum network_msg_dev_id_t;
+struct poolstate_bool_t;
+struct poolstate_uint8_t;
+struct poolstate_circuit_t;
+struct poolstate_pump_t;
+enum class network_pump_mode_t : uint8_t;
+enum class network_pump_ctrl_t : uint8_t;
+enum class network_msg_dev_id_t : uint8_t;
 
     // namespace-scope free functions from poolstate_log.cpp
-
 namespace poolstate_rx {
 namespace poolstate_rx_log {
 
@@ -70,7 +75,7 @@ constexpr char const * const KEY_DEVID    = "devid";
 void add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time);
 void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod);
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
-void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool showSp, bool const showHeating);
+void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool const showSp, bool const showHeating);
 void add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds);
 void add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes);
 void add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * temps);
