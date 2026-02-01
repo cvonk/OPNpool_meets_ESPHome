@@ -54,13 +54,13 @@ OpnPoolBinarySensor::dump_config()
  * and publishes the new value to Home Assistant. This avoids redundant updates to Home
  * Assistant.
  *
- * @param value The new binary sensor value to be published.
+ * @param[in] value The new binary sensor value to be published.
  */
 void
 OpnPoolBinarySensor::publish_value_if_changed(bool const value)
 {
     if (!last_.valid || last_.value != value) {
-        
+
         this->publish_state(value);
 
         last_ = {

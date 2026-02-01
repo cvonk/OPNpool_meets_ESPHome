@@ -35,10 +35,34 @@ namespace opnpool {
 struct datalink_pkt_t;
 struct network_msg_t;
 
-    // function prototypes for network_rx.cpp
+/**
+ * @brief Decode a datalink packet into a network message for higher-level processing.
+ *
+ * @details
+ * Translates a validated datalink packet (from RS-485) into a structured network message,
+ * supporting multiple protocol types (A5/CTRL, A5/PUMP, IC/Chlorinator). Determines the
+ * message type, populates the network message fields, and sets the transmission opportunity
+ * flag if the decoded message allows for a response.
+ *
+ * @param[in]  pkt           Pointer to the datalink packet to decode.
+ * @param[out] msg           Pointer to the network message structure to populate.
+ * @param[out] txOpportunity Pointer to a boolean set true if message provides a transmission opportunity.
+ * @return                   ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
+ */
 [[nodiscard]] esp_err_t network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool * const txOpportunity);
 
-    // function prototypes for network_create.cpp
+/**
+ * @brief Creates a datalink packet from a network message.
+ *
+ * @details
+ * Allocates a socket buffer, sets protocol headers based on message type, and copies
+ * the message payload into the packet data area. The packet is ready for transmission
+ * after this function returns successfully.
+ *
+ * @param[in]  msg Pointer to the network message to convert.
+ * @param[out] pkt Pointer to the datalink packet structure to fill.
+ * @return         ESP_OK on success, ESP_FAIL if message type is unknown or allocation fails.
+ */
 [[nodiscard]] esp_err_t network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt);
 
 }  // namespace opnpool

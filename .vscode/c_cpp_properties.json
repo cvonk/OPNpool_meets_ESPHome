@@ -1,0 +1,30 @@
+{
+    "configurations": [
+        {
+            "name": "ESP-IDF",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/components/opnpool",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/**/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/freertos/FreeRTOS-Kernel/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/freertos/config/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/esp_common/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/esp_system/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/esp_hw_support/include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/newlib/platform_include",
+                "C:/Users/Coert/.platformio/packages/framework-espidf/components/log/include",
+                "${workspaceFolder}/.esphome/build/opnpool-1/.pioenvs/opnpool-1/config"
+            ],
+            "defines": [
+                "__cplusplus",
+                "ESP_PLATFORM",
+                "IDF_VER=\"5.5.2\""
+            ],
+            "compilerPath": "C:/Users/Coert/.platformio/packages/toolchain-riscv32-esp/bin/riscv32-esp-elf-g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}

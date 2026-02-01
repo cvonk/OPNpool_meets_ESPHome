@@ -35,11 +35,11 @@ namespace opnpool {
 constexpr char TAG[] = "network_rx";
 
 /**
- * @brief             Decode a A5_PUMP datalink packet to form a network message
- * 
- * @param pkt         Pointer to the datalink packet to decode
- * @param msg         Pointer to the network message structure to populate
- * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
+ * @brief          Decode an A5_PUMP datalink packet to form a network message.
+ *
+ * @param[in]  pkt Pointer to the datalink packet to decode.
+ * @param[out] msg Pointer to the network message structure to populate.
+ * @return         ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
  */
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
@@ -61,7 +61,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 
     msg->typ       = info->network_msg_typ;
     msg->device_id = is_to_pump ? pkt->dst.get_dev_id() : pkt->src.get_dev_id();
-    memcpy(msg->u.raw, pkt->data, pkt->data_len);  // honoring the union types would require a big switch() statement
+    memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
@@ -69,11 +69,11 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 
 
 /**
- * @brief             Decode a A5_CTRL datalink packet to form a network message
- * 
- * @param pkt         Pointer to the datalink packet to decode
- * @param msg         Pointer to the network message structure to populate
- * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
+ * @brief         Decode an A5_CTRL datalink packet to form a network message.
+ *
+ * @param[in]  pkt Pointer to the datalink packet to decode.
+ * @param[out] msg Pointer to the network message structure to populate.
+ * @return         ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
  */
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
@@ -92,20 +92,20 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
-    memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
+    msg->device_id = datalink_dev_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
-};
+}
 
 
 /**
- * @brief             Decode a IC datalink packet to form a network message
- * 
- * @param pkt         Pointer to the datalink packet to decode
- * @param msg         Pointer to the network message structure to populate
- * @return esp_err_t  ESP_OK if the message was successfully decoded, ESP_FAIL otherwise
+ * @brief         Decode an IC datalink packet to form a network message.
+ *
+ * @param[in]  pkt Pointer to the datalink packet to decode.
+ * @param[out] msg Pointer to the network message structure to populate.
+ * @return         ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
  */
 [[nodiscard]] static esp_err_t
 _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg)
@@ -124,8 +124,8 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
-    memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
+    msg->device_id = datalink_dev_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));
     return ESP_OK;
@@ -144,10 +144,10 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
  * resets the string conversion mechanism for entity names and logs decoding results for
  * debugging.
  *
- * @param pkt            Pointer to the datalink packet to decode.
- * @param msg            Pointer to the network message structure to populate.
- * @param txOpportunity  Pointer to a boolean that indicates whether the message provides a transmission opportunity.
- * @return esp_err_t     ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
+ * @param[in]  pkt           Pointer to the datalink packet to decode.
+ * @param[out] msg           Pointer to the network message structure to populate.
+ * @param[out] txOpportunity Pointer to a boolean set true if message provides a transmission opportunity.
+ * @return                   ESP_OK if the message was successfully decoded, ESP_FAIL otherwise.
  */
 
 esp_err_t
@@ -182,7 +182,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
         default:
             ESP_LOGW(TAG, "unknown prot %u", enum_index(pkt->prot));
             result = ESP_FAIL;
-  	}
+    }
     ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), pkt->dst.byte, enum_str(msg->typ));
 
     *txOpportunity =

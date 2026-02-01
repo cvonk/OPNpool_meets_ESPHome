@@ -1,3 +1,18 @@
+/**
+ * @file opnpool_ids.cpp
+ * @brief Entity ID conversion utilities for OPNpool component.
+ *
+ * @details
+ * Implements conversion functions between ESPHome entity IDs (climate_id_t, switch_id_t)
+ * and their corresponding internal representations (poolstate_thermo_typ_t,
+ * network_pool_circuit_t). These mappings enable the component to translate between
+ * ESPHome's entity model and the pool controller's protocol model.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <esp_system.h>
 #include <esp_types.h>
 
@@ -10,7 +25,7 @@
 
 namespace esphome {
 namespace opnpool {
-  
+
 /**
  * @brief Convert climate_id_t to poolstate_thermo_typ_t.
  *
@@ -18,8 +33,8 @@ namespace opnpool {
  * This helper assumes that climate_id_t and poolstate_thermo_typ_t enums are kept in the
  * same order and size. A static_assert is used to enforce the size match at compile time.
  *
- * @param id climate_id_t value to convert.
- * @return   poolstate_thermo_typ_t corresponding value.
+ * @param[in] id climate_id_t value to convert.
+ * @return       poolstate_thermo_typ_t corresponding value.
  */
 [[nodiscard]] poolstate_thermo_typ_t
 climate_id_to_poolstate_thermo(climate_id_t const id)
@@ -32,16 +47,15 @@ climate_id_to_poolstate_thermo(climate_id_t const id)
 }
 
 /**
-   * @brief Convert switch_id_t to network_pool_circuit_t.
-   *
-   * @details
-   * This helper assumes that switch_id_t and network_pool_circuit_t enums are kept in the
-   * same order and size. A static_assert is used to enforce the size match at compile
-   * time.
-   *
-   * @param id switch_id_t value to convert.
-   * @return   network_pool_circuit_t corresponding value.
-   */
+ * @brief Convert switch_id_t to network_pool_circuit_t.
+ *
+ * @details
+ * This helper assumes that switch_id_t and network_pool_circuit_t enums are kept in the
+ * same order and size. A static_assert is used to enforce the size match at compile time.
+ *
+ * @param[in] id switch_id_t value to convert.
+ * @return       network_pool_circuit_t corresponding value.
+ */
 [[nodiscard]] network_pool_circuit_t
 switch_id_to_network_circuit(switch_id_t const id)
 {

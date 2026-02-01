@@ -13,7 +13,7 @@
  * NETWORK_MSG_TYP_LIST.
  *
  * Thread safety is not provided, because it is not required for the single-threaded
- * nature of ESPHome.
+ * nature of ESPHome.  UNKNOWN_xx values have not yet been identified.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
@@ -43,7 +43,6 @@ namespace esphome {
 namespace opnpool {
 
     // enumerates the operation modes of the pool controller.
-    // the purpose of UNKNOWN_xx values has not yet been identified
 enum class network_pool_mode_bits_t : uint8_t {
     SERVICE     = 0,
     UNKNOWN_01  = 1,
@@ -66,7 +65,6 @@ enum class network_pool_circuit_t : uint8_t {
 };
 
     // enumerates the operation modes of the pool pump
-    // the purpose of UNKNOWN_xx values has not yet been identified
 enum class network_pump_mode_typ_t : uint8_t {
     FILTER     = 0,
     MAN        = 1,
@@ -97,7 +95,6 @@ struct network_pump_ctrl_t {
 } PACK8;
 
     // enumerates the states of the pool pump
-    // the purpose of UNKNOWN_xx values has not yet been identified
 enum class network_pump_state_t : uint8_t {
     OK         = 0,
     PRIMING    = 1,

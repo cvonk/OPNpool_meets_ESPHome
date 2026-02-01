@@ -39,18 +39,28 @@
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"
 
-
 namespace esphome {
 namespace opnpool {
 
-    
 constexpr char TAG[] = "opnpool_climate";
 
+/**
+ * @brief Converts a temperature from Celsius to Fahrenheit.
+ *
+ * @param[in] c Temperature in Celsius.
+ * @return      Temperature in Fahrenheit.
+ */
 [[nodiscard]] static float
 _celsius_to_fahrenheit(float c) {
     return c * 9.0f / 5.0f + 32.0f;
 }
 
+/**
+ * @brief Maps a thermostat type to its corresponding pool circuit index.
+ *
+ * @param[in] thermo_typ The thermostat type (POOL or SPA).
+ * @return               The pool circuit index, or 0 if invalid.
+ */
 [[nodiscard]] static uint8_t
 _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 {
@@ -61,7 +71,7 @@ _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
             return enum_index(network_pool_circuit_t::SPA);
         default:
             ESP_LOGE(TAG, "Invalid thermo_typ: %d", static_cast<int>(thermo_typ));
-            return -1;  // invalid index, will cause out-of-bounds access if used
+            return 0;  // invalid index, but will prevent out-of-bounds access if used
     }
 }
 
@@ -100,7 +110,7 @@ OpnPoolClimate::dump_config()
  * sources. Home Assistant will use the custom presets (Heat/SolarPreferred/Solar), but
  * has to use the regular preset (NONE) to disable the heating source.
  *
- * @return climate::ClimateTraits 
+ * @return The climate traits defining supported modes, presets, and temperature range.
  */
 climate::ClimateTraits
 OpnPoolClimate::traits()
@@ -140,7 +150,7 @@ OpnPoolClimate::traits()
  * climate modes are logged and reported to Home Assistant as OFF. State is not published
  * immediately; updates are sent after confirmation from the pool controller.
  *
- * @param call The climate call object containing requested changes from Home Assistant.
+ * @param[in] call The climate call object containing requested changes from Home Assistant.
  */
 void
 OpnPoolClimate::control(const climate::ClimateCall &call)
@@ -212,7 +222,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
         // handle heat source changes (based on custom preset)
 
     char const * preset_str = call.get_custom_preset().c_str();
-    if (preset_str != nullptr) {
+    if (*preset_str != '\0') {
 
         ESP_LOGV(TAG, "HA requests %s to %s", enum_str(thermo_typ), preset_str);
 
@@ -278,11 +288,11 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
  * internal state, sets the appropriate preset or custom preset, and publishes the new
  * state to Home Assistant. This avoids redundant updates to Home Assistant.
  *
- * @param value_current_temperature  The updated current temperature in Celsius.
- * @param value_target_temperature   The updated target temperature in Celsius.
- * @param value_mode                 The updated climate mode (OFF/HEAT).
- * @param value_custom_preset        The updated custom preset string (heat source).
- * @param value_action               The updated climate action (heating, idle, or off).
+ * @param[in] value_current_temperature  The updated current temperature in Celsius.
+ * @param[in] value_target_temperature   The updated target temperature in Celsius.
+ * @param[in] value_mode                 The updated climate mode (OFF/HEAT).
+ * @param[in] value_custom_preset        The updated custom preset string (heat source).
+ * @param[in] value_action               The updated climate action (heating, idle, or off).
  */
 void 
 OpnPoolClimate::publish_value_if_changed(
