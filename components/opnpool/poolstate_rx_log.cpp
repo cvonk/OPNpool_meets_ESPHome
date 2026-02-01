@@ -128,7 +128,7 @@ add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * t
 }
 
 static void
-_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_typ_t const mode)
 {
     cJSON_AddStringToObject(obj, key, enum_str(mode));
 }
@@ -316,7 +316,7 @@ add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t co
  * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_typ_t const ctrl)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
@@ -331,7 +331,7 @@ add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const
  * @param mode The pump mode value to log (as enum).
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_typ_t const mode)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 

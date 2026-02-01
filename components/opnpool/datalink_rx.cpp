@@ -70,15 +70,15 @@ static proto_info_t _proto_descr[] = {
     // size lookup table for message types
     // MUST MATCH enum datalink_chlor_typ_t in datalink_pkt.h
 inline constexpr size_t datalink_chlor_typ_sizes[] = {
-    sizeof(network_msg_chlor_ping_req_t),   // 0x00 PING_REQ
-    sizeof(network_msg_chlor_ping_resp_t),  // 0x01 PING_RESP
+    sizeof(network_chlor_ping_req_t),   // 0x00 PING_REQ
+    sizeof(network_chlor_ping_resp_t),  // 0x01 PING_RESP
     0,                                      // 0x02 UNKNOWN_02
-    sizeof(network_msg_chlor_name_resp_t),  // 0x03 NAME_RESP
+    sizeof(network_chlor_name_resp_t),  // 0x03 NAME_RESP
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 0x04..0x10 UNKNOWN_04..10
-    sizeof(network_msg_chlor_level_set_t),  // 0x11 LEVEL_SET
-    sizeof(network_msg_chlor_level_resp_t), // 0x12 LEVEL_RESP
+    sizeof(network_chlor_level_set_t),  // 0x11 LEVEL_SET
+    sizeof(network_chlor_level_resp_t), // 0x12 LEVEL_RESP
     0,                                      // 0x13 UNKNOWN_13
-    sizeof(network_msg_chlor_name_req_t)    // 0x14 NAME_REQ
+    sizeof(network_chlor_name_req_t)    // 0x14 NAME_REQ
 };
 static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(datalink_chlor_typ_sizes));
 
@@ -240,12 +240,12 @@ _network_ic_len(uint8_t const ic_typ)
         datalink_chlor_typ_t typ;
         uint8_t len;
     } type_lut[] = {
-        {datalink_chlor_typ_t::PING_REQ,   sizeof(network_msg_chlor_ping_req_t)},
-        {datalink_chlor_typ_t::PING_RESP,  sizeof(network_msg_chlor_ping_resp_t)},
-        {datalink_chlor_typ_t::NAME_RESP,  sizeof(network_msg_chlor_name_resp_t)},
-        {datalink_chlor_typ_t::LEVEL_SET,  sizeof(network_msg_chlor_level_set_t)},
-        {datalink_chlor_typ_t::LEVEL_RESP, sizeof(network_msg_chlor_level_resp_t)},
-        {datalink_chlor_typ_t::NAME_REQ,   sizeof(network_msg_chlor_name_req_t)},
+        {datalink_chlor_typ_t::PING_REQ,   sizeof(network_chlor_ping_req_t)},
+        {datalink_chlor_typ_t::PING_RESP,  sizeof(network_chlor_ping_resp_t)},
+        {datalink_chlor_typ_t::NAME_RESP,  sizeof(network_chlor_name_resp_t)},
+        {datalink_chlor_typ_t::LEVEL_SET,  sizeof(network_chlor_level_set_t)},
+        {datalink_chlor_typ_t::LEVEL_RESP, sizeof(network_chlor_level_resp_t)},
+        {datalink_chlor_typ_t::NAME_REQ,   sizeof(network_chlor_name_req_t)},
     };
         // MUST MATCH datalink_chlor_typ_t in datalink_pkt.h
     static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(type_lut));
@@ -291,7 +291,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 pkt->src      = hdr->src;
                 pkt->dst      = hdr->dst;
                 pkt->data_len = hdr->len;
-                if (pkt->data_len > sizeof(network_msg_data_a5_t)) {
+                if (pkt->data_len > sizeof(network_data_a5_t)) {
                     return ESP_FAIL;
                 }
                 return ESP_OK;

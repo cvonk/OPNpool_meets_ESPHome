@@ -121,8 +121,8 @@ struct poolstate_circuit_t {
 };
 
 struct poolstate_pump_mode_t {
-    bool                valid;
-    network_pump_mode_t value;
+    bool                    valid;
+    network_pump_mode_typ_t value;
 };
 
 struct poolstate_pump_state_t {
@@ -162,7 +162,7 @@ struct poolstate_chlor_status_t {
 
 struct poolstate_chlor_name_t {
     bool     valid;
-    char     value[sizeof(network_msg_chlor_name_str_t) + 1];  // +1 for \0 termination
+    char     value[sizeof(network_chlor_name_str_t) + 1];  // +1 for \0 termination
 };
 
 struct poolstate_chlor_t {
@@ -197,7 +197,7 @@ struct poolstate_chlor_t {
 struct poolstate_t {
     poolstate_system_t   system;
     poolstate_chlor_t    chlor;
-    poolstate_pump_t     pumps[enum_count<datalink_dev_id_t>()];
+    poolstate_pump_t     pumps[enum_count<datalink_dev_id_t>()];  // doesn't really need REMOTE, but well..
     poolstate_circuit_t  circuits[enum_count<network_pool_circuit_t>()];
     poolstate_bool_t     modes[enum_count<network_pool_mode_bits_t>()];
     poolstate_thermo_t   thermos[enum_count<poolstate_thermo_typ_t>()];

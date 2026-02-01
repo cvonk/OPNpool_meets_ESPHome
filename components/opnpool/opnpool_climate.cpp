@@ -247,7 +247,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
         network_msg_t msg = {};  // prevents -Wmissing-field-initializers
         msg.device_id = datalink_dev_id_t::PRIMARY;
-        msg.typ = network_typ_t::CTRL_HEAT_SET;
+        msg.typ = network_msg_typ_t::CTRL_HEAT_SET;
         msg.u.a5.ctrl_heat_set.pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value;
         msg.u.a5.ctrl_heat_set.spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value;
         msg.u.a5.ctrl_heat_set.heat_src.set_pool(thermos_new[thermo_pool_idx].heat_src.value);

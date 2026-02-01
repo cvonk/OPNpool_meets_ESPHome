@@ -64,7 +64,7 @@ enum class datalink_group_addr_t : uint8_t {
 enum class datalink_dev_id_t : uint8_t {
     PRIMARY    = 0x00,
     SECONDARY  = 0x01,
-    //REMOTE   = 0x02
+    REMOTE     = 0x02
 };
 
 using datalink_preamble_a5_t = uint8_t[3];

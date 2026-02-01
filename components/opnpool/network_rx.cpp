@@ -48,7 +48,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 
     datalink_pump_typ_t const datalink_pump_typ = pkt->typ.pump;
 
-    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_pump_typ, is_to_pump);
+    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_pump_typ, is_to_pump);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported pump_typ (%s) ", enum_str(datalink_pump_typ));
         return ESP_FAIL;
@@ -59,7 +59,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
         return ESP_FAIL;
     }
 
-    msg->typ       = info->network_typ;
+    msg->typ       = info->network_msg_typ;
     msg->device_id = is_to_pump ? pkt->dst.get_dev_id() : pkt->src.get_dev_id();
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // honoring the union types would require a big switch() statement
 
@@ -80,7 +80,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
     datalink_ctrl_typ_t const datalink_ctrl_typ = pkt->typ.ctrl;
 
-    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_ctrl_typ);
+    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_ctrl_typ);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported ctrl_typ (%s) ", enum_str(datalink_ctrl_typ));
         return ESP_FAIL;
@@ -91,7 +91,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
         return ESP_FAIL;
     }
 
-    msg->typ       = info->network_typ;
+    msg->typ       = info->network_msg_typ;
     msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
 
@@ -112,7 +112,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
 {
     datalink_chlor_typ_t const datalink_chlor_typ = pkt->typ.chlor;
 
-    network_typ_info_t const * const info = network_msg_typ_get_info(datalink_chlor_typ);
+    network_msg_typ_info_t const * const info = network_msg_typ_get_info(datalink_chlor_typ);
     if (info == nullptr) {
         ESP_LOGW(TAG, "unsupported chlor_typ (%s) ", enum_str(datalink_chlor_typ));
         return ESP_FAIL;
@@ -123,7 +123,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
         return ESP_FAIL;
     }
 
-    msg->typ       = info->network_typ;
+    msg->typ       = info->network_msg_typ;
     msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
 
@@ -162,7 +162,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
         (pkt->prot == datalink_prot_t::IC && dst != datalink_group_addr_t::ALL && dst != datalink_group_addr_t::CHLOR)) {
 
         *txOpportunity = false;
-        msg->typ = network_typ_t::IGNORE;
+        msg->typ = network_msg_typ_t::IGNORE;
         ESP_LOGV(TAG, "Ignoring packet with prot %s and dst group addr %u", enum_str(pkt->prot), enum_index(dst));
         return ESP_OK;
     }

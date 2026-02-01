@@ -24,7 +24,7 @@ namespace esphome {
 namespace opnpool {
 
     // should be at least ((sizeof(datalink_hdr_t) +
-    // sizeof(network_msg_ctrl_state_bcast_t) + 1) * 3 + 50). that 3 bytes for each hex
+    // sizeof(network_ctrl_state_bcast_t) + 1) * 3 + 50). that 3 bytes for each hex
     // value when displaying raw, and another 50 for displaying date/time.
 constexpr size_t TO_STR_BUF_SIZE = 200;
 
