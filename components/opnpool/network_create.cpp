@@ -37,37 +37,40 @@ namespace opnpool {
 
 constexpr char TAG[] = "network_create";
 
-/*
- * Create datalink_pkt from network_msg.
+/**
+ * @brief Creates a datalink packet from a network message.
+ *
+ * Allocates a socket buffer, sets protocol headers based on message type, and copies
+ * the message payload into the packet data area. The packet is ready for transmission
+ * after this function returns successfully.
+ *
+ * @param[in]  msg Pointer to the network message to convert.
+ * @param[out] pkt Pointer to the datalink packet structure to fill.
+ * @return         ESP_OK on success, ESP_FAIL if message type is unknown or allocation fails.
  */
-
 esp_err_t
 network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 {
-        // get protocol info from the lookup table network_msg_typ_info[] in network_msg.h
+    // get protocol info from the lookup table network_msg_typ_info[] in network_msg.h
     const network_msg_typ_info_t * info = network_msg_typ_get_info(msg->typ);
     if (info == nullptr) {
         ESP_LOGE(TAG, "unknown msg typ(%s)", enum_str(msg->typ));
         return ESP_FAIL;
     }
 
-    uint32_t data_len = info->size;
-
-#if 0
-    size_t data_len;
-    if (network_msg_typ_get_size(msg->typ, &data_len) != ESP_OK) {
-        ESP_LOGE(TAG, "unknown msg typ(%s)", enum_str(msg->typ));
-        return ESP_FAIL;
-    }
-#endif
+    uint32_t const data_len = info->size;
 
     pkt->prot = info->proto;
     pkt->typ = info->datalink_typ;
     pkt->data_len = data_len;
     pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
+    if (!pkt->skb) {
+        ESP_LOGW(TAG, "Failed to allocate socket buffer");
+        return ESP_FAIL;
+    }
     skb_reserve(pkt->skb, DATALINK_MAX_HEAD_SIZE);
     pkt->data = skb_put(pkt->skb, data_len);
-    memcpy(pkt->data, msg->u.raw, data_len);    
+    memcpy(pkt->data, msg->u.raw, data_len);
     return ESP_OK;
 }
 

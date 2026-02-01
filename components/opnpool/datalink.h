@@ -11,8 +11,8 @@
  * 
  * The data link layer provides two functions:
  * 1. `datalink_rx_pkt()`: removes the header and tail of a RS-485 byte stream, verifies
- *    its integrity. 
- * 2. `datalink_create_pkt()`: adds the header and tail to create a RS-485 byte stream.
+ *    its integrity.
+ * 2. `datalink_tx_pkt_queue()`: adds the header and tail to create a RS-485 byte stream.
  *
  * The design supports multiple protocol variants (A5, IC) and hardware configurations,
  * and is intended for use in a single-threaded ESPHome environment.
@@ -41,7 +41,6 @@ namespace opnpool {
 struct datalink_pkt_t;
 struct rs485_instance_t;
 using rs485_handle_t = rs485_instance_t *;
-struct datalink_pkt_t;
 
     // 0x10 = suntouch ctrl system
     // 0x20 = easytouch
@@ -71,12 +70,38 @@ using datalink_preamble_a5_t = uint8_t[3];
 using datalink_preamble_ic_t = uint8_t[2];
 using datalink_postamble_ic_t = uint8_t[2];
 
+/**
+ * @brief 8-bit device address combining group and device ID.
+ *
+ * The address byte encodes both the group (high nibble) and device ID (low nibble).
+ * This struct provides accessor methods for extracting and setting each component.
+ */
 struct datalink_addr_t {
-    uint8_t byte;  // lower nibble is device address; higher nibble is group address
-    datalink_dev_id_t   get_dev_id()    const { return static_cast<datalink_dev_id_t>(byte & 0x0F); } 
-    datalink_group_addr_t get_group_addr()  const { return static_cast<datalink_group_addr_t>((byte >> 4) & 0x0F); }    
-    void set_dev_id(datalink_dev_id_t dev)      { byte = (byte & 0xF0) | (static_cast<uint8_t>(dev) & 0x0F); }
-    void set_group_addr( datalink_group_addr_t grp) { byte = (byte & 0x0F) | (static_cast<uint8_t>(grp) << 4); }
+    uint8_t byte;  // Full address byte: high nibble = group, low nibble = device ID
+
+        // @brief Extracts the device ID from the address (low nibble)
+        // @return The device ID as datalink_dev_id_t
+    constexpr datalink_dev_id_t get_dev_id() const {
+        return static_cast<datalink_dev_id_t>(byte & 0x0F);
+    }
+
+        // @brief Extracts the group address from the address (high nibble)
+        // @return The group address as datalink_group_addr_t
+    constexpr datalink_group_addr_t get_group_addr() const {
+        return static_cast<datalink_group_addr_t>((byte >> 4) & 0x0F);
+    }
+
+        // @brief Sets the device ID in the address (low nibble)
+        // @param[in] dev The device ID to set
+    constexpr void set_dev_id(datalink_dev_id_t dev) {
+        byte = (byte & 0xF0) | (static_cast<uint8_t>(dev) & 0x0F);
+    }
+
+        // @brief Sets the group address in the address (high nibble)
+        // @param[in] grp The group address to set
+    constexpr void set_group_addr(datalink_group_addr_t grp) {
+        byte = (byte & 0x0F) | (static_cast<uint8_t>(grp) << 4);
+    }
 } PACK8;
 static_assert(sizeof(datalink_addr_t) == 1, "datalink_addr_t must be 1 byte");
 
@@ -128,11 +153,11 @@ union datalink_head_t {
 uint8_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
 
 struct datalink_tail_a5_t {
-    uint8_t  crc[2];
+    uint8_t  checksum[2];
 } PACK8;
 
 struct datalink_tail_ic_t {
-    uint8_t                 crc[1];
+    uint8_t                 checksum[1];
     datalink_postamble_ic_t postamble;
 } PACK8;
 
@@ -140,10 +165,11 @@ struct datalink_tail_ic_t {
  * @brief Data link tail union for protocol abstraction.
  *
  * This union provides access to the tail fields for both IC and A5 protocol variants.
- * It enables unified handling of protocol-specific tail data, such as CRC and postamble,
+ * It enables unified handling of protocol-specific tail data, such as checksum and postamble,
  * for packet validation and parsing.
- * @var `ic`: Tail structure for IC protocol packets (includes CRC and postamble).
- * @var `a5`: Tail structure for A5 protocol packets (includes CRC).
+ *
+ * @var `ic`: Tail structure for IC protocol packets (includes checksum and postamble).
+ * @var `a5`: Tail structure for A5 protocol packets (includes checksum).
  */
 union datalink_tail_t {
     datalink_tail_ic_t ic;
@@ -152,28 +178,45 @@ union datalink_tail_t {
 
 uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
+// Protocol preamble and postamble constants
+extern datalink_preamble_a5_t datalink_preamble_a5;   ///< A5 protocol preamble: { 0x00, 0xFF, 0xA5 }
+extern datalink_preamble_ic_t datalink_preamble_ic;   ///< IC protocol preamble: { 0x10, 0x02 }
+extern datalink_postamble_ic_t datalink_postamble_ic; ///< IC protocol postamble: { 0x10, 0x03 }
+
 /**
- * @brief Data link layer function prototypes and constant declarations.
+ * @brief Composes a device address from an address group and device ID.
  *
- * These declarations provide the interface for key data link layer operations and
- * protocol constants:
- * - Address group and device address calculation
- * - CRC calculation for packet validation
- * - Protocol preamble and postamble constants for A5 and IC variants
- * - Packet receive and transmit functions for RS-485 communication
+ * @param[in] group     The address group (high nibble).
+ * @param[in] device_id The device ID within the group (low nibble).
+ * @return              The composed 8-bit device address.
  */
+datalink_addr_t datalink_addr(datalink_group_addr_t const group, datalink_dev_id_t const device_id);
 
-datalink_group_addr_t datalink_group_addr(uint8_t const addr);
-uint8_t datalink_device_id(uint8_t const addr);
-datalink_addr_t datalink_dev_id(datalink_group_addr_t const group, datalink_dev_id_t const device_id);
-uint16_t datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop);
-extern datalink_preamble_a5_t datalink_preamble_a5;
-extern datalink_preamble_ic_t datalink_preamble_ic;
-extern datalink_postamble_ic_t datalink_postamble_ic;
+/**
+ * @brief Calculates the checksum for a data buffer.
+ *
+ * @param[in] start Pointer to the start of the data buffer.
+ * @param[in] stop  Pointer to one past the end of the data buffer (exclusive).
+ * @return          The calculated 16-bit checksum (sum of all bytes).
+ */
+uint16_t datalink_calc_checksum(uint8_t const * const start, uint8_t const * const stop);
 
+/**
+ * @brief Receive a protocol packet from the RS-485 bus.
+ *
+ * @param[in]  rs485 RS485 handle for reading bytes from the bus.
+ * @param[out] pkt   Pointer to a packet structure to fill with received data.
+ * @return           ESP_OK if a valid packet is received and checksum matches, ESP_FAIL otherwise.
+ */
 [[nodiscard]] esp_err_t datalink_rx_pkt(rs485_handle_t const rs485, datalink_pkt_t * const pkt);
 
-void datalink_tx_pkt_queue(rs485_handle_t const rs485_handle, datalink_pkt_t const * const pkt);
+/**
+ * @brief Adds protocol headers and tails to a data packet and queues it for RS485 transmission.
+ *
+ * @param[in] rs485 Pointer to the RS485 interface handle.
+ * @param[in] pkt   Pointer to the datalink packet structure to be transmitted.
+ */
+void datalink_tx_pkt_queue(rs485_handle_t const rs485, datalink_pkt_t const * const pkt);
 
 } // namespace opnpool
 } // namespace esphome

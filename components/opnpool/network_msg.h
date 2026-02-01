@@ -126,16 +126,17 @@ struct uint8_hi_lo_t {
     uint8_t low;
 } PACK8;
 
+    // converts a low-high byte pair to a 16-bit unsigned integer.
 constexpr uint16_t
 uint8_lo_hi_to_uint16(uint8_lo_hi_t const value) {
     return ((uint16_t)value.high << 8) | value.low;
 }
 
+    // converts a high-low byte pair to a 16-bit unsigned integer.
 constexpr uint16_t
 uint8_hi_lo_to_uint16(uint8_hi_lo_t const value) {
     return ((uint16_t)value.high << 8) | value.low;
 }
-
 
 /**
  * @brief Structures and unions for A5-controller messages.
@@ -345,8 +346,15 @@ enum class network_pump_program_addr_t : uint16_t {
     ERPM3        = 0x032A   // program ext program RPM3
 };
 
-    // can't use magic enum, because the enum values that are not contiguous, and outside the range that magic_enum expects
-constexpr char const * 
+/**
+ * @brief Converts a pump program address to a string representation.
+ *
+ * @note Can't use magic_enum because the enum values are not contiguous and outside magic_enum's range.
+ *
+ * @param[in] addr The pump program address to convert.
+ * @return         String representation of the address.
+ */
+constexpr char const *
 network_pump_program_addr_str(network_pump_program_addr_t const addr)
 {
     switch (addr) {
@@ -557,7 +565,12 @@ enum class network_msg_typ_t : uint8_t {
 #undef X_ENUM
 };
 
-    // structure to hold message type metadata
+/**
+ * @brief Metadata structure for network message types.
+ *
+ * Contains protocol info, datalink type, message size, direction, and the corresponding
+ * network_msg_typ_t value. Used for message type lookup and validation.
+ */
 struct network_msg_typ_info_t {
     datalink_prot_t   proto;
     datalink_typ_t    datalink_typ;
@@ -586,6 +599,12 @@ constexpr network_msg_typ_info_t network_msg_typ_info[] = {
 #undef X_INFO
 };
 
+/**
+ * @brief     Looks up message type info by network_msg_typ_t.
+ *
+ * @param[in] typ The network message type to look up.
+ * @return        Pointer to the matching network_msg_typ_info_t, or nullptr if not found.
+ */
 constexpr network_msg_typ_info_t const *
 network_msg_typ_get_info(network_msg_typ_t typ)
 {
@@ -597,10 +616,10 @@ network_msg_typ_get_info(network_msg_typ_t typ)
 }
 
 /**
- * @brief          Reverse lookup from (datalink_prot_t, datalink_ctrl_typ_t) to network_msg_typ_info_t.
+ * @brief              Reverse lookup from (datalink_prot_t, datalink_ctrl_typ_t) to network_msg_typ_info_t.
  *
- * @param ctrl_typ The datalink controller message type
- * @return         The matching network_msg_typ_info_t, or nullptr if not found
+ * @param[in] ctrl_typ The datalink controller message type.
+ * @return             Pointer to the matching network_msg_typ_info_t, or nullptr if not found.
  */
 constexpr network_msg_typ_info_t const *
 network_msg_typ_get_info(datalink_ctrl_typ_t const ctrl_typ)
@@ -615,11 +634,11 @@ network_msg_typ_get_info(datalink_ctrl_typ_t const ctrl_typ)
 }
 
 /**
- * @brief            Reverse lookup from (datalink_prot_t, datalink_pump_typ_t) to network_msg_typ_info_t.
+ * @brief                Reverse lookup from (datalink_prot_t, datalink_pump_typ_t) to network_msg_typ_info_t.
  *
- * @param pump_typ   The datalink pump message type
- * @param is_to_pump True if message is directed to pump (SET/REQ), false if from pump (RESP)
- * @return           The matching network_msg_typ_info_t, or nullptr if not found
+ * @param[in] pump_typ   The datalink pump message type.
+ * @param[in] is_to_pump True if message is directed to pump (SET/REQ), false if from pump (RESP).
+ * @return               Pointer to the matching network_msg_typ_info_t, or nullptr if not found.
  */
 constexpr network_msg_typ_info_t const *
 network_msg_typ_get_info(datalink_pump_typ_t const pump_typ, bool const is_to_pump)
@@ -634,10 +653,10 @@ network_msg_typ_get_info(datalink_pump_typ_t const pump_typ, bool const is_to_pu
 }
 
 /**
- * @brief           Reverse lookup from (datalink_prot_t, datalink_chlor_typ_t) to network_msg_typ_info_t.
+ * @brief               Reverse lookup from (datalink_prot_t, datalink_chlor_typ_t) to network_msg_typ_info_t.
  *
- * @param chlor_typ The datalink chlorinator message type
- * @return          The matching network_msg_typ_info_t, or nullptr if not found
+ * @param[in] chlor_typ The datalink chlorinator message type.
+ * @return              Pointer to the matching network_msg_typ_info_t, or nullptr if not found.
  */
 constexpr network_msg_typ_info_t const *
 network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)

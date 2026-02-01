@@ -19,18 +19,18 @@ The data link layer handles framing, addressing, and integrity checking for RS-4
 
 ### A5 Protocol Frame (Controller & Pump)
 
-| Offset | Field    | Size     | Value/Contents | Description
-|--------|----------|----------|----------------|------------
-| 0      | Sync     | 1 byte   | `0xFF`         | Synchronization byte
-| 1-3    | Preamble | 3 bytes  | `00 FF A5`     | Packet start marker
-| 4      | ver      | 1 byte   |                | Protocol version
-| 5      | dst      | 1 byte   |                | Destination address
-| 6      | src      | 1 byte   |                | Source address
-| 7      | typ      | 1 byte   |                | Message type
-| 8      | len      | 1 byte   |                | Data length
-| 9-n    | Data     | variable |                | Payload (len bytes)
-| n+1    | CRC hi   | 1 byte   |                | Checksum high byte
-| n+2    | CRC lo   | 1 byte   |                | Checksum low byte
+| Offset | Field       | Size     | Value/Contents | Description
+|--------|--------------|----------|----------------|------------
+| 0      | Sync        | 1 byte   | `0xFF`         | Synchronization byte
+| 1-3    | Preamble    | 3 bytes  | `00 FF A5`     | Packet start marker
+| 4      | ver         | 1 byte   |                | Protocol version
+| 5      | dst         | 1 byte   |                | Destination address
+| 6      | src         | 1 byte   |                | Source address
+| 7      | typ         | 1 byte   |                | Message type
+| 8      | len         | 1 byte   |                | Data length
+| 9-n    | Data        | variable |                | Payload (len bytes)
+| n+1    | Checksum hi | 1 byte   |                | Checksum high byte
+| n+2    | Checksum lo | 1 byte   |                | Checksum low byte
 
 
 | Field    | Size | Description 
@@ -43,7 +43,7 @@ The data link layer handles framing, addressing, and integrity checking for RS-4
 | typ      | 1    | Message type
 | len      | 1    | Data payload length
 | data     | var  | Message payload (0-255 bytes)
-| crc      | 2    | 16-bit CRC (big-endian)
+| checksum | 2    | 16-bit checksum (big-endian)
 
 ### IC Protocol Frame (Chlorinator)
 
@@ -54,7 +54,7 @@ The data link layer handles framing, addressing, and integrity checking for RS-4
 | 3      | dst       | 1 byte   |
 | 4      | typ       | 1 byte   |
 | 5-n    | Data      | variable |
-| n+1    | CRC       | 1 byte   |
+| n+1    | Checksum  | 1 byte   |
 | n+2    | Postamble | 2 bytes  | `10 03`
 
 ## Addressing Scheme
@@ -154,10 +154,10 @@ struct datalink_pkt_t {
 };
 ```
 
-## CRC Calculation
+## Checksum Calculation
 
-* A5 Protocol: 16-bit CRC calculated from the last byte of the preamble (0xA5) through the end of the data payload
-* IC Protocol: 8-bit CRC (lower byte of 16-bit calculation) from preamble through data payload
+* A5 Protocol: 16-bit checksum calculated from the last byte of the preamble (0xA5) through the end of the data payload
+* IC Protocol: 8-bit checksum (lower byte of 16-bit calculation) from preamble through data payload
 
 ## Protocol Detection
 

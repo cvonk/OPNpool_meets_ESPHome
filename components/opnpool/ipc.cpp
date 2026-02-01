@@ -37,11 +37,11 @@ namespace opnpool {
 constexpr char TAG[] = "ipc";
 
 /**
- * @brief              Send a network message to the main task
+ * @brief                  Send a network message to the main task
  *
- * @param network_msg  Pointer to the network message to send
- * @param ipc          Pointer to the IPC structure containing the queue handles
- * @return             ESP_OK if the message was successfully queued, ESP_FAIL otherwise
+ * @param[in] network_msg  Pointer to the network message to send
+ * @param[in] ipc          Pointer to the IPC structure containing the queue handles
+ * @return                 ESP_OK if the message was successfully queued, ESP_FAIL otherwise
  */
 
 esp_err_t
@@ -53,17 +53,16 @@ ipc_send_network_msg_to_main_task(network_msg_t const * const network_msg, ipc_t
         ESP_LOGW(TAG, "to_main_q full");
         return ESP_FAIL;
     }
-    //vTaskDelay(1);  // give main task a chance to catch up
     return ESP_OK;
 }
 
 /**
- * @brief              Send a network message to the pool task
+ * @brief                  Send a network message to the pool task
  *
- * @param network_msg  Pointer to the network message to send
- * @param ipc          Pointer to the IPC structure containing the queue handles
- * @return             ESP_OK if the message was successfully queued, ESP_FAIL otherwise
- **/
+ * @param[in] network_msg  Pointer to the network message to send
+ * @param[in] ipc          Pointer to the IPC structure containing the queue handles
+ * @return                 ESP_OK if the message was successfully queued, ESP_FAIL otherwise
+ */
 
 esp_err_t
 ipc_send_network_msg_to_pool_task(network_msg_t const * const network_msg, ipc_t const * const ipc)

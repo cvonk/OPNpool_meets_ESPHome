@@ -6,7 +6,7 @@
  * This file implements core functions for the OPNpool data link layer, facilitating the
  * conversion between raw RS485 byte streams and structured protocol data packets. It
  * provides utilities for handling protocol preambles and postambles, address group
- * extraction and composition, and CRC calculation for packet integrity. These
+ * extraction and composition, and checksum calculation for packet integrity. These
  * foundational routines are used by both the transmitter and receiver to ensure reliable
  * communication between the ESPHome component and pool equipment over the RS485 bus.
  *
@@ -29,47 +29,19 @@
 namespace esphome {
 namespace opnpool {
 
-// constexpr char TAG[] = "datalink";
-
 datalink_preamble_a5_t datalink_preamble_a5  = { 0x00, 0xFF, 0xA5 };  // use of 0xA5 in the preamble makes the detection more reliable
 datalink_preamble_ic_t datalink_preamble_ic  = { 0x10, 0x02 };
 datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 
 /**
- * @brief      Extracts the address group from a 8-bit A5 address.
+ * @brief               Composes a device address from an address group and device ID.
  *
- * @param addr The full 8-bit address.
- * @return     The address group as a datalink_group_addr_t.
- */
-datalink_group_addr_t
-datalink_group_addr(uint8_t const addr)
-{
-    return static_cast<datalink_group_addr_t>((addr >> 4) & 0x0F);
-}
-
-
-/**
- * @brief      Extracts the address id from a 8-bit A5 address.
- *
- * @param addr The full 8-bit address.
- * @return     The address id as a uint8_t.
- */
-uint8_t
-datalink_device_id(uint8_t const addr)
-{
-    return static_cast<uint8_t>(addr & 0x0F);
-}
-
-
-/**
- * @brief       Composes a device address from an address group and device ID.
- *
- * @param group The address group.
- * @param id    The device ID within the group.
- * @return      The composed 8-bit device address.
+ * @param[in] group     The address group (high nibble).
+ * @param[in] device_id The device ID within the group (low nibble).
+ * @return              The composed 8-bit device address.
  */
 datalink_addr_t
-datalink_dev_id(datalink_group_addr_t const group, datalink_dev_id_t const device_id)
+datalink_addr(datalink_group_addr_t const group, datalink_dev_id_t const device_id)
 {
     datalink_addr_t addr = {};
     addr.set_group_addr(group);
@@ -79,20 +51,20 @@ datalink_dev_id(datalink_group_addr_t const group, datalink_dev_id_t const devic
 }
 
 /**
- * @brief       Calculates the CRC for a data buffer.
+ * @brief           Calculates the checksum for a data buffer.
  *
- * @param start Pointer to the start of the data buffer.
- * @param stop  Pointer to one past the end of the data buffer.
- * @return      The calculated 16-bit CRC value.
+ * @param[in] start Pointer to the start of the data buffer.
+ * @param[in] stop  Pointer to one past the end of the data buffer (exclusive).
+ * @return          The calculated 16-bit checksum (sum of all bytes).
  */
 uint16_t
-datalink_calc_crc(uint8_t const * const start, uint8_t const * const stop)
+datalink_calc_checksum(uint8_t const * const start, uint8_t const * const stop)
 {
-    uint16_t crc = 0;
+    uint16_t checksum = 0;
     for (uint8_t const * byte = start; byte < stop; byte++) {
-        crc += *byte;
+        checksum += *byte;
     }
-    return crc;
+    return checksum;
 }
 
 } // namespace opnpool

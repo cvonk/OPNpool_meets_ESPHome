@@ -4,24 +4,24 @@ This component implements communication with Pentair pool equipment over an RS-4
 
 ## Protocol Variants
 
-| Variant     | Device Type                    | Preamble             | CRC    | Notes
-|-------------|--------------------------------|----------------------|--------|------
-| **A5_CTRL** | EasyTouch/SunTouch controllers | `{0x00, 0xFF, 0xA5}` | 16-bit | Full addressing with source/destination
-| **A5_PUMP** | IntelliFlo pumps               | `{0x00, 0xFF, 0xA5}` | 16-bit | Same wire format as A5_CTRL
-| **IC**      | IntelliChlor chlorinators      | `{0x10, 0x02}`       |  8-bit | Simpler format with postamble `{0x10, 0x03}`
+| Variant     | Device Type                    | Preamble             | Checksum | Notes
+|-------------|--------------------------------|----------------------|----------|------
+| **A5_CTRL** | EasyTouch/SunTouch controllers | `{0x00, 0xFF, 0xA5}` | 16-bit   | Full addressing with source/destination
+| **A5_PUMP** | IntelliFlo pumps               | `{0x00, 0xFF, 0xA5}` | 16-bit   | Same wire format as A5_CTRL
+| **IC**      | IntelliChlor chlorinators      | `{0x10, 0x02}`       |  8-bit   | Simpler format with postamble `{0x10, 0x03}`
 
 ## Frame Structure
 
 ### A5 Protocol Frame
 
 ```
-[0xFF] [preamble: 00 FF A5] [ver] [dst] [src] [typ] [len] [data...] [crc_hi] [crc_lo]
+[0xFF] [preamble: 00 FF A5] [ver] [dst] [src] [typ] [len] [data...] [checksum_hi] [checksum_lo]
 ```
 
 ### IC Protocol Frame
 
 ```
-[0xFF] [preamble: 10 02] [dst] [typ] [data...] [crc] [postamble: 10 03]
+[0xFF] [preamble: 10 02] [dst] [typ] [data...] [checksum] [postamble: 10 03]
 ```
 
 ## Addressing Scheme
@@ -106,7 +106,7 @@ struct network_pump_status_resp_t {
 
 ## Communication Flow
 
-1. Reception (datalink_rx.cpp): Strips preamble/postamble, validates CRC, extracts header and payload
-2. Transmission (datalink_tx.cpp): Adds protocol-specific header, calculates CRC, queues for RS-485 transmission
+1. Reception (datalink_rx.cpp): Strips preamble/postamble, validates checksum, extracts header and payload
+2. Transmission (datalink_tx.cpp): Adds protocol-specific header, calculates checksum, queues for RS-485 transmission
 
 The implementation uses a socket buffer (skb) abstraction for zero-copy packet handling, with `skb_push()` to prepend headers and `skb_put()` to append trailers.
