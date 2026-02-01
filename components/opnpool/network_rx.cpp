@@ -34,21 +34,6 @@ namespace opnpool {
 
 constexpr char TAG[] = "network_rx";
 
-    // helper to determine device_id
-static network_msg_dev_id_t
-_network_dev_id(datalink_dev_id_t const datalink_dev_id)
-{
-    // I only have one pump, so I have to assume that pumps are numbered sequentially starting at 0
-    // I can imagine a secondary pump for solar though
-    switch (datalink_dev_id) {
-        case datalink_dev_id_t::PRIMARY:   return network_msg_dev_id_t::PRIMARY;
-        case datalink_dev_id_t::SECONDARY: return network_msg_dev_id_t::SECONDARY;
-        case datalink_dev_id_t::REMOTE:    break;  // roll through to unsupported
-    }
-    ESP_LOGE(TAG, "%s: unsupported datalink_dev_id %u", __FUNCTION__, static_cast<uint8_t>(datalink_dev_id));
-    return network_msg_dev_id_t::PRIMARY;
-}
-
 /**
  * @brief             Decode a A5_PUMP datalink packet to form a network message
  * 
@@ -70,15 +55,12 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
-        ESP_LOGW(TAG, "%s => %s invalid length: expected %lu, got %u", enum_str(datalink_pump_typ), enum_str(msg->typ), info->size, pkt->data_len);
+        ESP_LOGW(TAG, "{%s %u} => %s invalid length: expected %lu, got %u", enum_str(datalink_pump_typ), is_to_pump, enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
 
-    auto datalink_dev_id = is_to_pump ? pkt->dst.get_dev_id()
-                                      : pkt->src.get_dev_id();
-
     msg->typ       = info->network_typ;
-    msg->device_id = _network_dev_id(datalink_dev_id);
+    msg->device_id = is_to_pump ? pkt->dst.get_dev_id() : pkt->src.get_dev_id();
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // honoring the union types would require a big switch() statement
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -110,7 +92,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_typ;
-    msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
+    msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
 
     ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -142,7 +124,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     msg->typ       = info->network_typ;
-    msg->device_id = network_msg_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
+    msg->device_id = datalink_dev_id_t::PRIMARY;  // only relevant for A4-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);    // honoring the union types would require a big switch() statement
 
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));

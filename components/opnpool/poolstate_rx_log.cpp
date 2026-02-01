@@ -271,7 +271,7 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
  * @param state Pointer to the poolstate_t structure containing the pump information.
  */
 void
-add_pump(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, poolstate_pump_t const * const pump)
+add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, poolstate_pump_t const * const pump)
 {
     cJSON * const item = _create_item(obj, key);
 
@@ -301,7 +301,7 @@ add_pump(cJSON * const obj, char const * const key, network_msg_dev_id_t const d
  * @param value The pump program value to log.
  */
 void
-add_pump_program(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, uint16_t const value)
+add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, uint16_t const value)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
@@ -316,7 +316,7 @@ add_pump_program(cJSON * const obj, char const * const key, network_msg_dev_id_t
  * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
@@ -331,7 +331,7 @@ add_pump_ctrl(cJSON * const obj, char const * const key, network_msg_dev_id_t co
  * @param mode The pump mode value to log (as enum).
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_t const mode)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
@@ -346,7 +346,7 @@ add_pump_mode(cJSON * const obj, char const * const key, network_msg_dev_id_t co
  * @param running The pump running status to log (true if running).
  */
 void
-add_pump_running(cJSON * const obj, char const * const key, network_msg_dev_id_t const dev_id, bool const running)
+add_pump_running(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, bool const running)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 

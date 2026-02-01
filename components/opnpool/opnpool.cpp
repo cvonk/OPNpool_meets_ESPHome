@@ -383,19 +383,19 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     }   
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_POWER)],        
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].power
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].power
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_FLOW)],         
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].flow
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].flow
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_SPEED)],        
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].speed
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].speed
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_ERROR)],        
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].error
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].error
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::CHLORINATOR_LEVEL)], 
@@ -412,7 +412,7 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
         this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)],           
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].running
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].running
     );
     _publish_if(
         this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_SERVICE)],           
@@ -445,11 +445,11 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
     _publish_enum_if(
         this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)], 
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].mode
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].mode
     );    
     _publish_enum_if(
         this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_STATE)],
-        state->pumps[enum_index(network_msg_dev_id_t::PRIMARY)].state
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].state
     );
     _publish_if(
         this->text_sensors_[enum_index(text_sensor_id_t::CHLORINATOR_NAME)], 

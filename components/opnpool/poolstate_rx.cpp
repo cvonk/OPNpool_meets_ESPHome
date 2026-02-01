@@ -586,7 +586,7 @@ _ctrl_version_resp(cJSON * const dbg, network_msg_ctrl_version_resp_t const * co
  * verbose logging is enabled, logs the register update to the debug JSON object.
  */
 static void
-_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg, network_msg_dev_id_t const device_id)
+_pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg, datalink_dev_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -616,7 +616,7 @@ _pump_reg_set(cJSON * const dbg, network_msg_pump_reg_set_t const * const msg, n
  * enabled, logs the value to the debug JSON object.
  */
 static void
-_pump_reg_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg, network_msg_dev_id_t const device_id)
+_pump_reg_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg, datalink_dev_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -642,7 +642,7 @@ _pump_reg_resp(cJSON * const dbg, network_msg_pump_reg_resp_t const * const msg,
  * is enabled.
  */
 static void
-_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg, network_msg_dev_id_t const device_id)
+_pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg, datalink_dev_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -668,7 +668,7 @@ _pump_ctrl(cJSON * const dbg, network_msg_pump_ctrl_t const * const msg, network
  * JSON object if verbose logging is enabled.
  */
 static void
-_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -700,7 +700,7 @@ _pump_mode(cJSON * const dbg, network_msg_pump_mode_t const * const msg, network
  * status to the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -739,7 +739,7 @@ _pump_run(cJSON * const dbg, network_msg_pump_run_t const * const msg, network_m
  * the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, network_msg_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_status(cJSON * const dbg, network_msg_pump_status_resp_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);

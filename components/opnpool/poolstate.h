@@ -197,7 +197,7 @@ struct poolstate_chlor_t {
 struct poolstate_t {
     poolstate_system_t   system;
     poolstate_chlor_t    chlor;
-    poolstate_pump_t     pumps[enum_count<network_msg_dev_id_t>()];
+    poolstate_pump_t     pumps[enum_count<datalink_dev_id_t>()];
     poolstate_circuit_t  circuits[enum_count<network_pool_circuit_t>()];
     poolstate_bool_t     modes[enum_count<network_pool_mode_bits_t>()];
     poolstate_thermo_t   thermos[enum_count<poolstate_thermo_typ_t>()];
