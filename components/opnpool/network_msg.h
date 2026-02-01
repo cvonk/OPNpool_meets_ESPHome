@@ -39,10 +39,8 @@
 #include "to_str.h"
 #include "enum_helpers.h"
 
-
 namespace esphome {
 namespace opnpool {
-
 
     // enumerates the operation modes of the pool controller.
     // the purpose of UNKNOWN_xx values has not yet been identified
