@@ -186,14 +186,19 @@ async def to_code(config):
 
     # add component source files
     component_dir = os.path.dirname(__file__)
-    
+    component_dir_path = os.path.dirname(os.path.abspath(__file__))
+
     # C++ entity implementation files (including matter subdirectory)
     cg.add_platformio_option("build_src_filter", [
         "+<*>",
         "+<esphome/components/opnpool/*.cpp>",
         "+<esphome/components/opnpool/matter/*.cpp>",
     ])
-    
+
+    # larger app partitions for Matter/Thread
+    partitions_path = os.path.join(component_dir_path, "partitions.csv").replace("\\", "/")
+    cg.add_platformio_option("board_build.partitions", partitions_path)
+
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-Wl,-Map=output.map")

@@ -1,0 +1,9 @@
+# OPNpool ESP-IDF SDK configuration defaults
+# These options are applied during the ESP-IDF build
+
+# Increase main task stack size for complex operations
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# OpenThread settings (when using Thread networking)
+# CONFIG_OPENTHREAD_ENABLED=y
+# CONFIG_OPENTHREAD_FTD=y
