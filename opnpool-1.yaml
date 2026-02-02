@@ -52,6 +52,14 @@ logger:
 debug:
   update_interval: 5s  # for exception decoding in logs
 
+## OpenThread configuration (requires ESP32-C6 or ESP32-H2)
+#openthread:
+#  device_type: FTD  # full thread device
+#  tlv: !secret thread_tlv
+## Enable IPv6 for Thread networking
+#network:
+#  enable_ipv6: true
+
 wifi:
   domain: !secret domain_name
   min_auth_mode: WPA2
@@ -62,6 +70,8 @@ wifi:
   ap: # enable fallback ap captive portal in case wifi connection fails
     ssid: "${device_name} Config"
     password: !secret wifi_password
+
+captive_portal:
 
 api:
   encryption:
@@ -79,8 +89,6 @@ web_server:
   port: 80
   include_internal: true
 
-captive_portal:
-    
 external_components:
   - source: 
       type: local
@@ -102,7 +110,7 @@ opnpool:
   #  rts_pin: 27  # default 23 (GPIO23)
 
   matter:
-    enabled: false                               # waiting for ESPHome native support
+    enabled: false                              # waiting for ESPHome native support
     discriminator: !secret matter_discriminator  # For QR code pairing (0-4095)
     passcode: !secret matter_passcode            # Setup code (1-99999998)
 
