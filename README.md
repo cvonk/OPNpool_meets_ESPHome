@@ -1,4 +1,4 @@
-[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://github.com/cvonk/OPNpool_meets_ESPHome/discussions)
+[![ESPHome Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://community.home-assistant.io/t/opnpool-meets-esphome-pentair-suntouch-controller-into-home-assistant/981965)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
@@ -14,31 +14,28 @@ At its core, OPNpool connects an ESP32 microcontroller to your pool controller�
 
 ## Features
 
-  - [x] **Smart Home Integration:** Native support for Home Assistant and ESPHome.
-  - [x] **Remote Monitoring & Control:** Access your pool’s status and controls from anywhere.
-  - [x] **Community Driven:** Built on the work of pool automation enthusiasts and reverse engineers.
-  - [x] **Open Source:** Fully transparent hardware and software—customize and extend as needed.
+- [x] **Smart Home Integration:** Native support for Home Assistant and ESPHome.
+- [x] **Remote Monitoring & Control:** Access your pool’s status and controls from anywhere.
+- [x] **Community Driven:** Built on the work of pool automation enthusiasts and reverse engineers.
+- [x] **Open Source:** Fully transparent hardware and software—customize and extend as needed.
 
 ## Getting started
 
 No prior experience with pool automation or ESPHome is required. The documentation below will guide you through hardware assembly, wiring, firmware installation, and Home Assistant integration. If you have questions or need help, join the project’s GitHub Discussions for community support.
 
-This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
+This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor saltwater chlorinator.
 
-> This open source and hardware project is intended to comply with the October 2016 
-> exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a
-> controlled environment designed to avoid any harm to individuals or to the public.
+> This open source and hardware project is intended to comply with the October 2016 exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a controlled environment designed to avoid any harm to individuals or to the public.
 
 ## Acknowledgements
 
-> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if if I forgot you.)
+> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if I forgot you.)
 
 ## Usage
 
-Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an addon to Home Assistant.
+Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an add-on to Home Assistant.
 
 In an empty directory, create a `opnpool-1.yaml` configuration file as shown below.
-
 ```yaml
 substitutions:
   device_name: opnpool-1
@@ -231,6 +228,8 @@ The entire schematic fits comfortably on a compact two-layer PCB. The board was 
 | PCB Screws  | Machine screw, #6-32 x x 3/16", panhead                  | Keystone-Electronics 9306  | [$0.10](https://www.digikey.com/en/products/detail/keystone-electronics/9306/2746085?s=N4IgjCBcpgTB0QGMoDMCGAbAzgUwDQgD2UA2iLAAwCsIAuoQA4AuUIAyswE4CWAdgHMQAX2GFYZEAGlcAT2zMifXAFoAoplxJuSnkmwACAJwBmSgDZ6woA)
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head               | Essentra 50M020040D016     | [$0.28](https://www.digikey.com/en/products/detail/essentra-components/50M020040D016/11639297)
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                   | Essentra 04M020040HN       | [$0.15](https://www.digikey.com/en/products/detail/essentra-components/04M020040HN/9677098)
+
+Note that tariffs and shipping will add to the cost.
 
 ## Troubleshooting
 
