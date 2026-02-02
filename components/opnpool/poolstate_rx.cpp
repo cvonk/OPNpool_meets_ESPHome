@@ -64,20 +64,171 @@ namespace poolstate_rx {
 
 constexpr char TAG[] = "poolstate_rx";
 
-    // returns the first matching status flag, or OTHER if none match
-constexpr poolstate_chlor_status_typ_t
-_get_chlor_status_from_error(uint8_t const error)
-{
-    using T = poolstate_chlor_status_typ_t;
+    /**********************\
+      State Update Helpers
+    \**********************/
 
-    if (error & static_cast<uint8_t>(T::LOW_FLOW))   return T::LOW_FLOW;
-    if (error & static_cast<uint8_t>(T::LOW_SALT))   return T::LOW_SALT;
-    if (error & static_cast<uint8_t>(T::HIGH_SALT))  return T::HIGH_SALT;
-    if (error & static_cast<uint8_t>(T::CLEAN_CELL)) return T::CLEAN_CELL;
-    if (error & static_cast<uint8_t>(T::COLD))       return T::COLD;
-    if (error & static_cast<uint8_t>(T::OK))         return T::OK;
-    return T::OTHER;
+static void 
+_update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
+{
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        arr[ii].active = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active.value);
+    }
 }
+
+static void 
+_update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
+{
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        arr[ii].delay = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
+        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay.value);
+    }
+}
+
+static void 
+_update_modes_from_bits(poolstate_bool_t * modes, uint16_t const bits, uint8_t const count)
+{
+    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
+        modes[ii] = {
+            .valid = true,
+            .value = (bits & mask) != 0
+        };
+        ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
+    }
+}
+
+static void
+_update_circuits(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_circuit_t * const circuits)
+{
+    constexpr uint8_t pool_idx = enum_index(network_pool_circuit_t::POOL);
+    constexpr uint8_t spa_idx  = enum_index(network_pool_circuit_t::SPA);
+
+        // update circuits[].active
+    uint16_t const bitmask_active_circuits = uint8_lo_hi_to_uint16(msg->active);
+    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
+    _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
+
+        // if both SPA and POOL bits are set, only SPA runs
+    if (circuits[spa_idx].active.value) {
+        circuits[pool_idx].active.value = false;
+    }
+
+        // update circuits[].delay
+    uint8_t const bitmask_delay_circuits = msg->delay;
+    _update_circuit_delay_from_bits(circuits, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_circuits(dbg, poolstate_rx_log::KEY_CIRCUITS, circuits);
+    }
+}
+
+static void
+_update_thermos(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_thermo_t * const thermos, poolstate_circuit_t const * const circuits)
+{
+        // update circuits.thermos (only update when the pump is running)
+    constexpr uint8_t pool_therm_idx = enum_index(poolstate_thermo_typ_t::POOL);
+    constexpr uint8_t spa_therm_idx  = enum_index(poolstate_thermo_typ_t::SPA);
+    static_assert(pool_therm_idx < enum_count<poolstate_thermo_typ_t>(), "pool_therm_idx OOB");
+    static_assert(spa_therm_idx < enum_count<poolstate_thermo_typ_t>(), "spa_therm_idx OOB");
+    poolstate_thermo_t * const pool_thermo = &thermos[pool_therm_idx];
+    poolstate_thermo_t * const spa_thermo  = &thermos[spa_therm_idx];
+
+    constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
+    constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
+    poolstate_bool_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
+    poolstate_bool_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
+
+    if (pool_circuit->valid && pool_circuit->value) {
+        pool_thermo->temp_in_f = {
+            .valid = true,
+            .value = msg->pool_temp
+        };
+    }
+    if (spa_circuit->valid && spa_circuit->value) {
+        spa_thermo->temp_in_f = {
+            .valid = true,
+            .value = msg->spa_temp
+        };
+    }
+    pool_thermo->heating = {
+        .valid = true,
+        .value = msg->heat_status.get_pool()
+    };
+    pool_thermo->heat_src = {
+        .valid = true,
+        .value = msg->heat_src.get_pool()
+    };
+    spa_thermo->heating  = {
+        .valid = true,
+        .value = msg->heat_status.get_spa()
+    };
+    spa_thermo->heat_src = {
+        .valid = true,
+        .value = msg->heat_src.get_spa()
+    };
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_thermos(dbg, poolstate_rx_log::KEY_THERMOS, thermos, true, true, true);
+    }    
+}
+
+static void
+_update_modes(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_bool_t * const modes)
+{
+    _update_modes_from_bits(modes, msg->mode_bits, enum_count<network_pool_mode_bits_t>());
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_modes(dbg, poolstate_rx_log::KEY_MODES, modes);
+    }
+}
+
+static void
+_update_system_time(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
+{
+    *time = {
+        .valid = true,
+        .hour = msg->hour,
+        .minute = msg->minute
+    };
+    // PS date is updated through `network_ctrl_time`
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_time(dbg, poolstate_rx_log::KEY_TIME, time);
+    }
+}
+
+static void
+_update_temps(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_uint8_t * const temps)
+{
+    uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
+    uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);
+    static_assert(air_idx < enum_count<poolstate_temp_typ_t>(), "size err for air_idx");
+    static_assert(water_idx < enum_count<poolstate_temp_typ_t>(), "size err for water_idx");
+
+    temps[air_idx] = {
+        .valid = true,
+        .value = msg->air_temp
+    };
+    temps[water_idx] = {
+        .valid = true,
+        .value = msg->water_temp
+    };
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        poolstate_rx_log::add_temps(dbg, poolstate_rx_log::KEY_TEMPS, temps);
+    }
+}
+
+    /*****************************\
+      Controller Message Handlers    
+    \*****************************/
 
 /**
  * @brief       Process a controller time message and update the pool state.
@@ -223,42 +374,6 @@ _ctrl_heat_set(cJSON * const dbg, network_ctrl_heat_set_t const * const msg, poo
     }
 }
 
-static void 
-_update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
-{
-    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].active = {
-            .valid = true,
-            .value = (bits & mask) != 0
-        };
-        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].active.value);
-    }
-}
-
-static void 
-_update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
-{
-    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        arr[ii].delay = {
-            .valid = true,
-            .value = (bits & mask) != 0
-        };
-        ESP_LOGVV(TAG, "  arr[%u] = %u", ii, arr[ii].delay.value);
-    }
-}
-
-static void 
-_update_modes_from_bits(poolstate_bool_t * modes, uint16_t const bits, uint8_t const count)
-{
-    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        modes[ii] = {
-            .valid = true,
-            .value = (bits & mask) != 0
-        };
-        ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
-    }
-}
-
 /**
  * @brief             Optionally log raw hex bytes from a controller message.
  *
@@ -379,128 +494,6 @@ _ctrl_sched_resp(cJSON * const dbg, network_ctrl_sched_resp_t const * const msg,
     }
 }
 
-static void
-_update_circuits(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_circuit_t * const circuits)
-{
-    constexpr uint8_t pool_idx = enum_index(network_pool_circuit_t::POOL);
-    constexpr uint8_t spa_idx  = enum_index(network_pool_circuit_t::SPA);
-
-        // update circuits[].active
-    uint16_t const bitmask_active_circuits = uint8_lo_hi_to_uint16(msg->active);
-    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
-    _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
-
-        // if both SPA and POOL bits are set, only SPA runs
-    if (circuits[spa_idx].active.value) {
-        circuits[pool_idx].active.value = false;
-    }
-
-        // update circuits[].delay
-    uint8_t const bitmask_delay_circuits = msg->delay;
-    _update_circuit_delay_from_bits(circuits, bitmask_delay_circuits, enum_count<network_pool_circuit_t>());
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_circuits(dbg, poolstate_rx_log::KEY_CIRCUITS, circuits);
-    }
-}
-
-static void
-_update_thermos(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_thermo_t * const thermos, poolstate_circuit_t const * const circuits)
-{
-        // update circuits.thermos (only update when the pump is running)
-    constexpr uint8_t pool_therm_idx = enum_index(poolstate_thermo_typ_t::POOL);
-    constexpr uint8_t spa_therm_idx  = enum_index(poolstate_thermo_typ_t::SPA);
-    static_assert(pool_therm_idx < enum_count<poolstate_thermo_typ_t>(), "pool_therm_idx OOB");
-    static_assert(spa_therm_idx < enum_count<poolstate_thermo_typ_t>(), "spa_therm_idx OOB");
-    poolstate_thermo_t * const pool_thermo = &thermos[pool_therm_idx];
-    poolstate_thermo_t * const spa_thermo  = &thermos[spa_therm_idx];
-
-    constexpr uint8_t pool_circuit_idx = enum_index(network_pool_circuit_t::POOL);
-    constexpr uint8_t spa_circuit_idx  = enum_index(network_pool_circuit_t::SPA);
-    poolstate_bool_t const * const pool_circuit = &circuits[pool_circuit_idx].active;
-    poolstate_bool_t const * const spa_circuit  = &circuits[spa_circuit_idx].active;
-
-    if (pool_circuit->valid && pool_circuit->value) {
-        pool_thermo->temp_in_f = {
-            .valid = true,
-            .value = msg->pool_temp
-        };
-    }
-    if (spa_circuit->valid && spa_circuit->value) {
-        spa_thermo->temp_in_f = {
-            .valid = true,
-            .value = msg->spa_temp
-        };
-    }
-    pool_thermo->heating = {
-        .valid = true,
-        .value = msg->heat_status.get_pool()
-    };
-    pool_thermo->heat_src = {
-        .valid = true,
-        .value = msg->heat_src.get_pool()
-    };
-    spa_thermo->heating  = {
-        .valid = true,
-        .value = msg->heat_status.get_spa()
-    };
-    spa_thermo->heat_src = {
-        .valid = true,
-        .value = msg->heat_src.get_spa()
-    };
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_thermos(dbg, poolstate_rx_log::KEY_THERMOS, thermos, true, true, true);
-    }    
-}
-
-static void
-_update_modes(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_bool_t * const modes)
-{
-    _update_modes_from_bits(modes, msg->mode_bits, enum_count<network_pool_mode_bits_t>());
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_modes(dbg, poolstate_rx_log::KEY_MODES, modes);
-    }
-}
-
-static void
-_update_system_time(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_time_t * const time)
-{
-    *time = {
-        .valid = true,
-        .hour = msg->hour,
-        .minute = msg->minute
-    };
-    // PS date is updated through `network_ctrl_time`
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_time(dbg, poolstate_rx_log::KEY_TIME, time);
-    }
-}
-
-static void
-_update_temps(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_uint8_t * const temps)
-{
-    uint8_t const air_idx = enum_index(poolstate_temp_typ_t::AIR);
-    uint8_t const water_idx = enum_index(poolstate_temp_typ_t::WATER);
-    static_assert(air_idx < enum_count<poolstate_temp_typ_t>(), "size err for air_idx");
-    static_assert(water_idx < enum_count<poolstate_temp_typ_t>(), "size err for water_idx");
-
-    temps[air_idx] = {
-        .valid = true,
-        .value = msg->air_temp
-    };
-    temps[water_idx] = {
-        .valid = true,
-        .value = msg->water_temp
-    };
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_temps(dbg, poolstate_rx_log::KEY_TEMPS, temps);
-    }
-}
-
 /**
  * @brief       Process a controller state broadcast message and update the pool state.
  *
@@ -560,6 +553,35 @@ _ctrl_version_resp(cJSON * const dbg, network_ctrl_version_resp_t const * const 
         poolstate_rx_log::add_version(dbg, poolstate_rx_log::KEY_FIRMWARE, &state->system.version);
     }
 }
+
+/**
+ * @brief       Process a controller set acknowledgment message and log the result.
+ *
+ * @param dbg   Optional JSON object for verbose debug logging.
+ * @param msg   Pointer to the received network_ctrl_set_ack_t message.
+ *
+ * This function logs the acknowledgment type to the debug JSON object if verbose logging
+ * is enabled.
+ */
+static void
+_ctrl_set_ack(cJSON * const dbg, network_ctrl_set_ack_t const * const msg)
+{
+    if (!msg) {
+        ESP_LOGW(TAG, "null to %s", __func__);
+        return;
+    }
+
+    // no change to poolstate
+    //     2BD we could.., e.g. when a circuit is changed ..
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        cJSON_AddStringToObject(dbg, poolstate_rx_log::KEY_ACK, enum_str(msg->typ));
+    }
+}
+
+    /**********************\
+      Pump Message Handlers
+    \**********************/
 
 /**
  * @brief            Process a pump register set message and log the register update.
@@ -789,30 +811,9 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
     }
 }
 
-/**
- * @brief       Process a controller set acknowledgment message and log the result.
- *
- * @param dbg   Optional JSON object for verbose debug logging.
- * @param msg   Pointer to the received network_ctrl_set_ack_t message.
- *
- * This function logs the acknowledgment type to the debug JSON object if verbose logging
- * is enabled.
- */
-static void
-_ctrl_set_ack(cJSON * const dbg, network_ctrl_set_ack_t const * const msg)
-{
-    if (!msg) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return;
-    }
-
-    // no change to poolstate
-    //     2BD we could.., e.g. when a circuit is changed ..
-
-    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        cJSON_AddStringToObject(dbg, poolstate_rx_log::KEY_ACK, enum_str(msg->typ));
-    }
-}
+    /******************************\
+      Chlorinator Message Handlers
+    \******************************/
 
 /**
  * @brief       Process a chlorine generator name response message, update the pool state, and log the status.
@@ -877,6 +878,21 @@ _chlor_level_set(cJSON * const dbg, network_chlor_level_set_t const * const msg,
     }
 }
 
+    // returns the first matching status flag, or OTHER if none match
+constexpr poolstate_chlor_status_typ_t
+_get_chlor_status_from_error(uint8_t const error)
+{
+    using T = poolstate_chlor_status_typ_t;
+
+    if (error & static_cast<uint8_t>(T::LOW_FLOW))   return T::LOW_FLOW;
+    if (error & static_cast<uint8_t>(T::LOW_SALT))   return T::LOW_SALT;
+    if (error & static_cast<uint8_t>(T::HIGH_SALT))  return T::HIGH_SALT;
+    if (error & static_cast<uint8_t>(T::CLEAN_CELL)) return T::CLEAN_CELL;
+    if (error & static_cast<uint8_t>(T::COLD))       return T::COLD;
+    if (error & static_cast<uint8_t>(T::OK))         return T::OK;
+    return T::OTHER;
+}
+
 /**
  * @brief       Process a chlorine generator level set response message, update the pool state, and log the status.
  *
@@ -909,6 +925,10 @@ _chlor_level_set_resp(cJSON * const dbg, network_chlor_level_resp_t const * cons
         poolstate_rx_log::add_chlor_resp(dbg, poolstate_rx_log::KEY_CHLOR, chlor);
     }
 }
+
+    /******************\
+      Main Entry Point
+    \******************/
 
 /**
  * @brief           Process a received network message and update the pool state.

@@ -12,7 +12,7 @@
  * These functions are kept separate from poolstate_rx.cpp because their purpose is
  * to provide logging functionality, and separating them helps to avoid making that file
  * too large.
- * 
+ *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
  * are not required within the pool_task context.
  *
@@ -43,6 +43,13 @@ namespace opnpool {
 namespace poolstate_rx {
 namespace poolstate_rx_log {
 
+/**
+ * @brief Creates or returns a JSON object for the given key.
+ *
+ * @param[in] obj The parent JSON object.
+ * @param[in] key The key for the new child object, or nullptr to return parent.
+ * @return        The created child object, or parent if key is nullptr.
+ */
 [[nodiscard]] static cJSON *
 _create_item(cJSON * const obj, char const * const key)
 {
@@ -55,17 +62,29 @@ _create_item(cJSON * const obj, char const * const key)
     return item;
 }
 
-    // add system information (time, date, firmware) to a JSON object
+/**
+ * @brief Adds system information (time, date, firmware) to a JSON object.
+ *
+ * @param[in] obj    The parent JSON object.
+ * @param[in] key    The key under which to add the system object.
+ * @param[in] system Pointer to the poolstate_system_t structure.
+ */
 void
 _add_system(cJSON * const obj, char const * const key, poolstate_system_t const * const system)
 {
     cJSON * const item = _create_item(obj, key);
- 
+
     add_time_and_date(item, KEY_TOD, &system->tod);
     add_version(item, KEY_FIRMWARE, &system->version);
 }
 
-    // add active circuit information to a JSON object
+/**
+ * @brief Adds active circuit states to a JSON object.
+ *
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the active circuits object.
+ * @param[in] circuit Pointer to the first poolstate_circuit_t in the array.
+ */
 static void
 _add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
@@ -77,7 +96,13 @@ _add_circuit_active(cJSON * const obj, char const * const key, poolstate_circuit
     }
 }
 
-    // add delay circuit information to a JSON object
+/**
+ * @brief Adds delay circuit states to a JSON object.
+ *
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the delay circuits object.
+ * @param[in] circuit Pointer to the first poolstate_circuit_t in the array.
+ */
 static void
 _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_t const * circuit)
 {
@@ -89,20 +114,39 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
     }
 }
 
+/**
+ * @brief Adds pump mode as a string to a JSON object.
+ *
+ * @param[in] obj  The parent JSON object.
+ * @param[in] key  The key for the pump mode value.
+ * @param[in] mode The pump mode enum value.
+ */
 static void
 _add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_typ_t const mode)
 {
     cJSON_AddStringToObject(obj, key, enum_str(mode));
 }
 
+/**
+ * @brief Adds pump running status to a JSON object.
+ *
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key for the running status.
+ * @param[in] running The pump running status (true if running).
+ */
 static void
 _add_pump_running(cJSON * const obj, char const * const key, bool const running)
 {
     cJSON_AddBoolToObject(obj, key, running);
 }
 
-
-    // add circuit information to a JSON object
+/**
+ * @brief Adds circuit information (active and delay states) to a JSON object.
+ *
+ * @param[in] obj      The parent JSON object.
+ * @param[in] key      The key under which to add the circuits object.
+ * @param[in] circuits Pointer to the array of poolstate_circuit_t structures.
+ */
 void
 add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t const * const circuits)
 {
@@ -112,7 +156,13 @@ add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t cons
     _add_circuit_delay(item, KEY_DELAY, circuits);
 }
 
-    // add mode information to a JSON object
+/**
+ * @brief Adds mode information to a JSON object.
+ *
+ * @param[in] obj   The parent JSON object.
+ * @param[in] key   The key under which to add the modes object.
+ * @param[in] modes Pointer to the array of poolstate_bool_t structures.
+ */
 void
 add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes)
 {
@@ -125,13 +175,19 @@ add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * co
     }
 }
 
-    // add temperatures information to a JSON object
+/**
+ * @brief Adds temperature information to a JSON object.
+ *
+ * @param[in] obj   The parent JSON object.
+ * @param[in] key   The key under which to add the temperatures object.
+ * @param[in] temps Pointer to the array of poolstate_uint8_t temperature values.
+ */
 void
 add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * temps)
 {
     cJSON * const item = _create_item(obj, key);
-    
-    poolstate_uint8_t const * temp = temps;    
+
+    poolstate_uint8_t const * temp = temps;
     for (auto typ : magic_enum::enum_values<poolstate_temp_typ_t>()) {
         if (temp->value != 0xFF && temp->value != 0x00) {
             cJSON_AddNumberToObject(item, enum_str(typ), temp->value);
@@ -141,42 +197,42 @@ add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * t
 }
 
 /**
- * @brief      Add time and date information to a JSON object for logging.
- * 
- * @param obj  The parent JSON object.
- * @param key  The key under which to add the time and date object.
- * @param time Pointer to the poolstate_time_t structure containing the time.
+ * @brief Adds time information to a JSON object for logging.
+ *
+ * @param[in] obj  The parent JSON object.
+ * @param[in] key  The key under which to add the time object.
+ * @param[in] time Pointer to the poolstate_time_t structure containing the time.
  */
 void
 add_time(cJSON * const obj, char const * const key, poolstate_time_t const * const time)
 {
     cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(time->hour, time->minute));    
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(time->hour, time->minute));
 }
 
 /**
- * @brief     Add time and date information to a JSON object for logging.
- * 
- * @param obj The parent JSON object.
- * @param key The key under which to add the time and date object.
- * @param tod Pointer to the poolstate_tod_t structure containing the time and date.
+ * @brief Adds time and date information to a JSON object for logging.
+ *
+ * @param[in] obj The parent JSON object.
+ * @param[in] key The key under which to add the time and date object.
+ * @param[in] tod Pointer to the poolstate_tod_t structure containing the time and date.
  */
 void
 add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t const * const tod)
 {
     cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(tod->time.hour, tod->time.minute));    
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(tod->time.hour, tod->time.minute));
     cJSON_AddStringToObject(item, KEY_DATE, date_str(tod->date.year, tod->date.month, tod->date.day));
 }
 
 /**
- * @brief Add version information to a JSON object for logging.
- * 
- * @param obj The parent JSON object.
- * @param key The key under which to add the version string.
- * @param version Pointer to the poolstate_version_t structure containing the version information.
+ * @brief Adds version information to a JSON object for logging.
+ *
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the version string.
+ * @param[in] version Pointer to the poolstate_version_t structure.
  */
 void
 add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version)
@@ -185,14 +241,14 @@ add_version(cJSON * const obj, char const * const key, poolstate_version_t const
 }
 
 /**
- * @brief              Add thermostat information to a JSON object for logging.
+ * @brief Adds thermostat information to a JSON object for logging.
  *
- * @param obj          The parent JSON object.
- * @param key          The key under which to add the thermostat array.
- * @param thermos      Pointer to the array of poolstate_thermo_t structures.
- * @param showTemp     Whether to include temperature values.
- * @param showSp       Whether to include set point values.
- * @param showHeating  Whether to include heating status.
+ * @param[in] obj         The parent JSON object.
+ * @param[in] key         The key under which to add the thermostat array.
+ * @param[in] thermos     Pointer to the array of poolstate_thermo_t structures.
+ * @param[in] showTemp    Whether to include temperature values.
+ * @param[in] showSp      Whether to include set point values.
+ * @param[in] showHeating Whether to include heating status.
  */
 void
 add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos,
@@ -221,11 +277,11 @@ add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const 
 }
 
 /**
- * @brief           Add schedule information to a JSON object for logging.
+ * @brief Adds schedule information to a JSON object for logging.
  *
- * @param obj       The parent JSON object.
- * @param key       The key under which to add the schedule array.
- * @param scheds    Pointer to the array of poolstate_sched_t structures.
+ * @param[in] obj   The parent JSON object.
+ * @param[in] key   The key under which to add the schedule array.
+ * @param[in] sched Pointer to the first poolstate_sched_t structure in the array.
  */
 void
 add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * sched)
@@ -244,11 +300,11 @@ add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * 
 }
 
 /**
- * @brief       Add the controller pool state to a JSON object for logging.
+ * @brief Adds the controller pool state to a JSON object for logging.
  *
- * @param obj   The parent JSON object.
- * @param key   The key under which to add the pool state object.
- * @param state Pointer to the poolstate_t structure to log.
+ * @param[in] obj   The parent JSON object.
+ * @param[in] key   The key under which to add the pool state object.
+ * @param[in] state Pointer to the poolstate_t structure to log.
  */
 void
 add_state(cJSON * const obj, char const * const key, poolstate_t const * const state)
@@ -264,11 +320,12 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 }
 
 /**
- * @brief       Add pump information to a JSON object for logging.
+ * @brief Adds pump information to a JSON object for logging.
  *
- * @param obj   The parent JSON object.
- * @param key   The key under which to add the pump object.
- * @param state Pointer to the poolstate_t structure containing the pump information.
+ * @param[in] obj    The parent JSON object.
+ * @param[in] key    The key under which to add the pump object.
+ * @param[in] dev_id The device ID for the pump.
+ * @param[in] pump   Pointer to the poolstate_pump_t structure to log.
  */
 void
 add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, poolstate_pump_t const * const pump)
@@ -278,7 +335,7 @@ add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_
     _add_pump_mode(item, KEY_MODE, pump->mode.value);
     _add_pump_running(item, KEY_RUNNING, pump->running.value);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));    
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));
     cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
     cJSON_AddStringToObject(item, KEY_DEVID, enum_str(dev_id));
     cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
@@ -294,11 +351,12 @@ add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_
 }
 
 /**
- * @brief       Add pump program value to a JSON object for logging.
+ * @brief Adds pump program value to a JSON object for logging.
  *
- * @param obj   The parent JSON object.
- * @param key   The key under which to add the pump program value.
- * @param value The pump program value to log.
+ * @param[in] obj    The parent JSON object.
+ * @param[in] key    The key under which to add the pump program value.
+ * @param[in] dev_id The device ID for the pump.
+ * @param[in] value  The pump program value to log.
  */
 void
 add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, uint16_t const value)
@@ -309,11 +367,12 @@ add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t co
 }
 
 /**
- * @brief      Add pump control mode to a JSON object for logging.
+ * @brief Adds pump control mode to a JSON object for logging.
  *
- * @param obj  The parent JSON object.
- * @param key  The key under which to add the pump control value.
- * @param ctrl The pump control value to log (0x00 = local, 0xFF = remote, other = numeric).
+ * @param[in] obj    The parent JSON object.
+ * @param[in] key    The key under which to add the pump control value.
+ * @param[in] dev_id The device ID for the pump.
+ * @param[in] ctrl   The pump control value to log.
  */
 void
 add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_typ_t const ctrl)
@@ -324,11 +383,12 @@ add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const
 }
 
 /**
- * @brief      Add pump mode to a JSON object for logging.
+ * @brief Adds pump mode to a JSON object for logging.
  *
- * @param obj  The parent JSON object.
- * @param key  The key under which to add the pump mode value.
- * @param mode The pump mode value to log (as enum).
+ * @param[in] obj    The parent JSON object.
+ * @param[in] key    The key under which to add the pump mode value.
+ * @param[in] dev_id The device ID for the pump.
+ * @param[in] mode   The pump mode value to log.
  */
 void
 add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_typ_t const mode)
@@ -339,11 +399,12 @@ add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const
 }
 
 /**
- * @brief         Add pump running status to a JSON object for logging.
+ * @brief Adds pump running status to a JSON object for logging.
  *
- * @param obj     The parent JSON object.
- * @param key     The key under which to add the running status.
- * @param running The pump running status to log (true if running).
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the running status.
+ * @param[in] dev_id  The device ID for the pump.
+ * @param[in] running The pump running status to log (true if running).
  */
 void
 add_pump_running(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, bool const running)
@@ -354,11 +415,11 @@ add_pump_running(cJSON * const obj, char const * const key, datalink_dev_id_t co
 }
 
 /**
- * @brief       Add chlorinator response information to a JSON object for logging.
+ * @brief Adds chlorinator response information to a JSON object for logging.
  *
- * @param obj   The parent JSON object.
- * @param key   The key under which to add the chlorinator response object.
- * @param chlor Pointer to the poolstate_chlor_t structure to log.
+ * @param[in] obj   The parent JSON object.
+ * @param[in] key   The key under which to add the chlorinator response object.
+ * @param[in] chlor Pointer to the poolstate_chlor_t structure to log.
  */
 void
 add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t const * const chlor)
@@ -368,7 +429,6 @@ add_chlor_resp(cJSON * const obj, char const * const key, poolstate_chlor_t cons
     cJSON_AddNumberToObject(item, KEY_SALT, chlor->salt.value);
     cJSON_AddStringToObject(item, KEY_STATUS, enum_str(chlor->status.value));
 }
-
 
 }  // namespace poolstate_rx_log
 }  // namespace poolstate_rx
