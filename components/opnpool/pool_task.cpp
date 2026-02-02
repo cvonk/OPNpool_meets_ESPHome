@@ -52,8 +52,8 @@ namespace opnpool {
 
 constexpr char TAG[] = "pool_task";
 
-constexpr uint32_t POOL_TASK_DELAY_MS = 100;
-constexpr uint32_t POOL_REQ_INTERVAL_MS = 30 * 1000;
+constexpr uint32_t POOL_TASK_DELAY_MS       = 100;
+constexpr uint32_t POOL_REQ_INTERVAL_MS     = 30 * 1000;
 constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;
 
 
@@ -64,9 +64,9 @@ constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;
  * Receives a packet from RS-485, decodes it into a network message, and sends it to the
  * main task via IPC if successful. Frees the packet buffer after processing.
  *
- * @param rs485 RS-485 handle.
- * @param ipc   IPC structure pointer.
- * @return true if a transmit opportunity is available, false otherwise.
+ * @param[in] rs485 RS-485 handle.
+ * @param[in] ipc   IPC structure pointer.
+ * @return          True if a transmit opportunity is available, false otherwise.
  */
 [[nodiscard]] static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
@@ -99,8 +99,8 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
  * Receives network messages from the IPC queue, packetizes them, and queues them for
  * transmission to the pool controller. Frees the packet if creation fails.
  *
- * @param rs485 RS-485 handle.
- * @param ipc   IPC structure pointer.
+ * @param[in] rs485 RS-485 handle.
+ * @param[in] ipc   IPC structure pointer.
  */
 static void
 _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
@@ -127,8 +127,8 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
  * Creates a network message of the specified type, packetizes it, and queues it for
  * transmission on the RS-485 bus. Frees the packet if creation fails.
  *
- * @param rs485 RS-485 handle.
- * @param typ   Network message type to send.
+ * @param[in] rs485 RS-485 handle.
+ * @param[in] typ   Network message type to send.
  */
 static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
@@ -154,8 +154,8 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
  * Dequeues a packet, transmits it over RS-485, logs the transmission if verbose,
  * and simulates reception for protocol state consistency. Frees the packet after use.
  *
- * @param rs485 RS-485 handle.
- * @param ipc   IPC structure pointer.
+ * @param[in] rs485 RS-485 handle.
+ * @param[in] ipc   IPC structure pointer.
  */
 static void
 _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
@@ -178,7 +178,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
         rs485->write_bytes(pkt->skb->priv.data, pkt->skb->len);
         rs485->tx_mode(false);
 
-            // pretend that we received our own message
+            // pretend that we received our own message to ensure consistent state tracking
 
         bool txOpportunity = false;
         network_msg_t msg;
@@ -202,7 +202,7 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
  * Periodically sends heat and schedule request messages to the pool controller
  * to keep the pool state up to date.
  *
- * @param rs485_void Pointer to the RS-485 handle (as void* for FreeRTOS compatibility).
+ * @param[in] rs485_void Pointer to the RS-485 handle (as void* for FreeRTOS compatibility).
  */
 void
 pool_req_task(void * rs485_void) 
@@ -230,7 +230,7 @@ pool_req_task(void * rs485_void)
  *   - Maintaining protocol state and relaying messages between the controller and main
  *     task.
  *
- * @param ipc_void Pointer to the IPC structure.
+ * @param[in] ipc_void Pointer to the IPC structure (as void* for FreeRTOS compatibility).
  */
 void
 pool_task(void * ipc_void)

@@ -64,9 +64,14 @@ constexpr uint32_t    POOL_TASK_STACK_SIZE = 2 * 4096;
 constexpr UBaseType_t TO_POOL_QUEUE_LEN = 6;
 constexpr UBaseType_t TO_MAIN_QUEUE_LEN = 10;
 
-    // helper to only dump_config if entity exists
+/**
+ * @brief            Calls dump_config() on an entity if it exists.
+ *
+ * @tparam EntityT   The entity type (climate, switch, sensor, etc.).
+ * @param[in] entity Pointer to the entity, or nullptr.
+ */
 template<typename EntityT>
-static void 
+static void
 _dump_if(EntityT * const entity)
 {
     if (entity != nullptr) {
@@ -74,9 +79,16 @@ _dump_if(EntityT * const entity)
     }
 }
 
-    // helper to only publish if entity exists
+/**
+ * @brief            Publishes a value to an entity if it exists and the value is valid.
+ *
+ * @tparam EntityT   The entity type.
+ * @tparam ValueT    The value wrapper type (must have .valid and .value members).
+ * @param[in] entity Pointer to the entity, or nullptr.
+ * @param[in] base   The value wrapper containing validity flag and value.
+ */
 template<typename EntityT, typename ValueT>
-static void 
+static void
 _publish_if(EntityT * const entity, ValueT const base)
 {
     if (entity != nullptr && base.valid) {
@@ -84,9 +96,16 @@ _publish_if(EntityT * const entity, ValueT const base)
     }
 }
 
-    // helper to only publish if entity exists
+/**
+ * @brief            Publishes an enum value as a string to an entity if it exists and is valid.
+ *
+ * @tparam EntityT   The entity type.
+ * @tparam ValueT    The value wrapper type (must have .valid and .value members).
+ * @param[in] entity Pointer to the entity, or nullptr.
+ * @param[in] base   The value wrapper containing validity flag and enum value.
+ */
 template<typename EntityT, typename ValueT>
-static void 
+static void
 _publish_enum_if(EntityT * const entity, ValueT const base)
 {
     if (entity != nullptr && base.valid) {
@@ -94,7 +113,12 @@ _publish_enum_if(EntityT * const entity, ValueT const base)
     }
 }
 
-    // helper to publish scheduled times if entity exists
+/**
+ * @brief            Publishes a schedule as a formatted time range string.
+ *
+ * @param[in] sensor Pointer to the text sensor entity, or nullptr.
+ * @param[in] sched  Pointer to the schedule data structure.
+ */
 static void
 _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const * const sched)
 {
@@ -110,7 +134,12 @@ _publish_schedule_if(OpnPoolTextSensor * const sensor, poolstate_sched_t const *
     sensor->publish_value_if_changed(buf);
 }
 
-    // helper to publish date and time if entity exists
+/**
+ * @brief            Publishes date and time as a formatted string.
+ *
+ * @param[in] sensor Pointer to the text sensor entity, or nullptr.
+ * @param[in] tod    Pointer to the time-of-day data structure.
+ */
 static void
 _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t const * const tod)
 {
@@ -130,7 +159,12 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
     sensor->publish_value_if_changed(time_str);
 }
 
-    // helper to publish version if entity exists
+/**
+ * @brief             Publishes firmware version as a formatted string.
+ *
+ * @param[in] sensor  Pointer to the text sensor entity, or nullptr.
+ * @param[in] version Pointer to the version data structure.
+ */
 static void
 _publish_version_if(OpnPoolTextSensor * const sensor, poolstate_version_t const * const version)
 {
@@ -141,6 +175,12 @@ _publish_version_if(OpnPoolTextSensor * const sensor, poolstate_version_t const 
     }
 }
 
+/**
+ * @brief                Converts a thermostat type to its corresponding pool circuit index.
+ *
+ * @param[in] thermo_typ The thermostat type (POOL or SPA).
+ * @return               The circuit index for the corresponding pool circuit.
+ */
 [[nodiscard]] static uint8_t
 _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 {
@@ -156,7 +196,7 @@ _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 }
 
 /**
- * @brief Set up the OpnPool component.
+ * @brief  Set up the OpnPool component.
  *
  * This function initializes the OpnPool state, sets up inter-process communication (IPC)
  * queues, and starts the pool task that handles RS485 communication, datalink layer, and
@@ -216,7 +256,13 @@ OpnPool::setup() {
     }
 }
 
-OpnPool::~OpnPool() 
+/**
+ * @brief Destructor for OpnPool component.
+ *
+ * @details
+ * Cleans up resources including the pool task, IPC queues, and pool state.
+ */
+OpnPool::~OpnPool()
 {
     if (pool_task_handle_) {
         vTaskDelete(pool_task_handle_);
@@ -304,7 +350,12 @@ OpnPool::dump_config() {
     }
 }
 
-void 
+/**
+ * @brief Updates climate entities with current pool state.
+ *
+ * @param[in] state Pointer to the current pool state.
+ */
+void
 OpnPool::update_climates(const poolstate_t * const state)
 {
     for (auto climate_id : magic_enum::enum_values<climate_id_t>()) {
@@ -347,6 +398,11 @@ OpnPool::update_climates(const poolstate_t * const state)
     }
 }
 
+/**
+ * @brief Updates switch entities with current pool state.
+ *
+ * @param[in] state Pointer to the current pool state.
+ */
 void
 OpnPool::update_switches(const poolstate_t * const state)
 {
@@ -363,6 +419,11 @@ OpnPool::update_switches(const poolstate_t * const state)
     }
 }
 
+/**
+ * @brief Updates analog sensor entities with current pool state.
+ *
+ * @param[in] state Pointer to the current pool state.
+ */
 void
 OpnPool::update_analog_sensors(poolstate_t const * const state)
 {
@@ -407,7 +468,12 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     );
 }
 
-void 
+/**
+ * @brief Updates binary sensor entities with current pool state.
+ *
+ * @param[in] state Pointer to the current pool state.
+ */
+void
 OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
@@ -432,7 +498,12 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
     );
 }
 
-void 
+/**
+ * @brief Updates text sensor entities with current pool state.
+ *
+ * @param[in] state Pointer to the current pool state.
+ */
+void
 OpnPool::update_text_sensors(poolstate_t const * const state)
 {
     _publish_schedule_if(
@@ -469,9 +540,18 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
 }
 
-    // setters (required by ESPHome's component model)
+// ============================================================================
+// Setter methods (required by ESPHome's component model for code generation)
+// ============================================================================
 
-void 
+/**
+ * @brief Sets the RS-485 GPIO pin assignments.
+ *
+ * @param[in] rx_pin  GPIO pin for RS-485 receive.
+ * @param[in] tx_pin  GPIO pin for RS-485 transmit.
+ * @param[in] rts_pin GPIO pin for RS-485 direction control.
+ */
+void
 OpnPool::set_rs485_pins(uint8_t const rx_pin, uint8_t const tx_pin, uint8_t const rts_pin)
 {
     rs485_pins_.rx_pin = rx_pin;

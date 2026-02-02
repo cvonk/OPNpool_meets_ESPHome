@@ -8,7 +8,7 @@
  * versions, and status messages) to Home Assistant.
  *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
- * are not required within the main task context. The maximum number of climates is
+ * are not required within the main task context. The maximum number of text sensors is
  * limited by the use of uint8_t for indexing.
  *
  * @author Coert Vonk (@cvonk on GitHub)
@@ -38,7 +38,6 @@ constexpr char TAG[] = "opnpool_text_sensor";
  * known value (if valid). This information is useful for diagnostics and debugging,
  * providing visibility into the entity's state and configuration at runtime.
  */
-
 void
 OpnPoolTextSensor::dump_config()
 {
@@ -55,7 +54,7 @@ OpnPoolTextSensor::dump_config()
  * and publishes the new value to Home Assistant. This avoids redundant updates to Home
  * Assistant.
  *
- * @param value The new text sensor value to be published.
+ * @param[in] value The new text sensor value to be published.
  */
 void
 OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
@@ -67,7 +66,7 @@ OpnPoolTextSensor::publish_value_if_changed(const std::string & value)
             .valid = true,
             .value = value
         };
-        ESP_LOGV(TAG, "Publised %s", value.c_str());
+        ESP_LOGV(TAG, "Published %s", value.c_str());
     }
 }
 

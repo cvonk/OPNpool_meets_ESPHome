@@ -89,6 +89,19 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
     }
 }
 
+static void
+_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_typ_t const mode)
+{
+    cJSON_AddStringToObject(obj, key, enum_str(mode));
+}
+
+static void
+_add_pump_running(cJSON * const obj, char const * const key, bool const running)
+{
+    cJSON_AddBoolToObject(obj, key, running);
+}
+
+
     // add circuit information to a JSON object
 void
 add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t const * const circuits)
@@ -126,19 +139,6 @@ add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * t
         temp++;
     }
 }
-
-static void
-_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_typ_t const mode)
-{
-    cJSON_AddStringToObject(obj, key, enum_str(mode));
-}
-
-static void
-_add_pump_running(cJSON * const obj, char const * const key, bool const running)
-{
-    cJSON_AddBoolToObject(obj, key, running);
-}
-
 
 /**
  * @brief      Add time and date information to a JSON object for logging.

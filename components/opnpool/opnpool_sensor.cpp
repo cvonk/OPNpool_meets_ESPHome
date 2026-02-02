@@ -8,7 +8,7 @@
  * Home Assistant.
  *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
- * are not required within the main task context. The maximum number of climates is
+ * are not required within the main task context. The maximum number of sensors is
  * limited by the use of uint8_t for indexing.
  *
  * @author Coert Vonk (@cvonk on GitHub)
@@ -38,7 +38,6 @@ constexpr char TAG[] = "opnpool_sensor";
  * known value (if valid). This information is useful for diagnostics and debugging,
  * providing visibility into the entity's state and configuration at runtime.
  */
-
 void
 OpnPoolSensor::dump_config()
 {
@@ -55,8 +54,8 @@ OpnPoolSensor::dump_config()
  * the given tolerance, updates the internal state and publishes the new value to Home
  * Assistant. This avoids redundant updates to Home Assistant.
  *
- * @param value      The new sensor value to be published.
- * @param tolerance  The minimum change required to trigger a new state publication.
+ * @param[in] value     The new sensor value to be published.
+ * @param[in] tolerance The minimum change required to trigger a new state publication.
  */
 void
 OpnPoolSensor::publish_value_if_changed(float value, float tolerance)

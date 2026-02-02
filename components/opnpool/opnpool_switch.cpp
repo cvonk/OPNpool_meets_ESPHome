@@ -11,7 +11,7 @@
  * changes are published to Home Assistant, avoiding redundant updates.
  *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
- * are not required within the main task context. The maximum number of climates is
+ * are not required within the main task context. The maximum number of switches is
  * limited by the use of uint8_t for indexing.
  *
  * restore_mode is ignored because state is always synchronized from the pool controller.
@@ -50,7 +50,6 @@ constexpr char TAG[] = "opnpool_switch";
  * and debugging, providing visibility into the entity's state and configuration at
  * runtime.
  */
-
 void
 OpnPoolSwitch::dump_config()
 {
@@ -62,8 +61,7 @@ OpnPoolSwitch::dump_config()
 }
 
 /**
- * @brief
- * Handles switch state changes triggered by Home Assistant.
+ * @brief Handles switch state changes triggered by Home Assistant.
  *
  * @details
  * Constructs and sends a network message to the pool controller to set the state of the
@@ -72,7 +70,7 @@ OpnPoolSwitch::dump_config()
  * method is called automatically when the switch entity is toggled in Home Assistant or
  * ESPHome.
  *
- * @param state The desired state of the switch (true for ON, false for OFF).
+ * @param[in] state The desired state of the switch (true for ON, false for OFF).
  */
 void
 OpnPoolSwitch::write_state(bool value)
@@ -99,15 +97,14 @@ OpnPoolSwitch::write_state(bool value)
 }
 
 /**
- * @brief
- * Publishes the switch state to Home Assistant if it has changed.
+ * @brief Publishes the switch state to Home Assistant if it has changed.
  *
  * @details
  * Compares the new switch state with the last published state. If the state has changed
  * or is not yet valid, updates the internal state and publishes the new value to Home
  * Assistant. This avoids redundant updates to Home Assistant.
  *
- * @param value The new state of the switch (true for ON, false for OFF).
+ * @param[in] value The new state of the switch (true for ON, false for OFF).
  */
 void
 OpnPoolSwitch::publish_value_if_changed(bool value)

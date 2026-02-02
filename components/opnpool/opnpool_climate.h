@@ -43,7 +43,7 @@ class OpnPoolClimate : public climate::Climate, public Component {
      * @brief Constructs an OpnPoolClimate instance.
      *
      * @param[in] parent Pointer to the parent OpnPool component.
-     * @param[in] id     The climate entity ID (POOL_CLIMATE or SPA_CLIMATE).
+     * @param[in] id     The climate entity ID (POOL or SPA).
      */
     OpnPoolClimate(OpnPool* parent, uint8_t id) : parent_{parent}, id_{static_cast<climate_id_t>(id)} {}
 
