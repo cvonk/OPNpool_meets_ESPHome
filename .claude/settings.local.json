@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:components.espressif.com)",
+      "Bash(python -m idf_component_manager:*)",
+      "Bash(dir:*)"
     ]
   }
 }

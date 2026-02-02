@@ -32,6 +32,7 @@ if sys.version_info < (3, 6):
 import os
 import esphome.codegen as cg
 import esphome.config_validation as cv
+from esphome.components import esp32
 from esphome.components import climate, switch, sensor, binary_sensor, text_sensor
 from esphome.components.sensor import STATE_CLASSES
 from esphome.const import (
@@ -55,6 +56,12 @@ CONF_RS485 = "rs485"
 CONF_RS485_RX_PIN = "rx_pin"
 CONF_RS485_TX_PIN = "tx_pin"
 CONF_RS485_RTS_PIN = "rts_pin"
+
+# Matter over Thread configuration
+CONF_MATTER = "matter"
+CONF_MATTER_ENABLED = "enabled"
+CONF_MATTER_DISCRIMINATOR = "discriminator"
+CONF_MATTER_PASSCODE = "passcode"
 
 # MUST be in the same order as network_pool_thermo_t
 CONF_CLIMATES = [  # used to overwrite climate_id_t enum in opnpool.h
@@ -120,6 +127,13 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional(CONF_RS485_RX_PIN, default=22): cv.int_,
         cv.Optional(CONF_RS485_RTS_PIN, default=23): cv.int_,
     }),
+    # Matter over Thread settings (optional, disabled by default)
+    # Requires ESP32-C6 or ESP32-H2 with Thread radio support
+    cv.Optional(CONF_MATTER, default={}): cv.Schema({
+        cv.Optional(CONF_MATTER_ENABLED, default=False): cv.boolean,
+        cv.Optional(CONF_MATTER_DISCRIMINATOR, default=3840): cv.int_range(min=0, max=4095),
+        cv.Optional(CONF_MATTER_PASSCODE, default=20202021): cv.int_range(min=1, max=99999998),
+    }),
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): climate.climate_schema(OpnPoolClimate).extend({
             cv.GenerateID(): cv.declare_id(OpnPoolClimate)
@@ -168,21 +182,20 @@ async def to_code(config):
 
     # add all source files to build
     cg.add_library("ESP32", None, "freertos")
-    
+
+
     # add component source files
     component_dir = os.path.dirname(__file__)
     
-    # C++ entity implementation files
+    # C++ entity implementation files (including matter subdirectory)
     cg.add_platformio_option("build_src_filter", [
         "+<*>",
         "+<esphome/components/opnpool/*.cpp>",
+        "+<esphome/components/opnpool/matter/*.cpp>",
     ])
     
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
-    cg.add_build_flag("-DMAGIC_ENUM_RANGE_MIN=0")
-    cg.add_build_flag("-DMAGIC_ENUM_RANGE_MAX=256")
-
     cg.add_build_flag("-Wl,-Map=output.map")
 
     # interface firmware version
@@ -221,6 +234,42 @@ async def to_code(config):
     # RS485 configuration
     rs485_config = config[CONF_RS485]
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_RTS_PIN]))
+
+    # Matter over Thread configuration (optional)
+    # IMPORTANT: Matter support requires:
+    #   1. ESP32-C6 or ESP32-H2 (with Thread 802.15.4 radio)
+    #   2. ESP-IDF v5.x with esp-matter component (via IDF Component Manager)
+    #   3. framework: type: esp-idf in your ESPHome YAML
+    #
+    # The esp-matter SDK is available as a managed component via idf_component.yml.
+    # After the first build, you may need to run 'idf.py reconfigure' in the build
+    # directory to download managed components.
+    #
+    # See: https://components.espressif.com/components/espressif/esp_matter
+    matter_config = config[CONF_MATTER]
+    if matter_config[CONF_MATTER_ENABLED]:
+        import logging
+
+        cg.add_define("USE_MATTER")
+        cg.add_build_flag("-DCONFIG_ENABLE_MATTER=1")
+        cg.add(var.set_matter_config(
+            matter_config[CONF_MATTER_DISCRIMINATOR],
+            matter_config[CONF_MATTER_PASSCODE]
+        ))
+
+        # Add include path for matter subdirectory
+        component_dir = os.path.dirname(os.path.abspath(__file__))
+        component_dir_cmake = component_dir.replace("\\", "/")
+        cg.add_build_flag(f"-I{component_dir_cmake}")
+
+        # Log Matter configuration
+        # NOTE: esp-matter integration requires manual setup:
+        #   1. Copy idf_component.yml to the ESPHome build directory's main component
+        #   2. Run 'idf.py reconfigure' to download esp-matter
+        #   3. Rebuild the project
+        # See: https://components.espressif.com/components/espressif/esp_matter
+        logging.info("OPNpool: Matter enabled with discriminator=%d", matter_config[CONF_MATTER_DISCRIMINATOR])
+        logging.warning("OPNpool: Matter requires manual esp-matter setup. See idf_component.yml in project root")
 
     # register climate entities (constructor injection)
     for id, climate_key in enumerate(CONF_CLIMATES):

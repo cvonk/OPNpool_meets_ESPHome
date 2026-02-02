@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"U:\\\\Users\\\\Coert\\\\src\\\\OPNpool_meets_ESPHome\\\\.esphome\\\\build\\\\opnpool-1\\\\managed_components\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object -First 10)"
+    ]
+  }
+}

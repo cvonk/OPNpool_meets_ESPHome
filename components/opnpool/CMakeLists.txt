@@ -1,0 +1,28 @@
+idf_component_register(
+    SRCS 
+        "opnpool.cpp"
+        "opnpool_binary_sensor.cpp"
+        "opnpool_climate.cpp"
+        "opnpool_ids.cpp"
+        "opnpool_sensor.cpp"
+        "opnpool_switch.cpp"
+        "opnpool_text_sensor.cpp"
+        "datalink.cpp"
+        "datalink_rx.cpp"
+        "datalink_tx.cpp"
+        "ipc.cpp"
+        "network_create.cpp"
+        "network_rx.cpp"
+        "pool_task.cpp"
+        "poolstate_rx.cpp"
+        "poolstate_rx_log.cpp"
+        "rs485.cpp"
+        "skb.cpp"
+        "to_str.cpp"
+        "matter/matter_bridge.cpp"
+    INCLUDE_DIRS "." "matter"
+    REQUIRES 
+        esp_matter
+        nvs_flash 
+        json
+)

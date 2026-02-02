@@ -25,6 +25,10 @@
 #include "enum_helpers.h"
 #include "opnpool_ids.h"
 
+#ifdef USE_MATTER
+#include "matter/matter_bridge.h"
+#endif
+
 namespace esphome {
 namespace opnpool {
 
@@ -109,6 +113,20 @@ class OpnPool : public Component {
     void set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts);
     void set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts);
 
+#ifdef USE_MATTER
+    // ========== Matter Configuration ==========
+    void set_matter_config(uint16_t discriminator, uint32_t passcode);
+
+    /// @brief Check if Matter is enabled and initialized.
+    [[nodiscard]] bool is_matter_enabled() const { return matter_bridge_ != nullptr; }
+
+    /// @brief Check if Matter device is commissioned to a fabric.
+    [[nodiscard]] bool is_matter_commissioned() const;
+
+    /// @brief Get Matter QR code for commissioning.
+    size_t get_matter_qr_code(char * buf, size_t buf_size) const;
+#endif
+
     // ========== Entity Update Methods ==========
     void update_climates(poolstate_t const * const state);
     void update_switches(poolstate_t const * const state);
@@ -134,6 +152,12 @@ class OpnPool : public Component {
     OpnPoolSensor * sensors_[enum_count<sensor_id_t>()]{nullptr};                 ///< Sensor entity pointers.
     OpnPoolBinarySensor * binary_sensors_[enum_count<binary_sensor_id_t>()]{nullptr}; ///< Binary sensor pointers.
     OpnPoolTextSensor * text_sensors_[enum_count<text_sensor_id_t>()]{nullptr};   ///< Text sensor pointers.
+
+#ifdef USE_MATTER
+    // ========== Matter Integration ==========
+    matter::MatterBridge * matter_bridge_{nullptr};  ///< Matter bridge instance.
+    matter::matter_config_t matter_config_{};        ///< Matter configuration.
+#endif
 };
 
 } // namespace opnpool

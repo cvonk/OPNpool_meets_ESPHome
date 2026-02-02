@@ -254,6 +254,31 @@ OpnPool::setup() {
             interface_firmware->publish_state("unknown");
 #endif
     }
+
+#ifdef USE_MATTER
+        // Initialize Matter bridge if configured
+    if (matter_config_.discriminator != 0 || matter_config_.passcode != 0) {
+        matter_bridge_ = new matter::MatterBridge();
+        if (matter_bridge_ == nullptr) {
+            ESP_LOGE(TAG, "Failed to allocate Matter bridge");
+        } else {
+            esp_err_t err = matter_bridge_->init(&matter_config_);
+            if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to initialize Matter bridge: %s", esp_err_to_name(err));
+                delete matter_bridge_;
+                matter_bridge_ = nullptr;
+            } else {
+                ESP_LOGI(TAG, "Matter bridge initialized successfully");
+
+                // Log QR code for commissioning
+                char qr_buf[64];
+                if (matter_bridge_->get_qr_code(qr_buf, sizeof(qr_buf)) > 0) {
+                    ESP_LOGI(TAG, "Matter QR code: %s", qr_buf);
+                }
+            }
+        }
+    }
+#endif
 }
 
 /**
@@ -264,6 +289,13 @@ OpnPool::setup() {
  */
 OpnPool::~OpnPool()
 {
+#ifdef USE_MATTER
+    if (matter_bridge_ != nullptr) {
+        delete matter_bridge_;
+        matter_bridge_ = nullptr;
+    }
+#endif
+
     if (pool_task_handle_) {
         vTaskDelete(pool_task_handle_);
     }
@@ -312,8 +344,28 @@ OpnPool::loop() {
             }
  
             ESP_LOGVV(TAG, "FYI Poolstate changed");
+
+#ifdef USE_MATTER
+                // Update Matter endpoints with new state
+            if (matter_bridge_ != nullptr) {
+                matter_bridge_->update_from_poolstate(&new_state);
+            }
+#endif
         }
     }
+
+#ifdef USE_MATTER
+        // Process pending Matter commands (from Matter controller → pool)
+    if (matter_bridge_ != nullptr) {
+        network_msg_t matter_cmd = {};
+        while (matter_bridge_->get_pending_command(&matter_cmd)) {
+            ESP_LOGD(TAG, "Processing Matter command: %s", enum_str(matter_cmd.typ));
+            if (xQueueSend(ipc_->to_pool_q, &matter_cmd, 0) != pdPASS) {
+                ESP_LOGW(TAG, "Failed to queue Matter command to pool_task");
+            }
+        }
+    }
+#endif
 }
 
 /**
@@ -753,9 +805,53 @@ OpnPool::set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts)
 
 void
 OpnPool::set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts)
-{ 
-    this->text_sensors_[enum_index(text_sensor_id_t::INTERFACE_FIRMWARE)] = ts; 
+{
+    this->text_sensors_[enum_index(text_sensor_id_t::INTERFACE_FIRMWARE)] = ts;
 }
+
+#ifdef USE_MATTER
+/**
+ * @brief Configure Matter over Thread settings.
+ *
+ * @param[in] discriminator Device discriminator for pairing (0-4095).
+ * @param[in] passcode      Setup passcode for commissioning (1-99999998).
+ */
+void
+OpnPool::set_matter_config(uint16_t const discriminator, uint32_t const passcode)
+{
+    matter_config_.discriminator = discriminator;
+    matter_config_.passcode = passcode;
+    ESP_LOGI(TAG, "Matter config set: discriminator=%u, passcode=%lu",
+             discriminator, static_cast<unsigned long>(passcode));
+}
+
+/**
+ * @brief Check if Matter device is commissioned to a fabric.
+ *
+ * @return True if commissioned, false otherwise.
+ */
+bool
+OpnPool::is_matter_commissioned() const
+{
+    return matter_bridge_ != nullptr && matter_bridge_->is_commissioned();
+}
+
+/**
+ * @brief Get Matter QR code payload for commissioning.
+ *
+ * @param[out] buf      Buffer to write QR code string.
+ * @param[in]  buf_size Size of buffer.
+ * @return              Length of QR code string, or 0 on error.
+ */
+size_t
+OpnPool::get_matter_qr_code(char * buf, size_t buf_size) const
+{
+    if (matter_bridge_ == nullptr) {
+        return 0;
+    }
+    return matter_bridge_->get_qr_code(buf, buf_size);
+}
+#endif  // USE_MATTER
 
 }  // namespace opnpool
 }  // namespace esphome

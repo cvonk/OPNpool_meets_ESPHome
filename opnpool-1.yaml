@@ -16,12 +16,17 @@ esphome:
   name: ${device_name}
   comment: ${description}
   friendly_name: ${friendly_name}
-
+      
 esp32:
   variant: esp32c6           # esp32c6            for >= r4 boards, esp32     for <= r3 boards
   board: esp32-c6-devkitc-1  # esp32-c6-devkitc-1 for >= r4 boards, lolin_d32 for <= r3 boards
+  #partitions: partitions_matter.csv
   framework:
     type: esp-idf
+    #components:
+    #  - "espressif/esp_matter^1.4.2~1"   
+    #sdkconfig_options:
+    #  CONFIG_ESP_MAIN_TASK_STACK_SIZE: "8192"
 
 logger:
   level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
@@ -95,6 +100,11 @@ opnpool:
   #  tx_pin:  26  # default 21 (GPIO21)
   #  rx_pin:  25  # default 22 (GPIO22)
   #  rts_pin: 27  # default 23 (GPIO23)
+
+  matter:
+    enabled: false                               # waiting for ESPHome native support
+    discriminator: !secret matter_discriminator  # For QR code pairing (0-4095)
+    passcode: !secret matter_passcode            # Setup code (1-99999998)
 
   # climate thermostats
   pool_climate:
