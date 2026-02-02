@@ -64,11 +64,11 @@ namespace poolstate_rx {
 
 constexpr char TAG[] = "poolstate_rx";
 
-    /**********************\
-      State Update Helpers
-    \**********************/
+/// @name State Update Helpers
+/// @brief Internal functions for updating pool state fields from message data.
+/// @{
 
-static void 
+static void
 _update_circuit_active_from_bits(poolstate_circuit_t * const arr, uint16_t const bits, uint8_t const count)
 {
     for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
@@ -226,9 +226,11 @@ _update_temps(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, p
     }
 }
 
-    /*****************************\
-      Controller Message Handlers    
-    \*****************************/
+/// @}
+
+/// @name Controller Message Handlers
+/// @brief Handlers for messages from the pool controller.
+/// @{
 
 /**
  * @brief       Process a controller time message and update the pool state.
@@ -579,9 +581,11 @@ _ctrl_set_ack(cJSON * const dbg, network_ctrl_set_ack_t const * const msg)
     }
 }
 
-    /**********************\
-      Pump Message Handlers
-    \**********************/
+/// @}
+
+/// @name Pump Message Handlers
+/// @brief Handlers for messages from variable-speed pumps.
+/// @{
 
 /**
  * @brief            Process a pump register set message and log the register update.
@@ -811,9 +815,11 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
     }
 }
 
-    /******************************\
-      Chlorinator Message Handlers
-    \******************************/
+/// @}
+
+/// @name Chlorinator Message Handlers
+/// @brief Handlers for messages from the salt chlorine generator.
+/// @{
 
 /**
  * @brief       Process a chlorine generator name response message, update the pool state, and log the status.
@@ -926,9 +932,11 @@ _chlor_level_set_resp(cJSON * const dbg, network_chlor_level_resp_t const * cons
     }
 }
 
-    /******************\
-      Main Entry Point
-    \******************/
+/// @}
+
+/// @name Main Entry Point
+/// @brief Primary function for dispatching network messages to handlers.
+/// @{
 
 /**
  * @brief           Process a received network message and update the pool state.
@@ -1106,7 +1114,9 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
     return ESP_OK;
 }
 
-} // namespace poolstate_rx
+/// @}
+
+}  // namespace poolstate_rx
 
 } // namespace opnpool
 } // namespace esphome  

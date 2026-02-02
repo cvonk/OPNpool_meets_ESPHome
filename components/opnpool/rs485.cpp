@@ -63,7 +63,7 @@ static gpio_num_t  _rts_pin;
 /**
  * @brief Returns the number of bytes available in the UART RX buffer.
  */
-[[nodiscard]] static int
+static int
 _available()
 {
     size_t length = 0;
@@ -72,11 +72,11 @@ _available()
 }
 
 /**
- * @brief     Reads bytes from the UART RX buffer with a timeout.
+ * @brief          Reads bytes from the UART RX buffer with a timeout.
  *
- * @param dst Destination buffer.
- * @param len Number of bytes to read.
- * @return    Number of bytes read.
+ * @param[out] dst Destination buffer.
+ * @param[in]  len Number of bytes to read.
+ * @return         Number of bytes read.
  */
 [[nodiscard]] static int
 _read_bytes(uint8_t * dst, uint32_t len)
@@ -85,11 +85,11 @@ _read_bytes(uint8_t * dst, uint32_t len)
 }
 
 /**
- * @brief     Writes bytes to the UART TX buffer.
+ * @brief         Writes bytes to the UART TX buffer.
  *
- * @param src Source buffer.
- * @param len Number of bytes to write.
- * @return    Number of bytes written.
+ * @param[in] src Source buffer.
+ * @param[in] len Number of bytes to write.
+ * @return        Number of bytes written.
  */
 [[nodiscard]] static int
 _write_bytes(uint8_t * src, size_t len)
@@ -108,10 +108,10 @@ _flush(void)
 }
 
 /**
- * @brief        Queues a packet for transmission on the RS-485 bus.
+ * @brief            Queues a packet for transmission on the RS-485 bus.
  *
- * @param handle RS-485 handle.
- * @param pkt    Packet to queue.
+ * @param[in] handle RS-485 handle.
+ * @param[in] pkt    Packet to queue.
  */
 static void
 _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
@@ -129,10 +129,10 @@ _queue(rs485_handle_t const handle, datalink_pkt_t const * const pkt)
 }
 
 /**
- * @brief        Dequeues a packet from the RS-485 transmit queue.
+ * @brief            Dequeues a packet from the RS-485 transmit queue.
  *
- * @param handle RS-485 handle.
- * @return       Pointer to the dequeued packet, or NULL if none available.
+ * @param[in] handle RS-485 handle.
+ * @return           Pointer to the dequeued packet, or NULL if none available.
  */
 [[nodiscard]] static datalink_pkt_t const *
 _dequeue(rs485_handle_t const handle)
@@ -148,9 +148,9 @@ _dequeue(rs485_handle_t const handle)
 }
 
 /**
- * @brief           Sets the RS-485 transceiver to transmit or receive mode.
+ * @brief               Sets the RS-485 transceiver to transmit or receive mode.
  *
- * @param tx_enable True to enable transmit mode, false for receive mode.
+ * @param[in] tx_enable True to enable transmit mode, false for receive mode.
  */
 static void
 _tx_mode(bool const tx_enable)
@@ -179,8 +179,8 @@ _tx_mode(bool const tx_enable)
  * function pointers for RS485 operations. Returns a handle to the initialized RS485
  * interface for use by higher-level protocol layers.
  *
- * @param rs485_pins Pointer to the structure containing RX, TX, and RTS pin numbers.
- * @return rs485_handle_t Handle to the initialized RS485 interface.
+ * @param[in] rs485_pins Pointer to the structure containing RX, TX, and RTS pin numbers.
+ * @return               Handle to the initialized RS485 interface.
  */
 [[nodiscard]] rs485_handle_t
 rs485_init(rs485_pins_t const * const rs485_pins)

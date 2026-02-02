@@ -1,13 +1,7 @@
-# SPDX-License-Identifier: GPL-3.0-or-later
-# SPDX-FileCopyrightText: 2026 Coert Vonk
-
 """
 @file __init__.py
-@author Coert Vonk (@cvonk on GitHub)
 @brief OPNpool - ESPHome Python codegen for the OPNpool component.
  
-@copyright Copyright (c) 2026, Coert Vonk
-
 @details This file defines the ESPHome code generation logic for the OPNpool component,
 which integrates an OPNpool interface with the ESPHome ecosystem. It declares the
 configuration schema, entity types, and code generation routines for climate, switch,
@@ -25,6 +19,10 @@ opnpool.h consistent with CONF_* in this file.
 
 This module enables seamless integration of pool automation hardware into ESPHome YAML
 configurations, supporting flexible entity mapping and robust build-time configuration.
+
+@author Coert Vonk (@cvonk on GitHub)
+@copyright 2014, 2019, 2022, 2026, Coert Vonk
+@license SPDX-License-Identifier: GPL-3.0-or-later
 """
 
 import sys
@@ -154,6 +152,16 @@ CONFIG_SCHEMA = cv.Schema({
 
 
 async def to_code(config):
+    """Generate C++ code for the OPNpool ESPHome component.
+
+    This async function is called by ESPHome's code generation framework to produce
+    the C++ code that implements the OPNpool component. It instantiates the main
+    OpnPool component, configures RS485 pins, registers all entity types (climate,
+    switch, sensor, binary sensor, text sensor), and adds necessary build flags.
+
+    Args:
+        config: The validated configuration dictionary from the ESPHome YAML.
+    """
     # instantiate the main OpnPool component
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
@@ -273,6 +281,18 @@ ENTITY_ENUMS = {
 }
 
 def generate_enum(enum_name, items):
+    """Generate a C++ enum class definition from a list of items.
+
+    Creates a C++ enum class with uint8_t underlying type, where each item
+    is assigned a sequential value starting from 0.
+
+    Args:
+        enum_name: The name for the C++ enum class (e.g., "climate_id_t").
+        items: List of enum member names in lowercase with underscores.
+
+    Returns:
+        A string containing the complete C++ enum class definition.
+    """
     lines = [f"enum class {enum_name} : uint8_t {{"]
     for id, name in enumerate(items):
         lines.append(f"    {name.upper()} = {id},")
@@ -280,6 +300,19 @@ def generate_enum(enum_name, items):
     return "\n".join(lines)
 
 def update_header(header_path, entity_enums):
+    """Update C++ header file with regenerated enum definitions.
+
+    Reads the specified header file, replaces all entity enum definitions with
+    newly generated versions based on the Python CONF_* lists, and atomically
+    writes the updated content back to the file.
+
+    This ensures the C++ enums in opnpool_ids.h stay synchronized with the
+    entity configurations defined in this Python module.
+
+    Args:
+        header_path: Absolute path to the C++ header file to update.
+        entity_enums: Dict mapping enum names to lists of enum member names.
+    """
     import tempfile
     import shutil
 
