@@ -25,9 +25,7 @@ No prior experience with pool automation or ESPHome is required. The documentati
 
 This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
 
-> This open source and hardware project is intended to comply with the October 2016 
-> exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a
-> controlled environment designed to avoid any harm to individuals or to the public.
+> This open source and hardware project is intended to comply with the October 2016 exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a controlled environment designed to avoid any harm to individuals or to the public.
 
 ## Acknowledgements
 
@@ -231,6 +229,8 @@ The entire schematic fits comfortably on a compact two-layer PCB. The board was 
 | PCB Screws  | Machine screw, #6-32 x x 3/16", panhead                  | Keystone-Electronics 9306  | [$0.10](https://www.digikey.com/en/products/detail/keystone-electronics/9306/2746085?s=N4IgjCBcpgTB0QGMoDMCGAbAzgUwDQgD2UA2iLAAwCsIAuoQA4AuUIAyswE4CWAdgHMQAX2GFYZEAGlcAT2zMifXAFoAoplxJuSnkmwACAJwBmSgDZ6woA)
 | CONN Screws | Machine screw, M2-0.4 x 16 mm, cheese head               | Essentra 50M020040D016     | [$0.28](https://www.digikey.com/en/products/detail/essentra-components/50M020040D016/11639297)
 | CONN Nuts   | Hex nut, M2-0.4, nylon                                   | Essentra 04M020040HN       | [$0.15](https://www.digikey.com/en/products/detail/essentra-components/04M020040HN/9677098)
+
+Note that tariffs and shipping will add to the cost.
 
 ## Troubleshooting
 
