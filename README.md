@@ -1,4 +1,4 @@
-[![GitHub Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://github.com/cvonk/OPNpool_meets_ESPHome/discussions)
+[![ESPHome Discussions](https://img.shields.io/github/discussions/cvonk/OPNpool_meets_ESPHome)](https://community.home-assistant.io/t/opnpool-meets-esphome-pentair-suntouch-controller-into-home-assistant/981965)
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
