@@ -14,29 +14,28 @@ At its core, OPNpool connects an ESP32 microcontroller to your pool controller�
 
 ## Features
 
-  - [x] **Smart Home Integration:** Native support for Home Assistant and ESPHome.
-  - [x] **Remote Monitoring & Control:** Access your pool’s status and controls from anywhere.
-  - [x] **Community Driven:** Built on the work of pool automation enthusiasts and reverse engineers.
-  - [x] **Open Source:** Fully transparent hardware and software—customize and extend as needed.
+- [x] **Smart Home Integration:** Native support for Home Assistant and ESPHome.
+- [x] **Remote Monitoring & Control:** Access your pool’s status and controls from anywhere.
+- [x] **Community Driven:** Built on the work of pool automation enthusiasts and reverse engineers.
+- [x] **Open Source:** Fully transparent hardware and software—customize and extend as needed.
 
 ## Getting started
 
 No prior experience with pool automation or ESPHome is required. The documentation below will guide you through hardware assembly, wiring, firmware installation, and Home Assistant integration. If you have questions or need help, join the project’s GitHub Discussions for community support.
 
-This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor salt water chlorinator.
+This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor saltwater chlorinator.
 
 > This open source and hardware project is intended to comply with the October 2016 exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a controlled environment designed to avoid any harm to individuals or to the public.
 
 ## Acknowledgements
 
-> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if if I forgot you.)
+> We proudly acknowledge the work of reverse engineering pioneers [Joshua Bloch](https://docs.google.com/document/d/1M0KMfXfvbszKeqzu6MUF_7yM6KDHk8cZ5nrH1_OUcAc/edit), [Michael Russe](http://cocoontech.com/forums/files/file/173-pab014sharezip/), and [George Saw](http://cocoontech.com/forums/topic/27864-download-pitzip/). (Drop me a line if I forgot you.)
 
 ## Usage
 
-Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an addon to Home Assistant.
+Start with [installing the ESPHome environment](https://esphome.io/guides/installing_esphome/) on a beefy computer. In my case, this cut the compilation time to a minute, compared to half an hour when running it as an add-on to Home Assistant.
 
 In an empty directory, create a `opnpool-1.yaml` configuration file as shown below.
-
 ```yaml
 substitutions:
   device_name: opnpool-1
