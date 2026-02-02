@@ -4,6 +4,9 @@
 # Increase main task stack size for complex operations
 CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
 
+# Flash size configuration (ESP32-C6-DevKitC-1 has 8MB flash)
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+
 # OpenThread settings (when using Thread networking)
 # CONFIG_OPENTHREAD_ENABLED=y
 # CONFIG_OPENTHREAD_FTD=y

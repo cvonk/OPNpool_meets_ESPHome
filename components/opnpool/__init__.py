@@ -183,7 +183,6 @@ async def to_code(config):
     # add all source files to build
     cg.add_library("ESP32", None, "freertos")
 
-
     # add component source files
     component_dir = os.path.dirname(__file__)
     component_dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -198,6 +197,11 @@ async def to_code(config):
     # larger app partitions for Matter/Thread
     partitions_path = os.path.join(component_dir_path, "partitions.csv").replace("\\", "/")
     cg.add_platformio_option("board_build.partitions", partitions_path)
+
+    # ESP32-C6-DevKitC-1 has 8MB flash (override board defaults)
+    cg.add_platformio_option("board_build.flash_size", "8MB")
+    cg.add_platformio_option("board_upload.flash_size", "8MB")
+    cg.add_platformio_option("board_upload.maximum_size", 8388608)  # 8MB in bytes
 
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
