@@ -14,7 +14,7 @@ or ESPHome version for build metadata. - Adding required build flags and source 
 the C++ implementation. - Providing async routines to instantiate and link all entities to
 the main OpnPool component.
 
-WARNING: The script directly edits the `opnpool.h` header file to keep the enums in
+WARNING: The script directly edits the `opnpool_ids.h` header file to keep the enums in
 opnpool.h consistent with CONF_* in this file.
 
 This module enables seamless integration of pool automation hardware into ESPHome YAML
@@ -90,24 +90,14 @@ CONF_SWITCHES = [  # used to overwrite switch_id_t enum in opnpool.h
     "feature3",
     "feature4"
 ]
-CONF_ANALOG_SENSORS = [  # used to overwrite sensor_id_t enum in opnpool.h
-    "air_temperature",
-    "water_temperature",
-    "primary_pump_power",
-    "primary_pump_flow",
-    "primary_pump_speed",
-    "chlorinator_level",
-    "chlorinator_salt",
-    "primary_pump_error"
-]
-CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
-    "air_temperature": {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
-    "water_temperature": {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+CONF_ANALOG_SENSORS = { # keys are used to overwrite sensor_id_t enum in opnpool.h
+    "air_temperature":    {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "water_temperature":  {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
     "primary_pump_power": {"unit": UNIT_WATT, CONF_DEVICE_CLASS: DEVICE_CLASS_POWER, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
-    "primary_pump_flow": {"unit": "gal/min", CONF_DEVICE_CLASS: DEVICE_CLASS_VOLUME_FLOW_RATE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "primary_pump_flow":  {"unit": "gal/min", CONF_DEVICE_CLASS: DEVICE_CLASS_VOLUME_FLOW_RATE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
     "primary_pump_speed": {"unit": UNIT_REVOLUTIONS_PER_MINUTE, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
-    "chlorinator_level": {"unit": UNIT_PERCENT, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
-    "chlorinator_salt": {"unit": UNIT_PARTS_PER_MILLION, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "chlorinator_level":  {"unit": UNIT_PERCENT, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "chlorinator_salt":   {"unit": UNIT_PARTS_PER_MILLION, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
     "primary_pump_error": {"unit": UNIT_EMPTY, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
 }
 CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.h
@@ -159,9 +149,8 @@ CONFIG_SCHEMA = cv.Schema({
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): sensor.sensor_schema(OpnPoolSensor).extend({
             cv.GenerateID(): cv.declare_id(OpnPoolSensor),
-            cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSOR_META[key]["unit"]): cv.string,
-            cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key][CONF_DEVICE_CLASS]): cv.string,
-            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key][CONF_STATE_CLASS]): cv.one_of(*STATE_CLASSES, lower=True),
+            cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSORS[key]["unit"]): cv.string,
+            cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSORS[key][CONF_DEVICE_CLASS]): cv.string,
         }) for key in CONF_ANALOG_SENSORS
     },
     **{
@@ -221,7 +210,6 @@ async def to_code(config):
     # interface firmware version
     version = "unknown"
     try:
-        component_dir = os.path.dirname(os.path.abspath(__file__))
         git_hash = subprocess.check_output(
             ['git', 'rev-parse', '--short', 'HEAD'],
             cwd=component_dir,
@@ -335,7 +323,7 @@ async def to_code(config):
         await text_sensor.register_text_sensor(ts_entity, entity_cfg)
         cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
 
-# replace the enums in opnpool.h to keep them consistent with CONF_* in this file
+# replace the enums in opnpool_ids.h to keep them consistent with CONF_* in this file
 
 ENTITY_ENUMS = {
     "climate_id_t": CONF_CLIMATES,
