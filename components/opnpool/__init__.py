@@ -30,14 +30,16 @@ if sys.version_info < (3, 6):
     raise RuntimeError("OPNpool ESPHome component requires Python 3.6 or newer.")
 
 import os
+import re
+import subprocess
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import esp32
 from esphome.components import climate, switch, sensor, binary_sensor, text_sensor
-from esphome.components.sensor import STATE_CLASSES
 from esphome.const import (
-    CONF_ID, CONF_UNIT_OF_MEASUREMENT, CONF_DEVICE_CLASS,
-    CONF_STATE_CLASS, STATE_CLASS_MEASUREMENT,
+    CONF_ID,
+    CONF_DEVICE_CLASS, DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_POWER, DEVICE_CLASS_VOLUME_FLOW_RATE, DEVICE_CLASS_EMPTY,
+    CONF_UNIT_OF_MEASUREMENT, UNIT_CELSIUS, UNIT_WATT, UNIT_EMPTY, UNIT_REVOLUTIONS_PER_MINUTE, UNIT_PARTS_PER_MILLION, UNIT_PERCENT,
+    CONF_STATE_CLASS, STATE_CLASS_MEASUREMENT
 )
 
 DEPENDENCIES = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
@@ -62,6 +64,14 @@ CONF_MATTER = "matter"
 CONF_MATTER_ENABLED = "enabled"
 CONF_MATTER_DISCRIMINATOR = "discriminator"
 CONF_MATTER_PASSCODE = "passcode"
+
+# Flash size configuration
+CONF_FLASH_SIZE = "flash_size"
+FLASH_SIZES = {
+    "4MB": 4194304,
+    "8MB": 8388608,
+    "16MB": 16777216,
+}
 
 # MUST be in the same order as network_pool_thermo_t
 CONF_CLIMATES = [  # used to overwrite climate_id_t enum in opnpool.h
@@ -91,14 +101,14 @@ CONF_ANALOG_SENSORS = [  # used to overwrite sensor_id_t enum in opnpool.h
     "primary_pump_error"
 ]
 CONF_ANALOG_SENSOR_META = {  # MUST MATCH CONF_ANALOG_SENSORS order
-    "air_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
-    "water_temperature": {"unit": "°C", "device_class": "temperature", "state_class": "measurement"},
-    "primary_pump_power": {"unit": "W", "device_class": "power", "state_class": "measurement"},
-    "primary_pump_flow": {"unit": "gal/min", "device_class": "volume_flow_rate", "state_class": "measurement"},
-    "primary_pump_speed": {"unit": "rpm", "device_class": "", "state_class": "measurement"},
-    "chlorinator_level": {"unit": "%", "device_class": "", "state_class": "measurement"},
-    "chlorinator_salt": {"unit": "ppm", "device_class": "", "state_class": "measurement"},
-    "primary_pump_error": {"unit": "", "device_class": "", "state_class": "measurement"},
+    "air_temperature": {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "water_temperature": {"unit": UNIT_CELSIUS, CONF_DEVICE_CLASS: DEVICE_CLASS_TEMPERATURE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "primary_pump_power": {"unit": UNIT_WATT, CONF_DEVICE_CLASS: DEVICE_CLASS_POWER, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "primary_pump_flow": {"unit": "gal/min", CONF_DEVICE_CLASS: DEVICE_CLASS_VOLUME_FLOW_RATE, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "primary_pump_speed": {"unit": UNIT_REVOLUTIONS_PER_MINUTE, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "chlorinator_level": {"unit": UNIT_PERCENT, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "chlorinator_salt": {"unit": UNIT_PARTS_PER_MILLION, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
+    "primary_pump_error": {"unit": UNIT_EMPTY, CONF_DEVICE_CLASS: DEVICE_CLASS_EMPTY, CONF_STATE_CLASS: STATE_CLASS_MEASUREMENT},
 }
 CONF_BINARY_SENSORS = [  # used to overwrite binary_sensor_id_t enum in opnpool.h
     "primary_pump_running",
@@ -134,6 +144,8 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional(CONF_MATTER_DISCRIMINATOR, default=3840): cv.int_range(min=0, max=4095),
         cv.Optional(CONF_MATTER_PASSCODE, default=20202021): cv.int_range(min=1, max=99999998),
     }),
+    # Flash size (ESP32-C6-DevKitC-1-N8 has 8MB, some variants have 4MB)
+    cv.Optional(CONF_FLASH_SIZE, default="8MB"): cv.one_of(*FLASH_SIZES.keys(), upper=True),
     **{
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): climate.climate_schema(OpnPoolClimate).extend({
             cv.GenerateID(): cv.declare_id(OpnPoolClimate)
@@ -148,8 +160,8 @@ CONFIG_SCHEMA = cv.Schema({
         cv.Optional(key, default={"name": key.replace("_", " ").title()}): sensor.sensor_schema(OpnPoolSensor).extend({
             cv.GenerateID(): cv.declare_id(OpnPoolSensor),
             cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=CONF_ANALOG_SENSOR_META[key]["unit"]): cv.string,
-            cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["device_class"]): cv.string,
-            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key]["state_class"]): cv.one_of(*STATE_CLASSES, lower=True),
+            cv.Optional(CONF_DEVICE_CLASS, default=CONF_ANALOG_SENSOR_META[key][CONF_DEVICE_CLASS]): cv.string,
+            #doesn't appear to work: cv.Optional(CONF_STATE_CLASS, default=CONF_ANALOG_SENSOR_META[key][CONF_STATE_CLASS]): cv.one_of(*STATE_CLASSES, lower=True),
         }) for key in CONF_ANALOG_SENSORS
     },
     **{
@@ -183,10 +195,6 @@ async def to_code(config):
     # add all source files to build
     cg.add_library("ESP32", None, "freertos")
 
-    # add component source files
-    component_dir = os.path.dirname(__file__)
-    component_dir_path = os.path.dirname(os.path.abspath(__file__))
-
     # C++ entity implementation files (including matter subdirectory)
     cg.add_platformio_option("build_src_filter", [
         "+<*>",
@@ -195,20 +203,22 @@ async def to_code(config):
     ])
 
     # larger app partitions for Matter/Thread
-    partitions_path = os.path.join(component_dir_path, "partitions.csv").replace("\\", "/")
+    component_dir = os.path.dirname(os.path.abspath(__file__))
+    partitions_path = os.path.join(component_dir, "partitions.csv").replace("\\", "/")
     cg.add_platformio_option("board_build.partitions", partitions_path)
 
-    # ESP32-C6-DevKitC-1 has 8MB flash (override board defaults)
-    cg.add_platformio_option("board_build.flash_size", "8MB")
-    cg.add_platformio_option("board_upload.flash_size", "8MB")
-    cg.add_platformio_option("board_upload.maximum_size", 8388608)  # 8MB in bytes
+    # Flash size configuration (override board defaults)
+    flash_size = config[CONF_FLASH_SIZE]
+    flash_size_bytes = FLASH_SIZES[flash_size]
+    cg.add_platformio_option("board_build.flash_size", flash_size)
+    cg.add_platformio_option("board_upload.flash_size", flash_size)
+    cg.add_platformio_option("board_upload.maximum_size", flash_size_bytes)
 
     # add build flags
     cg.add_build_flag("-fmax-errors=5")
     cg.add_build_flag("-Wl,-Map=output.map")
 
     # interface firmware version
-    import subprocess    
     version = "unknown"
     try:
         component_dir = os.path.dirname(os.path.abspath(__file__))
@@ -229,11 +239,11 @@ async def to_code(config):
             dirty = "-dirty"
         
         version = f"git-{git_hash}{dirty}"
-    except:
+    except Exception:
         try:
             from esphome.const import __version__ as ESPHOME_VERSION
             version = f"esphome-{ESPHOME_VERSION}"
-        except:
+        except Exception:
             import logging
             logging.warning("OPNpool: Could not determine firmware version from Git or ESPHome. Using 'unknown'.")
             version = "unknown"
@@ -326,9 +336,6 @@ async def to_code(config):
         cg.add(getattr(var, f"set_{text_sensor_key}_text_sensor")(ts_entity))
 
 # replace the enums in opnpool.h to keep them consistent with CONF_* in this file
-
-import os
-import re
 
 ENTITY_ENUMS = {
     "climate_id_t": CONF_CLIMATES,

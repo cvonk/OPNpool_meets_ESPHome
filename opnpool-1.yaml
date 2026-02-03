@@ -91,6 +91,7 @@ external_components:
 
 opnpool:
   id: opnpool_1
+  flash_size: "8MB"  # options: "4MB", "8MB", "16MB"
 
   # RS485 configuration for >= r4 boards
   rs485:
@@ -105,7 +106,7 @@ opnpool:
   #  rts_pin: 27  # default 23 (GPIO23)
 
   matter:
-    enabled: false                              # waiting for ESPHome native support
+    enabled: false                               # waiting for native ESPHome support
     discriminator: !secret matter_discriminator  # For QR code pairing (0-4095)
     passcode: !secret matter_passcode            # Setup code (1-99999998)
 
