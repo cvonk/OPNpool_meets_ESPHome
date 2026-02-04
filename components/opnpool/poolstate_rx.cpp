@@ -1067,7 +1067,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-#if 0
+#if 1
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST  ||
                           msg->typ == network_msg_typ_t::IGNORE            ||   
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET   ||
@@ -1077,8 +1077,9 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
                           msg->typ == network_msg_typ_t::PUMP_RUNNING_RESP ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_REQ   ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
-#endif
+#else                          
     bool const frequent = false;
+#endif
 
     if ((verbose && !frequent) || very_verbose) {
         size_t const json_size = 1500;
