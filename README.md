@@ -2,7 +2,13 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
+> This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
+
+Ever dreamed of making your pool smarter and easier to manage? If you’ve ever owned a backyard pool, you know it’s not just about swimming—there’s a whole world of chemicals, covers, vacuums, brushes, and fiddling with thermostats and circuits. Even with a saltwater pool, you’ve got to keep a close eye on things!
+
+Enter OPNpool: your pool’s new best friend. It takes all the classic pool controller features and brings them into your smart home. OPNpool keeps track of your controller, pump, and chlorinator, so you don’t have to run outside every time you want to check or change something. Even better, you can set up automations—like running the pump longer when it’s hot out—all from the comfort of your phone or smart home dashboard.
+
+Thanks to some clever folks who reverse engineered the RS485 protocol, OPNpool can eavesdrop on the chatter between your pool’s components. The ESP32 inside shares all that state info as JSON/HTTP and can publish it via MQTT. And if you’re a Home Assistant fan, you’ll love how easily it integrates using MQTT Discovery.
 
 # OPNpool meets ESPHome
 
@@ -23,7 +29,7 @@ At its core, OPNpool connects an ESP32 microcontroller to your pool controller�
 
 No prior experience with pool automation or ESPHome is required. The documentation below will guide you through hardware assembly, wiring, firmware installation, and Home Assistant integration. If you have questions or need help, join the project’s GitHub Discussions for community support.
 
-This device was tested with the Pentair SunTouch controller with firmware **2.080**, connected to an IntelliFlo pump and IntelliChlor saltwater chlorinator.
+This device was tested with the Pentair SunTouch controller with firmware **2.080** (2013-07-15), connected to an IntelliFlo pump and IntelliChlor saltwater chlorinator.
 
 > This open source and hardware project is intended to comply with the October 2016 exemption to the Digital Millennium Copyright Act allowing "good-faith" testing," in a controlled environment designed to avoid any harm to individuals or to the public.
 
@@ -275,6 +281,25 @@ debug:
 
 > **Tip:** Detailed crash information will only appear on the serial console (not in the web logs). Be sure to check the serial output for troubleshooting.
 
+# FAQ
+
+**Is a controller required?**
+
+Unlike proprietary, all-in-one automation systems that can be daunting to a new homeowner, this setup ensures that when selling the house, the next owner is not stuck with a "custom" system. They can use the pool conventionally or easily adopt the smart features.
+
+**Will it work with ___ board?**
+
+There are many boards and kits that incorporate the ESP32. I started with the ESP8266, switched to the original ESP32, and use the ESP-C6. At this point it probably runs on any ESP32 flavor board. If you want to try something else, sure feel free the code is written to be portable. Just make sure you use the MAX3485 instead of the TTL-level MAX485.
+
+**My firmware is ___ How do you update SunTouch firmware?**
+
+> Only do this if you very confident with electrnics. You risk bricking your pool controller.
+
+You can only upgrade if your firmware is at [least version 2.x](https://saturationregion.blogspot.com/2020/01/whats-deal-with-easytouch-versions-1.html). You will need a [USBDM JS16](https://www.aliexpress.us/w/wholesale-Freescale-USBDM-Programmer-JS16.html?spm=a2g0o.detail.search.0) programmer, [make](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/#post-595657) a [JST cable](https://www.aliexpress.us/w/wholesale-5-PCS-JST-1.-25mm-Male-Female-6p.html?spm=a2g0o.detail.search.0) following [the instructions](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/page-7#post-2021911) to bump the firmware to e.g. [EasyTouch 2.080](https://www.pentair.com/content/dam/extranet/nam/pentair-pool/residential/automation/easytouch/easytouch-firmware/easytouch-2190.zip). The latest firmware is at [pentair.com](https://www.pentair.com/en-us/pool-spa/education-support/homeowner-support/software-downloads.html).
+
+**LEDs not blinking with RS-485 connected**
+
+If communication fails, swap the A and B data lines, as standards for these labels vary. 
 
 #
 I hope this project brings you joy.  Keep in touch through the dicussion forum.
