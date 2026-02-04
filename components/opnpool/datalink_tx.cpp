@@ -59,7 +59,7 @@ _enter_ic_head(datalink_head_ic_t * const head, datalink_typ_t const typ)
     for (uint_least8_t ii = 0; ii < DATALINK_PREAMBLE_IC_SIZE; ii++) {
         head->preamble[ii] = datalink_preamble_ic[ii];
     }
-    head->hdr.dst = datalink_addr(datalink_group_addr_t::CTRL, datalink_dev_id_t::PRIMARY);
+    head->hdr.dst = datalink_addr(datalink_group_addr_t::SUNTOUCH, datalink_dev_id_t::PRIMARY);
     head->hdr.typ = typ.raw;
 }
 
@@ -91,8 +91,8 @@ _enter_a5_head(datalink_head_a5_t * const head, datalink_typ_t const typ, size_t
         head->preamble[ii] = datalink_preamble_a5[ii];
     }
     head->hdr.ver = A5_PROTOCOL_VERSION;
-    head->hdr.dst = datalink_addr(datalink_group_addr_t::CTRL, datalink_dev_id_t::PRIMARY);
-    head->hdr.src = datalink_addr(datalink_group_addr_t::REMOTE, datalink_dev_id_t::REMOTE);  // 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
+    head->hdr.dst = datalink_addr(datalink_group_addr_t::SUNTOUCH, datalink_dev_id_t::PRIMARY);
+    head->hdr.src = datalink_addr(datalink_group_addr_t::EASYTOUCH, datalink_dev_id_t::REMOTE);  // 0x20 is the wired remote; 0x22 is the wireless remote (Screen Logic, or any app)
     head->hdr.typ = typ.raw;
     head->hdr.len = data_len;
 }

@@ -41,17 +41,12 @@ using skb_handle_t = skb_t *;
  * This enum class defines the protocol identifiers used at the data link layer
  * for communication between the ESPHome component and pool equipment. It
  * distinguishes between the IC protocol, A5 controller protocol, and A5 pump protocol.
- *
- * @var IC      Protocol type for the IntelliCenter (IC) protocol (e.g. Chlorinator).
- * @var A5_CTRL Protocol type for the A5 controller protocol.
- * @var A5_PUMP Protocol type for the A5 pump protocol.
- * @var NONE    Indicates that no valid protocol was detected.
  */
 enum class datalink_prot_t : uint8_t {
-    IC      = 0x00,
-    A5_CTRL = 0x01,
-    A5_PUMP = 0x02,
-    NONE    = 0xFF
+    IC      = 0x00,  ///< Protocol type for the IntelliCenter (IC) protocol (e.g. Chlorinator).
+    A5_CTRL = 0x01,  ///< Protocol type for the A5 controller protocol.
+    A5_PUMP = 0x02,  ///< Protocol type for the A5 pump protocol.
+    NONE    = 0xFF   ///< Indicates that no valid protocol was detected.
 };
 
 /**
@@ -163,17 +158,12 @@ enum class datalink_chlor_typ_t : uint8_t {
  * This union allows access to the message type as a controller, pump, or chlorinator
  * message type, depending on the protocol context. It also provides access to the
  * raw 8-bit value for generic handling.
- *
- * @var ctrl   Controller message type (datalink_ctrl_typ_t).
- * @var pump   Pump message type (datalink_pump_typ_t).
- * @var chlor  Chlorinator message type (datalink_chlor_typ_t).
- * @var raw    Raw 8-bit value for generic or protocol-agnostic access.
  */
 union datalink_typ_t {
-    datalink_ctrl_typ_t  ctrl;
-    datalink_pump_typ_t  pump;
-    datalink_chlor_typ_t chlor;
-    uint8_t              raw;
+    datalink_ctrl_typ_t  ctrl;  ///< Controller message type (datalink_ctrl_typ_t).
+    datalink_pump_typ_t  pump;  ///< Pump message type (datalink_pump_typ_t).
+    datalink_chlor_typ_t chlor; ///< Chlorinator message type (datalink_chlor_typ_t).
+    uint8_t              raw;   ///< Raw 8-bit value for generic or protocol-agnostic access.
 };
 
 /**

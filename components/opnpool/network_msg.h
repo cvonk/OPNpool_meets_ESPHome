@@ -13,7 +13,7 @@
  * NETWORK_MSG_TYP_LIST.
  *
  * Thread safety is not provided, because it is not required for the single-threaded
- * nature of ESPHome.  UNKNOWN_xx values have not yet been identified.
+ * nature of ESPHome.  UNKNOWN/unknown values have not yet been identified.
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
@@ -50,41 +50,41 @@ namespace opnpool {
 
     // enumerates the operation modes of the pool controller.
 enum class network_pool_mode_bits_t : uint8_t {
-    SERVICE     = 0,
+    SERVICE     = 0,  ///< Service mode
     UNKNOWN_01  = 1,
-    TEMP_INC    = 2,
-    FREEZE_PROT = 3,
-    TIMEOUT     = 4
+    TEMP_INC    = 2,  ///< Temperature increase mode
+    FREEZE_PROT = 3,  ///< Freeze protection mode
+    TIMEOUT     = 4   ///< Timeout mode
 };
 
     // enumerates the pool controller circuits and features
 enum class network_pool_circuit_t : uint8_t {
-    SPA      = 0,
-    AUX1     = 1,
-    AUX2     = 2,
-    AUX3     = 3,
-    FEATURE1 = 4,
-    POOL     = 5,
-    FEATURE2 = 6,
-    FEATURE3 = 7,
-    FEATURE4 = 8
+    SPA      = 0,  ///< Spa circuit
+    AUX1     = 1,  ///< Auxiliary circuit 1
+    AUX2     = 2,  ///< Auxiliary circuit 2
+    AUX3     = 3,  ///< Auxiliary circuit 3
+    FEATURE1 = 4,  ///< Feature 1
+    POOL     = 5,  ///< Pool circuit
+    FEATURE2 = 6,  ///< Feature 2
+    FEATURE3 = 7,  ///< Feature 3
+    FEATURE4 = 8   ///< Feature 4
 };
 
     // enumerates the operation modes of the pool pump
 enum class network_pump_mode_typ_t : uint8_t {
-    FILTER     = 0,
-    MAN        = 1,
-    BKWASH     = 2,
-    UNKNOWN_03 = 3,
+    FILTER     = 0,  ///< Regular filter mode
+    MAN        = 1,  ///< Manual mode
+    BKWASH     = 2,  ///< Backwash mode
+    RINSE      = 3,  ///< Rinse mode
     UNKNOWN_04 = 4,
     UNKNOWN_05 = 5,
-    FT1        = 6,
+    UNKNOWN_06 = 6,
     UNKNOWN_07 = 7,
     UNKNOWN_08 = 8,
-    EP1        = 9,
-    EP2        = 10,
-    EP3        = 11,
-    EP4        = 12
+    EP1        = 9,  ///< Extra Program 1
+    EP2        = 10, ///< Extra Program 2
+    EP3        = 11, ///< Extra Program 3
+    EP4        = 12  ///< Extra Program 4
 };
 
 struct network_pump_mode_t {
@@ -102,44 +102,34 @@ struct network_pump_ctrl_t {
 
     // enumerates the states of the pool pump
 enum class network_pump_state_t : uint8_t {
-    OK         = 0,
-    PRIMING    = 1,
-    RUNNING    = 2,
-    UNKNOWN_03 = 3,
-    SYSPRIMING = 4
+    OK          = 0,  ///< Normal operation
+    PRIMING     = 1,  ///< Priming state
+    RUNNING     = 2,  ///< Running state
+    UNKNOWN_03  = 3,
+    SYS_PRIMING = 4   ///< System priming state
 };
 
     // enumerates the heat sources for the pool heating system
+    // names in camel case because this is as they appear in the UI
 enum class network_heat_src_t : uint8_t {
     NONE,
-    Heat,
-    SolarPreferred,
-    Solar
+    Heat,           ///< Heater
+    SolarPreferred, ///< Solar preferred
+    Solar           ///< Solar
 };
 
     // (high << 8) | low
 struct uint8_lo_hi_t {
-    uint8_t low;
-    uint8_t high;
+    uint8_t low;   ///< low order byte
+    uint8_t high;  ///< high order byte
+    constexpr uint16_t to_uint16() const { return ((uint16_t)high << 8) | low; }
 } PACK8;
 
-    // (high << 8) | low
 struct uint8_hi_lo_t {
-    uint8_t high;
-    uint8_t low;
+    uint8_t high;  ///< high order byte
+    uint8_t low;   ///< low order byte
+    constexpr uint16_t to_uint16() const { return ((uint16_t)high << 8) | low; }
 } PACK8;
-
-    // converts a low-high byte pair to a 16-bit unsigned integer.
-constexpr uint16_t
-uint8_lo_hi_to_uint16(uint8_lo_hi_t const value) {
-    return ((uint16_t)value.high << 8) | value.low;
-}
-
-    // converts a high-low byte pair to a 16-bit unsigned integer.
-constexpr uint16_t
-uint8_hi_lo_to_uint16(uint8_hi_lo_t const value) {
-    return ((uint16_t)value.high << 8) | value.low;
-}
 
 /**
  * @brief Structures and unions for A5-controller messages.
@@ -164,16 +154,16 @@ struct network_ctrl_circuit_set_t {
 
 struct network_ctrl_sched_resp_sub_t {
     uint8_t       circuit_plus_1;  // 0  (0 = schedule not active)
-    uint8_t       UNKNOWN_1;       // 1
+    uint8_t       unknown_1;       // 1
     uint8_hi_lo_t prg_start;       // 2..3 [minutes]
     uint8_hi_lo_t prg_stop;        // 4..5 [minutes]
 } PACK8;
 
-constexpr size_t NETWORK_MSG_CTRL_SCHED_COUNT = 2;
+constexpr size_t NETWORK_CTRL_SCHED_COUNT = 2;
 
 struct network_ctrl_sched_resp_t {
-    uint8_t                           UNKNOWN_0to3[4];  // 0,1,2,3
-    network_ctrl_sched_resp_sub_t scheds[NETWORK_MSG_CTRL_SCHED_COUNT]; // 4,5,6,7,8,9, 10,11,12,13,14,15
+    uint8_t                       unknown_0to3[4];  // 0,1,2,3
+    network_ctrl_sched_resp_sub_t scheds[NETWORK_CTRL_SCHED_COUNT]; // 4,5,6,7,8,9, 10,11,12,13,14,15
 } PACK8;
 
     // portable bit map for combined heat status
@@ -194,35 +184,32 @@ struct uint8_heat_src_t {
     void set_spa( network_heat_src_t src) { bits = (bits & 0x0F) | (static_cast<uint8_t>(src) << 4); }
 } PACK8;
 
-static_assert(sizeof(uint8_heat_status_t) == 1, "uint8_heat_status_t must be 1 byte");
-static_assert(sizeof(uint8_heat_src_t) == 1, "uint8_heat_src_t must be 1 byte");
-
 struct network_ctrl_state_bcast_t {
     uint8_t             hour;               // 0
     uint8_t             minute;             // 1
     uint8_lo_hi_t       active;             // 2..3   bitmask for active circuits
-    uint8_t             UNKNOWN_04to06[3];  // 4..6   more `active` circuits on fancy controllers
-    uint8_t             UNKNOWN_07to08[2];  // 7..8
+    uint8_t             unknown_04to06[3];  // 4..6   more `active` circuits on fancy controllers
+    uint8_t             unknown_07to08[2];  // 7..8
     uint8_t             mode_bits;          // 9      bitmask for active pool modes
     uint8_heat_status_t heat_status;        // 10     bit2 is for POOL, bit3 is for SPA
-    uint8_t             UNKNOWN_11;         // 11
+    uint8_t             unknown_11;         // 11
     uint8_t             delay;              // 12     bitmask for delay status of circuits
-    uint8_t             UNKNOWN_13;         // 13
+    uint8_t             unknown_13;         // 13
     uint8_t             pool_temp;          // 14     water sensor 1
     uint8_t             spa_temp;           // 15     water sensor 2
-    uint8_t             UNKNOWN_16;         // 16     unknown          (was major)
+    uint8_t             unknown_16;         // 16     unknown          (was major)
     uint8_t             water_temp;         // 17     solar sensor 1   (was minor)
     uint8_t             air_temp;           // 18     air sensor
     uint8_t             water_temp2;        // 19     solar sensor 2
-    uint8_t             UNKNOWN_20to21[2];  // 20..21 more water sensors?
+    uint8_t             unknown_20to21[2];  // 20..21 more water sensors?
     uint8_heat_src_t    heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
-    uint8_t             UNKNOWN_23to28[6];  // 23..28
+    uint8_t             unknown_23to28[6];  // 23..28
 } PACK8;
 
 struct network_ctrl_time_t {
     uint8_t hour;        // 0
     uint8_t minute;      // 1
-    uint8_t UNKNOWN_02;  // 2 (DST adjust?)
+    uint8_t unknown_02;  // 2 (DST adjust?)
     uint8_t day;         // 3
     uint8_t month;       // 4
     uint8_t year;        // 5
@@ -232,28 +219,28 @@ struct network_ctrl_time_t {
 
 struct network_ctrl_version_resp_t {
     uint8_t req_id;              // 0
-    uint8_t major;               // 1    0x02  -> version 2.080
-    uint8_t minor;               // 2    0x50
-    uint8_t UNKNOWN_03to04[2];   // 3,4
+    uint8_t major;               // 1    0x02  -> version 2.___
+    uint8_t minor;               // 2    0x50  -> version _.080
+    uint8_t unknown_03to04[2];   // 3..4
     uint8_t boot_major;          // 5
     uint8_t boot_minor;          // 6   
-    uint8_t UNKNOWN_07to16[10];  // 7,8,9,10,11, 12,13,14,15,16
+    uint8_t unknown_07to16[10];  // 7..16
 } PACK8;
 
 struct network_ctrl_valve_resp_t {
-    uint8_t UNKNOWN[24]; // 03 00 00 00 00 FF FF 01 02 03 04 01 48 00 00 00 03 00 00 00 04 00 00 00
+    uint8_t unknown[24]; // 03 00 00 00 00 FF FF 01 02 03 04 01 48 00 00 00 03 00 00 00 04 00 00 00
 } PACK8;
 
 struct network_ctrl_solarpump_resp_t {
-    uint8_t UNKNOWN[3];  // 05 00 00
+    uint8_t unknown[3];  // 05 00 00
 } PACK8;
 
 struct network_ctrl_delay_resp_t {
-    uint8_t UNKNOWN[2];  // 10 00
+    uint8_t unknown[2];  // 10 00
 } PACK8;
 
 struct network_ctrl_heat_setpt_resp_t {
-    uint8_t UNKNOWN[10];  // 00 00 00 00 00 00 00 00 00 00 
+    uint8_t unknown[10];  // 00 00 00 00 00 00 00 00 00 00 
 } PACK8;
 
 struct network_ctrl_circ_names_req_t {
@@ -262,11 +249,11 @@ struct network_ctrl_circ_names_req_t {
 
 struct network_ctrl_circ_names_resp_t {
     uint8_t req_id;      // req 0x01 -> resp 01 01 48 00 00
-    uint8_t UNKNOWN[5];  // req 0x02 -> resp 02 00 03 00 00
+    uint8_t unknown[5];  // req 0x02 -> resp 02 00 03 00 00
 } PACK8;
 
 struct network_ctrl_chem_req_t {
-    uint8_t UNKNOWN;  // 0xD2
+    uint8_t unknown;  // 0xD2
 } PACK8;
 
 struct network_ctrl_scheds_req_t {
@@ -290,20 +277,20 @@ struct network_ctrl_heat_resp_t {
     uint8_t          pool_set_point;  // 3
     uint8_t          spa_set_point;   // 4
     uint8_heat_src_t heat_src;        // 5 bits 0-3 for POOL, bits 4-7 for SPA
-    uint8_t          UNKNOWN_06;      // 6
-    uint8_t          UNKNOWN_07;      // 7
-    uint8_t          UNKNOWN_08;      // 8
-    uint8_t          UNKNOWN_09;      // 9
-    uint8_t          UNKNOWN_10;      // 10
-    uint8_t          UNKNOWN_11;      // 11
-    uint8_t          UNKNOWN_12;      // 12
+    uint8_t          unknown_06;      // 6
+    uint8_t          unknown_07;      // 7
+    uint8_t          unknown_08;      // 8
+    uint8_t          unknown_09;      // 9
+    uint8_t          unknown_10;      // 10
+    uint8_t          unknown_11;      // 11
+    uint8_t          unknown_12;      // 12
 } PACK8;
 
 struct network_ctrl_heat_set_t {
     uint8_t          pool_set_point;  // 0
     uint8_t          spa_set_point;   // 1
     uint8_heat_src_t heat_src;        // 2 bits 0-3 for POOL, bits 4-7 for SPA
-    uint8_t          UNKNOWN;         // 3
+    uint8_t          unknown;         // 3
 } PACK8;
 
 struct network_ctrl_layout_t {
@@ -325,16 +312,13 @@ struct network_pump_reg_set_t {
 } PACK8;
 
 struct network_pump_reg_resp_t {
-    uint8_hi_lo_t value;  // 0..1
+    uint8_hi_lo_t value;   // 0..1
 } PACK8;
 
-enum class network_pump_running_t : uint8_t {
-    OFF = 0x04,
-    ON  = 0x0A
-};
-
-struct network_pump_run_t {
-    network_pump_running_t running;
+struct network_pump_running_t {
+    uint8_t raw;
+    constexpr bool is_running() const { return (raw) == 0x0A; };
+    constexpr bool is_not_running() const { return (raw) == 0x04; };
 } PACK8;
 
 enum class network_pump_program_addr_t : uint16_t {
@@ -350,7 +334,7 @@ enum class network_pump_program_addr_t : uint16_t {
 };
 
 /**
- * @brief Converts a pump program address to a string representation.
+ * @brief Converts a 16-bit pump program address to a string representation.
  *
  * @note Can't use magic_enum because the enum values are not contiguous and outside magic_enum's range.
  *
@@ -382,7 +366,7 @@ struct network_pump_status_resp_t {
     uint8_hi_lo_t          speed;         // 5..6 [rpm]
     uint8_t                flow;          // 7 [G/min]
     uint8_t                level;         // 8 [%]
-    uint8_t                UNKNOWN;       // 9
+    uint8_t                unknown;       // 9
     uint8_t                error;         // 10
     uint8_t                remaining_hr;  // 11
     uint8_t                remaining_min; // 12
@@ -401,23 +385,22 @@ struct network_pump_status_resp_t {
  */
 
 struct network_chlor_ping_req_t {
-    uint8_t UNKNOWN_0;
+    uint8_t unknown;
 } PACK8;
 
 struct network_chlor_ping_resp_t {
-    uint8_t UNKNOWN_0;
-    uint8_t UNKNOWN_1;
+    uint8_t unknown[2];
 } PACK8;
 
 using network_chlor_name_str_t = char[16];
 
 struct network_chlor_name_req_t {
-    uint8_t UNKNOWN;  // sending 0x00 or 0x02 gets a response
+    uint8_t unknown;
 } PACK8;
 
 struct network_chlor_name_resp_t {
-    uint8_t                      salt;  // ppm/50
-    network_chlor_name_str_t name;
+    uint8_t                  salt;  ///< Parts per million /50
+    network_chlor_name_str_t name;  ///< non-\0 terminated chlorinator name
 } PACK8;
 
 struct network_chlor_level_set_t {
@@ -425,8 +408,8 @@ struct network_chlor_level_set_t {
 } PACK8;
 
 struct network_chlor_level_resp_t {
-    uint8_t  salt;   // ppm/50
-    uint8_t  error;  // error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
+    uint8_t  salt;   ///< Parts per million /50
+    uint8_t  error;  ///< error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
 } PACK8;
 
 
@@ -442,19 +425,18 @@ struct network_chlor_level_resp_t {
  * 
  * @note These represent the non-0 length messages
  */
-
 union network_data_a5_t {
     network_pump_reg_set_t         pump_reg_set;
     network_pump_reg_resp_t        pump_reg_resp;
-    network_pump_ctrl_t            pump_ctrl;     // set or resp
-    network_pump_mode_t            pump_mode;     // set or resp
-    network_pump_run_t             pump_run;      // set or resp
+    network_pump_ctrl_t            pump_ctrl;         // set or resp
+    network_pump_mode_t            pump_mode;         // set or resp
+    network_pump_running_t         pump_running;      // set or resp
     network_pump_status_resp_t     pump_status_resp;
     network_ctrl_set_ack_t         ctrl_set_ack;
     network_ctrl_circuit_set_t     ctrl_circuit_set;
     network_ctrl_sched_resp_t      ctrl_sched_resp;
     network_ctrl_state_bcast_t     ctrl_state_bcast;
-    network_ctrl_time_t            ctrl_time;     // set or resp
+    network_ctrl_time_t            ctrl_time;         // set or resp
     network_ctrl_heat_resp_t       ctrl_heat_resp;
     network_ctrl_heat_set_t        ctrl_heat_set;
     network_ctrl_layout_t          ctrl_layout_resp;
@@ -485,7 +467,7 @@ inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = std::max(sizeof(network_data_a
 union network_data_t {
     network_data_a5_t a5;
     network_data_ic_t ic;
-    uint8_t               raw[DATALINK_MAX_DATA_SIZE];
+    uint8_t           raw[DATALINK_MAX_DATA_SIZE];
 } PACK8;
 
 
@@ -507,40 +489,40 @@ union network_data_t {
  * @note The SET/REQ must precede the RESP in this list.
  */
 #define NETWORK_MSG_TYP_LIST(X) \
-    X(IGNORE,               0,                                         false, A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
+    X(IGNORE,               0,                                     false, A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
     X(PUMP_REG_SET,         sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG)          \
     X(PUMP_REG_RESP,        sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG)          \
     X(PUMP_CTRL_SET,        sizeof(network_pump_ctrl_t),           true,  A5_PUMP, datalink_pump_typ_t::CTRL)         \
     X(PUMP_CTRL_RESP,       sizeof(network_pump_ctrl_t),           false, A5_PUMP, datalink_pump_typ_t::CTRL)         \
     X(PUMP_MODE_SET,        sizeof(network_pump_mode_t),           true,  A5_PUMP, datalink_pump_typ_t::MODE)         \
     X(PUMP_MODE_RESP,       sizeof(network_pump_mode_t),           false, A5_PUMP, datalink_pump_typ_t::MODE)         \
-    X(PUMP_RUN_SET,         sizeof(network_pump_run_t),            true,  A5_PUMP, datalink_pump_typ_t::RUN)          \
-    X(PUMP_RUN_RESP,        sizeof(network_pump_run_t),            false, A5_PUMP, datalink_pump_typ_t::RUN)          \
-    X(PUMP_STATUS_REQ,      0,                                         true,  A5_PUMP, datalink_pump_typ_t::STATUS)       \
+    X(PUMP_RUNNING_SET,     sizeof(network_pump_running_t),        true,  A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_RUNNING_RESP,    sizeof(network_pump_running_t),        false, A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_STATUS_REQ,      0,                                     true,  A5_PUMP, datalink_pump_typ_t::STATUS)       \
     X(PUMP_STATUS_RESP,     sizeof(network_pump_status_resp_t),    false, A5_PUMP, datalink_pump_typ_t::STATUS)       \
     X(CTRL_SET_ACK,         sizeof(network_ctrl_set_ack_t),        false, A5_CTRL, datalink_ctrl_typ_t::SET_ACK)      \
     X(CTRL_CIRCUIT_SET,     sizeof(network_ctrl_circuit_set_t),    false, A5_CTRL, datalink_ctrl_typ_t::CIRCUIT_SET)  \
-    X(CTRL_SCHED_REQ,       0,                                         false, A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ)    \
+    X(CTRL_SCHED_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ)    \
     X(CTRL_SCHED_RESP,      sizeof(network_ctrl_sched_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_RESP)   \
     X(CTRL_STATE_BCAST,     sizeof(network_ctrl_state_bcast_t),    false, A5_CTRL, datalink_ctrl_typ_t::STATE_BCAST)  \
-    X(CTRL_TIME_REQ,        0,                                         false, A5_CTRL, datalink_ctrl_typ_t::TIME_REQ)     \
+    X(CTRL_TIME_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::TIME_REQ)     \
     X(CTRL_TIME_RESP,       sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_RESP)    \
     X(CTRL_TIME_SET,        sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_SET)     \
-    X(CTRL_HEAT_REQ,        0,                                         false, A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ)     \
+    X(CTRL_HEAT_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ)     \
     X(CTRL_HEAT_RESP,       sizeof(network_ctrl_heat_resp_t),      false, A5_CTRL, datalink_ctrl_typ_t::HEAT_RESP)    \
     X(CTRL_HEAT_SET,        sizeof(network_ctrl_heat_set_t),       false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SET)     \
-    X(CTRL_LAYOUT_REQ,      0,                                         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ)   \
+    X(CTRL_LAYOUT_REQ,      0,                                     false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ)   \
     X(CTRL_LAYOUT_RESP,     sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_RESP)  \
     X(CTRL_LAYOUT_SET,      sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_SET)   \
-    X(CTRL_VALVE_REQ,       0,                                         false, A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ)    \
+    X(CTRL_VALVE_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ)    \
     X(CTRL_VALVE_RESP,      sizeof(network_ctrl_valve_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_RESP)   \
-    X(CTRL_VERSION_REQ,     0,                                         false, A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ)  \
+    X(CTRL_VERSION_REQ,     0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ)  \
     X(CTRL_VERSION_RESP,    sizeof(network_ctrl_version_resp_t),   false, A5_CTRL, datalink_ctrl_typ_t::VERSION_RESP) \
-    X(CTRL_SOLARPUMP_REQ,   0,                                         false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ)   \
+    X(CTRL_SOLARPUMP_REQ,   0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ)   \
     X(CTRL_SOLARPUMP_RESP,  sizeof(network_ctrl_solarpump_resp_t), false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_RESP)  \
-    X(CTRL_DELAY_REQ,       0,                                         false, A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ)       \
+    X(CTRL_DELAY_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ)       \
     X(CTRL_DELAY_RESP,      sizeof(network_ctrl_delay_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_RESP)      \
-    X(CTRL_HEAT_SETPT_REQ,  0,                                         false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ)  \
+    X(CTRL_HEAT_SETPT_REQ,  0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ)  \
     X(CTRL_HEAT_SETPT_RESP, sizeof(network_ctrl_heat_setpt_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP) \
     X(CTRL_CIRC_NAMES_REQ,  sizeof(network_ctrl_circ_names_req_t), false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ)  \
     X(CTRL_CIRC_NAMES_RESP, sizeof(network_ctrl_circ_names_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP) \
@@ -575,11 +557,11 @@ enum class network_msg_typ_t : uint8_t {
  * network_msg_typ_t value. Used for message type lookup and validation.
  */
 struct network_msg_typ_info_t {
-    datalink_prot_t   proto;
-    datalink_typ_t    datalink_typ;
-    uint32_t          size;
-    bool              is_to_pump;
-    network_msg_typ_t     network_msg_typ;
+    datalink_prot_t    proto;
+    datalink_typ_t     datalink_typ;
+    uint32_t           size;
+    bool               is_to_pump;
+    network_msg_typ_t  network_msg_typ;
     
         // each constructor overload handles a different datalink type enum, allowing the X-Macro to pass the correct type
     constexpr network_msg_typ_info_t(datalink_prot_t dp, uint8_t pt, uint32_t s, bool itp, network_msg_typ_t nt)
@@ -679,19 +661,17 @@ network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
  * @details
  * Contains the message type and a union of all possible protocol-specific message data 
  * structures, allowing flexible handling of controller, pump, and chlorinator messages.
- *
- * @var typ  The network message type identifier.
- * @var u    Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
  */
-
 struct network_msg_t {
-    datalink_dev_id_t  device_id;  // only valid for A5-PUMP messages
-    network_msg_typ_t      typ;
-    network_data_t u;
+    datalink_dev_id_t  device_id;  ///< Device identifier (only valid for A5-PUMP messages).
+    network_msg_typ_t  typ;        ///< The network message type identifier.
+    network_data_t     u;          ///< Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
 };
 
     // sanity checks
-static_assert(sizeof(network_data_t) <= UINT8_MAX, "network_data_t size exceeds UINT8_MAX");
+static_assert(sizeof(uint8_heat_status_t) == 1, "uint8_heat_status_t must be 1 byte");
+static_assert(sizeof(uint8_heat_src_t)    == 1, "uint8_heat_src_t must be 1 byte");
+static_assert(sizeof(network_data_t)      <= UINT8_MAX, "network_data_t size exceeds UINT8_MAX");
 static_assert(std::size(network_msg_typ_info) == enum_count<network_msg_typ_t>());
 static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, true)  == &network_msg_typ_info[enum_index(network_msg_typ_t::PUMP_STATUS_REQ)]);
 static_assert(network_msg_typ_get_info(datalink_pump_typ_t::STATUS, false) == &network_msg_typ_info[enum_index(network_msg_typ_t::PUMP_STATUS_RESP)]);

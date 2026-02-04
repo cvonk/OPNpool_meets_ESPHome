@@ -158,7 +158,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
 
         // silently ignore packets that we don't know how to decode
     datalink_group_addr_t const dst = pkt->dst.get_group_addr();
-    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_group_addr_t::X09) ||
+    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_group_addr_t::UNKNOWN_09) ||
         (pkt->prot == datalink_prot_t::IC && dst != datalink_group_addr_t::ALL && dst != datalink_group_addr_t::CHLOR)) {
 
         *txOpportunity = false;
@@ -187,7 +187,7 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
 
     *txOpportunity =
         pkt->prot == datalink_prot_t::A5_CTRL &&
-        pkt->src.get_group_addr() == datalink_group_addr_t::CTRL &&
+        pkt->src.get_group_addr() == datalink_group_addr_t::SUNTOUCH &&
         pkt->dst.get_group_addr() == datalink_group_addr_t::ALL;
 
     return result;

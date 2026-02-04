@@ -111,7 +111,7 @@ _update_circuits(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg
     constexpr uint8_t spa_idx  = enum_index(network_pool_circuit_t::SPA);
 
         // update circuits[].active
-    uint16_t const bitmask_active_circuits = uint8_lo_hi_to_uint16(msg->active);
+    uint16_t const bitmask_active_circuits = msg->active.to_uint16();
     static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
     _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
 
@@ -476,8 +476,8 @@ _ctrl_sched_resp(cJSON * const dbg, network_ctrl_sched_resp_t const * const msg,
             static_cast<network_pool_circuit_t>(sched.circuit_plus_1 - 1);
         uint8_t const circuit_idx = enum_index(circuit);
 
-        uint16_t const start = uint8_hi_lo_to_uint16(sched.prg_start);
-        uint16_t const stop  = uint8_hi_lo_to_uint16(sched.prg_stop);
+        uint16_t const start = sched.prg_start.to_uint16();
+        uint16_t const stop  = sched.prg_stop.to_uint16();
 
         if (circuit_idx < std::size(state->scheds)) {
             state_scheds[circuit_idx] = {
@@ -608,8 +608,8 @@ _pump_reg_set(cJSON * const dbg, network_pump_reg_set_t const * const msg, datal
     // no change to poolstate
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const address = uint8_hi_lo_to_uint16(msg->address);
-        uint16_t const value   = uint8_hi_lo_to_uint16(msg->value);
+        uint16_t const address = msg->address.to_uint16();
+        uint16_t const value   = msg->value.to_uint16();
         network_pump_program_addr_t const address_enum =
             static_cast<network_pump_program_addr_t>(address);
         poolstate_rx_log::add_pump_program(dbg, network_pump_program_addr_str(address_enum), device_id, value);
@@ -638,7 +638,7 @@ _pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, dat
     // no change to poolstate
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const value = uint8_hi_lo_to_uint16(msg->value);
+        uint16_t const value = msg->value.to_uint16();
         poolstate_rx_log::add_pump_program(dbg, poolstate_rx_log::KEY_RESP, device_id, value);
     }
 }
@@ -711,7 +711,7 @@ _pump_mode(cJSON * const dbg, network_pump_mode_t const * const msg, datalink_de
  * status to the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_run(cJSON * const dbg, network_pump_run_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_running(cJSON * const dbg, network_pump_running_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -720,10 +720,10 @@ _pump_run(cJSON * const dbg, network_pump_run_t const * const msg, datalink_dev_
 
     auto pump = &pumps[enum_index(device_id)];
 
-    bool const running     = msg->running == network_pump_running_t::ON;
-    bool const not_running = msg->running == network_pump_running_t::OFF;
+    bool const running     = msg->is_running();
+    bool const not_running = msg->is_not_running();
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "running state err 0x%02X in %s", static_cast<uint8_t>(msg->running), __func__);
+        ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->raw, __func__);
         return;
     }    
 
@@ -758,11 +758,11 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
 
     auto pump = &pumps[enum_index(device_id)];
 
-    bool const running     = msg->running == network_pump_running_t::ON;
-    bool const not_running = msg->running == network_pump_running_t::OFF;
+    bool const running     = msg->running.is_running();
+    bool const not_running = msg->running.is_not_running();
 
     if (!running && !not_running) {
-        ESP_LOGW(TAG, "running state err 0x%02X (%u %u) in %s", static_cast<uint8_t>(msg->running), running, not_running, __func__);
+        ESP_LOGW(TAG, "running state err 0x%02X (%u %u) in %s", msg->running.raw, running, not_running, __func__);
         return;
     }
 
@@ -786,7 +786,7 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
         },
         .power = {
             .valid = true,
-            .value = uint8_hi_lo_to_uint16(msg->power)
+            .value = msg->power.to_uint16()
         },
         .flow = {
             .valid = true,
@@ -794,7 +794,7 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
         },
         .speed = {
             .valid = true,
-            .value = uint8_hi_lo_to_uint16(msg->speed)
+            .value = msg->speed.to_uint16()
         },
         .level = {
             .valid = true,      
@@ -984,9 +984,9 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_msg_typ_t::PUMP_MODE_RESP:
             _pump_mode(dbg, &msg->u.a5.pump_mode, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_RUN_SET:
-        case network_msg_typ_t::PUMP_RUN_RESP:
-            _pump_run(dbg, &msg->u.a5.pump_run, msg->device_id, new_state->pumps);
+        case network_msg_typ_t::PUMP_RUNNING_SET:
+        case network_msg_typ_t::PUMP_RUNNING_RESP:
+            _pump_running(dbg, &msg->u.a5.pump_running, msg->device_id, new_state->pumps);
             break;
         case network_msg_typ_t::PUMP_STATUS_REQ:
              break;
@@ -1082,14 +1082,14 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST ||
-                          msg->typ == network_msg_typ_t::IGNORE           ||   
-                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET  ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET    ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP   ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_SET     ||
-                          msg->typ == network_msg_typ_t::PUMP_RUN_RESP    ||
-                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ  ||
+    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST  ||
+                          msg->typ == network_msg_typ_t::IGNORE            ||   
+                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET   ||
+                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET     ||
+                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP    ||
+                          msg->typ == network_msg_typ_t::PUMP_RUNNING_SET  ||
+                          msg->typ == network_msg_typ_t::PUMP_RUNNING_RESP ||
+                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ   ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
 
     if ((verbose && !frequent) || very_verbose) {

@@ -43,21 +43,19 @@ struct rs485_instance_t;
 using rs485_handle_t = rs485_instance_t *;
 
     // 0x10 = suntouch ctrl system
-    // 0x20 = easytouch
+    // 0x20 = easytouch ctrl system
     // 0x21 = remote
     // 0x22 = wireless remote
     // 0x48 = quicktouch remote
     // 0x60 .. 0x6F = intelliflow pump 0 .. 15
-    // 
-    // `addrgroup` is the high nibble of the address
-
+    // `addrgroup` is the high nibble of the address byte
 enum class datalink_group_addr_t : uint8_t {
-  ALL    = 0x00,
-  CTRL   = 0x01,
-  REMOTE = 0x02,
-  CHLOR  = 0x05,
-  PUMP   = 0x06,
-  X09    = 0x09
+  ALL        = 0x00,
+  SUNTOUCH   = 0x01,
+  EASYTOUCH  = 0x02,
+  CHLOR      = 0x05,
+  PUMP       = 0x06,
+  UNKNOWN_09 = 0x09
 };
 
 enum class datalink_dev_id_t : uint8_t {
@@ -141,13 +139,10 @@ struct datalink_head_ic_t {
  * This union provides access to the head fields for both IC and A5 protocol variants. It
  * enables unified handling of protocol-specific head data, including preamble and header,
  * for flexible packet parsing and construction.
- *
- * @var `ic`: Head structure for IC protocol packets (includes preamble and header).
- * @var `a5`: Head structure for A5 protocol packets (includes preamble and header).
  */
 union datalink_head_t {
-    datalink_head_ic_t ic;
-    datalink_head_a5_t a5;
+    datalink_head_ic_t ic;  ///< Head structure for IC protocol packets (includes preamble and header).
+    datalink_head_a5_t a5;  ///< Head structure for A5 protocol packets (includes preamble and header).
 };
 
 uint8_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
@@ -167,21 +162,18 @@ struct datalink_tail_ic_t {
  * This union provides access to the tail fields for both IC and A5 protocol variants.
  * It enables unified handling of protocol-specific tail data, such as checksum and postamble,
  * for packet validation and parsing.
- *
- * @var `ic`: Tail structure for IC protocol packets (includes checksum and postamble).
- * @var `a5`: Tail structure for A5 protocol packets (includes checksum).
  */
 union datalink_tail_t {
-    datalink_tail_ic_t ic;
-    datalink_tail_a5_t a5;
+    datalink_tail_ic_t ic;  ///< Tail structure for IC protocol packets (includes checksum and postamble)
+    datalink_tail_a5_t a5;  ///< Tail structure for A5 protocol packets (includes checksum)
 };
 
 uint8_t const DATALINK_MAX_TAIL_SIZE = sizeof(datalink_tail_t);
 
-// Protocol preamble and postamble constants
-extern datalink_preamble_a5_t datalink_preamble_a5;   ///< A5 protocol preamble: { 0x00, 0xFF, 0xA5 }
-extern datalink_preamble_ic_t datalink_preamble_ic;   ///< IC protocol preamble: { 0x10, 0x02 }
-extern datalink_postamble_ic_t datalink_postamble_ic; ///< IC protocol postamble: { 0x10, 0x03 }
+    // protocol preamble and postamble constants
+extern datalink_preamble_a5_t  datalink_preamble_a5;   ///< A5 protocol preamble: { 0x00, 0xFF, 0xA5 }
+extern datalink_preamble_ic_t  datalink_preamble_ic;   ///< IC protocol preamble: { 0x10, 0x02 }
+extern datalink_postamble_ic_t datalink_postamble_ic;  ///< IC protocol postamble: { 0x10, 0x03 }
 
 /**
  * @brief Composes a device address from an address group and device ID.
