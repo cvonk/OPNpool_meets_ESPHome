@@ -15,7 +15,7 @@ the C++ implementation. - Providing async routines to instantiate and link all e
 the main OpnPool component.
 
 WARNING: The script directly edits the `opnpool_ids.h` header file to keep the enums in
-opnpool.h consistent with CONF_* in this file.
+opnpool_ids.h consistent with CONF_* in this file.
 
 This module enables seamless integration of pool automation hardware into ESPHome YAML
 configurations, supporting flexible entity mapping and robust build-time configuration.
@@ -47,29 +47,29 @@ AUTO_LOAD = ["climate", "switch", "sensor", "binary_sensor", "text_sensor"]
 
 # namespace and class definitions
 opnpool_ns = cg.esphome_ns.namespace("opnpool")
-OpnPool = opnpool_ns.class_("OpnPool", cg.Component)
-OpnPoolClimate = opnpool_ns.class_("OpnPoolClimate", climate.Climate, cg.Component)
-OpnPoolSwitch = opnpool_ns.class_("OpnPoolSwitch", switch.Switch, cg.Component)
-OpnPoolSensor = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor, cg.Component)
+OpnPool             = opnpool_ns.class_("OpnPool", cg.Component)
+OpnPoolClimate      = opnpool_ns.class_("OpnPoolClimate", climate.Climate, cg.Component)
+OpnPoolSwitch       = opnpool_ns.class_("OpnPoolSwitch", switch.Switch, cg.Component)
+OpnPoolSensor       = opnpool_ns.class_("OpnPoolSensor", sensor.Sensor, cg.Component)
 OpnPoolBinarySensor = opnpool_ns.class_("OpnPoolBinarySensor", binary_sensor.BinarySensor, cg.Component)
-OpnPoolTextSensor = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSensor, cg.Component)
+OpnPoolTextSensor   = opnpool_ns.class_("OpnPoolTextSensor", text_sensor.TextSensor, cg.Component)
 
-CONF_RS485 = "rs485"
-CONF_RS485_RX_PIN = "rx_pin"
-CONF_RS485_TX_PIN = "tx_pin"
+CONF_RS485         = "rs485"
+CONF_RS485_RX_PIN  = "rx_pin"
+CONF_RS485_TX_PIN  = "tx_pin"
 CONF_RS485_RTS_PIN = "rts_pin"
 
 # Matter over Thread configuration
-CONF_MATTER = "matter"
-CONF_MATTER_ENABLED = "enabled"
+CONF_MATTER               = "matter"
+CONF_MATTER_ENABLED       = "enabled"
 CONF_MATTER_DISCRIMINATOR = "discriminator"
-CONF_MATTER_PASSCODE = "passcode"
+CONF_MATTER_PASSCODE      = "passcode"
 
 # Flash size configuration
 CONF_FLASH_SIZE = "flash_size"
 FLASH_SIZES = {
-    "4MB": 4194304,
-    "8MB": 8388608,
+     "4MB":  4194304,
+     "8MB":  8388608,
     "16MB": 16777216,
 }
 
@@ -199,8 +199,8 @@ async def to_code(config):
     # Flash size configuration (override board defaults)
     flash_size = config[CONF_FLASH_SIZE]
     flash_size_bytes = FLASH_SIZES[flash_size]
-    cg.add_platformio_option("board_build.flash_size", flash_size)
-    cg.add_platformio_option("board_upload.flash_size", flash_size)
+    cg.add_platformio_option("board_build.flash_size",    flash_size)
+    cg.add_platformio_option("board_upload.flash_size",   flash_size)
     cg.add_platformio_option("board_upload.maximum_size", flash_size_bytes)
 
     # add build flags
@@ -242,17 +242,7 @@ async def to_code(config):
     rs485_config = config[CONF_RS485]
     cg.add(var.set_rs485_pins(rs485_config[CONF_RS485_RX_PIN], rs485_config[CONF_RS485_TX_PIN], rs485_config[CONF_RS485_RTS_PIN]))
 
-    # Matter over Thread configuration (optional)
-    # IMPORTANT: Matter support requires:
-    #   1. ESP32-C6 or ESP32-H2 (with Thread 802.15.4 radio)
-    #   2. ESP-IDF v5.x with esp-matter component (via IDF Component Manager)
-    #   3. framework: type: esp-idf in your ESPHome YAML
-    #
-    # The esp-matter SDK is available as a managed component via idf_component.yml.
-    # After the first build, you may need to run 'idf.py reconfigure' in the build
-    # directory to download managed components.
-    #
-    # See: https://components.espressif.com/components/espressif/esp_matter
+    # matter over Thread configuration
     matter_config = config[CONF_MATTER]
     if matter_config[CONF_MATTER_ENABLED]:
         import logging
@@ -264,12 +254,12 @@ async def to_code(config):
             matter_config[CONF_MATTER_PASSCODE]
         ))
 
-        # Add include path for matter subdirectory
+        # add include path for matter subdirectory
         component_dir = os.path.dirname(os.path.abspath(__file__))
         component_dir_cmake = component_dir.replace("\\", "/")
         cg.add_build_flag(f"-I{component_dir_cmake}")
 
-        # Log Matter configuration
+        # log Matter configuration
         # NOTE: esp-matter integration requires manual setup:
         #   1. Copy idf_component.yml to the ESPHome build directory's main component
         #   2. Run 'idf.py reconfigure' to download esp-matter
@@ -326,11 +316,11 @@ async def to_code(config):
 # replace the enums in opnpool_ids.h to keep them consistent with CONF_* in this file
 
 ENTITY_ENUMS = {
-    "climate_id_t": CONF_CLIMATES,
-    "switch_id_t": CONF_SWITCHES,
-    "sensor_id_t": CONF_ANALOG_SENSORS,
+    "climate_id_t":       CONF_CLIMATES,
+    "switch_id_t":        CONF_SWITCHES,
+    "sensor_id_t":        CONF_ANALOG_SENSORS,
     "binary_sensor_id_t": CONF_BINARY_SENSORS,
-    "text_sensor_id_t": CONF_TEXT_SENSORS,
+    "text_sensor_id_t":   CONF_TEXT_SENSORS,
 }
 
 def generate_enum(enum_name, items):
