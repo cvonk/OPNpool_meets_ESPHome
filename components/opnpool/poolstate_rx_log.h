@@ -48,8 +48,8 @@ struct poolstate_bool_t;
 struct poolstate_uint8_t;
 struct poolstate_circuit_t;
 struct poolstate_pump_t;
-enum class network_pump_mode_typ_t : uint8_t;
-enum class network_pump_ctrl_typ_t : uint8_t;
+struct network_pump_ctrl_t;
+struct network_pump_mode_t;
 enum class datalink_dev_id_t : uint8_t;
 /// @}
 
@@ -92,7 +92,7 @@ constexpr char const * const KEY_FLOW     = "flow";      ///< Flow field key.
 constexpr char const * const KEY_ERROR    = "error";     ///< Error field key.
 constexpr char const * const KEY_TIMER    = "timer";     ///< Timer field key.
 constexpr char const * const KEY_RESP     = "resp";      ///< Response key.
-constexpr char const * const KEY_CTRL     = "ctrl";      ///< Control key.
+constexpr char const * const KEY_CTRL     = "local_ctrl";///< Local control key.
 constexpr char const * const KEY_ACK      = "ack";       ///< Acknowledgment key.
 constexpr char const * const KEY_DEVID    = "devid";     ///< Device ID key.
 /// @}
@@ -105,7 +105,7 @@ void add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_
 void add_version(cJSON * const obj, char const * const key, poolstate_version_t const * const version);
 void add_thermos(cJSON * const obj, char const * const key, poolstate_thermo_t const * thermos, bool const showTemp, bool const showSp, bool const showHeating);
 void add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * scheds);
-void add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes);
+void add_mode(cJSON * const obj, char const * const key, poolstate_modes_t const mode);
 void add_temps(cJSON * const obj, char const * const key, poolstate_uint8_t const * temps);
 void add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t const * const circuits);
 void add_state(cJSON * const obj, char const * const key, poolstate_t const * const state);
@@ -115,8 +115,8 @@ void add_state(cJSON * const obj, char const * const key, poolstate_t const * co
 /// @brief Functions to add pump-specific data to JSON objects.
 /// @{
 void add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, uint16_t const value);
-void add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_typ_t const ctrl);
-void add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_typ_t const mode);
+void add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_t const ctrl);
+void add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_t const mode);
 void add_pump_running(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, bool const running);
 void add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, poolstate_pump_t const * const pumps);
 /// @}

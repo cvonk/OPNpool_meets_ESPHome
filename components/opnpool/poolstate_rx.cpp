@@ -92,18 +92,6 @@ _update_circuit_delay_from_bits(poolstate_circuit_t * const arr, uint16_t const 
     }
 }
 
-static void 
-_update_modes_from_bits(poolstate_bool_t * modes, uint16_t const bits, uint8_t const count)
-{
-    for (uint16_t ii = 0, mask = 0x0001; ii < count; ++ii, mask <<= 1) {
-        modes[ii] = {
-            .valid = true,
-            .value = (bits & mask) != 0
-        };
-        ESP_LOGVV(TAG, "  modes[%u] = %u", ii, modes[ii].value);
-    }
-}
-
 static void
 _update_circuits(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_circuit_t * const circuits)
 {
@@ -112,7 +100,6 @@ _update_circuits(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg
 
         // update circuits[].active
     uint16_t const bitmask_active_circuits = msg->active.to_uint16();
-    static_assert(enum_count<network_pool_mode_bits_t>() <= enum_count<network_pool_circuit_t>(), "size mismatch for circuits");
     _update_circuit_active_from_bits(circuits, bitmask_active_circuits, enum_count<network_pool_circuit_t>());
 
         // if both SPA and POOL bits are set, only SPA runs
@@ -180,12 +167,15 @@ _update_thermos(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg,
 }
 
 static void
-_update_modes(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_bool_t * const modes)
+_update_system_modes(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, poolstate_modes_t * const mode)
 {
-    _update_modes_from_bits(modes, msg->mode_bits, enum_count<network_pool_mode_bits_t>());
+    *mode = {
+        .valid = true,
+        .value = msg->modes
+    };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        poolstate_rx_log::add_modes(dbg, poolstate_rx_log::KEY_MODES, modes);
+        poolstate_rx_log::add_mode(dbg, poolstate_rx_log::KEY_MODES, *mode);
     }
 }
 
@@ -517,7 +507,7 @@ _ctrl_state(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg,  po
 
     _update_circuits(dbg, msg, state->circuits);
     _update_thermos(dbg, msg, state->thermos, state->circuits); 
-    _update_modes(dbg, msg, state->modes);
+    _update_system_modes(dbg, msg, &state->system.modes);
     _update_system_time(dbg, msg, &state->system.tod.time);
     _update_temps(dbg, msg, state->temps);
 
@@ -648,23 +638,18 @@ _pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, dat
  *
  * @param dbg        Optional JSON object for verbose debug logging.
  * @param device_id  The device ID of the pump.
- * @param msg        Pointer to the received network_pump_ctrl_*_t message.
+ * @param msg        The network_pump_ctrl_t message received.
  *
  * This function logs the pump control value to the debug JSON object if verbose logging
  * is enabled.
  */
 static void
-_pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const * const msg, datalink_dev_id_t const device_id)
+_pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const msg, datalink_dev_id_t const device_id)
 {
-    if (!msg) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return;
-    }
-
     // no change to poolstate
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-       poolstate_rx_log::add_pump_ctrl(dbg, poolstate_rx_log::KEY_CTRL, device_id, msg->typ);
+       poolstate_rx_log::add_pump_ctrl(dbg, poolstate_rx_log::KEY_CTRL, device_id, msg);
     }
 }
 
@@ -680,9 +665,9 @@ _pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const * const msg, datalink_de
  * JSON object if verbose logging is enabled.
  */
 static void
-_pump_mode(cJSON * const dbg, network_pump_mode_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_mode(cJSON * const dbg, network_pump_mode_t const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
 {
-    if (!msg || !pumps) {
+    if (!pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
         return;
     }
@@ -691,7 +676,7 @@ _pump_mode(cJSON * const dbg, network_pump_mode_t const * const msg, datalink_de
 
     pump->mode = {
         .valid = true,
-        .value = msg->typ
+        .value = msg
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
@@ -774,7 +759,7 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
         },
         .mode = {
             .valid = true,
-            .value = msg->mode.typ
+            .value = msg->mode
         },
         .running = {
             .valid = true,
@@ -978,11 +963,11 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
         case network_msg_typ_t::PUMP_CTRL_SET:
         case network_msg_typ_t::PUMP_CTRL_RESP:
-            _pump_ctrl(dbg, &msg->u.a5.pump_ctrl, msg->device_id);
+            _pump_ctrl(dbg, msg->u.a5.pump_ctrl, msg->device_id);
             break;
         case network_msg_typ_t::PUMP_MODE_SET:
         case network_msg_typ_t::PUMP_MODE_RESP:
-            _pump_mode(dbg, &msg->u.a5.pump_mode, msg->device_id, new_state->pumps);
+            _pump_mode(dbg, msg->u.a5.pump_mode, msg->device_id, new_state->pumps);
             break;
         case network_msg_typ_t::PUMP_RUNNING_SET:
         case network_msg_typ_t::PUMP_RUNNING_RESP:
@@ -1082,6 +1067,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
+#if 0
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST  ||
                           msg->typ == network_msg_typ_t::IGNORE            ||   
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET   ||
@@ -1091,9 +1077,11 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
                           msg->typ == network_msg_typ_t::PUMP_RUNNING_RESP ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_REQ   ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
+#endif
+    bool const frequent = false;
 
     if ((verbose && !frequent) || very_verbose) {
-        size_t const json_size = 1024;
+        size_t const json_size = 1500;
         char * const json = static_cast<char *>(calloc(1, json_size));
         if (json == nullptr) {
             ESP_LOGE(TAG, "Failed to allocate memory for JSON string");
@@ -1102,7 +1090,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         }
         bool print_success = cJSON_PrintPreallocated(dbg, json, json_size, false);
         if (!print_success) {
-            ESP_LOGE(TAG, "Failed to print JSON string");
+            ESP_LOGE(TAG, "Failed to print JSON string");  // increase size?
             free(json);
             cJSON_Delete(dbg);
             return ESP_FAIL;

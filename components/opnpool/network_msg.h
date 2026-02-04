@@ -48,15 +48,23 @@
 namespace esphome {
 namespace opnpool {
 
-    // enumerates the operation modes of the pool controller.
+    // operation modes of the pool controller.
     //  some say: bit0=service, bit2=celsius, bit3=freeze, bit7=timeout
-enum class network_pool_mode_bits_t : uint8_t {
-    SERVICE     = 0,  ///< Service mode
-    UNKNOWN_01  = 1,
-    TEMP_INC    = 2,  ///< Temperature increase mode
-    FREEZE_PROT = 3,  ///< Freeze protection mode
-    TIMEOUT     = 4   ///< Timeout mode
-};
+struct network_pool_modes_t {
+    uint8_t bits;
+    bool is_service_mode() const {
+        return (bits & 0x01) != 0;
+    }
+    bool is_temp_increase_mode() const {
+        return (bits & 0x04) != 0;
+    }
+    bool is_freeze_protection_mode() const {
+        return (bits & 0x08) != 0;
+    }
+    bool is_timeout_mode() const {
+        return (bits & 0x10) != 0;
+    }   
+} PACK8;
 
     // enumerates the pool controller circuits and features
 enum class network_pool_circuit_t : uint8_t {
@@ -71,34 +79,30 @@ enum class network_pool_circuit_t : uint8_t {
     FEATURE4 = 8   ///< Feature 4
 };
 
-    // enumerates the operation modes of the pool pump
-enum class network_pump_mode_typ_t : uint8_t {
-    FILTER     = 0,  ///< Regular filter mode
-    MAN        = 1,  ///< Manual mode
-    BKWASH     = 2,  ///< Backwash mode
-    RINSE      = 3,  ///< Rinse mode
-    UNKNOWN_04 = 4,
-    UNKNOWN_05 = 5,
-    UNKNOWN_06 = 6,
-    UNKNOWN_07 = 7,
-    UNKNOWN_08 = 8,
-    EP1        = 9,  ///< Extra Program 1
-    EP2        = 10, ///< Extra Program 2
-    EP3        = 11, ///< Extra Program 3
-    EP4        = 12  ///< Extra Program 4
-};
-
 struct network_pump_mode_t {
-    network_pump_mode_typ_t typ;
+    uint8_t raw;
+
+    // 2BD: change to uint8_t and use constexpr functions?
+    constexpr char const * to_str() const {
+        switch (raw) {
+            case  0: return "Filter";
+            case  1: return "Manual";
+            case  2: return "Backwash";
+            case  3: return "Rinse";
+            case  9: return "Extra Prg 1";
+            case 10: return "Extra Prg 2";
+            case 11: return "Extra Prg 3";
+            case 12: return "Extra Prg 4";
+            default: break;
+        }
+        return "Unknown";
+    }
 } PACK8;
 
-enum class network_pump_ctrl_typ_t : uint8_t {
-    LOCAL    = 0x00,
-    REMOTE   = 0xFF
-};
-
 struct network_pump_ctrl_t {
-    network_pump_ctrl_typ_t typ;
+    uint8_t raw;
+    constexpr bool is_local()  const { return raw == 0x00; }
+    constexpr bool is_remote() const { return raw == 0xFF; }
 } PACK8;
 
     // enumerates the states of the pool pump
@@ -186,25 +190,25 @@ struct uint8_heat_src_t {
 } PACK8;
 
 struct network_ctrl_state_bcast_t {
-    uint8_t             hour;               // 0
-    uint8_t             minute;             // 1
-    uint8_lo_hi_t       active;             // 2..3   bitmask for active circuits
-    uint8_t             unknown_04to06[3];  // 4..6   more `active` circuits on fancy controllers
-    uint8_t             unknown_07to08[2];  // 7..8
-    uint8_t             mode_bits;          // 9      bitmask for active pool modes
-    uint8_heat_status_t heat_status;        // 10     bit2 is for POOL, bit3 is for SPA
-    uint8_t             unknown_11;         // 11
-    uint8_t             delay;              // 12     bitmask for delay status of circuits
-    uint8_t             unknown_13;         // 13
-    uint8_t             pool_temp;          // 14     water sensor 1
-    uint8_t             spa_temp;           // 15     water sensor 2
-    uint8_t             unknown_16;         // 16
-    uint8_t             water_temp;         // 17     solar sensor 1
-    uint8_t             air_temp;           // 18     air sensor
-    uint8_t             solar_temp;         // 19     solar sensor 2
-    uint8_t             unknown_20to21[2];  // 20..21 more water sensors?
-    uint8_heat_src_t    heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
-    uint8_t             unknown_23to28[6];  // 23..28 (26 maybe 0x01=automatically adjust DST)
+    uint8_t              hour;               // 0
+    uint8_t              minute;             // 1
+    uint8_lo_hi_t        active;             // 2..3   bitmask for active circuits
+    uint8_t              unknown_04to06[3];  // 4..6   more `active` circuits on fancy controllers
+    uint8_t              unknown_07to08[2];  // 7..8
+    network_pool_modes_t modes;              // 9      bitmask for active pool modes
+    uint8_heat_status_t  heat_status;        // 10     bit2 is for POOL, bit3 is for SPA
+    uint8_t              unknown_11;         // 11
+    uint8_t              delay;              // 12     bitmask for delay status of circuits
+    uint8_t              unknown_13;         // 13
+    uint8_t              pool_temp;          // 14     water sensor 1
+    uint8_t              spa_temp;           // 15     water sensor 2
+    uint8_t              unknown_16;         // 16
+    uint8_t              water_temp;         // 17     solar sensor 1
+    uint8_t              air_temp;           // 18     air sensor
+    uint8_t              solar_temp;         // 19     solar sensor 2
+    uint8_t              unknown_20to21[2];  // 20..21 more water sensors?
+    uint8_heat_src_t     heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
+    uint8_t              unknown_23to28[6];  // 23..28 (26 maybe 0x01=automatically adjust DST)
 } PACK8;
 
 struct network_ctrl_time_t {
@@ -268,7 +272,7 @@ struct network_ctrl_scheds_resp_t {
     uint8_t                start_min;    // 3
     uint8_t                stop_hr;      // 4
     uint8_t                stop_min;     // 5
-    uint8_t                day_of_week;  // 6 bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
+    uint8_t                day_of_week;  // 6 ///< bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
 } PACK8;
 
 struct network_ctrl_heat_resp_t {
@@ -277,7 +281,7 @@ struct network_ctrl_heat_resp_t {
     uint8_t          air_temp;        // 2
     uint8_t          pool_set_point;  // 3
     uint8_t          spa_set_point;   // 4
-    uint8_heat_src_t heat_src;        // 5 bits 0-3 for POOL, bits 4-7 for SPA
+    uint8_heat_src_t heat_src;        // 5 ///< bits 0-3 for POOL, bits 4-7 for SPA
     uint8_t          unknown_06;      // 6
     uint8_t          unknown_07;      // 7
     uint8_t          unknown_08;      // 8
@@ -290,7 +294,7 @@ struct network_ctrl_heat_resp_t {
 struct network_ctrl_heat_set_t {
     uint8_t          pool_set_point;  // 0
     uint8_t          spa_set_point;   // 1
-    uint8_heat_src_t heat_src;        // 2 bits 0-3 for POOL, bits 4-7 for SPA
+    uint8_heat_src_t heat_src;        // 2 ///< bits 0-3 for POOL, bits 4-7 for SPA
     uint8_t          unknown;         // 3
 } PACK8;
 

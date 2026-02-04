@@ -114,6 +114,23 @@ _publish_enum_if(EntityT * const entity, ValueT const base)
 }
 
 /**
+ * @brief            Publishes a string value as a string to an entity if it exists and is valid.
+ *
+ * @tparam EntityT   The entity type.
+ * @tparam ValueT    The value wrapper type (must have .valid and .value members).
+ * @param[in] entity Pointer to the entity, or nullptr.
+ * @param[in] base   The value wrapper containing validity flag and string value.
+ */
+template<typename EntityT, typename ValueT>
+static void
+_publish_str_if(EntityT * const entity, ValueT const base)
+{
+    if (entity != nullptr && base.valid) {
+        entity->publish_value_if_changed(base.value.to_str());
+    }
+}
+
+/**
  * @brief            Publishes a schedule as a formatted time range string.
  *
  * @param[in] sensor Pointer to the text sensor entity, or nullptr.
@@ -172,6 +189,30 @@ _publish_version_if(OpnPoolTextSensor * const sensor, poolstate_version_t const 
         static char fw_str[8];  // 2.80\0
         snprintf(fw_str, sizeof(fw_str), "%d.%d", version->major, version->minor);
         sensor->publish_value_if_changed(fw_str);
+    }
+}
+
+/**
+ * @brief Publishes the four mode binary sensors if present and valid.
+ *
+ * @param[in] sensors Array of binary sensor pointers.
+ * @param[in] modes   The modes value wrapper (must have .valid and .value members).
+ */
+static void
+_publish_modes_if(OpnPoolBinarySensor * const * const  sensors, poolstate_modes_t const modes)
+{
+    if (!modes.valid) return;
+    if (sensors[enum_index(binary_sensor_id_t::MODE_SERVICE)]) {
+        sensors[enum_index(binary_sensor_id_t::MODE_SERVICE)]->publish_value_if_changed(modes.value.is_service_mode());
+    }
+    if (sensors[enum_index(binary_sensor_id_t::MODE_TEMPERATURE_INC)]) {
+        sensors[enum_index(binary_sensor_id_t::MODE_TEMPERATURE_INC)]->publish_value_if_changed(modes.value.is_temp_increase_mode());
+    }
+    if (sensors[enum_index(binary_sensor_id_t::MODE_FREEZE_PROTECTION)]) {
+        sensors[enum_index(binary_sensor_id_t::MODE_FREEZE_PROTECTION)]->publish_value_if_changed(modes.value.is_freeze_protection_mode());
+    }
+    if (sensors[enum_index(binary_sensor_id_t::MODE_TIMEOUT)]) {
+        sensors[enum_index(binary_sensor_id_t::MODE_TIMEOUT)]->publish_value_if_changed(modes.value.is_timeout_mode());
     }
 }
 
@@ -525,6 +566,7 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
  *
  * @param[in] state Pointer to the current pool state.
  */
+
 void
 OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
@@ -532,22 +574,9 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
         this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)],           
         state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].running
     );
-    _publish_if(
-        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_SERVICE)],           
-        state->modes[enum_index(network_pool_mode_bits_t::SERVICE)]
-    );
-    _publish_if(
-        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_TEMPERATURE_INC)],   
-        state->modes[enum_index(network_pool_mode_bits_t::TEMP_INC)]
-    );
-    _publish_if(
-        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_FREEZE_PROTECTION)], 
-        state->modes[enum_index(network_pool_mode_bits_t::FREEZE_PROT)]
-    );
-    _publish_if(
-        this->binary_sensors_[enum_index(binary_sensor_id_t::MODE_TIMEOUT)],           
-        state->modes[enum_index(network_pool_mode_bits_t::TIMEOUT)]
-    );
+    _publish_modes_if(
+        this->binary_sensors_,
+        state->system.modes);
 }
 
 /**
@@ -567,12 +596,12 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
         &state->scheds[enum_index(network_pool_circuit_t::SPA)]
     );
     _publish_enum_if(
-        this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)], 
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].mode
-    );    
-    _publish_enum_if(
         this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_STATE)],
         state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].state
+    );
+    _publish_str_if(
+        this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)], 
+        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].mode
     );
     _publish_if(
         this->text_sensors_[enum_index(text_sensor_id_t::CHLORINATOR_NAME)], 

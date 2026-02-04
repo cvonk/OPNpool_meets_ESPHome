@@ -97,7 +97,18 @@ struct poolstate_tod_t {
     poolstate_time_t time;  ///< Time component.
 };
 
+/// @name Pool Mode Structure
+/// @brief Structure for representing pool mode flags.
+/// @{
+
+/// @brief Pool mode flags with validity.
+struct poolstate_modes_t {
+    bool                valid;  ///< True if mode has been set.
+    network_pool_modes_t value;  ///< Pool mode flags.
+};
+
 /// @}
+
 
 /// @name System Information Structures
 /// @brief Structures for firmware version and system state.
@@ -113,6 +124,7 @@ struct poolstate_version_t {
 /// @brief System information (time-of-day and firmware version).
 struct poolstate_system_t {
     poolstate_tod_t     tod;      ///< Current time-of-day.
+    poolstate_modes_t   modes;    ///< Mode flags.
     poolstate_version_t version;  ///< Controller firmware version.
 };
 
@@ -188,8 +200,8 @@ struct poolstate_circuit_t {
 
 /// @brief Pump mode with validity flag.
 struct poolstate_pump_mode_t {
-    bool                    valid;  ///< True if mode has been set.
-    network_pump_mode_typ_t value;  ///< Pump mode (filter, manual, etc.).
+    bool                valid;  ///< True if mode has been set.
+    network_pump_mode_t value;  ///< Pump mode (filter, manual, etc.).
 };
 
 /// @brief Pump state with validity flag.
@@ -276,7 +288,6 @@ struct poolstate_t {
     poolstate_chlor_t   chlor;                                           ///< Chlorinator status.
     poolstate_pump_t    pumps[enum_count<datalink_dev_id_t>()];          ///< Pump status array.
     poolstate_circuit_t circuits[enum_count<network_pool_circuit_t>()];  ///< Circuit states.
-    poolstate_bool_t    modes[enum_count<network_pool_mode_bits_t>()];   ///< Mode flags.
     poolstate_thermo_t  thermos[enum_count<poolstate_thermo_typ_t>()];   ///< Thermostat states.
     poolstate_uint8_t   temps[enum_count<poolstate_temp_typ_t>()];       ///< Temperature readings.
     poolstate_sched_t   scheds[enum_count<network_pool_circuit_t>()];    ///< Circuit schedules.

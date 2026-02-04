@@ -119,12 +119,12 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
  *
  * @param[in] obj  The parent JSON object.
  * @param[in] key  The key for the pump mode value.
- * @param[in] mode The pump mode enum value.
+ * @param[in] mode The pump mode value.
  */
 static void
-_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_typ_t const mode)
+_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
 {
-    cJSON_AddStringToObject(obj, key, enum_str(mode));
+    cJSON_AddStringToObject(obj, key, mode.to_str());
 }
 
 /**
@@ -159,20 +159,19 @@ add_circuits(cJSON * const obj, char const * const key, poolstate_circuit_t cons
 /**
  * @brief Adds mode information to a JSON object.
  *
- * @param[in] obj   The parent JSON object.
- * @param[in] key   The key under which to add the modes object.
- * @param[in] modes Pointer to the array of poolstate_bool_t structures.
+ * @param[in] obj  The parent JSON object.
+ * @param[in] key  The key under which to add the modes object.
+ * @param[in] mode The poolstate_modes_t structure.
  */
 void
-add_modes(cJSON * const obj, char const * const key, poolstate_bool_t const * const modes)
+add_mode(cJSON * const obj, char const * const key, poolstate_modes_t const mode)
 {
     cJSON * const item = _create_item(obj, key);
 
-    poolstate_bool_t const * mode = modes;
-    for (auto typ : magic_enum::enum_values<network_pool_mode_bits_t>()) {
-        cJSON_AddBoolToObject(item, enum_str(typ), mode->value);
-        mode++;
-    }
+    cJSON_AddBoolToObject(item, "service", mode.value.is_service_mode());
+    cJSON_AddBoolToObject(item, "temp_inc", mode.value.is_temp_increase_mode());
+    cJSON_AddBoolToObject(item, "freeze_prot", mode.value.is_freeze_protection_mode());
+    cJSON_AddBoolToObject(item, "timeout", mode.value.is_timeout_mode());
 }
 
 /**
@@ -313,7 +312,7 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 
     add_thermos(item, KEY_THERMOS, state->thermos, true, false, true);
     add_scheds(item, KEY_SCHEDS, state->scheds);
-    add_modes(item, KEY_MODES, state->modes);
+    add_mode(item, KEY_MODES, state->system.modes);
     add_temps(item, KEY_TEMPS, state->temps);
     add_circuits(item, KEY_CIRCUITS, state->circuits);
     _add_system(item, KEY_SYSTEM, &state->system);
@@ -375,11 +374,11 @@ add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t co
  * @param[in] ctrl   The pump control value to log.
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_typ_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
-    cJSON_AddStringToObject(item, key, enum_str(ctrl));
+    cJSON_AddBoolToObject(item, key, ctrl.is_local());
 }
 
 /**
@@ -391,7 +390,7 @@ add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const
  * @param[in] mode   The pump mode value to log.
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_typ_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_t const mode)
 {
     cJSON * const item = _create_item(obj, enum_str(dev_id));
 
