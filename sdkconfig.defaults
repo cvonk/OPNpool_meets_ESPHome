@@ -1,3 +1,5 @@
+# I don't think this file is honored by ESPHome/PlatformIO
+
 # OPNpool ESP-IDF SDK configuration defaults
 # These options are applied during the ESP-IDF build
 

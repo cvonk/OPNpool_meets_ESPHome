@@ -2,9 +2,8 @@
 # This is an example and may include too much for your use-case.
 # You can modify this file to suit your needs.
 /.esphome/
+/.claude/
 /secrets.yaml
 /hardware/libraries/Coert-Vonk.l#*
 /hardware/OPNpool r?.b#*
 /hardware/OPNpool r?.s#*
-
-coert copy.bmp
