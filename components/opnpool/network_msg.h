@@ -486,7 +486,6 @@ union network_data_t {
  *   - DATALINK_TYPE: The datalink type enum value
  * 
  * @note In C++ empty structs have a size of 1, not 0.  For those we use 0 in this table.
- * @note The SET/REQ must precede the RESP in this list.
  */
 #define NETWORK_MSG_TYP_LIST(X) \
     X(IGNORE,               0,                                     false, A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
