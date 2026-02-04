@@ -56,6 +56,8 @@ enum class datalink_prot_t : uint8_t {
  * This enum class defines the message types for the A5 controller protocol.
  * Each value corresponds to a specific request or response type used in the A5
  * controller protocol.
+ * 
+ * @note Bit 6-7 (0xC0) indicate Request (0xC0), Response (0x40), or Set (0x00).
  */
 enum class datalink_ctrl_typ_t : uint8_t {
     SET_ACK         = 0x01,
@@ -79,6 +81,7 @@ enum class datalink_ctrl_typ_t : uint8_t {
     LAYOUT_RESP     = 0x21,
     LAYOUT_SET      = 0xA1,
     LAYOUT_REQ      = 0xE1,
+    CUSTOM_NAME_REQ = 0xCA,
     CIRC_NAMES_RESP = 0x0B,
     CIRC_NAMES_REQ  = 0xCB,
     SCHEDS_RESP     = 0x11,
@@ -95,6 +98,18 @@ enum class datalink_ctrl_typ_t : uint8_t {
     HEAT_SETPT_REQ  = 0xE8,
     VERSION_RESP    = 0xFC,
     VERSION_REQ     = 0xFD
+    // SPA_CTRL_REQ     = 0xD6,
+    // SPA_CTRL_RESP    = 0x16,
+    // INTELLICHOR_REQ  = 0xD9,
+    // INTELLICHOR_RESP = 0x19,
+    // HS_VALVE_REQ     = 0xDE,
+    // HS_VALVE_RESP    = 0x1E,
+    // IS4_IS10_REQ     = 0xE0
+    // IS4_IS10_RESP    = 0x20,
+    // SPA_REMOTE_REQ   = 0xE1
+    // SPA_REMOTE_RESP  = 0x21,
+    // LIGHT_REQ        = 0xE7,
+    // LIGHT_RESP       = 0x27,
 };
 
 /**
@@ -128,10 +143,10 @@ enum class datalink_pump_typ_t : uint8_t {
  *        but whose purpose has not yet been identified.
  */
 enum class datalink_chlor_typ_t : uint8_t {
-    PING_REQ    = 0x00,
-    PING_RESP   = 0x01,
+    STATUS_REQ  = 0x00,  ///< Status request message
+    STATUS_RESP = 0x01,  ///< Status response message
     UNKNOWN_02  = 0x02,
-    NAME_RESP   = 0x03,
+    NAME_RESP   = 0x03,  ///< Name response message
     UNKNOWN_04  = 0x04,
     UNKNOWN_05  = 0x05,
     UNKNOWN_06  = 0x06,
@@ -145,10 +160,11 @@ enum class datalink_chlor_typ_t : uint8_t {
     UNKNOWN_0E  = 0x0E,
     UNKNOWN_0F  = 0x0F,
     UNKNOWN_10  = 0x10,
-    LEVEL_SET   = 0x11,
-    LEVEL_RESP  = 0x12,
+    LEVEL_SET   = 0x11,  ///< Level set message [%]
+    LEVEL_RESP  = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
     UNKNOWN_13  = 0x13,
-    NAME_REQ    = 0x14
+    NAME_REQ    = 0x14,  ///< Name request message
+    LEVEL_SET10 = 0x15   ///< Level set message percentage [%/10]
 };
 
 /**

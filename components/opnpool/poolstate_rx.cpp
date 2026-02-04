@@ -1062,8 +1062,8 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
         case network_msg_typ_t::CTRL_CHEM_REQ:
             break;
-        case network_msg_typ_t::CHLOR_PING_REQ:
-        case network_msg_typ_t::CHLOR_PING_RESP:
+        case network_msg_typ_t::CHLOR_STATUS_REQ:
+        case network_msg_typ_t::CHLOR_STATUS_RESP:
             break;
         case network_msg_typ_t::CHLOR_NAME_REQ:
             _ctrl_hex_bytes(dbg, msg->u.raw, 1);

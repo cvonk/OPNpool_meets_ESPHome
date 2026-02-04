@@ -131,8 +131,8 @@ Addresses are 8-bit values with the following structure:
 
 | Message      | Value | Description
 |--------------|-------|------------
-| `PING_REQ`   | 0x00  | Ping request (keepalive)
-| `PING_RESP`  | 0x01  | Ping response
+| `STATUS_REQ`   | 0x00  | Ping request (keepalive)
+| `STATUS_RESP`  | 0x01  | Ping response
 | `NAME_RESP`  | 0x03  | Name and salt level response
 | `LEVEL_SET`  | 0x11  | Set chlorine output level
 | `LEVEL_RESP` | 0x12  | Level and status response

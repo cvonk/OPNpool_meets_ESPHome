@@ -70,15 +70,16 @@ static proto_info_t _proto_descr[] = {
     // size lookup table for message types
     // MUST MATCH enum datalink_chlor_typ_t in datalink_pkt.h
 inline constexpr size_t datalink_chlor_typ_sizes[] = {
-    sizeof(network_chlor_ping_req_t),       // 0x00 PING_REQ
-    sizeof(network_chlor_ping_resp_t),      // 0x01 PING_RESP
+    sizeof(network_chlor_status_req_t),     // 0x00 STATUS_REQ
+    sizeof(network_chlor_status_resp_t),    // 0x01 STATUS_RESP
     0,                                      // 0x02 UNKNOWN_02
     sizeof(network_chlor_name_resp_t),      // 0x03 NAME_RESP
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 0x04..0x10 UNKNOWN_04..10
     sizeof(network_chlor_level_set_t),      // 0x11 LEVEL_SET
     sizeof(network_chlor_level_resp_t),     // 0x12 LEVEL_RESP
     0,                                      // 0x13 UNKNOWN_13
-    sizeof(network_chlor_name_req_t)        // 0x14 NAME_REQ
+    sizeof(network_chlor_name_req_t),       // 0x14 NAME_REQ
+    0,                                      // 0x15 LEVEL_SET10
 };
 static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(datalink_chlor_typ_sizes));
 

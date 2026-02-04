@@ -63,8 +63,8 @@ Addresses are 8-bit values where:
 
 | Type       | Value | Description
 |------------|-------|------------
-| PING_REQ   | 0x00 | Ping request
-| PING_RESP  | 0x01 | Ping response
+| STATUS_REQ   | 0x00 | Ping request
+| STATUS_RESP  | 0x01 | Ping response
 | NAME_REQ   | 0x14 | Name request
 | NAME_RESP  | 0x03 | Name response
 | LEVEL_SET  | 0x11 | Set chlorine level

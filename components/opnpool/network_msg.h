@@ -49,6 +49,7 @@ namespace esphome {
 namespace opnpool {
 
     // enumerates the operation modes of the pool controller.
+    //  some say: bit0=service, bit2=celsius, bit3=freeze, bit7=timeout
 enum class network_pool_mode_bits_t : uint8_t {
     SERVICE     = 0,  ///< Service mode
     UNKNOWN_01  = 1,
@@ -197,13 +198,13 @@ struct network_ctrl_state_bcast_t {
     uint8_t             unknown_13;         // 13
     uint8_t             pool_temp;          // 14     water sensor 1
     uint8_t             spa_temp;           // 15     water sensor 2
-    uint8_t             unknown_16;         // 16     unknown          (was major)
-    uint8_t             water_temp;         // 17     solar sensor 1   (was minor)
+    uint8_t             unknown_16;         // 16
+    uint8_t             water_temp;         // 17     solar sensor 1
     uint8_t             air_temp;           // 18     air sensor
-    uint8_t             water_temp2;        // 19     solar sensor 2
+    uint8_t             solar_temp;         // 19     solar sensor 2
     uint8_t             unknown_20to21[2];  // 20..21 more water sensors?
     uint8_heat_src_t    heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
-    uint8_t             unknown_23to28[6];  // 23..28
+    uint8_t             unknown_23to28[6];  // 23..28 (26 maybe 0x01=automatically adjust DST)
 } PACK8;
 
 struct network_ctrl_time_t {
@@ -297,6 +298,19 @@ struct network_ctrl_layout_t {
     network_ctrl_scheds_resp_t circuit[4];  // circuits assigned to each of the 4 buttons on the remote
 } PACK8;
 
+    // an informed guess towards the IntelliChlor message structure
+struct network_intellichem_t {
+    uint8_hi_lo_t ph;               // 0..1    ///< pH reading
+    uint8_hi_lo_t orp;              // 2..3    ///< ORP reading
+    uint8_hi_lo_t ph_setpoint;      // 4..5    ///< pH setpoint
+    uint8_hi_lo_t orp_setpoint;     // 6..7    ///< ORP setpoint
+    uint8_hi_lo_t tank;             // 8..9
+    uint8_hi_lo_t calc_hardness;    // 10..11  ///< calcium hardness reading
+    uint8_t       cya;              // 12      ///< cyanuric acid reading
+    uint8_hi_lo_t total_alkalinity; // 13..14  ///< total alkalinity reading
+    uint8_t       water_flow;       // 15      ///< water flow rate
+    uint8_hi_lo_t mode;             // 16..17
+} PACK8;
 
 /**
  * @brief Defines the structures and unions for A5-pump messages.
@@ -384,11 +398,11 @@ struct network_pump_status_resp_t {
  * IntelliChlor chlorinator.
  */
 
-struct network_chlor_ping_req_t {
+struct network_chlor_status_req_t {
     uint8_t unknown;
 } PACK8;
 
-struct network_chlor_ping_resp_t {
+struct network_chlor_status_resp_t {
     uint8_t unknown[2];
 } PACK8;
 
@@ -454,8 +468,8 @@ union network_data_a5_t {
 } PACK8;
 
 union network_data_ic_t {
-    network_chlor_ping_req_t    chlor_ping_req;
-    network_chlor_ping_resp_t   chlor_ping_resp;
+    network_chlor_status_req_t  chlor_status_req;
+    network_chlor_status_resp_t chlor_status_resp;
     network_chlor_name_req_t    chlor_name_req;
     network_chlor_name_resp_t   chlor_name_resp;
     network_chlor_level_set_t   chlor_level_set;
@@ -528,8 +542,8 @@ union network_data_t {
     X(CTRL_SCHEDS_REQ,      sizeof(network_ctrl_scheds_req_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)   \
     X(CTRL_SCHEDS_RESP,     sizeof(network_ctrl_scheds_resp_t),    false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)  \
     X(CTRL_CHEM_REQ,        sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)     \
-    X(CHLOR_PING_REQ,       sizeof(network_chlor_ping_req_t),      false, IC,      datalink_chlor_typ_t::PING_REQ)    \
-    X(CHLOR_PING_RESP,      sizeof(network_chlor_ping_resp_t),     false, IC,      datalink_chlor_typ_t::PING_RESP)   \
+    X(CHLOR_STATUS_REQ,     sizeof(network_chlor_status_req_t),    false, IC,      datalink_chlor_typ_t::STATUS_REQ)  \
+    X(CHLOR_STATUS_RESP,    sizeof(network_chlor_status_resp_t),   false, IC,      datalink_chlor_typ_t::STATUS_RESP) \
     X(CHLOR_NAME_REQ,       sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::NAME_REQ)    \
     X(CHLOR_NAME_RESP,      sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::NAME_RESP)   \
     X(CHLOR_LEVEL_SET,      sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)   \
