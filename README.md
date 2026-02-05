@@ -285,7 +285,7 @@ debug:
 
 **Is a controller required?**
 
-Unlike proprietary, all-in-one automation systems that can be daunting to a new homeowner, this setup ensures that when selling the house, the next owner is not stuck with a "custom" system. They can use the pool conventionally or easily adopt the smart features.
+This setup ensures that when selling the house, the next owner is not stuck with a "custom" system. They can use the pool conventionally or easily adopt the smart features.  If you're determined to build your own controller, I can recommend Russ Goldin's [nodejs-poolController](https://github.com/tagyoureit/nodejs-poolController/tree/master).
 
 **Will it work with ___ board?**
 
@@ -293,9 +293,11 @@ There are many boards and kits that incorporate the ESP32. I started with the ES
 
 **My firmware is ___ How do you update SunTouch firmware?**
 
+Instead of taking such a risky step, I recommend enabling `VERBOSE` logging for `datalink_rx` and `network_rx`.  This will visualize the raw bytes received and messages interpretated. Compare that with the structures `network_msg.h` to see what you need to adjust.
+
 > Only do this if you very confident with electrnics. You risk bricking your pool controller.
 
-You can only upgrade if your firmware is at [least version 2.x](https://saturationregion.blogspot.com/2020/01/whats-deal-with-easytouch-versions-1.html). You will need a [USBDM JS16](https://www.aliexpress.us/w/wholesale-Freescale-USBDM-Programmer-JS16.html?spm=a2g0o.detail.search.0) programmer, [make](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/#post-595657) a [JST cable](https://www.aliexpress.us/w/wholesale-5-PCS-JST-1.-25mm-Male-Female-6p.html?spm=a2g0o.detail.search.0) following [the instructions](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/page-7#post-2021911) to bump the firmware to e.g. [EasyTouch 2.080](https://www.pentair.com/content/dam/extranet/nam/pentair-pool/residential/automation/easytouch/easytouch-firmware/easytouch-2190.zip). The latest firmware is at [pentair.com](https://www.pentair.com/en-us/pool-spa/education-support/homeowner-support/software-downloads.html).
+You can only upgrade if your firmware is at [least version 2.x](https://saturationregion.blogspot.com/2020/01/whats-deal-with-easytouch-versions-1.html). You will need a [USBDM JS16](https://www.aliexpress.us/w/wholesale-Freescale-USBDM-Programmer-JS16.html?spm=a2g0o.detail.search.0) programmer, [make](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/#post-595657) a [JST cable](https://www.aliexpress.us/w/wholesale-5-PCS-JST-1.-25mm-Male-Female-6p.html?spm=a2g0o.detail.search.0) following [the instructions](https://www.troublefreepool.com/threads/how-to-perform-firmware-upgrade-on-pentair-controllers.69589/page-7#post-2021911) to bump the firmware to e.g. [EasyTouch 2.080](https://www.pentair.com/content/dam/extranet/nam/pentair-pool/residential/automation/easytouch/easytouch-firmware/easytouch-2190.zip). You find the latest firmware at [pentair.com](https://www.pentair.com/en-us/pool-spa/education-support/homeowner-support/software-downloads.html).
 
 **LEDs not blinking with RS-485 connected**
 
