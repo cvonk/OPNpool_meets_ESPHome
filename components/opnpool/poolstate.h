@@ -101,7 +101,7 @@ struct poolstate_tod_t {
 /// @brief Pool mode flags with validity.
 struct poolstate_modes_t {
     bool                 valid;  ///< True if mode has been set.
-    network_pool_modes_t value;  ///< Pool mode flags.
+    network_ctrl_modes_t value;  ///< Pool mode flags.
 };
 
 /// @}

@@ -121,11 +121,13 @@ enum class datalink_ctrl_typ_t : uint8_t {
  * pump protocol.
  */
 enum class datalink_pump_typ_t : uint8_t {
-    REG         = 0x01,  // 0x09 for VF Pump (gal/min), and 0x0A for VS Pump (RPM) appear similar
+    REG         = 0x01,
     REMOTE_CTRL = 0x04,
     RUN_MODE    = 0x05,  // intellicom uses this
     RUN         = 0x06,  // naming it POWER would conflict with pump power measurement
     STATUS      = 0x07,
+    REG_VF      = 0x09,  // variable flow rate (gal/min)
+    REG_VS      = 0x0A,  // variable speed (RPM)
     REJECTING   = 0xFF
 };
 

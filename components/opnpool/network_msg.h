@@ -50,7 +50,7 @@ namespace opnpool {
 
     // operation modes of the pool controller.
     //  some say: bit0=service, bit2=celsius, bit3=freeze, bit7=timeout
-struct network_pool_modes_t {
+struct network_ctrl_modes_t {
     uint8_t bits;
     bool is_service_mode()           const { return (bits & 0x01) != 0; }
     bool is_temp_increase_mode()     const { return (bits & 0x04) != 0; }
@@ -197,17 +197,18 @@ struct network_date_t {
 struct network_ctrl_state_bcast_t {
     network_time_t       time;          // 0..1
     network_lo_hi_t      active;        // 2..3 bitmask for active circuits
-    network_lo_hi_t      active_3_4;    // 4..5 bitmask for more active circuits
+    uint8_t              active_3;      // 4    bitmask for more active circuits
+    uint8_t              active_4;      // 5    bitmask for more active circuits
     uint8_t              active_5;      // 6    bitmask for more active circuits
     uint8_t              unknown_07;    // 7
     uint8_t              unknown_08;    // 8
-    network_pool_modes_t modes;         // 9    bitmask for active pool modes
+    network_ctrl_modes_t modes;         // 9    bitmask for active pool modes
     uint8_heat_status_t  heat_status;   // 10   bit2 is for POOL, bit3 is for SPA
     uint8_t              unknown_11;    // 11
     uint8_t              delay;         // 12   bitmask for delay status of circuits
     uint8_t              unknown_13;    // 13
-    uint8_t              pool_temp;     // 14   water sensor 1
-    uint8_t              spa_temp;      // 15   water sensor 2 (for shared system: mirrors water sensor 1)
+    uint8_t              pool_temp;     // 14   water sensor 1 (POOL)
+    uint8_t              spa_temp;      // 15   water sensor 2 (SPA, for shared system: mirrors water sensor 1)
     uint8_t              unknown_16;    // 16
     uint8_t              solar_temp_1;  // 17   solar sensor 1
     uint8_t              air_temp;      // 18   air sensor
@@ -524,9 +525,13 @@ union network_data_t {
  * @note In C++ empty structs have a size of 1, not 0.  For those we use 0 in this table.
  */
 #define NETWORK_MSG_TYP_LIST(X) \
-    X(IGNORE,                0,                                     false, A5_PUMP, datalink_pump_typ_t::REJECTING)   \
+    X(IGNORE,                0,                                     false, A5_PUMP, datalink_pump_typ_t::REJECTING)    \
     X(PUMP_REG_SET,          sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG)          \
     X(PUMP_REG_RESP,         sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG)          \
+    X(PUMP_REG_VF_SET,       sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG_VF)       \
+    X(PUMP_REG_VF_RESP,      sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG_VF)       \
+    X(PUMP_REG_VS_SET,       sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG_VS)       \
+    X(PUMP_REG_VS_RESP,      sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG_VS)       \
     X(PUMP_REMOTE_CTRL_SET,  sizeof(network_pump_ctrl_t),           true,  A5_PUMP, datalink_pump_typ_t::REMOTE_CTRL)  \
     X(PUMP_REMOTE_CTRL_RESP, sizeof(network_pump_ctrl_t),           false, A5_PUMP, datalink_pump_typ_t::REMOTE_CTRL)  \
     X(PUMP_RUN_MODE_SET,     sizeof(network_pump_run_mode_t),       true,  A5_PUMP, datalink_pump_typ_t::RUN_MODE)     \
