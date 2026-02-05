@@ -661,7 +661,7 @@ _pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const msg, datalink_pump_id_t 
  * JSON object if verbose logging is enabled.
  */
 static void
-_pump_mode(cJSON * const dbg, network_pump_mode_t const msg, datalink_pump_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_mode(cJSON * const dbg, network_pump_run_mode_t const msg, datalink_pump_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -701,8 +701,8 @@ _pump_running(cJSON * const dbg, network_pump_running_t const * const msg, datal
 
     auto pump = &pumps[enum_index(device_id)];
 
-    bool const running     = msg->is_running();
-    bool const not_running = msg->is_not_running();
+    bool const running     = msg->is_on();
+    bool const not_running = msg->is_off();
     if (!running && !not_running) {
         ESP_LOGW(TAG, "running state err 0x%02X in %s", msg->raw, __func__);
         return;
@@ -739,8 +739,8 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
 
     auto pump = &pumps[enum_index(device_id)];
 
-    bool const running     = msg->running.is_running();
-    bool const not_running = msg->running.is_not_running();
+    bool const running     = msg->running.is_on();
+    bool const not_running = msg->running.is_off();
 
     if (!running && !not_running) {
         ESP_LOGW(TAG, "running state err 0x%02X (%u %u) in %s", msg->running.raw, running, not_running, __func__);
@@ -956,16 +956,16 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_msg_typ_t::PUMP_REG_RESP:
             _pump_reg_resp(dbg, &msg->u.a5.pump_reg_resp, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_CTRL_SET:
-        case network_msg_typ_t::PUMP_CTRL_RESP:
+        case network_msg_typ_t::PUMP_REMOTE_CTRL_SET:
+        case network_msg_typ_t::PUMP_REMOTE_CTRL_RESP:
             _pump_ctrl(dbg, msg->u.a5.pump_ctrl, msg->device_id);
             break;
-        case network_msg_typ_t::PUMP_MODE_SET:
-        case network_msg_typ_t::PUMP_MODE_RESP:
+        case network_msg_typ_t::PUMP_RUN_MODE_SET:
+        case network_msg_typ_t::PUMP_RUN_MODE_RESP:
             _pump_mode(dbg, msg->u.a5.pump_mode, msg->device_id, new_state->pumps);
             break;
-        case network_msg_typ_t::PUMP_RUNNING_SET:
-        case network_msg_typ_t::PUMP_RUNNING_RESP:
+        case network_msg_typ_t::PUMP_RUN_SET:
+        case network_msg_typ_t::PUMP_RUN_RESP:
             _pump_running(dbg, &msg->u.a5.pump_running, msg->device_id, new_state->pumps);
             break;
         case network_msg_typ_t::PUMP_STATUS_REQ:
@@ -1062,14 +1062,14 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST  ||
-                          msg->typ == network_msg_typ_t::IGNORE            ||   
-                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET   ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_SET     ||
-                          msg->typ == network_msg_typ_t::PUMP_CTRL_RESP    ||
-                          msg->typ == network_msg_typ_t::PUMP_RUNNING_SET  ||
-                          msg->typ == network_msg_typ_t::PUMP_RUNNING_RESP ||
-                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ   ||
+    bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST      ||
+                          msg->typ == network_msg_typ_t::IGNORE                ||   
+                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET       ||
+                          msg->typ == network_msg_typ_t::PUMP_REMOTE_CTRL_SET  ||
+                          msg->typ == network_msg_typ_t::PUMP_REMOTE_CTRL_RESP ||
+                          msg->typ == network_msg_typ_t::PUMP_RUN_SET          ||
+                          msg->typ == network_msg_typ_t::PUMP_RUN_RESP         ||
+                          msg->typ == network_msg_typ_t::PUMP_STATUS_REQ       ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
 
     if ((verbose && !frequent) || very_verbose) {

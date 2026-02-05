@@ -571,7 +571,7 @@ void
 OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
-        this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)],           
+        this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_POWER)],           
         state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].running
     );
     _publish_modes_if(
@@ -757,7 +757,7 @@ OpnPool::set_chlorinator_salt_sensor(OpnPoolSensor * const s)
 void
 OpnPool::set_primary_pump_running_binary_sensor(OpnPoolBinarySensor * const bs)
 { 
-    this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)] = bs; 
+    this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_POWER)] = bs; 
 }
 
 void

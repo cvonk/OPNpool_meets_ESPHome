@@ -46,7 +46,7 @@ enum class datalink_prot_t : uint8_t {
     IC      = 0x00,  ///< Protocol type for the IntelliCenter (IC) protocol (e.g. Chlorinator).
     A5_CTRL = 0x01,  ///< Protocol type for the A5 controller protocol.
     A5_PUMP = 0x02,  ///< Protocol type for the A5 pump protocol.
-    NONE    = 0xFF   ///< Indicates that no valid protocol was detected.
+    NONE    = 0xFF   ///< No valid protocol was detected.
 };
 
 /**
@@ -121,12 +121,12 @@ enum class datalink_ctrl_typ_t : uint8_t {
  * pump protocol.
  */
 enum class datalink_pump_typ_t : uint8_t {
-    REG        = 0x01,
-    CTRL       = 0x04,
-    MODE       = 0x05,
-    RUN        = 0x06,
-    STATUS     = 0x07,
-    UNKNOWN_FF = 0xFF
+    REG         = 0x01,  // 0x09 for VF Pump (gal/min), and 0x0A for VS Pump (RPM) appear similar
+    REMOTE_CTRL = 0x04,
+    RUN_MODE    = 0x05,  // intellicom uses this
+    RUN         = 0x06,  // naming it POWER would conflict with pump power measurement
+    STATUS      = 0x07,
+    REJECTING   = 0xFF
 };
 
 /**
@@ -139,7 +139,6 @@ enum class datalink_pump_typ_t : uint8_t {
  *
  * @note  The enum value count MUST MATCH datalink_chlor_typ_sizes[] in
  *        datalink_rx.cpp. A compile-time assertion validates the count.
- * @note  Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/ChlorinatorStateMessage.ts
  */
 enum class datalink_chlor_typ_t : uint8_t {
     CONTROL_REQ   = 0x00,  ///< Status request message

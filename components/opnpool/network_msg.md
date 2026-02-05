@@ -94,7 +94,7 @@ struct network_ctrl_state_bcast_t {
 ```c
 struct network_pump_status_resp_t {
     network_pump_running_t running;       // 0
-    network_pump_mode_t    mode;          // 1
+    network_pump_run_mode_t    mode;          // 1
     network_pump_state_t   state;         // 2
     network_hi_lo_t          power;         // 3..4 [Watt]
     network_hi_lo_t          speed;         // 5..6 [rpm]

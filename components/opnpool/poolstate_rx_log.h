@@ -49,7 +49,7 @@ struct poolstate_uint8_t;
 struct poolstate_circuit_t;
 struct poolstate_pump_t;
 struct network_pump_ctrl_t;
-struct network_pump_mode_t;
+struct network_pump_run_mode_t;
 enum class datalink_pump_id_t : uint8_t;
 /// @}
 
@@ -116,7 +116,7 @@ void add_state(cJSON * const obj, char const * const key, poolstate_t const * co
 /// @{
 void add_pump_program(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, uint16_t const value);
 void add_pump_ctrl(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, network_pump_ctrl_t const ctrl);
-void add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, network_pump_mode_t const mode);
+void add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, network_pump_run_mode_t const mode);
 void add_pump_running(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, bool const running);
 void add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, poolstate_pump_t const * const pumps);
 /// @}

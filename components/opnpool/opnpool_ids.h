@@ -61,7 +61,7 @@ enum class sensor_id_t : uint8_t {
 
    // @brief Binary sensor entity identifiers for pool status indicators.
 enum class binary_sensor_id_t : uint8_t {
-    PRIMARY_PUMP_RUNNING   = 0,  ///< Primary pump running status.
+    PRIMARY_PUMP_POWER   = 0,  ///< Primary pump running status.
     MODE_SERVICE           = 1,  ///< Service mode active indicator.
     MODE_TEMPERATURE_INC   = 2,  ///< Temperature increase mode indicator.
     MODE_FREEZE_PROTECTION = 3,  ///< Freeze protection mode active indicator.

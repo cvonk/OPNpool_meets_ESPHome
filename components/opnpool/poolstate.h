@@ -197,8 +197,8 @@ struct poolstate_circuit_t {
 
 /// @brief Pump mode with validity flag.
 struct poolstate_pump_mode_t {
-    bool                valid;  ///< True if mode has been set.
-    network_pump_mode_t value;  ///< Pump mode (filter, manual, etc.).
+    bool                    valid;  ///< True if mode has been set.
+    network_pump_run_mode_t value;  ///< Pump mode (filter, manual, etc.).
 };
 
 /// @brief Pump state with validity flag.
@@ -210,7 +210,7 @@ struct poolstate_pump_state_t {
 /// @brief Complete pump status structure.
 struct poolstate_pump_t {
     poolstate_time_t       time;     ///< Pump's internal clock time (from pump_status_resp).
-    poolstate_pump_mode_t  mode;     ///< Operating mode (from pump_status_resp, pump_mode).
+    poolstate_pump_mode_t  mode;     ///< Operating mode (from pump_status_resp, pump_run_mode).
     poolstate_bool_t       running;  ///< True if pump is running (from pump_status_resp, pump_run).
     poolstate_pump_state_t state;    ///< Pump state (from pump_status_resp).
     poolstate_uint16_t     power;    ///< Power consumption in watts (from pump_status_resp).

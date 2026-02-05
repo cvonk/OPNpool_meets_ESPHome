@@ -122,7 +122,7 @@ _add_circuit_delay(cJSON * const obj, char const * const key, poolstate_circuit_
  * @param[in] mode The pump mode value.
  */
 static void
-_add_pump_mode(cJSON * const obj, char const * const key, network_pump_mode_t const mode)
+_add_pump_mode(cJSON * const obj, char const * const key, network_pump_run_mode_t const mode)
 {
     cJSON_AddStringToObject(obj, key, mode.to_str());
 }
@@ -398,7 +398,7 @@ add_pump_ctrl(cJSON * const obj, char const * const key, datalink_pump_id_t cons
  * @param[in] mode    The pump mode value to log.
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_run_mode_t const mode)
 {
     cJSON * const item = _create_item(obj, enum_str(pump_id));
 

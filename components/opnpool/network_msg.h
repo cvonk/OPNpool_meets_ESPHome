@@ -71,7 +71,7 @@ enum class network_pool_circuit_t : uint8_t {
     FEATURE4 = 8   ///< Feature 4
 };
 
-struct network_pump_mode_t {
+struct network_pump_run_mode_t {
     uint8_t raw;
 
     constexpr char const * to_str() const {
@@ -92,7 +92,7 @@ struct network_pump_mode_t {
 
 struct network_pump_ctrl_t {
     uint8_t raw;
-    constexpr bool is_local()  const { return raw == 0x00; }
+    constexpr bool is_local()  const { return raw != 0xFF; }
     constexpr bool is_remote() const { return raw == 0xFF; }
 } PACK8;
 
@@ -320,11 +320,13 @@ struct network_intellichem_t {
  * @details
  * This section provides packed C-style structs for each A5-pump style
  * protocol message exchanged between the pool controller and its pump.
+ * 
+ * @note  Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/PumpStateMessage.ts#L27
  */
 
 struct network_pump_reg_set_t {
     network_hi_lo_t address;  // 0..1
-    network_hi_lo_t value;    // 2..3
+    network_hi_lo_t value;    // 2..3, for REG maybe bit6: 0=RPM, 1=gal/min
 } PACK8;
 
 struct network_pump_reg_resp_t {
@@ -333,8 +335,9 @@ struct network_pump_reg_resp_t {
 
 struct network_pump_running_t {
     uint8_t raw;
-    constexpr bool is_running() const { return (raw) == 0x0A; };
-    constexpr bool is_not_running() const { return (raw) == 0x04; };
+    
+    constexpr bool is_on()  const { return (raw) == 0x0A; };
+    constexpr bool is_off() const { return (raw) == 0x04; };
 } PACK8;
 
 enum class network_pump_program_addr_t : uint16_t {
@@ -350,9 +353,9 @@ enum class network_pump_program_addr_t : uint16_t {
 };
 
 /**
- * @brief Converts a 16-bit pump program address to a string representation.
+ * @brief          Converts a 16-bit pump program address to a string representation.
  *
- * @note Can't use magic_enum because the enum values are not contiguous and outside magic_enum's range.
+ * @note           Can't use magic_enum because the enum values are not contiguous and outside magic_enum's range.
  *
  * @param[in] addr The pump program address to convert.
  * @return         String representation of the address.
@@ -375,17 +378,17 @@ network_pump_program_addr_str(network_pump_program_addr_t const addr)
 }
 
 struct network_pump_status_resp_t {
-    network_pump_running_t running;    // 0
-    network_pump_mode_t    mode;       // 1
-    network_pump_state_t   state;      // 2
-    network_hi_lo_t        power;      // 3..4 [Watt]
-    network_hi_lo_t        speed;      // 5..6 [rpm]
-    uint8_t                flow;       // 7 [G/min]
-    uint8_t                level;      // 8 [%]
-    uint8_t                unknown;    // 9
-    uint8_t                error;      // 10
-    network_time_t         remaining;  // 11..12 (some say its status bits)
-    network_time_t         clock;      // 13..14
+    network_pump_running_t   running;    // 0
+    network_pump_run_mode_t  mode;       // 1
+    network_pump_state_t     state;      // 2
+    network_hi_lo_t          power;      // 3..4 [Watt]
+    network_hi_lo_t          speed;      // 5..6 [rpm]
+    uint8_t                  flow;       // 7 [G/min]
+    uint8_t                  level;      // 8 [%]
+    uint8_t                  unknown;    // 9
+    uint8_t                  error;      // 10
+    network_time_t           remaining;  // 11..12 (some say its status bits)
+    network_time_t           clock;      // 13..14
 } PACK8;
     
 
@@ -393,9 +396,10 @@ struct network_pump_status_resp_t {
  * @brief Defines the structures and unions for IC messages.
  *
  * @details
- * This section provides packed C-style structs for each IC style
- * protocol message exchanged  between the pool controller and the
- * IntelliChlor chlorinator.
+ * This section provides packed C-style structs for each IC style protocol message
+ * exchanged  between the pool controller and the IntelliChlor chlorinator.
+ * 
+ * @note  Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/ChlorinatorStateMessage.ts
  */
 
 struct network_chlor_control_req_t {
@@ -452,7 +456,7 @@ union network_data_a5_t {
     network_pump_reg_set_t         pump_reg_set;
     network_pump_reg_resp_t        pump_reg_resp;
     network_pump_ctrl_t            pump_ctrl;         // set or resp
-    network_pump_mode_t            pump_mode;         // set or resp
+    network_pump_run_mode_t        pump_mode;         // set or resp
     network_pump_running_t         pump_running;      // set or resp
     network_pump_status_resp_t     pump_status_resp;
     network_ctrl_set_ack_t         ctrl_set_ack;
@@ -512,54 +516,54 @@ union network_data_t {
  * @note In C++ empty structs have a size of 1, not 0.  For those we use 0 in this table.
  */
 #define NETWORK_MSG_TYP_LIST(X) \
-    X(IGNORE,               0,                                     false, A5_PUMP, datalink_pump_typ_t::UNKNOWN_FF)   \
-    X(PUMP_REG_SET,         sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG)          \
-    X(PUMP_REG_RESP,        sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG)          \
-    X(PUMP_CTRL_SET,        sizeof(network_pump_ctrl_t),           true,  A5_PUMP, datalink_pump_typ_t::CTRL)         \
-    X(PUMP_CTRL_RESP,       sizeof(network_pump_ctrl_t),           false, A5_PUMP, datalink_pump_typ_t::CTRL)         \
-    X(PUMP_MODE_SET,        sizeof(network_pump_mode_t),           true,  A5_PUMP, datalink_pump_typ_t::MODE)         \
-    X(PUMP_MODE_RESP,       sizeof(network_pump_mode_t),           false, A5_PUMP, datalink_pump_typ_t::MODE)         \
-    X(PUMP_RUNNING_SET,     sizeof(network_pump_running_t),        true,  A5_PUMP, datalink_pump_typ_t::RUN)          \
-    X(PUMP_RUNNING_RESP,    sizeof(network_pump_running_t),        false, A5_PUMP, datalink_pump_typ_t::RUN)          \
-    X(PUMP_STATUS_REQ,      0,                                     true,  A5_PUMP, datalink_pump_typ_t::STATUS)       \
-    X(PUMP_STATUS_RESP,     sizeof(network_pump_status_resp_t),    false, A5_PUMP, datalink_pump_typ_t::STATUS)       \
-    X(CTRL_SET_ACK,         sizeof(network_ctrl_set_ack_t),        false, A5_CTRL, datalink_ctrl_typ_t::SET_ACK)      \
-    X(CTRL_CIRCUIT_SET,     sizeof(network_ctrl_circuit_set_t),    false, A5_CTRL, datalink_ctrl_typ_t::CIRCUIT_SET)  \
-    X(CTRL_SCHED_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ)    \
-    X(CTRL_SCHED_RESP,      sizeof(network_ctrl_sched_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_RESP)   \
-    X(CTRL_STATE_BCAST,     sizeof(network_ctrl_state_bcast_t),    false, A5_CTRL, datalink_ctrl_typ_t::STATE_BCAST)  \
-    X(CTRL_TIME_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::TIME_REQ)     \
-    X(CTRL_TIME_RESP,       sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_RESP)    \
-    X(CTRL_TIME_SET,        sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_SET)     \
-    X(CTRL_HEAT_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ)     \
-    X(CTRL_HEAT_RESP,       sizeof(network_ctrl_heat_resp_t),      false, A5_CTRL, datalink_ctrl_typ_t::HEAT_RESP)    \
-    X(CTRL_HEAT_SET,        sizeof(network_ctrl_heat_set_t),       false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SET)     \
-    X(CTRL_LAYOUT_REQ,      0,                                     false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ)   \
-    X(CTRL_LAYOUT_RESP,     sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_RESP)  \
-    X(CTRL_LAYOUT_SET,      sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_SET)   \
-    X(CTRL_VALVE_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ)    \
-    X(CTRL_VALVE_RESP,      sizeof(network_ctrl_valve_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_RESP)   \
-    X(CTRL_VERSION_REQ,     0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ)  \
-    X(CTRL_VERSION_RESP,    sizeof(network_ctrl_version_resp_t),   false, A5_CTRL, datalink_ctrl_typ_t::VERSION_RESP) \
-    X(CTRL_SOLARPUMP_REQ,   0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ)   \
-    X(CTRL_SOLARPUMP_RESP,  sizeof(network_ctrl_solarpump_resp_t), false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_RESP)  \
-    X(CTRL_DELAY_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ)       \
-    X(CTRL_DELAY_RESP,      sizeof(network_ctrl_delay_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_RESP)      \
-    X(CTRL_HEAT_SETPT_REQ,  0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ)  \
-    X(CTRL_HEAT_SETPT_RESP, sizeof(network_ctrl_heat_setpt_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP) \
-    X(CTRL_CIRC_NAMES_REQ,  sizeof(network_ctrl_circ_names_req_t), false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ)  \
-    X(CTRL_CIRC_NAMES_RESP, sizeof(network_ctrl_circ_names_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP) \
-    X(CTRL_SCHEDS_REQ,      sizeof(network_ctrl_scheds_req_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)    \
-    X(CTRL_SCHEDS_RESP,     sizeof(network_ctrl_scheds_resp_t),    false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)   \
-    X(CTRL_CHEM_REQ,        sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)      \
-    X(CHLOR_CONTROL_REQ,    sizeof(network_chlor_control_req_t),   false, IC,      datalink_chlor_typ_t::CONTROL_REQ)  \
-    X(CHLOR_CONTROL_RESP,   sizeof(network_chlor_control_resp_t),  false, IC,      datalink_chlor_typ_t::CONTROL_RESP) \
-    X(CHLOR_MODEL_REQ,      sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::MODEL_REQ)    \
-    X(CHLOR_MODEL_RESP,     sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::MODEL_RESP)   \
-    X(CHLOR_LEVEL_SET,      sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)    \
-    X(CHLOR_LEVEL_SET10,    sizeof(network_chlor_level10_set_t),   false, IC,      datalink_chlor_typ_t::LEVEL_SET10)  \
-    X(CHLOR_LEVEL_RESP,     sizeof(network_chlor_level_resp_t),    false, IC,      datalink_chlor_typ_t::LEVEL_RESP)   \
-    X(CHLOR_ICHLOR_BCAST,   sizeof(network_chlor_ichlor_bcast_t),  false, IC,      datalink_chlor_typ_t::ICHLOR_BCAST)
+    X(IGNORE,                0,                                     false, A5_PUMP, datalink_pump_typ_t::REJECTING)   \
+    X(PUMP_REG_SET,          sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG)          \
+    X(PUMP_REG_RESP,         sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG)          \
+    X(PUMP_REMOTE_CTRL_SET,  sizeof(network_pump_ctrl_t),           true,  A5_PUMP, datalink_pump_typ_t::REMOTE_CTRL)  \
+    X(PUMP_REMOTE_CTRL_RESP, sizeof(network_pump_ctrl_t),           false, A5_PUMP, datalink_pump_typ_t::REMOTE_CTRL)  \
+    X(PUMP_RUN_MODE_SET,     sizeof(network_pump_run_mode_t),       true,  A5_PUMP, datalink_pump_typ_t::RUN_MODE)     \
+    X(PUMP_RUN_MODE_RESP,    sizeof(network_pump_run_mode_t),       false, A5_PUMP, datalink_pump_typ_t::RUN_MODE)     \
+    X(PUMP_RUN_SET,          sizeof(network_pump_running_t),        true,  A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_RUN_RESP,         sizeof(network_pump_running_t),        false, A5_PUMP, datalink_pump_typ_t::RUN)          \
+    X(PUMP_STATUS_REQ,       0,                                     true,  A5_PUMP, datalink_pump_typ_t::STATUS)       \
+    X(PUMP_STATUS_RESP,      sizeof(network_pump_status_resp_t),    false, A5_PUMP, datalink_pump_typ_t::STATUS)       \
+    X(CTRL_SET_ACK,          sizeof(network_ctrl_set_ack_t),        false, A5_CTRL, datalink_ctrl_typ_t::SET_ACK)      \
+    X(CTRL_CIRCUIT_SET,      sizeof(network_ctrl_circuit_set_t),    false, A5_CTRL, datalink_ctrl_typ_t::CIRCUIT_SET)  \
+    X(CTRL_SCHED_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_REQ)    \
+    X(CTRL_SCHED_RESP,       sizeof(network_ctrl_sched_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHED_RESP)   \
+    X(CTRL_STATE_BCAST,      sizeof(network_ctrl_state_bcast_t),    false, A5_CTRL, datalink_ctrl_typ_t::STATE_BCAST)  \
+    X(CTRL_TIME_REQ,         0,                                     false, A5_CTRL, datalink_ctrl_typ_t::TIME_REQ)     \
+    X(CTRL_TIME_RESP,        sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_RESP)    \
+    X(CTRL_TIME_SET,         sizeof(network_ctrl_time_t),           false, A5_CTRL, datalink_ctrl_typ_t::TIME_SET)     \
+    X(CTRL_HEAT_REQ,         0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_REQ)     \
+    X(CTRL_HEAT_RESP,        sizeof(network_ctrl_heat_resp_t),      false, A5_CTRL, datalink_ctrl_typ_t::HEAT_RESP)    \
+    X(CTRL_HEAT_SET,         sizeof(network_ctrl_heat_set_t),       false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SET)     \
+    X(CTRL_LAYOUT_REQ,       0,                                     false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_REQ)   \
+    X(CTRL_LAYOUT_RESP,      sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_RESP)  \
+    X(CTRL_LAYOUT_SET,       sizeof(network_ctrl_layout_t),         false, A5_CTRL, datalink_ctrl_typ_t::LAYOUT_SET)   \
+    X(CTRL_VALVE_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_REQ)    \
+    X(CTRL_VALVE_RESP,       sizeof(network_ctrl_valve_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::VALVE_RESP)   \
+    X(CTRL_VERSION_REQ,      0,                                     false, A5_CTRL, datalink_ctrl_typ_t::VERSION_REQ)  \
+    X(CTRL_VERSION_RESP,     sizeof(network_ctrl_version_resp_t),   false, A5_CTRL, datalink_ctrl_typ_t::VERSION_RESP) \
+    X(CTRL_SOLARPUMP_REQ,    0,                                     false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_REQ)   \
+    X(CTRL_SOLARPUMP_RESP,   sizeof(network_ctrl_solarpump_resp_t), false, A5_CTRL, datalink_ctrl_typ_t::SOLARPUMP_RESP)  \
+    X(CTRL_DELAY_REQ,        0,                                     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_REQ)       \
+    X(CTRL_DELAY_RESP,       sizeof(network_ctrl_delay_resp_t),     false, A5_CTRL, datalink_ctrl_typ_t::DELAY_RESP)      \
+    X(CTRL_HEAT_SETPT_REQ,   0,                                     false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_REQ)  \
+    X(CTRL_HEAT_SETPT_RESP,  sizeof(network_ctrl_heat_setpt_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP) \
+    X(CTRL_CIRC_NAMES_REQ,   sizeof(network_ctrl_circ_names_req_t), false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ)  \
+    X(CTRL_CIRC_NAMES_RESP,  sizeof(network_ctrl_circ_names_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP) \
+    X(CTRL_SCHEDS_REQ,       sizeof(network_ctrl_scheds_req_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)    \
+    X(CTRL_SCHEDS_RESP,      sizeof(network_ctrl_scheds_resp_t),    false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)   \
+    X(CTRL_CHEM_REQ,         sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)      \
+    X(CHLOR_CONTROL_REQ,     sizeof(network_chlor_control_req_t),   false, IC,      datalink_chlor_typ_t::CONTROL_REQ)  \
+    X(CHLOR_CONTROL_RESP,    sizeof(network_chlor_control_resp_t),  false, IC,      datalink_chlor_typ_t::CONTROL_RESP) \
+    X(CHLOR_MODEL_REQ,       sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::MODEL_REQ)    \
+    X(CHLOR_MODEL_RESP,      sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::MODEL_RESP)   \
+    X(CHLOR_LEVEL_SET,       sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)    \
+    X(CHLOR_LEVEL_SET10,     sizeof(network_chlor_level10_set_t),   false, IC,      datalink_chlor_typ_t::LEVEL_SET10)  \
+    X(CHLOR_LEVEL_RESP,      sizeof(network_chlor_level_resp_t),    false, IC,      datalink_chlor_typ_t::LEVEL_RESP)   \
+    X(CHLOR_ICHLOR_BCAST,    sizeof(network_chlor_ichlor_bcast_t),  false, IC,      datalink_chlor_typ_t::ICHLOR_BCAST)
 
 /**
  * @brief Enumerates all supported network message types for OPNpool.
