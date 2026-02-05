@@ -70,16 +70,17 @@ static proto_info_t _proto_descr[] = {
     // size lookup table for message types
     // MUST MATCH enum datalink_chlor_typ_t in datalink_pkt.h
 inline constexpr size_t datalink_chlor_typ_sizes[] = {
-    sizeof(network_chlor_status_req_t),     // 0x00 STATUS_REQ
-    sizeof(network_chlor_status_resp_t),    // 0x01 STATUS_RESP
+    sizeof(network_chlor_control_req_t),    // 0x00 CONTROL_REQ
+    sizeof(network_chlor_control_resp_t),   // 0x01 CONTROL_RESP
     0,                                      // 0x02 UNKNOWN_02
-    sizeof(network_chlor_name_resp_t),      // 0x03 NAME_RESP
+    sizeof(network_chlor_name_resp_t),      // 0x03 MODEL_RESP
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 0x04..0x10 UNKNOWN_04..10
     sizeof(network_chlor_level_set_t),      // 0x11 LEVEL_SET
     sizeof(network_chlor_level_resp_t),     // 0x12 LEVEL_RESP
     0,                                      // 0x13 UNKNOWN_13
-    sizeof(network_chlor_name_req_t),       // 0x14 NAME_REQ
-    0,                                      // 0x15 LEVEL_SET10
+    sizeof(network_chlor_name_req_t),       // 0x14 MODEL_REQ
+    sizeof(network_chlor_level10_set_t),    // 0x15 LEVEL_SET10
+    sizeof(network_chlor_ichlor_bcast_t),   // 0x16 ICHLOR_BCAST
 };
 static_assert(enum_count<datalink_chlor_typ_t>() == ARRAY_SIZE(datalink_chlor_typ_sizes));
 
@@ -255,13 +256,12 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
 
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_a5_t)) == sizeof(datalink_hdr_a5_t)) {
 
-                ESP_LOGV(TAG, " %02X %02X %02X %02X %02X (header)", hdr->ver, hdr->dst.byte, hdr->src.byte, hdr->typ, hdr->len);
+                ESP_LOGV(TAG, " %02X %02X %02X %02X %02X (header)", hdr->ver, hdr->dst.addr, hdr->src.addr, hdr->typ, hdr->len);
 
                 if (hdr->len > DATALINK_MAX_DATA_SIZE) {
                     return ESP_FAIL;  // pkt length exceeds what we have planned for
                 }
-                if ( (hdr->src.get_group_addr() == datalink_group_addr_t::PUMP) ||
-                     (hdr->dst.get_group_addr() == datalink_group_addr_t::PUMP) ) {
+                if ( hdr->src.is_pump() || hdr->dst.is_pump() ) {
                     pkt->prot = datalink_prot_t::A5_PUMP;
                 }
                 pkt->typ.raw  = hdr->typ;
@@ -279,12 +279,10 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
             datalink_hdr_ic_t * const hdr = &local->head->ic.hdr;
             
             if (rs485->read_bytes((uint8_t *) hdr, sizeof(datalink_hdr_ic_t)) == sizeof(datalink_hdr_ic_t)) {
-                ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst.byte, hdr->typ);
-
-                auto dummy_addr = datalink_addr(datalink_group_addr_t::ALL, datalink_dev_id_t::PRIMARY);
+                ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst.addr, hdr->typ);
 
                 pkt->typ.raw  = hdr->typ;
-                pkt->src      = dummy_addr;  // made up filler
+                pkt->src      = datalink_addr_t::dummy();
                 pkt->dst      = hdr->dst;
                 pkt->data_len = _network_ic_len(hdr->typ);
                 return ESP_OK;

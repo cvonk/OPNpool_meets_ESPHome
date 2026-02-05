@@ -78,17 +78,14 @@ struct poolstate_uint16_t {
 
 /// @brief Time value (hour:minute) with validity flag.
 struct poolstate_time_t {
-    bool    valid;   ///< True if time has been set.
-    uint8_t hour;    ///< Hour (0-23).
-    uint8_t minute;  ///< Minute (0-59).
+    bool           valid;  ///< True if time has been set.
+    network_time_t value;
 };
 
 /// @brief Date value with validity flag.
 struct poolstate_date_t {
-    bool     valid;  ///< True if date has been set.
-    uint8_t  day;    ///< Day of month (1-31).
-    uint8_t  month;  ///< Month (1-12).
-    uint16_t year;   ///< Year (e.g., 2026).
+    bool           valid;  ///< True if date has been set.
+    network_date_t value;
 };
 
 /// @brief Combined date and time (time-of-day).
@@ -103,7 +100,7 @@ struct poolstate_tod_t {
 
 /// @brief Pool mode flags with validity.
 struct poolstate_modes_t {
-    bool                valid;  ///< True if mode has been set.
+    bool                 valid;  ///< True if mode has been set.
     network_pool_modes_t value;  ///< Pool mode flags.
 };
 
@@ -221,7 +218,7 @@ struct poolstate_pump_t {
     poolstate_uint16_t     speed;    ///< Speed in RPM (from pump_status_resp).
     poolstate_uint16_t     level;    ///< Programmed level (from pump_status_resp).
     poolstate_uint8_t      error;    ///< Error code (from pump_status_resp).
-    poolstate_uint8_t      timer;    ///< Remaining timer in minutes (from pump_status_resp).
+    poolstate_time_t       timer;    ///< Remaining timer (from pump_status_resp).
 };
 
 /// @}
@@ -286,7 +283,7 @@ struct poolstate_chlor_t {
 struct poolstate_t {
     poolstate_system_t  system;                                          ///< System info (date, time, firmware).
     poolstate_chlor_t   chlor;                                           ///< Chlorinator status.
-    poolstate_pump_t    pumps[enum_count<datalink_dev_id_t>()];          ///< Pump status array.
+    poolstate_pump_t    pumps[enum_count<datalink_pump_id_t>()];          ///< Pump status array.
     poolstate_circuit_t circuits[enum_count<network_pool_circuit_t>()];  ///< Circuit states.
     poolstate_thermo_t  thermos[enum_count<poolstate_thermo_typ_t>()];   ///< Thermostat states.
     poolstate_uint8_t   temps[enum_count<poolstate_temp_typ_t>()];       ///< Temperature readings.

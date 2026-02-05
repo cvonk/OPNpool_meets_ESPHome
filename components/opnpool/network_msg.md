@@ -63,10 +63,10 @@ Addresses are 8-bit values where:
 
 | Type       | Value | Description
 |------------|-------|------------
-| STATUS_REQ   | 0x00 | Ping request
-| STATUS_RESP  | 0x01 | Ping response
-| NAME_REQ   | 0x14 | Name request
-| NAME_RESP  | 0x03 | Name response
+| CONTROL_REQ   | 0x00 | Ping request
+| CONTROL_RESP  | 0x01 | Ping response
+| MODEL_REQ   | 0x14 | Name request
+| MODEL_RESP  | 0x03 | Name response
 | LEVEL_SET  | 0x11 | Set chlorine level
 | LEVEL_RESP | 0x12 | Level response
 
@@ -80,7 +80,7 @@ The `network_msg.h` file uses packed structs with bit fields to exactly match th
 struct network_ctrl_state_bcast_t {
     uint8_t             hour;               // 0
     uint8_t             minute;             // 1
-    uint8_lo_hi_t       active;             // 2..3   bitmask for active circuits
+    network_lo_hi_t       active;             // 2..3   bitmask for active circuits
     uint8_t             UNKNOWN_04to06[3];  // 4..6
     uint8_t             UNKNOWN_07to08[2];  // 7..8
     uint8_t             mode_bits;          // 9      bitmask for active pool modes
@@ -96,8 +96,8 @@ struct network_pump_status_resp_t {
     network_pump_running_t running;       // 0
     network_pump_mode_t    mode;          // 1
     network_pump_state_t   state;         // 2
-    uint8_hi_lo_t          power;         // 3..4 [Watt]
-    uint8_hi_lo_t          speed;         // 5..6 [rpm]
+    network_hi_lo_t          power;         // 3..4 [Watt]
+    network_hi_lo_t          speed;         // 5..6 [rpm]
     uint8_t                flow;          // 7 [G/min]
     uint8_t                level;         // 8 [%]
     uint8_t                UNKNOWN;       // 9

@@ -33,6 +33,7 @@ datalink_preamble_a5_t datalink_preamble_a5  = { 0x00, 0xFF, 0xA5 };  // use of 
 datalink_preamble_ic_t datalink_preamble_ic  = { 0x10, 0x02 };
 datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
 
+#if 0
 /**
  * @brief               Composes a device address from an address group and device ID.
  *
@@ -41,14 +42,15 @@ datalink_preamble_ic_t datalink_postamble_ic = { 0x10, 0x03 };
  * @return              The composed 8-bit device address.
  */
 datalink_addr_t
-datalink_addr(datalink_group_addr_t const group, datalink_dev_id_t const device_id)
+datalink_addr(datalink_group_addr_t const group, datalink_pump_id_t const device_id)
 {
     datalink_addr_t addr = {};
     addr.set_group_addr(group);
-    addr.set_dev_id(device_id);
+    addr.set_pump_id(device_id);
 
     return addr;
 }
+#endif
 
 /**
  * @brief           Calculates the checksum for a data buffer.

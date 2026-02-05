@@ -207,7 +207,7 @@ add_time(cJSON * const obj, char const * const key, poolstate_time_t const * con
 {
     cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(time->hour, time->minute));
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(time->value.hour, time->value.minute));
 }
 
 /**
@@ -222,8 +222,8 @@ add_time_and_date(cJSON * const obj, char const * const key, poolstate_tod_t con
 {
     cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(tod->time.hour, tod->time.minute));
-    cJSON_AddStringToObject(item, KEY_DATE, date_str(tod->date.year, tod->date.month, tod->date.day));
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(tod->time.value.hour, tod->time.value.minute));
+    cJSON_AddStringToObject(item, KEY_DATE, date_str(tod->date.value.year, tod->date.value.month, tod->date.value.day));
 }
 
 /**
@@ -291,8 +291,16 @@ add_scheds(cJSON * const obj, char const * const key, poolstate_sched_t const * 
         if (sched->active) {
             cJSON * const sub_item = _create_item(item, enum_str(circuit));
 
-            cJSON_AddStringToObject(sub_item, KEY_START, time_str(sched->start / 60, sched->start % 60));
-            cJSON_AddStringToObject(sub_item, KEY_STOP, time_str(sched->stop / 60, sched->stop % 60));
+            network_time_t const start_time = {
+                .hour   = static_cast<uint8_t>(sched->start / 60),
+                .minute = static_cast<uint8_t>(sched->start % 60)
+            };
+            network_time_t const stop_time = {
+                .hour   = static_cast<uint8_t>(sched->stop / 60),
+                .minute = static_cast<uint8_t>(sched->stop % 60)
+            };
+            cJSON_AddStringToObject(sub_item, KEY_START, time_str(start_time.hour, start_time.minute));
+            cJSON_AddStringToObject(sub_item, KEY_STOP,  time_str( stop_time.hour,  stop_time.minute));
         }
         sched++;
     }
@@ -321,22 +329,22 @@ add_state(cJSON * const obj, char const * const key, poolstate_t const * const s
 /**
  * @brief Adds pump information to a JSON object for logging.
  *
- * @param[in] obj    The parent JSON object.
- * @param[in] key    The key under which to add the pump object.
- * @param[in] dev_id The device ID for the pump.
- * @param[in] pump   Pointer to the poolstate_pump_t structure to log.
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the pump object.
+ * @param[in] pump_id The device ID for the pump.
+ * @param[in] pump    Pointer to the poolstate_pump_t structure to log.
  */
 void
-add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, poolstate_pump_t const * const pump)
+add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, poolstate_pump_t const * const pump)
 {
     cJSON * const item = _create_item(obj, key);
 
     _add_pump_mode(item, KEY_MODE, pump->mode.value);
     _add_pump_running(item, KEY_RUNNING, pump->running.value);
 
-    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.hour, pump->time.minute));
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.value.hour, pump->time.value.minute));
     cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
-    cJSON_AddStringToObject(item, KEY_DEVID, enum_str(dev_id));
+    cJSON_AddStringToObject(item, KEY_DEVID, enum_str(pump_id));
     cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
     cJSON_AddNumberToObject(item, KEY_SPEED, pump->speed.value);
     if (pump->flow.value) {
@@ -346,21 +354,21 @@ add_pump(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_
         cJSON_AddNumberToObject(item, KEY_LEVEL, pump->level.value);
     }
     cJSON_AddNumberToObject(item, KEY_ERROR, pump->error.value);
-    cJSON_AddNumberToObject(item, KEY_TIMER, pump->timer.value);
+    cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->timer.value.hour, pump->timer.value.minute));
 }
 
 /**
  * @brief Adds pump program value to a JSON object for logging.
  *
- * @param[in] obj    The parent JSON object.
- * @param[in] key    The key under which to add the pump program value.
- * @param[in] dev_id The device ID for the pump.
- * @param[in] value  The pump program value to log.
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the pump program value.
+ * @param[in] pump_id The device ID for the pump.
+ * @param[in] value   The pump program value to log.
  */
 void
-add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, uint16_t const value)
+add_pump_program(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, uint16_t const value)
 {
-    cJSON * const item = _create_item(obj, enum_str(dev_id));
+    cJSON * const item = _create_item(obj, enum_str(pump_id));
 
     cJSON_AddNumberToObject(item, key, value);
 }
@@ -368,15 +376,15 @@ add_pump_program(cJSON * const obj, char const * const key, datalink_dev_id_t co
 /**
  * @brief Adds pump control mode to a JSON object for logging.
  *
- * @param[in] obj    The parent JSON object.
- * @param[in] key    The key under which to add the pump control value.
- * @param[in] dev_id The device ID for the pump.
- * @param[in] ctrl   The pump control value to log.
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the pump control value.
+ * @param[in] pump_id The device ID for the pump.
+ * @param[in] ctrl    The pump control value to log.
  */
 void
-add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_ctrl_t const ctrl)
+add_pump_ctrl(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_ctrl_t const ctrl)
 {
-    cJSON * const item = _create_item(obj, enum_str(dev_id));
+    cJSON * const item = _create_item(obj, enum_str(pump_id));
 
     cJSON_AddBoolToObject(item, key, ctrl.is_local());
 }
@@ -384,15 +392,15 @@ add_pump_ctrl(cJSON * const obj, char const * const key, datalink_dev_id_t const
 /**
  * @brief Adds pump mode to a JSON object for logging.
  *
- * @param[in] obj    The parent JSON object.
- * @param[in] key    The key under which to add the pump mode value.
- * @param[in] dev_id The device ID for the pump.
- * @param[in] mode   The pump mode value to log.
+ * @param[in] obj     The parent JSON object.
+ * @param[in] key     The key under which to add the pump mode value.
+ * @param[in] pump_id The device ID for the pump.
+ * @param[in] mode    The pump mode value to log.
  */
 void
-add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, network_pump_mode_t const mode)
+add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_mode_t const mode)
 {
-    cJSON * const item = _create_item(obj, enum_str(dev_id));
+    cJSON * const item = _create_item(obj, enum_str(pump_id));
 
     _add_pump_mode(item, key, mode);
 }
@@ -402,13 +410,13 @@ add_pump_mode(cJSON * const obj, char const * const key, datalink_dev_id_t const
  *
  * @param[in] obj     The parent JSON object.
  * @param[in] key     The key under which to add the running status.
- * @param[in] dev_id  The device ID for the pump.
+ * @param[in] pump_id The device ID for the pump.
  * @param[in] running The pump running status to log (true if running).
  */
 void
-add_pump_running(cJSON * const obj, char const * const key, datalink_dev_id_t const dev_id, bool const running)
+add_pump_running(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, bool const running)
 {
-    cJSON * const item = _create_item(obj, enum_str(dev_id));
+    cJSON * const item = _create_item(obj, enum_str(pump_id));
 
     _add_pump_running(item, key, running);
 }

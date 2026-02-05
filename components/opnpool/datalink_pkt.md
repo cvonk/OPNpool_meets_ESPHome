@@ -131,12 +131,12 @@ Addresses are 8-bit values with the following structure:
 
 | Message      | Value | Description
 |--------------|-------|------------
-| `STATUS_REQ`   | 0x00  | Ping request (keepalive)
-| `STATUS_RESP`  | 0x01  | Ping response
-| `NAME_RESP`  | 0x03  | Name and salt level response
+| `CONTROL_REQ`   | 0x00  | Ping request (keepalive)
+| `CONTROL_RESP`  | 0x01  | Ping response
+| `MODEL_RESP`  | 0x03  | Name and salt level response
 | `LEVEL_SET`  | 0x11  | Set chlorine output level
 | `LEVEL_RESP` | 0x12  | Level and status response
-| `NAME_REQ`   | 0x14  | Request name and salt level
+| `MODEL_REQ`   | 0x14  | Request name and salt level
 
 ## Packet Structure
 

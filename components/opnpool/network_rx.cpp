@@ -44,7 +44,7 @@ constexpr char TAG[] = "network_rx";
 [[nodiscard]] static esp_err_t
 _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
 {
-    bool is_to_pump = (pkt->dst.get_group_addr()) == datalink_group_addr_t::PUMP;
+    bool is_to_pump = pkt->dst.is_pump();
 
     datalink_pump_typ_t const datalink_pump_typ = pkt->typ.pump;
 
@@ -60,7 +60,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = is_to_pump ? pkt->dst.get_dev_id() : pkt->src.get_dev_id();
+    msg->device_id = is_to_pump ? pkt->dst.get_pump_id() : pkt->src.get_pump_id();
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -92,7 +92,7 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_dev_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    msg->device_id = datalink_pump_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -124,7 +124,7 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_dev_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    msg->device_id = datalink_pump_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -156,18 +156,22 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
         // reset mechanism that converts various formats to string
     name_reset_idx();
 
-        // silently ignore packets that we don't know how to decode
-    datalink_group_addr_t const dst = pkt->dst.get_group_addr();
-    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst == datalink_group_addr_t::UNKNOWN_09) ||
+#if 0
         (pkt->prot == datalink_prot_t::IC && dst != datalink_group_addr_t::ALL && dst != datalink_group_addr_t::CHLOR)) {
+#endif    
+
+        // silently ignore packets that we don't know how to decode
+    datalink_addr_t const dst = pkt->dst;
+    if ((pkt->prot == datalink_prot_t::A5_CTRL && dst.is_unknown_90()) ||
+        (pkt->prot == datalink_prot_t::IC && !dst.is_broadcast() && !dst.is_chlorinator() )) {
 
         *txOpportunity = false;
         msg->typ = network_msg_typ_t::IGNORE;
-        ESP_LOGV(TAG, "Ignoring packet with prot %s and dst group addr %u", enum_str(pkt->prot), enum_index(dst));
+        ESP_LOGV(TAG, "Ignoring packet with prot %s and dst addr %u", enum_str(pkt->prot), dst.addr);
         return ESP_OK;
     }
 
-    esp_err_t result;
+    esp_err_t result = ESP_FAIL;
 
     switch (pkt->prot) {
         case datalink_prot_t::A5_CTRL:
@@ -181,14 +185,13 @@ network_rx_msg(datalink_pkt_t const * const pkt, network_msg_t * const msg, bool
             break;
         default:
             ESP_LOGW(TAG, "unknown prot %u", enum_index(pkt->prot));
-            result = ESP_FAIL;
     }
-    ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), pkt->dst.byte, enum_str(msg->typ));
+    ESP_LOGV(TAG, "Decoded pkt (prot=%s dst=%u) to %s", enum_str(pkt->prot), dst.addr, enum_str(msg->typ));
 
     *txOpportunity =
         pkt->prot == datalink_prot_t::A5_CTRL &&
-        pkt->src.get_group_addr() == datalink_group_addr_t::SUNTOUCH &&
-        pkt->dst.get_group_addr() == datalink_group_addr_t::ALL;
+        pkt->src.is_controller() &&
+        pkt->dst.is_broadcast();
 
     return result;
 }

@@ -60,44 +60,44 @@ enum class datalink_prot_t : uint8_t {
  * @note Bit 6-7 (0xC0) indicate Request (0xC0), Response (0x40), or Set (0x00).
  */
 enum class datalink_ctrl_typ_t : uint8_t {
-    SET_ACK         = 0x01,
-    STATE_BCAST     = 0x02,
-    CANCEL_DELAY    = 0x03,
-    TIME_RESP       = 0x05,
-    TIME_SET        = 0x85,
-    TIME_REQ        = 0xC5,
-    CIRCUIT_RESP    = 0x06,
-    CIRCUIT_SET     = 0x86,
-    CIRCUIT_REQ     = 0xC6,
-    HEAT_RESP       = 0x08,
-    HEAT_SET        = 0x88,
-    HEAT_REQ        = 0xC8,
-    HEAT_PUMP_RESP  = 0x10,
-    HEAT_PUMP_SET   = 0x90,
-    HEAT_PUMP_REQ   = 0xD0,
-    SCHED_RESP      = 0x1E,
-    SCHED_SET       = 0x9E,
-    SCHED_REQ       = 0xDE,
-    LAYOUT_RESP     = 0x21,
-    LAYOUT_SET      = 0xA1,
-    LAYOUT_REQ      = 0xE1,
-    CUSTOM_NAME_REQ = 0xCA,
-    CIRC_NAMES_RESP = 0x0B,
-    CIRC_NAMES_REQ  = 0xCB,
-    SCHEDS_RESP     = 0x11,
-    SCHEDS_REQ      = 0xD1,
-    CHEM_RESP       = 0x12,
-    CHEM_REQ        = 0xD2,
-    VALVE_RESP      = 0x1D,
-    VALVE_REQ       = 0xDD,
-    SOLARPUMP_RESP  = 0x22,
-    SOLARPUMP_REQ   = 0xE2,
-    DELAY_RESP      = 0x23,
-    DELAY_REQ       = 0xE3,
-    HEAT_SETPT_RESP = 0x28,
-    HEAT_SETPT_REQ  = 0xE8,
-    VERSION_RESP    = 0xFC,
-    VERSION_REQ     = 0xFD
+    SET_ACK          = 0x01,
+    STATE_BCAST      = 0x02,
+    CANCEL_DELAY     = 0x03,
+    TIME_RESP        = 0x05,
+    TIME_SET         = 0x85,
+    TIME_REQ         = 0xC5,
+    CIRCUIT_RESP     = 0x06,
+    CIRCUIT_SET      = 0x86,
+    CIRCUIT_REQ      = 0xC6,
+    HEAT_RESP        = 0x08,
+    HEAT_SET         = 0x88,
+    HEAT_REQ         = 0xC8,
+    HEAT_PUMP_RESP   = 0x10,
+    HEAT_PUMP_SET    = 0x90,
+    HEAT_PUMP_REQ    = 0xD0,
+    SCHED_RESP       = 0x1E,
+    SCHED_SET        = 0x9E,
+    SCHED_REQ        = 0xDE,
+    LAYOUT_RESP      = 0x21,
+    LAYOUT_SET       = 0xA1,
+    LAYOUT_REQ       = 0xE1,
+    CUSTOM_MODEL_REQ = 0xCA,
+    CIRC_NAMES_RESP  = 0x0B,
+    CIRC_NAMES_REQ   = 0xCB,
+    SCHEDS_RESP      = 0x11,
+    SCHEDS_REQ       = 0xD1,
+    CHEM_RESP        = 0x12,
+    CHEM_REQ         = 0xD2,
+    VALVE_RESP       = 0x1D,
+    VALVE_REQ        = 0xDD,
+    SOLARPUMP_RESP   = 0x22,
+    SOLARPUMP_REQ    = 0xE2,
+    DELAY_RESP       = 0x23,
+    DELAY_REQ        = 0xE3,
+    HEAT_SETPT_RESP  = 0x28,
+    HEAT_SETPT_REQ   = 0xE8,
+    VERSION_RESP     = 0xFC,
+    VERSION_REQ      = 0xFD
     // SPA_CTRL_REQ     = 0xD6,
     // SPA_CTRL_RESP    = 0x16,
     // INTELLICHOR_REQ  = 0xD9,
@@ -139,32 +139,32 @@ enum class datalink_pump_typ_t : uint8_t {
  *
  * @note  The enum value count MUST MATCH datalink_chlor_typ_sizes[] in
  *        datalink_rx.cpp. A compile-time assertion validates the count.
- * @note  UNKNOWN_XX values represent message types observed in protocol
- *        but whose purpose has not yet been identified.
+ * @note  Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/ChlorinatorStateMessage.ts
  */
 enum class datalink_chlor_typ_t : uint8_t {
-    STATUS_REQ  = 0x00,  ///< Status request message
-    STATUS_RESP = 0x01,  ///< Status response message
-    UNKNOWN_02  = 0x02,
-    NAME_RESP   = 0x03,  ///< Name response message
-    UNKNOWN_04  = 0x04,
-    UNKNOWN_05  = 0x05,
-    UNKNOWN_06  = 0x06,
-    UNKNOWN_07  = 0x07,
-    UNKNOWN_08  = 0x08,
-    UNKNOWN_09  = 0x09,
-    UNKNOWN_0A  = 0x0A,
-    UNKNOWN_0B  = 0x0B,
-    UNKNOWN_0C  = 0x0C,
-    UNKNOWN_0D  = 0x0D,
-    UNKNOWN_0E  = 0x0E,
-    UNKNOWN_0F  = 0x0F,
-    UNKNOWN_10  = 0x10,
-    LEVEL_SET   = 0x11,  ///< Level set message [%]
-    LEVEL_RESP  = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
-    UNKNOWN_13  = 0x13,
-    NAME_REQ    = 0x14,  ///< Name request message
-    LEVEL_SET10 = 0x15   ///< Level set message percentage [%/10]
+    CONTROL_REQ   = 0x00,  ///< Status request message
+    CONTROL_RESP  = 0x01,  ///< Status response message
+    UNKNOWN_02    = 0x02,
+    MODEL_RESP    = 0x03,  ///< Name response message (only when chlor is active)
+    UNKNOWN_04    = 0x04,
+    UNKNOWN_05    = 0x05,
+    UNKNOWN_06    = 0x06,
+    UNKNOWN_07    = 0x07,
+    UNKNOWN_08    = 0x08,
+    UNKNOWN_09    = 0x09,
+    UNKNOWN_0A    = 0x0A,
+    UNKNOWN_0B    = 0x0B,
+    UNKNOWN_0C    = 0x0C,
+    UNKNOWN_0D    = 0x0D,
+    UNKNOWN_0E    = 0x0E,
+    UNKNOWN_0F    = 0x0F,
+    UNKNOWN_10    = 0x10,
+    LEVEL_SET     = 0x11,  ///< Level set message [%]
+    LEVEL_RESP    = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
+    UNKNOWN_13    = 0x13,  ///< maybe a keep-alive? has no payload.
+    MODEL_REQ     = 0x14,  ///< Name request message
+    LEVEL_SET10   = 0x15,  ///< Level set message percentage with one decimal place [%*10]
+    ICHLOR_BCAST  = 0x16   ///< iChlor status message  (level and temp on IC30)
 };
 
 /**

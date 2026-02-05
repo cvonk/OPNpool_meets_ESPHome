@@ -52,26 +52,18 @@ namespace opnpool {
     //  some say: bit0=service, bit2=celsius, bit3=freeze, bit7=timeout
 struct network_pool_modes_t {
     uint8_t bits;
-    bool is_service_mode() const {
-        return (bits & 0x01) != 0;
-    }
-    bool is_temp_increase_mode() const {
-        return (bits & 0x04) != 0;
-    }
-    bool is_freeze_protection_mode() const {
-        return (bits & 0x08) != 0;
-    }
-    bool is_timeout_mode() const {
-        return (bits & 0x10) != 0;
-    }   
+    bool is_service_mode()           const { return (bits & 0x01) != 0; }
+    bool is_temp_increase_mode()     const { return (bits & 0x04) != 0; }
+    bool is_freeze_protection_mode() const { return (bits & 0x08) != 0; }
+    bool is_timeout_mode()           const { return (bits & 0x10) != 0; }   
 } PACK8;
 
     // enumerates the pool controller circuits and features
 enum class network_pool_circuit_t : uint8_t {
     SPA      = 0,  ///< Spa circuit
-    AUX1     = 1,  ///< Auxiliary circuit 1
-    AUX2     = 2,  ///< Auxiliary circuit 2
-    AUX3     = 3,  ///< Auxiliary circuit 3
+    AUX1     = 1,  ///< Auxiliary circuit 1 (e.g. cleaner)
+    AUX2     = 2,  ///< Auxiliary circuit 2 (e.g. air blower)
+    AUX3     = 3,  ///< Auxiliary circuit 3 (e.g. light)
     FEATURE1 = 4,  ///< Feature 1
     POOL     = 5,  ///< Pool circuit
     FEATURE2 = 6,  ///< Feature 2
@@ -82,7 +74,6 @@ enum class network_pool_circuit_t : uint8_t {
 struct network_pump_mode_t {
     uint8_t raw;
 
-    // 2BD: change to uint8_t and use constexpr functions?
     constexpr char const * to_str() const {
         switch (raw) {
             case  0: return "Filter";
@@ -123,14 +114,13 @@ enum class network_heat_src_t : uint8_t {
     Solar           ///< Solar
 };
 
-    // (high << 8) | low
-struct uint8_lo_hi_t {
+struct network_lo_hi_t {
     uint8_t low;   ///< low order byte
     uint8_t high;  ///< high order byte
     constexpr uint16_t to_uint16() const { return ((uint16_t)high << 8) | low; }
 } PACK8;
 
-struct uint8_hi_lo_t {
+struct network_hi_lo_t {
     uint8_t high;  ///< high order byte
     uint8_t low;   ///< low order byte
     constexpr uint16_t to_uint16() const { return ((uint16_t)high << 8) | low; }
@@ -153,15 +143,16 @@ struct network_ctrl_set_ack_t {
 struct network_ctrl_circuit_set_t {
     uint8_t  circuit_plus_1;
     uint8_t  value;
+
     constexpr void set_value(bool v) { value = v ? 1 : 0; }
     constexpr bool get_value() const { return value != 0; }
 } PACK8;
 
 struct network_ctrl_sched_resp_sub_t {
-    uint8_t       circuit_plus_1;  // 0  (0 = schedule not active)
-    uint8_t       unknown_1;       // 1
-    uint8_hi_lo_t prg_start;       // 2..3 [minutes]
-    uint8_hi_lo_t prg_stop;        // 4..5 [minutes]
+    uint8_t         circuit_plus_1;  // 0  (0 = schedule not active)
+    uint8_t         unknown_1;       // 1
+    network_hi_lo_t prg_start;       // 2..3 [minutes]
+    network_hi_lo_t prg_stop;        // 4..5 [minutes]
 } PACK8;
 
 constexpr size_t NETWORK_CTRL_SCHED_COUNT = 2;
@@ -183,16 +174,28 @@ struct uint8_heat_status_t {
     // portable bit map for combined heat source
 struct uint8_heat_src_t {
     uint8_t bits;  // lower nibble is pool heat source; higher nibble is for spa
+
     network_heat_src_t get_pool() const { return static_cast<network_heat_src_t>(bits & 0x0F); } 
     network_heat_src_t get_spa()  const { return static_cast<network_heat_src_t>((bits >> 4) & 0x0F); }    
+
     void set_pool(network_heat_src_t src) { bits = (bits & 0xF0) | (static_cast<uint8_t>(src) & 0x0F); }
     void set_spa( network_heat_src_t src) { bits = (bits & 0x0F) | (static_cast<uint8_t>(src) << 4); }
 } PACK8;
 
+struct network_time_t {
+    uint8_t hour;   // 0
+    uint8_t minute; // 1
+} PACK8;
+
+struct network_date_t {
+    uint8_t day;   // 0
+    uint8_t month; // 1
+    uint8_t year;  // 2
+} PACK8;
+
 struct network_ctrl_state_bcast_t {
-    uint8_t              hour;               // 0
-    uint8_t              minute;             // 1
-    uint8_lo_hi_t        active;             // 2..3   bitmask for active circuits
+    network_time_t       time;               // 0..1
+    network_lo_hi_t      active;             // 2..3   bitmask for active circuits
     uint8_t              unknown_04to06[3];  // 4..6   more `active` circuits on fancy controllers
     uint8_t              unknown_07to08[2];  // 7..8
     network_pool_modes_t modes;              // 9      bitmask for active pool modes
@@ -212,14 +215,11 @@ struct network_ctrl_state_bcast_t {
 } PACK8;
 
 struct network_ctrl_time_t {
-    uint8_t hour;        // 0
-    uint8_t minute;      // 1
-    uint8_t unknown_02;  // 2 (DST adjust?)
-    uint8_t day;         // 3
-    uint8_t month;       // 4
-    uint8_t year;        // 5
-    uint8_t clk_speed;   // 6
-    uint8_t dst_auto;    // 7 daylight savings time (1=auto, 0=manual)
+    network_time_t time;        // 0..1
+    uint8_t        unknown_02;  // 2 (DST adjust?)
+    network_date_t date;        // 3..5
+    uint8_t        clk_speed;   // 6
+    uint8_t        dst_auto;    // 7 daylight savings time (1=auto, 0=manual)
 } PACK8;
 
 struct network_ctrl_version_resp_t {
@@ -268,10 +268,8 @@ struct network_ctrl_scheds_req_t {
 struct network_ctrl_scheds_resp_t {
     uint8_t                sched_id;     // 0 
     network_pool_circuit_t circuit;      // 1
-    uint8_t                start_hr;     // 2
-    uint8_t                start_min;    // 3
-    uint8_t                stop_hr;      // 4
-    uint8_t                stop_min;     // 5
+    network_time_t         start;        // 2..3
+    network_time_t         stop;         // 4..5
     uint8_t                day_of_week;  // 6 ///< bitmask Mon (0x01), Tue (0x02), Wed (0x04), Thu(0x08), Fri (0x10), Sat (0x20), Sun(0x40)
 } PACK8;
 
@@ -304,16 +302,16 @@ struct network_ctrl_layout_t {
 
     // an informed guess towards the IntelliChlor message structure
 struct network_intellichem_t {
-    uint8_hi_lo_t ph;               // 0..1    ///< pH reading
-    uint8_hi_lo_t orp;              // 2..3    ///< ORP reading
-    uint8_hi_lo_t ph_setpoint;      // 4..5    ///< pH setpoint
-    uint8_hi_lo_t orp_setpoint;     // 6..7    ///< ORP setpoint
-    uint8_hi_lo_t tank;             // 8..9
-    uint8_hi_lo_t calc_hardness;    // 10..11  ///< calcium hardness reading
-    uint8_t       cya;              // 12      ///< cyanuric acid reading
-    uint8_hi_lo_t total_alkalinity; // 13..14  ///< total alkalinity reading
-    uint8_t       water_flow;       // 15      ///< water flow rate
-    uint8_hi_lo_t mode;             // 16..17
+    network_hi_lo_t ph;               // 0..1    ///< pH reading
+    network_hi_lo_t orp;              // 2..3    ///< ORP reading
+    network_hi_lo_t ph_setpoint;      // 4..5    ///< pH setpoint
+    network_hi_lo_t orp_setpoint;     // 6..7    ///< ORP setpoint
+    network_hi_lo_t tank;             // 8..9
+    network_hi_lo_t calc_hardness;    // 10..11  ///< calcium hardness reading
+    uint8_t         cya;              // 12      ///< cyanuric acid reading
+    network_hi_lo_t total_alkalinity; // 13..14  ///< total alkalinity reading
+    uint8_t         water_flow;       // 15      ///< water flow rate
+    network_hi_lo_t mode;             // 16..17
 } PACK8;
 
 /**
@@ -325,12 +323,12 @@ struct network_intellichem_t {
  */
 
 struct network_pump_reg_set_t {
-    uint8_hi_lo_t address;  // 0..1
-    uint8_hi_lo_t value;    // 2..3
+    network_hi_lo_t address;  // 0..1
+    network_hi_lo_t value;    // 2..3
 } PACK8;
 
 struct network_pump_reg_resp_t {
-    uint8_hi_lo_t value;   // 0..1
+    network_hi_lo_t value;   // 0..1
 } PACK8;
 
 struct network_pump_running_t {
@@ -377,19 +375,17 @@ network_pump_program_addr_str(network_pump_program_addr_t const addr)
 }
 
 struct network_pump_status_resp_t {
-    network_pump_running_t running;       // 0
-    network_pump_mode_t    mode;          // 1
-    network_pump_state_t   state;         // 2
-    uint8_hi_lo_t          power;         // 3..4 [Watt]
-    uint8_hi_lo_t          speed;         // 5..6 [rpm]
-    uint8_t                flow;          // 7 [G/min]
-    uint8_t                level;         // 8 [%]
-    uint8_t                unknown;       // 9
-    uint8_t                error;         // 10
-    uint8_t                remaining_hr;  // 11
-    uint8_t                remaining_min; // 12
-    uint8_t                clock_hr;      // 13
-    uint8_t                clock_min;     // 14
+    network_pump_running_t running;    // 0
+    network_pump_mode_t    mode;       // 1
+    network_pump_state_t   state;      // 2
+    network_hi_lo_t        power;      // 3..4 [Watt]
+    network_hi_lo_t        speed;      // 5..6 [rpm]
+    uint8_t                flow;       // 7 [G/min]
+    uint8_t                level;      // 8 [%]
+    uint8_t                unknown;    // 9
+    uint8_t                error;      // 10
+    network_time_t         remaining;  // 11..12 (some say its status bits)
+    network_time_t         clock;      // 13..14
 } PACK8;
     
 
@@ -398,15 +394,15 @@ struct network_pump_status_resp_t {
  *
  * @details
  * This section provides packed C-style structs for each IC style
- * protocol message exchanged between the pool controller and the
+ * protocol message exchanged  between the pool controller and the
  * IntelliChlor chlorinator.
  */
 
-struct network_chlor_status_req_t {
+struct network_chlor_control_req_t {
     uint8_t unknown;
 } PACK8;
 
-struct network_chlor_status_resp_t {
+struct network_chlor_control_resp_t {
     uint8_t unknown[2];
 } PACK8;
 
@@ -425,9 +421,18 @@ struct network_chlor_level_set_t {
     uint8_t  level;
 } PACK8;
 
+struct network_chlor_level10_set_t {
+    uint8_t  level_times_10;
+} PACK8;
+
 struct network_chlor_level_resp_t {
     uint8_t  salt;   ///< Parts per million /50
     uint8_t  error;  ///< error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
+} PACK8;
+
+struct network_chlor_ichlor_bcast_t {
+    uint8_t  level;  ///< current chlorine level percentage
+    uint8_t  temp;   ///< water temperature
 } PACK8;
 
 
@@ -472,12 +477,13 @@ union network_data_a5_t {
 } PACK8;
 
 union network_data_ic_t {
-    network_chlor_status_req_t  chlor_status_req;
-    network_chlor_status_resp_t chlor_status_resp;
-    network_chlor_name_req_t    chlor_name_req;
-    network_chlor_name_resp_t   chlor_name_resp;
-    network_chlor_level_set_t   chlor_level_set;
-    network_chlor_level_resp_t  chlor_level_resp;
+    network_chlor_control_req_t  chlor_status_req;
+    network_chlor_control_resp_t chlor_status_resp;
+    network_chlor_name_req_t     chlor_name_req;
+    network_chlor_name_resp_t    chlor_name_resp;
+    network_chlor_level_set_t    chlor_level_set;
+    network_chlor_level10_set_t  chlor_level10_set;
+    network_chlor_level_resp_t   chlor_level_resp;
 } PACK8;
 
 inline constexpr uint8_t DATALINK_MAX_DATA_SIZE = std::max(sizeof(network_data_a5_t), sizeof(network_data_ic_t));
@@ -543,15 +549,18 @@ union network_data_t {
     X(CTRL_HEAT_SETPT_RESP, sizeof(network_ctrl_heat_setpt_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::HEAT_SETPT_RESP) \
     X(CTRL_CIRC_NAMES_REQ,  sizeof(network_ctrl_circ_names_req_t), false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_REQ)  \
     X(CTRL_CIRC_NAMES_RESP, sizeof(network_ctrl_circ_names_resp_t),false, A5_CTRL, datalink_ctrl_typ_t::CIRC_NAMES_RESP) \
-    X(CTRL_SCHEDS_REQ,      sizeof(network_ctrl_scheds_req_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)   \
-    X(CTRL_SCHEDS_RESP,     sizeof(network_ctrl_scheds_resp_t),    false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)  \
-    X(CTRL_CHEM_REQ,        sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)     \
-    X(CHLOR_STATUS_REQ,     sizeof(network_chlor_status_req_t),    false, IC,      datalink_chlor_typ_t::STATUS_REQ)  \
-    X(CHLOR_STATUS_RESP,    sizeof(network_chlor_status_resp_t),   false, IC,      datalink_chlor_typ_t::STATUS_RESP) \
-    X(CHLOR_NAME_REQ,       sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::NAME_REQ)    \
-    X(CHLOR_NAME_RESP,      sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::NAME_RESP)   \
-    X(CHLOR_LEVEL_SET,      sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)   \
-    X(CHLOR_LEVEL_RESP,     sizeof(network_chlor_level_resp_t),    false, IC,      datalink_chlor_typ_t::LEVEL_RESP)
+    X(CTRL_SCHEDS_REQ,      sizeof(network_ctrl_scheds_req_t),     false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_REQ)    \
+    X(CTRL_SCHEDS_RESP,     sizeof(network_ctrl_scheds_resp_t),    false, A5_CTRL, datalink_ctrl_typ_t::SCHEDS_RESP)   \
+    X(CTRL_CHEM_REQ,        sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)      \
+    X(CHLOR_CONTROL_REQ,    sizeof(network_chlor_control_req_t),   false, IC,      datalink_chlor_typ_t::CONTROL_REQ)  \
+    X(CHLOR_CONTROL_RESP,   sizeof(network_chlor_control_resp_t),  false, IC,      datalink_chlor_typ_t::CONTROL_RESP) \
+    X(CHLOR_MODEL_REQ,      sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::MODEL_REQ)    \
+    X(CHLOR_MODEL_RESP,     sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::MODEL_RESP)   \
+    X(CHLOR_LEVEL_SET,      sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)    \
+    X(CHLOR_LEVEL_SET10,    sizeof(network_chlor_level10_set_t),   false, IC,      datalink_chlor_typ_t::LEVEL_SET10)  \
+    X(CHLOR_LEVEL_RESP,     sizeof(network_chlor_level_resp_t),    false, IC,      datalink_chlor_typ_t::LEVEL_RESP)   \
+    X(CHLOR_ICHLOR_BCAST,   sizeof(network_chlor_ichlor_bcast_t),  false, IC,      datalink_chlor_typ_t::ICHLOR_BCAST)
+
 /**
  * @brief Enumerates all supported network message types for OPNpool.
  *
@@ -673,14 +682,14 @@ network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
 }
 
 /**
- * @brief    Represents a generic network message for the Pentair protocol.
+ * @brief Represents a generic network message for the Pentair protocol.
  *
  * @details
  * Contains the message type and a union of all possible protocol-specific message data 
  * structures, allowing flexible handling of controller, pump, and chlorinator messages.
  */
 struct network_msg_t {
-    datalink_dev_id_t  device_id;  ///< Device identifier (only valid for A5-PUMP messages).
+    datalink_pump_id_t  device_id;  ///< Device identifier (only valid for A5-PUMP messages).
     network_msg_typ_t  typ;        ///< The network message type identifier.
     network_data_t     u;          ///< Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
 };

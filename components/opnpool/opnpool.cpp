@@ -167,11 +167,11 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
 
     if (tod->date.valid) {
         snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
-                 tod->date.year, tod->date.month, tod->date.day,
-                 tod->time.hour, tod->time.minute);
+                 tod->date.value.year, tod->date.value.month, tod->date.value.day,
+                 tod->time.value.hour, tod->time.value.minute);
     } else {
         snprintf(time_str, sizeof(time_str), "%02d:%02d",
-                 tod->time.hour, tod->time.minute);
+                 tod->time.value.hour, tod->time.value.minute);
     }
     sensor->publish_value_if_changed(time_str);
 }
@@ -537,19 +537,19 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     }   
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_POWER)],        
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].power
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].power
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_FLOW)],         
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].flow
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].flow
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_SPEED)],        
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].speed
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].speed
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_ERROR)],        
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].error
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].error
     );
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::CHLORINATOR_LEVEL)], 
@@ -572,7 +572,7 @@ OpnPool::update_binary_sensors(poolstate_t const * const state)
 {
     _publish_if(
         this->binary_sensors_[enum_index(binary_sensor_id_t::PRIMARY_PUMP_RUNNING)],           
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].running
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].running
     );
     _publish_modes_if(
         this->binary_sensors_,
@@ -597,11 +597,11 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
     _publish_enum_if(
         this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_STATE)],
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].state
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].state
     );
     _publish_str_if(
         this->text_sensors_[enum_index(text_sensor_id_t::PRIMARY_PUMP_MODE)], 
-        state->pumps[enum_index(datalink_dev_id_t::PRIMARY)].mode
+        state->pumps[enum_index(datalink_pump_id_t::PRIMARY)].mode
     );
     _publish_if(
         this->text_sensors_[enum_index(text_sensor_id_t::CHLORINATOR_NAME)], 

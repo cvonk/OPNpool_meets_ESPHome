@@ -184,8 +184,7 @@ _update_system_time(cJSON * const dbg, network_ctrl_state_bcast_t const * const 
 {
     *time = {
         .valid = true,
-        .hour = msg->hour,
-        .minute = msg->minute
+        .value = msg->time
     };
     // PS date is updated through `network_ctrl_time`
 
@@ -244,14 +243,11 @@ _ctrl_time(cJSON * const dbg, network_ctrl_time_t const * const msg, poolstate_t
     state->system.tod = {
         .date = {
             .valid = true,
-            .day = msg->day,
-            .month = msg->month,
-            .year = static_cast<uint16_t>(2000 + msg->year)
+            .value = msg->date
         },
         .time = {
             .valid = true,
-            .hour = msg->hour,
-            .minute = msg->minute
+            .value = msg->time
         }
     };
 
@@ -588,7 +584,7 @@ _ctrl_set_ack(cJSON * const dbg, network_ctrl_set_ack_t const * const msg)
  * verbose logging is enabled, logs the register update to the debug JSON object.
  */
 static void
-_pump_reg_set(cJSON * const dbg, network_pump_reg_set_t const * const msg, datalink_dev_id_t const device_id)
+_pump_reg_set(cJSON * const dbg, network_pump_reg_set_t const * const msg, datalink_pump_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -618,7 +614,7 @@ _pump_reg_set(cJSON * const dbg, network_pump_reg_set_t const * const msg, datal
  * enabled, logs the value to the debug JSON object.
  */
 static void
-_pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, datalink_dev_id_t const device_id)
+_pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, datalink_pump_id_t const device_id)
 {
     if (!msg) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -644,7 +640,7 @@ _pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, dat
  * is enabled.
  */
 static void
-_pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const msg, datalink_dev_id_t const device_id)
+_pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const msg, datalink_pump_id_t const device_id)
 {
     // no change to poolstate
 
@@ -665,7 +661,7 @@ _pump_ctrl(cJSON * const dbg, network_pump_ctrl_t const msg, datalink_dev_id_t c
  * JSON object if verbose logging is enabled.
  */
 static void
-_pump_mode(cJSON * const dbg, network_pump_mode_t const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_mode(cJSON * const dbg, network_pump_mode_t const msg, datalink_pump_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -696,7 +692,7 @@ _pump_mode(cJSON * const dbg, network_pump_mode_t const msg, datalink_dev_id_t c
  * status to the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_running(cJSON * const dbg, network_pump_running_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_running(cJSON * const dbg, network_pump_running_t const * const msg, datalink_pump_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -734,7 +730,7 @@ _pump_running(cJSON * const dbg, network_pump_running_t const * const msg, datal
  * the debug JSON object if verbose logging is enabled.
  */
 static void
-_pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, datalink_dev_id_t const device_id, poolstate_pump_t * const pumps)
+_pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, datalink_pump_id_t const device_id, poolstate_pump_t * const pumps)
 {
     if (!msg || !pumps) {
         ESP_LOGW(TAG, "null to %s", __func__);
@@ -754,8 +750,7 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
     *pump = {
         .time = {
             .valid  = true,
-            .hour   = msg->clock_hr,
-            .minute = msg->clock_min
+            .value  = msg->clock,
         },
         .mode = {
             .valid = true,
@@ -791,7 +786,7 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
         },
         .timer = {
             .valid = true,
-            .value = msg->remaining_min
+            .value = msg->remaining
         }
     };
 
@@ -1047,13 +1042,13 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
         case network_msg_typ_t::CTRL_CHEM_REQ:
             break;
-        case network_msg_typ_t::CHLOR_STATUS_REQ:
-        case network_msg_typ_t::CHLOR_STATUS_RESP:
+        case network_msg_typ_t::CHLOR_CONTROL_REQ:
+        case network_msg_typ_t::CHLOR_CONTROL_RESP:
             break;
-        case network_msg_typ_t::CHLOR_NAME_REQ:
+        case network_msg_typ_t::CHLOR_MODEL_REQ:
             _ctrl_hex_bytes(dbg, msg->u.raw, 1);
             break;
-        case network_msg_typ_t::CHLOR_NAME_RESP:
+        case network_msg_typ_t::CHLOR_MODEL_RESP:
             _chlor_name_resp(dbg, &msg->u.ic.chlor_name_resp, &new_state->chlor);
             break;
         case network_msg_typ_t::CHLOR_LEVEL_SET:
@@ -1067,7 +1062,6 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
             break;
     }
 
-#if 1
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST  ||
                           msg->typ == network_msg_typ_t::IGNORE            ||   
                           msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET   ||
@@ -1077,9 +1071,6 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
                           msg->typ == network_msg_typ_t::PUMP_RUNNING_RESP ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_REQ   ||
                           msg->typ == network_msg_typ_t::PUMP_STATUS_RESP;
-#else                          
-    bool const frequent = false;
-#endif
 
     if ((verbose && !frequent) || very_verbose) {
         size_t const json_size = 1500;

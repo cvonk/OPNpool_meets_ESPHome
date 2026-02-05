@@ -42,6 +42,7 @@ struct datalink_pkt_t;
 struct rs485_instance_t;
 using rs485_handle_t = rs485_instance_t *;
 
+#if 0
     // 0x10 = suntouch ctrl system
     // 0x20 = easytouch ctrl system
     // 0x21 = remote
@@ -57,15 +58,16 @@ enum class datalink_group_addr_t : uint8_t {
   PUMP       = 0x06,
   UNKNOWN_09 = 0x09
 };
+#endif
 
-enum class datalink_dev_id_t : uint8_t {
-    PRIMARY    = 0x00,
-    SECONDARY  = 0x01,
-    REMOTE     = 0x02
+    // common pump ids 
+enum class datalink_pump_id_t : uint8_t {
+    PRIMARY = 0x00,
+    SOLAR   = 0x01
 };
 
-using datalink_preamble_a5_t = uint8_t[3];
-using datalink_preamble_ic_t = uint8_t[2];
+using datalink_preamble_a5_t  = uint8_t[3];
+using datalink_preamble_ic_t  = uint8_t[2];
 using datalink_postamble_ic_t = uint8_t[2];
 
 /**
@@ -75,30 +77,43 @@ using datalink_postamble_ic_t = uint8_t[2];
  * This struct provides accessor methods for extracting and setting each component.
  */
 struct datalink_addr_t {
-    uint8_t byte;  // Full address byte: high nibble = group, low nibble = device ID
+    uint8_t addr;  //< full address byte: high nibble = group, low nibble = device ID
 
-        // @brief Extracts the device ID from the address (low nibble)
-        // @return The device ID as datalink_dev_id_t
-    constexpr datalink_dev_id_t get_dev_id() const {
-        return static_cast<datalink_dev_id_t>(byte & 0x0F);
+        // constants for common addresses
+    static constexpr uint8_t ALL                  = 0x00;
+    static constexpr uint8_t SUNTOUCH_CONTROLLER  = 0x10;
+    static constexpr uint8_t EASYTOUCH_CONTROLLER = 0x20;
+    static constexpr uint8_t REMOTE               = 0x21;
+    static constexpr uint8_t WIRELESS_REMOTE      = 0x22;  ///< Screen Logic or app
+    static constexpr uint8_t QUICKTOUCH_REMOTE    = 0x48;
+    static constexpr uint8_t CHLORINATOR          = 0x50;
+    static constexpr uint8_t PUMP_BASE            = 0x60;  ///< base value for pump addresses
+    static constexpr uint8_t PUMP_ID_MASK         = 0x0F;  ///< mask to extract pump ID (low nibble)
+    static constexpr uint8_t BROADCAST            = 0x0F;  ///< broadcast address
+    static constexpr uint8_t UNKNOWN_90           = 0x90;
+
+        // factory methods
+    static constexpr datalink_addr_t dummy()                { return datalink_addr_t{ALL}; }
+    static constexpr datalink_addr_t suntouch_controller()  { return datalink_addr_t{SUNTOUCH_CONTROLLER}; }
+    static constexpr datalink_addr_t easytouch_controller() { return datalink_addr_t{EASYTOUCH_CONTROLLER}; }
+    static constexpr datalink_addr_t remote()               { return datalink_addr_t{REMOTE}; }
+    static constexpr datalink_addr_t wireless_remote()      { return datalink_addr_t{WIRELESS_REMOTE}; }
+    static constexpr datalink_addr_t quicktouch_remote()    { return datalink_addr_t{QUICKTOUCH_REMOTE}; }
+
+    static constexpr datalink_addr_t pump(datalink_pump_id_t const pump_id) { 
+        return datalink_addr_t{ static_cast<uint8_t>(PUMP_BASE | (static_cast<uint8_t>(pump_id) & PUMP_ID_MASK)) };
     }
 
-        // @brief Extracts the group address from the address (high nibble)
-        // @return The group address as datalink_group_addr_t
-    constexpr datalink_group_addr_t get_group_addr() const {
-        return static_cast<datalink_group_addr_t>((byte >> 4) & 0x0F);
-    }
+        // accessors
+    constexpr bool is_controller()  const { return (addr == SUNTOUCH_CONTROLLER || addr == EASYTOUCH_CONTROLLER); }
+    constexpr bool is_remote()      const { return (addr == REMOTE || addr == WIRELESS_REMOTE || addr == QUICKTOUCH_REMOTE); }
+    constexpr bool is_pump()        const { return (addr & 0xF0) == PUMP_BASE; }
+    constexpr bool is_unknown_90()  const { return addr == UNKNOWN_90; }
+    constexpr bool is_chlorinator() const { return addr == CHLORINATOR; } 
+    constexpr bool is_broadcast()   const { return addr == BROADCAST; }
 
-        // @brief Sets the device ID in the address (low nibble)
-        // @param[in] dev The device ID to set
-    constexpr void set_dev_id(datalink_dev_id_t dev) {
-        byte = (byte & 0xF0) | (static_cast<uint8_t>(dev) & 0x0F);
-    }
-
-        // @brief Sets the group address in the address (high nibble)
-        // @param[in] grp The group address to set
-    constexpr void set_group_addr(datalink_group_addr_t grp) {
-        byte = (byte & 0x0F) | (static_cast<uint8_t>(grp) << 4);
+    constexpr datalink_pump_id_t get_pump_id() const {
+        return static_cast<datalink_pump_id_t>(addr & PUMP_ID_MASK);
     }
 } PACK8;
 static_assert(sizeof(datalink_addr_t) == 1, "datalink_addr_t must be 1 byte");
@@ -175,6 +190,7 @@ extern datalink_preamble_a5_t  datalink_preamble_a5;   ///< A5 protocol preamble
 extern datalink_preamble_ic_t  datalink_preamble_ic;   ///< IC protocol preamble: { 0x10, 0x02 }
 extern datalink_postamble_ic_t datalink_postamble_ic;  ///< IC protocol postamble: { 0x10, 0x03 }
 
+#if 0
 /**
  * @brief Composes a device address from an address group and device ID.
  *
@@ -182,7 +198,8 @@ extern datalink_postamble_ic_t datalink_postamble_ic;  ///< IC protocol postambl
  * @param[in] device_id The device ID within the group (low nibble).
  * @return              The composed 8-bit device address.
  */
-datalink_addr_t datalink_addr(datalink_group_addr_t const group, datalink_dev_id_t const device_id);
+datalink_addr_t datalink_addr(datalink_group_addr_t const group, datalink_pump_id_t const device_id);
+#endif
 
 /**
  * @brief Calculates the checksum for a data buffer.
