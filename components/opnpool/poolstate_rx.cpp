@@ -135,13 +135,13 @@ _update_thermos(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg,
     if (pool_circuit->valid && pool_circuit->value) {
         pool_thermo->temp_in_f = {
             .valid = true,
-            .value = msg->water_temp_1
+            .value = msg->pool_temp
         };
     }
     if (spa_circuit->valid && spa_circuit->value) {
         spa_thermo->temp_in_f = {
             .valid = true,
-            .value = msg->water_temp_2
+            .value = msg->spa_temp
         };
     }
     pool_thermo->heating = {
@@ -207,7 +207,7 @@ _update_temps(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, p
     };
     temps[water_idx] = {
         .valid = true,
-        .value = msg->water_temp_1
+        .value = msg->pool_temp
     };
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {

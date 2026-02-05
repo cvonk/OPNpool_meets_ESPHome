@@ -60,12 +60,12 @@ struct network_pool_modes_t {
 
     // enumerates the pool controller circuits and features
 enum class network_pool_circuit_t : uint8_t {
-    SPA      = 0,  ///< Spa circuit
+    SPA      = 0,  ///< Spa circuit (body 2)
     AUX1     = 1,  ///< Auxiliary circuit 1 (e.g. cleaner)
     AUX2     = 2,  ///< Auxiliary circuit 2 (e.g. air blower)
     AUX3     = 3,  ///< Auxiliary circuit 3 (e.g. light)
     FEATURE1 = 4,  ///< Feature 1
-    POOL     = 5,  ///< Pool circuit
+    POOL     = 5,  ///< Pool circuit (body 1)
     FEATURE2 = 6,  ///< Feature 2
     FEATURE3 = 7,  ///< Feature 3
     FEATURE4 = 8   ///< Feature 4
@@ -195,39 +195,39 @@ struct network_date_t {
 } PACK8;
 
 struct network_ctrl_state_bcast_t {
-    network_time_t       time;               // 0..1
-    network_lo_hi_t      active;             // 2..3 bitmask for active circuits
-    network_lo_hi_t      active_3_4;         // 4..5 bitmask for more active circuits
-    uint8_t              active_5;           // 6    bitmask for more active circuits
-    uint8_t              unknown_07;         // 7
-    uint8_t              unknown_08;         // 8
-    network_pool_modes_t modes;              // 9    bitmask for active pool modes
-    uint8_heat_status_t  heat_status;        // 10   bit2 is for POOL, bit3 is for SPA
-    uint8_t              unknown_11;         // 11
-    uint8_t              delay;              // 12   bitmask for delay status of circuits
-    uint8_t              unknown_13;         // 13
-    uint8_t              water_temp_1;       // 14   water sensor 1
-    uint8_t              water_temp_2;       // 15   water sensor 2 (for shared system: mirrors water sensor 1)
-    uint8_t              unknown_16;         // 16
-    uint8_t              solar_temp_1;       // 17   solar sensor 1
-    uint8_t              air_temp;           // 18   air sensor
-    uint8_t              solar_temp_2;       // 19   solar sensor 2 (for shared system: mirrors solar sensor 1)
-    uint8_t              unknown_20;         // 20   maybe water sensor 3
-    uint8_t              unknown_21;         // 21   maybe water sensor 4
-    uint8_heat_src_t     heat_src;           // 22   lowest nibble is for POOL,  highest nibble is for SPA
-    uint8_heat_src_t     heat_src_2;         // 23   lowest nibble is for body3, highest nibble is for body4
-    uint8_t              unknown_24;         // 24
-    uint8_t              unknown_25;         // 25
-    uint8_t              unknown_26;         // 26
-    network_hi_lo_t      ocp_id;             // 27..28 outdoor control panel ID
+    network_time_t       time;          // 0..1
+    network_lo_hi_t      active;        // 2..3 bitmask for active circuits
+    network_lo_hi_t      active_3_4;    // 4..5 bitmask for more active circuits
+    uint8_t              active_5;      // 6    bitmask for more active circuits
+    uint8_t              unknown_07;    // 7
+    uint8_t              unknown_08;    // 8
+    network_pool_modes_t modes;         // 9    bitmask for active pool modes
+    uint8_heat_status_t  heat_status;   // 10   bit2 is for POOL, bit3 is for SPA
+    uint8_t              unknown_11;    // 11
+    uint8_t              delay;         // 12   bitmask for delay status of circuits
+    uint8_t              unknown_13;    // 13
+    uint8_t              pool_temp;     // 14   water sensor 1
+    uint8_t              spa_temp;      // 15   water sensor 2 (for shared system: mirrors water sensor 1)
+    uint8_t              unknown_16;    // 16
+    uint8_t              solar_temp_1;  // 17   solar sensor 1
+    uint8_t              air_temp;      // 18   air sensor
+    uint8_t              solar_temp_2;  // 19   solar sensor 2 (for shared system: mirrors solar sensor 1)
+    uint8_t              unknown_20;    // 20   maybe water sensor 3
+    uint8_t              unknown_21;    // 21   maybe water sensor 4
+    uint8_heat_src_t     heat_src;      // 22   lowest nibble is for body 1 (POOL),  highest nibble is for body 2 (SPA)
+    uint8_t              heat_src_2;    // 23   lowest nibble is for body 3, highest nibble is for body 4
+    uint8_t              unknown_24;    // 24
+    uint8_t              unknown_25;    // 25
+    uint8_t              unknown_26;    // 26
+    network_hi_lo_t      ocp_id;        // 27..28 outdoor control panel ID
 } PACK8;
 
 struct network_ctrl_time_t {
-    network_time_t time;        // 0..1
-    uint8_t        unknown_02;  // 2 (DST adjust?)
-    network_date_t date;        // 3..5
-    uint8_t        clk_speed;   // 6
-    uint8_t        dst_auto;    // 7 daylight savings time (1=auto, 0=manual)
+    network_time_t time;          // 0..1
+    uint8_t        dayoftheweek;  // 2
+    network_date_t date;          // 3..5
+    uint8_t        clk_speed;     // 6
+    uint8_t        dst_auto;      // 7 daylight savings time (1=auto, 0=manual)
 } PACK8;
 
 struct network_ctrl_version_resp_t {
@@ -282,25 +282,25 @@ struct network_ctrl_scheds_resp_t {
 } PACK8;
 
 struct network_ctrl_heat_resp_t {
-    uint8_t          pool_temp;       // 0
-    uint8_t          spa_temp;        // 1
-    uint8_t          air_temp;        // 2
-    uint8_t          pool_set_point;  // 3
-    uint8_t          spa_set_point;   // 4
-    uint8_heat_src_t heat_src;        // 5 ///< bits 0-3 for POOL, bits 4-7 for SPA
-    uint8_t          unknown_06;      // 6
-    uint8_t          unknown_07;      // 7
-    uint8_t          unknown_08;      // 8
-    uint8_t          unknown_09;      // 9
-    uint8_t          unknown_10;      // 10
-    uint8_t          unknown_11;      // 11
-    uint8_t          unknown_12;      // 12
+    uint8_t          pool_temp;        // 0   ///< water sensor 1 (POOL)
+    uint8_t          spa_temp;         // 1   ///< water sensor 2 (SPA)
+    uint8_t          air_temp;         // 2   ///< air sensor
+    uint8_t          pool_set_point;   // 3   ///< body 1 set-point (POOL)
+    uint8_t          spa_set_point;    // 4   ///< body 2 set-point (SPA)
+    uint8_heat_src_t heat_src;         // 5   ///< body 1 and 2 heat source, bits 0-3 for POOL, bits 4-7 for SPA
+    uint8_t          water_temp_3;     // 6   ///< maybe water sensor 3
+    uint8_t          water_temp_4;     // 7   ///< maybe water sensor 4
+    uint8_t          air_temp_2;       // 8   ///< maybe reserved air sensor
+    uint8_t          body_3_set_point; // 9   ///< maybe body 3 set-point
+    uint8_t          body_4_set_point; // 10  ///< maybe body 4 set-point
+    uint8_t          heat_src_3_4;     // 11  ///< maybe body 3 and 4 heat source
+    uint8_t          unknown;          // 12
 } PACK8;
 
 struct network_ctrl_heat_set_t {
-    uint8_t          pool_set_point;  // 0
-    uint8_t          spa_set_point;   // 1
-    uint8_heat_src_t heat_src;        // 2 ///< bits 0-3 for POOL, bits 4-7 for SPA
+    uint8_t          pool_set_point;  // 0  ///< body 1 set-point (POOL)
+    uint8_t          spa_set_point;   // 1  ///< body 2 set-point (SPA)
+    uint8_heat_src_t heat_src;        // 2  ///< body 1 and 2 heat source, bits 0-3 for POOL, bits 4-7 for SPA
     uint8_t          unknown;         // 3
 } PACK8;
 
