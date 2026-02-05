@@ -134,6 +134,7 @@ struct network_hi_lo_t {
  * exchanged between the pool controller and OPNpool.
  * 
  * @note The purpose of UNKNOWN* values has not yet been identified.
+ * @note Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/EquipmentStateMessage.ts#L168
  */
 
 struct network_ctrl_set_ack_t {
@@ -195,23 +196,30 @@ struct network_date_t {
 
 struct network_ctrl_state_bcast_t {
     network_time_t       time;               // 0..1
-    network_lo_hi_t      active;             // 2..3   bitmask for active circuits
-    uint8_t              unknown_04to06[3];  // 4..6   more `active` circuits on fancy controllers
-    uint8_t              unknown_07to08[2];  // 7..8
-    network_pool_modes_t modes;              // 9      bitmask for active pool modes
-    uint8_heat_status_t  heat_status;        // 10     bit2 is for POOL, bit3 is for SPA
+    network_lo_hi_t      active;             // 2..3 bitmask for active circuits
+    network_lo_hi_t      active_3_4;         // 4..5 bitmask for more active circuits
+    uint8_t              active_5;           // 6    bitmask for more active circuits
+    uint8_t              unknown_07;         // 7
+    uint8_t              unknown_08;         // 8
+    network_pool_modes_t modes;              // 9    bitmask for active pool modes
+    uint8_heat_status_t  heat_status;        // 10   bit2 is for POOL, bit3 is for SPA
     uint8_t              unknown_11;         // 11
-    uint8_t              delay;              // 12     bitmask for delay status of circuits
+    uint8_t              delay;              // 12   bitmask for delay status of circuits
     uint8_t              unknown_13;         // 13
-    uint8_t              pool_temp;          // 14     water sensor 1
-    uint8_t              spa_temp;           // 15     water sensor 2
+    uint8_t              water_temp_1;       // 14   water sensor 1
+    uint8_t              water_temp_2;       // 15   water sensor 2 (for shared system: mirrors water sensor 1)
     uint8_t              unknown_16;         // 16
-    uint8_t              water_temp;         // 17     solar sensor 1
-    uint8_t              air_temp;           // 18     air sensor
-    uint8_t              solar_temp;         // 19     solar sensor 2
-    uint8_t              unknown_20to21[2];  // 20..21 more water sensors?
-    uint8_heat_src_t     heat_src;           // 22     lowest nibble is for POOL, highest nibble is for SPA
-    uint8_t              unknown_23to28[6];  // 23..28 (26 maybe 0x01=automatically adjust DST)
+    uint8_t              solar_temp_1;       // 17   solar sensor 1
+    uint8_t              air_temp;           // 18   air sensor
+    uint8_t              solar_temp_2;       // 19   solar sensor 2 (for shared system: mirrors solar sensor 1)
+    uint8_t              unknown_20;         // 20   maybe water sensor 3
+    uint8_t              unknown_21;         // 21   maybe water sensor 4
+    uint8_heat_src_t     heat_src;           // 22   lowest nibble is for POOL,  highest nibble is for SPA
+    uint8_heat_src_t     heat_src_2;         // 23   lowest nibble is for body3, highest nibble is for body4
+    uint8_t              unknown_24;         // 24
+    uint8_t              unknown_25;         // 25
+    uint8_t              unknown_26;         // 26
+    network_hi_lo_t      ocp_id;             // 27..28 outdoor control panel ID
 } PACK8;
 
 struct network_ctrl_time_t {

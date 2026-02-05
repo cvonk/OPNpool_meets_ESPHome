@@ -42,24 +42,6 @@ struct datalink_pkt_t;
 struct rs485_instance_t;
 using rs485_handle_t = rs485_instance_t *;
 
-#if 0
-    // 0x10 = suntouch ctrl system
-    // 0x20 = easytouch ctrl system
-    // 0x21 = remote
-    // 0x22 = wireless remote
-    // 0x48 = quicktouch remote
-    // 0x60 .. 0x6F = intelliflow pump 0 .. 15
-    // `addrgroup` is the high nibble of the address byte
-enum class datalink_group_addr_t : uint8_t {
-  ALL        = 0x00,
-  SUNTOUCH   = 0x01,
-  EASYTOUCH  = 0x02,
-  CHLOR      = 0x05,
-  PUMP       = 0x06,
-  UNKNOWN_09 = 0x09
-};
-#endif
-
     // common pump ids 
 enum class datalink_pump_id_t : uint8_t {
     PRIMARY = 0x00,
