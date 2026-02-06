@@ -60,10 +60,12 @@ network_create_pkt(network_msg_t const * const msg, datalink_pkt_t * const pkt)
 
     uint32_t const data_len = info->size;
 
-    pkt->prot = info->proto;
-    pkt->typ = info->datalink_typ;
+    pkt->src      = msg->src;
+    pkt->dst      = msg->dst;
+    pkt->prot     = info->proto;
+    pkt->typ      = info->datalink_typ;
     pkt->data_len = data_len;
-    pkt->skb = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
+    pkt->skb      = skb_alloc(DATALINK_MAX_HEAD_SIZE + data_len + DATALINK_MAX_TAIL_SIZE);
     if (!pkt->skb) {
         ESP_LOGW(TAG, "Failed to allocate socket buffer");
         return ESP_FAIL;

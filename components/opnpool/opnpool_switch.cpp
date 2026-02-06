@@ -79,7 +79,8 @@ OpnPoolSwitch::write_state(bool value)
     uint8_t const circuit_idx = enum_index(circuit);
 
     network_msg_t msg;
-    msg.device_id = datalink_pump_id_t::PRIMARY;
+    msg.src = datalink_addr_t::remote();
+    msg.dst = datalink_addr_t::suntouch_controller();
     msg.typ = network_msg_typ_t::CTRL_CIRCUIT_SET;
     msg.u.a5 = {
         .ctrl_circuit_set = {

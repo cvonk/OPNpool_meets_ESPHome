@@ -24,18 +24,18 @@ esp32:
     type: esp-idf
 
 logger:
-  level: VERBOSE       # build includes ESP_LOGx up to VERBOSE
-  initial_level: WARN  # only show up to WARN globally
+  level: VERBOSE           # build includes ESP_LOGx up to VERBOSE
+  initial_level: WARN      # only show up to WARN globally
   logs:
     rs485: VERBOSE
-    datalink_rx: WARN  # VERBOSE to see the raw bytes
-    datalink_tx: WARN
+    datalink_rx: WARN      # VERBOSE to see the raw bytes
+    datalink_tx: WARN      # VERBOSE to see the raw bytes
     network_rx: WARN
     network_create: WARN
     pool_task: WARN
     ipc: WARN
     poolstate: WARN
-    poolstate_rx: VERBOSE
+    poolstate_rx: VERBOSE  # VERBOSE to see the decoded messages
     opnpool: WARN
     opnpool_climate: WARN
     opnpool_switch: WARN

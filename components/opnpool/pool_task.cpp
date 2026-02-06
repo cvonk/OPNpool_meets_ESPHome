@@ -133,8 +133,10 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
 static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
 {
-    network_msg_t msg = {};  // prevents -Wmissing-field-initializers
+    network_msg_t msg = {};
     msg.typ = typ;
+    msg.src = datalink_addr_t::remote();               // pretent we're a remote control
+    msg.dst = datalink_addr_t::suntouch_controller();  // use controller address
 
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 

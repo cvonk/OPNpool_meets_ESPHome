@@ -60,7 +60,8 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = is_to_pump ? pkt->dst.get_pump_id() : pkt->src.get_pump_id();
+    msg->src       = pkt->src;
+    msg->dst       = pkt->dst;
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_PUMP msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -92,7 +93,8 @@ _decode_msg_a5_ctrl(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_pump_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    msg->src       = pkt->src;
+    msg->dst       = pkt->dst;
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded A5_CTRL msg typ %s", __FUNCTION__, enum_str(msg->typ));
@@ -124,7 +126,8 @@ _decode_msg_ic_chlor(datalink_pkt_t const * const pkt, network_msg_t * const msg
     }
 
     msg->typ       = info->network_msg_typ;
-    msg->device_id = datalink_pump_id_t::PRIMARY;   // only relevant for A5-PUMP msgs
+    msg->src       = pkt->src;
+    msg->dst       = pkt->dst;
     memcpy(msg->u.raw, pkt->data, pkt->data_len);  // saves lots of code to using a union-aware switch
 
     ESP_LOGVV(TAG, "%s: decoded IC msg typ %s", __FUNCTION__, enum_str(msg->typ));

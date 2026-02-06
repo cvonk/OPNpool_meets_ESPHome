@@ -735,9 +735,10 @@ network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
  * structures, allowing flexible handling of controller, pump, and chlorinator messages.
  */
 struct network_msg_t {
-    datalink_pump_id_t device_id;  ///< Device identifier (only valid for A5-PUMP messages).
-    network_msg_typ_t  typ;        ///< The network message type identifier.
-    network_data_t     u;          ///< Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
+    datalink_addr_t    src;  ///< source address from datalink_hdr
+    datalink_addr_t    dst;  ///< destination address from datalink_hdr
+    network_msg_typ_t  typ;  ///< The network message type identifier.
+    network_data_t     u;    ///< Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
 };
 
     // sanity checks
