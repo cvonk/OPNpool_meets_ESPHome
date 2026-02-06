@@ -333,9 +333,28 @@ struct network_intellichem_t {
  * @note  Details at https://github.com/tagyoureit/nodejs-poolController/blob/master/controller/comms/messages/status/PumpStateMessage.ts#L27
  */
 
+enum class network_pump_reg_addr_t : uint8_t {
+    RPM        = 0x01,  // program RPM
+    POWER      = 0x02,  // program Power [Watt]
+    CURRENT    = 0x03,  // program Current [A]
+    STATUS     = 0x04,  // 0=off, 4=on, 10=running
+    SETPOINT   = 0x05,
+    TIMER_PROG = 0x06,
+};
+
+struct network_pump_reg_operation_t {
+    uint8_t raw;
+
+    static constexpr uint8_t WRITE = 0xC4;
+    constexpr bool is_write() const { return raw == WRITE; }
+    constexpr char const * to_str() const { return raw == WRITE ? "WRITE" : "READ"; }
+} PACK8;
+
+
 struct network_pump_reg_set_t {
-    network_hi_lo_t address;  // 0..1
-    network_hi_lo_t value;    // 2..3, for REG maybe bit6: 0=RPM, 1=gal/min
+    network_pump_reg_addr_t      address;    // 0
+    network_pump_reg_operation_t operation;  // 1
+    network_hi_lo_t              value;      // 2..3  0x0000 for read operation
 } PACK8;
 
 struct network_pump_reg_resp_t {
@@ -349,13 +368,14 @@ struct network_pump_running_t {
     constexpr bool is_off() const { return (raw) == 0x04; };
 } PACK8;
 
+#if 0
 enum class network_pump_program_addr_t : uint16_t {
     UNKNOWN_2BF0 = 0x2BF0,
     UNKNOWN_02BF = 0x02BF,   
     PGM          = 0x02E4,  // program GPM
     RPM          = 0x02C4,  // program RPM
     EPRG         = 0x0321,  // select ext prog, 0x0000=P0, 0x0008=P1, 0x0010=P2, 0x0080=P3, 0x0020=P4
-    ERPM0        = 0x0327,  // program ext program RPM0
+    ERPM0        = 0x0327,  // program ext program RPM0 (not turning, no speed)
     ERPM1        = 0x0328,  // program ext program RPM1
     ERPM2        = 0x0329,  // program ext program RPM2
     ERPM3        = 0x032A   // program ext program RPM3
@@ -385,6 +405,7 @@ network_pump_program_addr_str(network_pump_program_addr_t const addr)
         default: return uint16_str(static_cast<uint16_t>(addr));
     }
 }
+#endif
 
 struct network_pump_status_resp_t {
     network_pump_running_t   running;    // 0
@@ -412,40 +433,48 @@ struct network_pump_status_resp_t {
  */
 
 struct network_chlor_control_req_t {
-    uint8_t unknown;
+    uint8_t sub_cmd;
+
+    static constexpr uint8_t CONTROL = 0x00;  // only known sub-command, used to request the chlorinator control/status
+    static constexpr network_chlor_control_req_t control() { return network_chlor_control_req_t{CONTROL}; }
+    constexpr bool is_control_req() const { return sub_cmd == CONTROL; }
 } PACK8;
+
+using network_chlor_name_t = char[16];
 
 struct network_chlor_control_resp_t {
-    uint8_t unknown[2];
+    uint8_t  unknown[2];  // always appear to be 00 00
 } PACK8;
 
-using network_chlor_name_str_t = char[16];
+struct network_chlor_model_req_t {
+    uint8_t typ;
 
-struct network_chlor_name_req_t {
-    uint8_t unknown;
+    static constexpr uint8_t TYP = 0x00;  // only known type, used to request the chlorinator model
+    static constexpr network_chlor_model_req_t set_typ() { return network_chlor_model_req_t{TYP}; }
+    constexpr bool is_get_typ() const { return typ; }
 } PACK8;
 
-struct network_chlor_name_resp_t {
-    uint8_t                  salt;  ///< Parts per million /50
-    network_chlor_name_str_t name;  ///< non-\0 terminated chlorinator name
+struct network_chlor_model_resp_t {
+    uint8_t              salt;  ///< parts per million /50
+    network_chlor_name_t name;  ///< non-\0 terminated chlorinator name
 } PACK8;
 
 struct network_chlor_level_set_t {
-    uint8_t  level;
+    uint8_t  level;             ///< chlorine level percentage (0-100)
 } PACK8;
 
 struct network_chlor_level10_set_t {
-    uint8_t  level_times_10;
+    uint8_t  level_times_10;    ///< chlorine level times 10 (0-255, representing 0.0% to 25.5%)
 } PACK8;
 
 struct network_chlor_level_resp_t {
-    uint8_t  salt;   ///< Parts per million /50
-    uint8_t  error;  ///< error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
+    uint8_t  salt;              ///< Parts per million /50
+    uint8_t  error;             ///< error bits: low flow (0x01), low salt (0x02), high salt (0x04), clean cell (0x10), cold (0x40), OK (0x80)
 } PACK8;
 
 struct network_chlor_ichlor_bcast_t {
-    uint8_t  level;  ///< current chlorine level percentage
-    uint8_t  temp;   ///< water temperature
+    uint8_t  level;             ///< current chlorine level percentage
+    uint8_t  temp;              ///< water temperature
 } PACK8;
 
 
@@ -490,10 +519,10 @@ union network_data_a5_t {
 } PACK8;
 
 union network_data_ic_t {
-    network_chlor_control_req_t  chlor_status_req;
+    network_chlor_control_req_t  chlor_control_req;
     network_chlor_control_resp_t chlor_status_resp;
-    network_chlor_name_req_t     chlor_name_req;
-    network_chlor_name_resp_t    chlor_name_resp;
+    network_chlor_model_req_t    chlor_model_req;
+    network_chlor_model_resp_t   chlor_model_resp;
     network_chlor_level_set_t    chlor_level_set;
     network_chlor_level10_set_t  chlor_level10_set;
     network_chlor_level_resp_t   chlor_level_resp;
@@ -571,8 +600,8 @@ union network_data_t {
     X(CTRL_CHEM_REQ,         sizeof(network_ctrl_chem_req_t),       false, A5_CTRL, datalink_ctrl_typ_t::CHEM_REQ)      \
     X(CHLOR_CONTROL_REQ,     sizeof(network_chlor_control_req_t),   false, IC,      datalink_chlor_typ_t::CONTROL_REQ)  \
     X(CHLOR_CONTROL_RESP,    sizeof(network_chlor_control_resp_t),  false, IC,      datalink_chlor_typ_t::CONTROL_RESP) \
-    X(CHLOR_MODEL_REQ,       sizeof(network_chlor_name_req_t),      false, IC,      datalink_chlor_typ_t::MODEL_REQ)    \
-    X(CHLOR_MODEL_RESP,      sizeof(network_chlor_name_resp_t),     false, IC,      datalink_chlor_typ_t::MODEL_RESP)   \
+    X(CHLOR_MODEL_REQ,       sizeof(network_chlor_model_req_t),     false, IC,      datalink_chlor_typ_t::MODEL_REQ)    \
+    X(CHLOR_MODEL_RESP,      sizeof(network_chlor_model_resp_t),    false, IC,      datalink_chlor_typ_t::MODEL_RESP)   \
     X(CHLOR_LEVEL_SET,       sizeof(network_chlor_level_set_t),     false, IC,      datalink_chlor_typ_t::LEVEL_SET)    \
     X(CHLOR_LEVEL_SET10,     sizeof(network_chlor_level10_set_t),   false, IC,      datalink_chlor_typ_t::LEVEL_SET10)  \
     X(CHLOR_LEVEL_RESP,      sizeof(network_chlor_level_resp_t),    false, IC,      datalink_chlor_typ_t::LEVEL_RESP)   \
@@ -706,7 +735,7 @@ network_msg_typ_get_info(datalink_chlor_typ_t const chlor_typ)
  * structures, allowing flexible handling of controller, pump, and chlorinator messages.
  */
 struct network_msg_t {
-    datalink_pump_id_t  device_id;  ///< Device identifier (only valid for A5-PUMP messages).
+    datalink_pump_id_t device_id;  ///< Device identifier (only valid for A5-PUMP messages).
     network_msg_typ_t  typ;        ///< The network message type identifier.
     network_data_t     u;          ///< Union containing all supported message data structures for A5/controller, A5/pump, and IC messages.
 };

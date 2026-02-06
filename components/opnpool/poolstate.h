@@ -249,7 +249,7 @@ struct poolstate_chlor_status_t {
 /// @brief Chlorinator name with validity flag.
 struct poolstate_chlor_name_t {
     bool valid;                                           ///< True if name has been set.
-    char value[sizeof(network_chlor_name_str_t) + 1];     ///< Null-terminated name string.
+    char value[sizeof(network_chlor_name_t) + 1];     ///< Null-terminated name string.
 };
 
 /// @brief Complete chlorinator state.

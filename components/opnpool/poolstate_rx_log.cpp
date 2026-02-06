@@ -344,7 +344,7 @@ add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const pum
 
     cJSON_AddStringToObject(item, KEY_TIME, time_str(pump->time.value.hour, pump->time.value.minute));
     cJSON_AddStringToObject(item, KEY_STATE, enum_str(pump->state.value));
-    cJSON_AddStringToObject(item, KEY_DEVID, enum_str(pump_id));
+    cJSON_AddStringToObject(item, KEY_ID, enum_str(pump_id));
     cJSON_AddNumberToObject(item, KEY_POWER, pump->power.value);
     cJSON_AddNumberToObject(item, KEY_SPEED, pump->speed.value);
     if (pump->flow.value) {
@@ -366,11 +366,26 @@ add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const pum
  * @param[in] value   The pump program value to log.
  */
 void
-add_pump_program(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, uint16_t const value)
+add_pump_reg_set(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_reg_set_t const * const reg)
 {
-    cJSON * const item = _create_item(obj, enum_str(pump_id));
+    cJSON * const item = _create_item(obj, key);
 
-    cJSON_AddNumberToObject(item, key, value);
+    cJSON_AddStringToObject(item, KEY_ID, enum_str(pump_id));
+    cJSON_AddStringToObject(item, KEY_ADDRESS, enum_str(reg->address));
+    cJSON_AddStringToObject(item, KEY_OPERATION, reg->operation.to_str());
+
+    if (reg->operation.is_write()) {
+        cJSON_AddNumberToObject(item, KEY_VALUE, reg->value.to_uint16());
+    }
+}
+
+void
+add_pump_reg_resp(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_reg_resp_t const * const reg)
+{
+    cJSON * const item = _create_item(obj, key);
+
+    cJSON_AddStringToObject(item, KEY_ID, enum_str(pump_id));
+    cJSON_AddNumberToObject(item, KEY_VALUE, reg->value.to_uint16());
 }
 
 /**

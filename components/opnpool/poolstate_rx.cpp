@@ -594,11 +594,7 @@ _pump_reg_set(cJSON * const dbg, network_pump_reg_set_t const * const msg, datal
     // no change to poolstate
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const address = msg->address.to_uint16();
-        uint16_t const value   = msg->value.to_uint16();
-        network_pump_program_addr_t const address_enum =
-            static_cast<network_pump_program_addr_t>(address);
-        poolstate_rx_log::add_pump_program(dbg, network_pump_program_addr_str(address_enum), device_id, value);
+        poolstate_rx_log::add_pump_reg_set(dbg, poolstate_rx_log::KEY_REG, device_id, msg);
     }
 }
 
@@ -624,8 +620,7 @@ _pump_reg_resp(cJSON * const dbg, network_pump_reg_resp_t const * const msg, dat
     // no change to poolstate
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-        uint16_t const value = msg->value.to_uint16();
-        poolstate_rx_log::add_pump_program(dbg, poolstate_rx_log::KEY_RESP, device_id, value);
+        poolstate_rx_log::add_pump_reg_resp(dbg, poolstate_rx_log::KEY_RESP, device_id, msg);
     }
 }
 
@@ -801,23 +796,63 @@ _pump_status(cJSON * const dbg, network_pump_status_resp_t const * const msg, da
 /// @brief Handlers for messages from the salt chlorine generator.
 /// @{
 
+    // returns the first matching status flag, or OTHER if none match
+constexpr poolstate_chlor_status_typ_t
+_get_chlor_status_from_error(uint8_t const error)
+{
+    using T = poolstate_chlor_status_typ_t;
+
+    if (error & static_cast<uint8_t>(T::LOW_FLOW))   return T::LOW_FLOW;
+    if (error & static_cast<uint8_t>(T::LOW_SALT))   return T::LOW_SALT;
+    if (error & static_cast<uint8_t>(T::HIGH_SALT))  return T::HIGH_SALT;
+    if (error & static_cast<uint8_t>(T::CLEAN_CELL)) return T::CLEAN_CELL;
+    if (error & static_cast<uint8_t>(T::COLD))       return T::COLD;
+    if (error & static_cast<uint8_t>(T::OK))         return T::OK;
+    return T::OTHER;
+}
+
+static void
+_chlor_control_req(cJSON * const dbg, network_chlor_control_req_t const * const msg)
+{
+    if (!msg) { ESP_LOGW(TAG, "null to %s", __func__); return; }
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        if (msg->is_control_req()) {
+            cJSON_AddStringToObject(dbg, poolstate_rx_log::KEY_SUBCMD, "CONTROL_REQ");
+        } else {
+            cJSON_AddNumberToObject(dbg, poolstate_rx_log::KEY_SUBCMD, msg->sub_cmd);
+        }
+    }
+}
+
+static void
+_chlor_model_req(cJSON * const dbg, network_chlor_model_req_t const * const msg)
+{
+    if (!msg) { ESP_LOGW(TAG, "null to %s", __func__); return; }
+
+    if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
+        if (msg->is_get_typ()) {
+            cJSON_AddStringToObject(dbg, poolstate_rx_log::KEY_SUBCMD, "MODEL_REQ");
+        } else {
+            cJSON_AddNumberToObject(dbg, poolstate_rx_log::KEY_SUBCMD, msg->typ);
+        }
+    }
+}
+
 /**
  * @brief       Process a chlorine generator name response message, update the pool state, and log the status.
  *
  * @param dbg   Optional JSON object for verbose debug logging.
- * @param msg   Pointer to the received network_chlor_name_resp_t message.
+ * @param msg   Pointer to the received network_chlor_model_resp_t message.
  * @param chlor Pointer to the poolstate_chlor_t structure to update.
  *
  * This function updates the chlorine generator name and salt level in the pool state and
  * logs the status to the debug JSON object if verbose logging is enabled.
  */
 static void
-_chlor_name_resp(cJSON * const dbg, network_chlor_name_resp_t const * const msg, poolstate_chlor_t * const chlor)
+_chlor_model_resp(cJSON * const dbg, network_chlor_model_resp_t const * const msg, poolstate_chlor_t * const chlor)
 {
-    if (!msg || !chlor) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return;
-    }
+    if (!msg || !chlor) { ESP_LOGW(TAG, "null to %s", __func__); return; }
 
     chlor->salt = {
         .valid = true,
@@ -849,10 +884,7 @@ _chlor_name_resp(cJSON * const dbg, network_chlor_name_resp_t const * const msg,
 static void
 _chlor_level_set(cJSON * const dbg, network_chlor_level_set_t const * const msg, poolstate_chlor_t * const chlor)
 {
-    if (!msg || !chlor) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return;
-    }   
+    if (!msg || !chlor) { ESP_LOGW(TAG, "null to %s", __func__); return; }   
 
     chlor->level = {
         .valid = true,
@@ -862,21 +894,6 @@ _chlor_level_set(cJSON * const dbg, network_chlor_level_set_t const * const msg,
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         cJSON_AddNumberToObject(dbg, poolstate_rx_log::KEY_LEVEL, chlor->level.value);
     }
-}
-
-    // returns the first matching status flag, or OTHER if none match
-constexpr poolstate_chlor_status_typ_t
-_get_chlor_status_from_error(uint8_t const error)
-{
-    using T = poolstate_chlor_status_typ_t;
-
-    if (error & static_cast<uint8_t>(T::LOW_FLOW))   return T::LOW_FLOW;
-    if (error & static_cast<uint8_t>(T::LOW_SALT))   return T::LOW_SALT;
-    if (error & static_cast<uint8_t>(T::HIGH_SALT))  return T::HIGH_SALT;
-    if (error & static_cast<uint8_t>(T::CLEAN_CELL)) return T::CLEAN_CELL;
-    if (error & static_cast<uint8_t>(T::COLD))       return T::COLD;
-    if (error & static_cast<uint8_t>(T::OK))         return T::OK;
-    return T::OTHER;
 }
 
 /**
@@ -893,10 +910,7 @@ _get_chlor_status_from_error(uint8_t const error)
 static void
 _chlor_level_set_resp(cJSON * const dbg, network_chlor_level_resp_t const * const msg, poolstate_chlor_t * const chlor)
 {
-    if (!msg || !chlor) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return;
-    }
+    if (!msg || !chlor) { ESP_LOGW(TAG, "null to %s", __func__); return; }
 
     chlor->salt = {
         .valid = true,
@@ -936,10 +950,7 @@ _chlor_level_set_resp(cJSON * const dbg, network_chlor_level_resp_t const * cons
 esp_err_t
 update_state(network_msg_t const * const msg, poolstate_t * const new_state)
 {
-    if (msg == nullptr || new_state == nullptr) {
-        ESP_LOGW(TAG, "null to %s", __func__);
-        return ESP_FAIL;
-    }
+    if (msg == nullptr || new_state == nullptr) { ESP_LOGW(TAG, "null to %s", __func__); return ESP_FAIL; }
 
     bool const verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE;
     bool const very_verbose = ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERY_VERBOSE;
@@ -1043,13 +1054,16 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
         case network_msg_typ_t::CTRL_CHEM_REQ:
             break;
         case network_msg_typ_t::CHLOR_CONTROL_REQ:
+            _chlor_control_req(dbg, &msg->u.ic.chlor_control_req);
+            break;
         case network_msg_typ_t::CHLOR_CONTROL_RESP:
+            _ctrl_hex_bytes(dbg, msg->u.raw, sizeof(network_chlor_control_resp_t));
             break;
         case network_msg_typ_t::CHLOR_MODEL_REQ:
-            _ctrl_hex_bytes(dbg, msg->u.raw, 1);
+            _chlor_model_req(dbg, &msg->u.ic.chlor_model_req);
             break;
         case network_msg_typ_t::CHLOR_MODEL_RESP:
-            _chlor_name_resp(dbg, &msg->u.ic.chlor_name_resp, &new_state->chlor);
+            _chlor_model_resp(dbg, &msg->u.ic.chlor_model_resp, &new_state->chlor);
             break;
         case network_msg_typ_t::CHLOR_LEVEL_SET:
             _chlor_level_set(dbg, &msg->u.ic.chlor_level_set, &new_state->chlor);
@@ -1064,7 +1078,7 @@ update_state(network_msg_t const * const msg, poolstate_t * const new_state)
 
     bool const frequent = msg->typ == network_msg_typ_t::CTRL_STATE_BCAST      ||
                           msg->typ == network_msg_typ_t::IGNORE                ||   
-                          msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET       ||
+                          //msg->typ == network_msg_typ_t::CHLOR_LEVEL_SET       ||
                           msg->typ == network_msg_typ_t::PUMP_REMOTE_CTRL_SET  ||
                           msg->typ == network_msg_typ_t::PUMP_REMOTE_CTRL_RESP ||
                           msg->typ == network_msg_typ_t::PUMP_RUN_SET          ||

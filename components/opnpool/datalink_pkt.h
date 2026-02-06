@@ -143,29 +143,29 @@ enum class datalink_pump_typ_t : uint8_t {
  *        datalink_rx.cpp. A compile-time assertion validates the count.
  */
 enum class datalink_chlor_typ_t : uint8_t {
-    CONTROL_REQ   = 0x00,  ///< Status request message
-    CONTROL_RESP  = 0x01,  ///< Status response message
-    UNKNOWN_02    = 0x02,
-    MODEL_RESP    = 0x03,  ///< Name response message (only when chlor is active)
-    UNKNOWN_04    = 0x04,
-    UNKNOWN_05    = 0x05,
-    UNKNOWN_06    = 0x06,
-    UNKNOWN_07    = 0x07,
-    UNKNOWN_08    = 0x08,
-    UNKNOWN_09    = 0x09,
-    UNKNOWN_0A    = 0x0A,
-    UNKNOWN_0B    = 0x0B,
-    UNKNOWN_0C    = 0x0C,
-    UNKNOWN_0D    = 0x0D,
-    UNKNOWN_0E    = 0x0E,
-    UNKNOWN_0F    = 0x0F,
-    UNKNOWN_10    = 0x10,
-    LEVEL_SET     = 0x11,  ///< Level set message [%]
-    LEVEL_RESP    = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
-    UNKNOWN_13    = 0x13,  ///< maybe a keep-alive? has no payload.
-    MODEL_REQ     = 0x14,  ///< Name request message
-    LEVEL_SET10   = 0x15,  ///< Level set message percentage with one decimal place [%*10]
-    ICHLOR_BCAST  = 0x16   ///< iChlor status message  (level and temp on IC30)
+    CONTROL_REQ  = 0x00,  ///< Control request message
+    CONTROL_RESP = 0x01,  ///< Control response message
+    UNKNOWN_02   = 0x02,
+    MODEL_RESP   = 0x03,  ///< Name response message (only when chlor is active)
+    UNKNOWN_04   = 0x04,
+    UNKNOWN_05   = 0x05,
+    UNKNOWN_06   = 0x06,
+    UNKNOWN_07   = 0x07,
+    UNKNOWN_08   = 0x08,
+    UNKNOWN_09   = 0x09,
+    UNKNOWN_0A   = 0x0A,
+    UNKNOWN_0B   = 0x0B,
+    UNKNOWN_0C   = 0x0C,
+    UNKNOWN_0D   = 0x0D,
+    UNKNOWN_0E   = 0x0E,
+    UNKNOWN_0F   = 0x0F,
+    UNKNOWN_10   = 0x10,
+    LEVEL_SET    = 0x11,  ///< Level set message [%]
+    LEVEL_RESP   = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
+    ICHLOR_PING  = 0x13,  ///< maybe a keep-alive? has no payload.
+    MODEL_REQ    = 0x14,  ///< Name request message
+    LEVEL_SET10  = 0x15,  ///< Level set message percentage with one decimal place [%*10]
+    ICHLOR_BCAST = 0x16   ///< iChlor status message  (level and temp on IC30)
 };
 
 /**

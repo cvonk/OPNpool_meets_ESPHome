@@ -73,12 +73,12 @@ inline constexpr size_t datalink_chlor_typ_sizes[] = {
     sizeof(network_chlor_control_req_t),    // 0x00 CONTROL_REQ
     sizeof(network_chlor_control_resp_t),   // 0x01 CONTROL_RESP
     0,                                      // 0x02 UNKNOWN_02
-    sizeof(network_chlor_name_resp_t),      // 0x03 MODEL_RESP
+    sizeof(network_chlor_model_resp_t),     // 0x03 MODEL_RESP
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // 0x04..0x10 UNKNOWN_04..10
     sizeof(network_chlor_level_set_t),      // 0x11 LEVEL_SET
     sizeof(network_chlor_level_resp_t),     // 0x12 LEVEL_RESP
-    0,                                      // 0x13 UNKNOWN_13
-    sizeof(network_chlor_name_req_t),       // 0x14 MODEL_REQ
+    0,                                      // 0x13 ICHLOR_PING
+    sizeof(network_chlor_model_req_t),      // 0x14 MODEL_REQ
     sizeof(network_chlor_level10_set_t),    // 0x15 LEVEL_SET10
     sizeof(network_chlor_ichlor_bcast_t),   // 0x16 ICHLOR_BCAST
 };

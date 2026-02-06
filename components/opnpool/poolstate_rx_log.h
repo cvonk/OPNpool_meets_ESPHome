@@ -59,42 +59,49 @@ namespace poolstate_rx_log {
 /// @name JSON Key Constants
 /// @brief String constants used as keys in JSON output.
 /// @{
-constexpr char const * const KEY_TIME     = "time";      ///< Time field key.
-constexpr char const * const KEY_DATE     = "date";      ///< Date field key.
-constexpr char const * const KEY_FIRMWARE = "firmware";  ///< Firmware version key.
-constexpr char const * const KEY_TOD      = "tod";       ///< Time-of-day key.
-constexpr char const * const KEY_TEMP     = "temp";      ///< Temperature key.
-constexpr char const * const KEY_SP       = "sp";        ///< Set point key.
-constexpr char const * const KEY_SRC      = "src";       ///< Heat source key.
-constexpr char const * const KEY_HEATING  = "heating";   ///< Heating status key.
-constexpr char const * const KEY_START    = "start";     ///< Schedule start key.
-constexpr char const * const KEY_STOP     = "stop";      ///< Schedule stop key.
-constexpr char const * const KEY_ACTIVE   = "active";    ///< Active circuit key.
-constexpr char const * const KEY_DELAY    = "delay";     ///< Delay circuit key.
-constexpr char const * const KEY_SYSTEM   = "system";    ///< System info key.
-constexpr char const * const KEY_TEMPS    = "temps";     ///< Temperatures key.
-constexpr char const * const KEY_THERMOS  = "thermos";   ///< Thermostats key.
-constexpr char const * const KEY_PUMP     = "pump";      ///< Pump info key.
-constexpr char const * const KEY_CHLOR    = "chlor";     ///< Chlorinator key.
-constexpr char const * const KEY_CIRCUITS = "circuits";  ///< Circuits key.
-constexpr char const * const KEY_SCHEDS   = "scheds";    ///< Schedules key.
-constexpr char const * const KEY_MODES    = "modes";     ///< Modes key.
-constexpr char const * const KEY_NAME     = "name";      ///< Name field key.
-constexpr char const * const KEY_LEVEL    = "level";     ///< Level field key.
-constexpr char const * const KEY_SALT     = "salt";      ///< Salt level key.
-constexpr char const * const KEY_STATUS   = "status";    ///< Status field key.
-constexpr char const * const KEY_MODE     = "mode";      ///< Mode field key.
-constexpr char const * const KEY_RUNNING  = "running";   ///< Running status key.
-constexpr char const * const KEY_STATE    = "state";     ///< State field key.
-constexpr char const * const KEY_POWER    = "power";     ///< Power field key.
-constexpr char const * const KEY_SPEED    = "speed";     ///< Speed field key.
-constexpr char const * const KEY_FLOW     = "flow";      ///< Flow field key.
-constexpr char const * const KEY_ERROR    = "error";     ///< Error field key.
-constexpr char const * const KEY_TIMER    = "timer";     ///< Timer field key.
-constexpr char const * const KEY_RESP     = "resp";      ///< Response key.
-constexpr char const * const KEY_CTRL     = "local_ctrl";///< Local control key.
-constexpr char const * const KEY_ACK      = "ack";       ///< Acknowledgment key.
-constexpr char const * const KEY_DEVID    = "devid";     ///< Device ID key.
+constexpr char const * const KEY_TIME      = "time";      ///< Time field key.
+constexpr char const * const KEY_DATE      = "date";      ///< Date field key.
+constexpr char const * const KEY_FIRMWARE  = "firmware";  ///< Firmware version key.
+constexpr char const * const KEY_TOD       = "tod";       ///< Time-of-day key.
+constexpr char const * const KEY_TEMP      = "temp";      ///< Temperature key.
+constexpr char const * const KEY_SP        = "sp";        ///< Set point key.
+constexpr char const * const KEY_SRC       = "src";       ///< Heat source key.
+constexpr char const * const KEY_HEATING   = "heating";   ///< Heating status key.
+constexpr char const * const KEY_START     = "start";     ///< Schedule start key.
+constexpr char const * const KEY_STOP      = "stop";      ///< Schedule stop key.
+constexpr char const * const KEY_ACTIVE    = "active";    ///< Active circuit key.
+constexpr char const * const KEY_DELAY     = "delay";     ///< Delay circuit key.
+constexpr char const * const KEY_SYSTEM    = "system";    ///< System info key.
+constexpr char const * const KEY_TEMPS     = "temps";     ///< Temperatures key.
+constexpr char const * const KEY_THERMOS   = "thermos";   ///< Thermostats key.
+constexpr char const * const KEY_PUMP      = "pump";      ///< Pump info key.
+constexpr char const * const KEY_CHLOR     = "chlor";     ///< Chlorinator key.
+constexpr char const * const KEY_CIRCUITS  = "circuits";  ///< Circuits key.
+constexpr char const * const KEY_SCHEDS    = "scheds";    ///< Schedules key.
+constexpr char const * const KEY_MODES     = "modes";     ///< Modes key.
+constexpr char const * const KEY_NAME      = "name";      ///< Name field key.
+constexpr char const * const KEY_LEVEL     = "level";     ///< Level field key.
+constexpr char const * const KEY_SALT      = "salt";      ///< Salt level key.
+constexpr char const * const KEY_STATUS    = "status";    ///< Status field key.
+constexpr char const * const KEY_MODE      = "mode";      ///< Mode field key.
+constexpr char const * const KEY_RUNNING   = "running";   ///< Running status key.
+constexpr char const * const KEY_STATE     = "state";     ///< State field key.
+constexpr char const * const KEY_POWER     = "power";     ///< Power field key.
+constexpr char const * const KEY_SPEED     = "speed";     ///< Speed field key.
+constexpr char const * const KEY_FLOW      = "flow";      ///< Flow field key.
+constexpr char const * const KEY_ERROR     = "error";     ///< Error field key.
+constexpr char const * const KEY_TIMER     = "timer";     ///< Timer field key.
+constexpr char const * const KEY_RESP      = "resp";      ///< Response key.
+constexpr char const * const KEY_CTRL      = "local_ctrl";///< Local control key.
+constexpr char const * const KEY_SUBCMD    = "sub_cmd";   ///< Sub-command key.
+constexpr char const * const KEY_ACK       = "ack";       ///< Acknowledgment key.
+constexpr char const * const KEY_ID        = "id";        ///< Pump Device ID key.
+constexpr char const * const KEY_REG       = "reg";       ///< Pump register key.
+constexpr char const * const KEY_ADDRESS   = "address";   ///< Pump register address key.
+constexpr char const * const KEY_OPERATION = "operation"; ///< Pump register operation key.
+constexpr char const * const KEY_VALUE     = "value";     ///< Pump register value key.
+
+
 /// @}
 
 /// @name Pool State Logging Functions
@@ -114,11 +121,12 @@ void add_state(cJSON * const obj, char const * const key, poolstate_t const * co
 /// @name Pump Logging Functions
 /// @brief Functions to add pump-specific data to JSON objects.
 /// @{
-void add_pump_program(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, uint16_t const value);
-void add_pump_ctrl(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, network_pump_ctrl_t const ctrl);
-void add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, network_pump_run_mode_t const mode);
-void add_pump_running(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, bool const running);
-void add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const dev_id, poolstate_pump_t const * const pumps);
+void add_pump_reg_set(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_reg_set_t const * const reg);
+void add_pump_reg_resp(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_reg_resp_t const * const reg);
+void add_pump_ctrl(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_ctrl_t const ctrl);
+void add_pump_mode(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, network_pump_run_mode_t const mode);
+void add_pump_running(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, bool const running);
+void add_pump(cJSON * const obj, char const * const key, datalink_pump_id_t const pump_id, poolstate_pump_t const * const pumps);
 /// @}
 
 /// @name Chlorinator Logging Functions
