@@ -118,11 +118,17 @@ struct poolstate_version_t {
     uint8_t minor;  ///< Minor version number.
 };
 
+struct poolstate_controller_addr_t {
+    bool            valid;  ///< True if controller info has been set.
+    datalink_addr_t value;  ///< Learned controller address from broadcasts.
+};
+
 /// @brief System information (time-of-day and firmware version).
 struct poolstate_system_t {
-    poolstate_tod_t     tod;      ///< Current time-of-day.
-    poolstate_modes_t   modes;    ///< Mode flags.
-    poolstate_version_t version;  ///< Controller firmware version.
+    poolstate_controller_addr_t addr;     ///< Learned controller address from broadcasts.
+    poolstate_tod_t             tod;      ///< Current time-of-day on controller.
+    poolstate_modes_t           modes;    ///< Controller mode flags.
+    poolstate_version_t         version;  ///< Controller firmware version.
 };
 
 /// @}
@@ -283,7 +289,7 @@ struct poolstate_chlor_t {
 struct poolstate_t {
     poolstate_system_t  system;                                          ///< System info (date, time, firmware).
     poolstate_chlor_t   chlor;                                           ///< Chlorinator status.
-    poolstate_pump_t    pumps[enum_count<datalink_pump_id_t>()];          ///< Pump status array.
+    poolstate_pump_t    pumps[enum_count<datalink_pump_id_t>()];         ///< Pump status array.
     poolstate_circuit_t circuits[enum_count<network_pool_circuit_t>()];  ///< Circuit states.
     poolstate_thermo_t  thermos[enum_count<poolstate_thermo_typ_t>()];   ///< Thermostat states.
     poolstate_uint8_t   temps[enum_count<poolstate_temp_typ_t>()];       ///< Temperature readings.

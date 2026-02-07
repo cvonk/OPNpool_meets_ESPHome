@@ -24,7 +24,6 @@
 
 #include "enum_helpers.h"
 #include "opnpool_ids.h"
-#include "datalink.h"
 
 #ifdef USE_MATTER
 #include "matter/matter_bridge.h"
@@ -140,14 +139,12 @@ class OpnPool : public Component {
     ipc_t *         get_ipc()              { return ipc_; }                 ///< Returns IPC structure pointer.
     PoolState *     get_opnpool_state()    { return poolState_; }           ///< Returns pool state pointer.
     OpnPoolSwitch * get_switch(uint8_t id) { return this->switches_[id]; }  ///< Returns switch by ID.
-    datalink_addr_t get_controller_addr()  { return controller_addr_; }     ///< Returns learned controller address.
-
+    
   protected:
     rs485_pins_t rs485_pins_;                ///< RS-485 GPIO pin configuration.
     ipc_t * ipc_{nullptr};                   ///< IPC structure for task communication.
     PoolState * poolState_{nullptr};         ///< Pool state manager instance.
     TaskHandle_t pool_task_handle_{nullptr}; ///< FreeRTOS task handle for pool_task.
-    datalink_addr_t controller_addr_{datalink_addr_t::unknown()}; ///< Learned controller address from broadcasts.
 
     // ========== Entity Arrays ==========
     OpnPoolClimate * climates_[enum_count<climate_id_t>()]{nullptr};              ///< Climate entity pointers.

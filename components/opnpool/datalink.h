@@ -93,6 +93,8 @@ struct datalink_addr_t {
     constexpr bool is_unknown_90()  const { return addr == UNKNOWN_90; }
     constexpr bool is_chlorinator() const { return addr == CHLORINATOR; } 
     constexpr bool is_broadcast()   const { return addr == BROADCAST; }
+    constexpr char const * to_str() const { return addr == SUNTOUCH_CONTROLLER  ? "Suntouch" :
+                                                   addr == EASYTOUCH_CONTROLLER ? "EasyTouch" : "unknown"; }
 
     constexpr datalink_pump_id_t get_pump_id() const {
         return static_cast<datalink_pump_id_t>(addr & PUMP_ID_MASK);

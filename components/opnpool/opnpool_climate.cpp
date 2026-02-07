@@ -35,6 +35,8 @@
 #include "opnpool_switch.h"
 #include "enum_helpers.h"
 #include "opnpool_ids.h"
+#include "poolstate.h"
+
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"
@@ -157,22 +159,25 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 {
     if (!this->parent_) { ESP_LOGW(TAG, "Parent unknown"); return; }
 
-    datalink_addr_t controller_addr = this->parent_->get_controller_addr();
-    if (!controller_addr.is_controller()) {
-        ESP_LOGW(TAG, "Controller address still unknown, cannot send control message");
-        return;
-    }
-
     poolstate_thermo_typ_t const thermo_typ = get_thermo_typ();
     uint8_t const thermo_idx = enum_index(thermo_typ);
 
     uint8_t const thermo_pool_idx = enum_index(climate_id_t::POOL_CLIMATE);
     uint8_t const thermo_spa_idx = enum_index(climate_id_t::SPA_CLIMATE);
 
-       // get the state of both thermostats ('cause the resulting network_msg needs to reference both)
+    PoolState * const state_class_ptr = parent_->get_opnpool_state();
+    if (!state_class_ptr) { ESP_LOGW(TAG, "Pool state unknown"); return; }
 
     poolstate_t state;
-    parent_->get_opnpool_state()->get(&state);
+    state_class_ptr->get(&state);
+    
+    datalink_addr_t const controller_addr = state.system.addr.value; // get learned controller address
+    if (!controller_addr.is_controller()) {
+        ESP_LOGW(TAG, "Controller address still unknown, cannot send control message");
+        return;
+    }
+
+       // get the state of both thermostats ('cause the resulting network_msg needs to reference both)
     poolstate_thermo_t thermos_old[enum_count<poolstate_thermo_typ_t>()];
     poolstate_thermo_t thermos_new[enum_count<poolstate_thermo_typ_t>()];
     memcpy(thermos_old, state.thermos, sizeof(thermos_old));

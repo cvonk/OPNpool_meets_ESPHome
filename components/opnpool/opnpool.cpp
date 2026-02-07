@@ -183,11 +183,11 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
  * @param[in] version Pointer to the version data structure.
  */
 static void
-_publish_version_if(OpnPoolTextSensor * const sensor, poolstate_version_t const * const version)
+_publish_version_if(OpnPoolTextSensor * const sensor, poolstate_system_t const * const system)
 {
-    if (sensor != nullptr && version != nullptr) {
-        static char fw_str[8];  // 2.80\0
-        snprintf(fw_str, sizeof(fw_str), "%d.%d", version->major, version->minor);
+    if (sensor != nullptr && system != nullptr && system->addr.valid && system->version.valid) {
+        static char fw_str[18];  // 2.80\0
+        snprintf(fw_str, sizeof(fw_str), "%s %d.%d", system->addr.value.to_str(), system->version.major, system->version.minor);
         sensor->publish_value_if_changed(fw_str);
     }
 }
@@ -366,14 +366,17 @@ OpnPool::loop() {
             // reset global string buffer (as a new cycle begins)
         name_reset_idx();
 
-        if (msg.src.is_controller()) {
-                controller_addr_ = msg.src;
-                ESP_LOGV(TAG, "learned controller address: 0x%02X", msg.src.addr);
-        }
-
             // start with new_state being the current state
         poolstate_t new_state;
         poolState_->get(&new_state);
+
+        if (msg.src.is_controller()) {
+            new_state.system.addr = {
+                .valid = true,
+                .value = msg.src
+            };
+            ESP_LOGV(TAG, "learned controller address: 0x%02X", msg.src.addr);
+        }
 
         if (poolstate_rx::update_state(&msg, &new_state) == ESP_OK) {
 
@@ -622,7 +625,7 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
     );
     _publish_version_if(
         this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_FIRMWARE)],
-        &state->system.version
+        &state->system
     );
 }
 

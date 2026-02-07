@@ -32,6 +32,7 @@
 #include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
 #include "opnpool_ids.h"      // conversion helper
 #include "enum_helpers.h"
+#include "poolstate.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"
@@ -77,7 +78,13 @@ OpnPoolSwitch::write_state(bool value)
 {
     if (!this->parent_) { ESP_LOGW(TAG, "Parent unknown"); return; }
 
-    datalink_addr_t controller_addr = this->parent_->get_controller_addr();
+    PoolState * const state_class_ptr = parent_->get_opnpool_state();
+    if (!state_class_ptr) { ESP_LOGW(TAG, "Pool state unknown"); return; }
+
+    poolstate_t state;
+    state_class_ptr->get(&state);
+    
+    datalink_addr_t const controller_addr = state.system.addr.value; // get learned controller address
     if (!controller_addr.is_controller()) {
         ESP_LOGW(TAG, "Controller address still unknown, cannot send control message");
         return;
