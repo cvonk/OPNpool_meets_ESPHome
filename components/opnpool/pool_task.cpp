@@ -56,6 +56,8 @@ constexpr uint32_t POOL_TASK_DELAY_MS       = 100;
 constexpr uint32_t POOL_REQ_INTERVAL_MS     = 30 * 1000;
 constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;
 
+static datalink_addr_t _controller_addr = datalink_addr_t::unknown();  // until we learn it from the broadcast
+
 
 /**
  * @brief Processes incoming packets from the RS-485 bus and relays messages to the main
@@ -78,6 +80,12 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
     if (datalink_rx_pkt(rs485, &pkt) == ESP_OK) {
 
         if (network_rx_msg(&pkt, &msg, &txOpportunity) == ESP_OK) {
+
+                // snoop to find the controller address to use as the dst in _queue_req()
+            if (msg.src.is_controller()) {
+                _controller_addr = msg.src;
+                ESP_LOGV(TAG, "learned controller address: 0x%02X", msg.src.addr);
+            }
 
             if( ipc_send_network_msg_to_main_task(&msg, ipc) != ESP_OK) {
                 ESP_LOGW(TAG, "Failed to send network message to main task");
@@ -136,7 +144,7 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
     network_msg_t msg = {};
     msg.typ = typ;
     msg.src = datalink_addr_t::remote();               // pretent we're a remote control
-    msg.dst = datalink_addr_t::suntouch_controller();  // use controller address
+    msg.dst = _controller_addr;  // use controller address
 
     datalink_pkt_t * const pkt = static_cast<datalink_pkt_t*>(calloc(1, sizeof(datalink_pkt_t)));
 
@@ -212,9 +220,19 @@ pool_req_task(void * rs485_void)
     rs485_handle_t const rs485 = (rs485_handle_t)rs485_void;
 
     while (1) {
+
+        vTaskDelay((TickType_t)POOL_REQ_INTERVAL_MS / portTICK_PERIOD_MS);
+
+        if (!_controller_addr.is_controller()) {
+            ESP_LOGW(TAG, "Controller address still unknown, skipping periodic requests");
+            vTaskDelay((TickType_t)POOL_REQ_INTERVAL_MS / portTICK_PERIOD_MS);
+            continue;
+        }
+        _queue_req(rs485, network_msg_typ_t::CTRL_VERSION_REQ);
+        //_queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
+
         _queue_req(rs485, network_msg_typ_t::CTRL_HEAT_REQ);
         _queue_req(rs485, network_msg_typ_t::CTRL_SCHED_REQ);
-        vTaskDelay((TickType_t)POOL_REQ_INTERVAL_MS / portTICK_PERIOD_MS);
     }
 }
 
@@ -241,10 +259,6 @@ pool_task(void * ipc_void)
 
     ipc_t * const ipc = static_cast<ipc_t*>(ipc_void);
     rs485_handle_t const rs485 = rs485_init(&ipc->config.rs485_pins);
-
-        // request some initial information from the controller
-    _queue_req(rs485, network_msg_typ_t::CTRL_VERSION_REQ);
-    _queue_req(rs485, network_msg_typ_t::CTRL_TIME_REQ);
 
         // periodically request information from controller
     if (xTaskCreate(&pool_req_task, "pool_req_task", POOL_REQ_TASK_STACK_SIZE, rs485, 5, NULL) != pdPASS) {

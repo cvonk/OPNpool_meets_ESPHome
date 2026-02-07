@@ -282,7 +282,7 @@ _read_head(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_
                 ESP_LOGV(TAG, " %02X %02X (header)", hdr->dst.addr, hdr->typ);
 
                 pkt->typ.raw  = hdr->typ;
-                pkt->src      = datalink_addr_t::dummy();
+                pkt->src      = datalink_addr_t::unknown();
                 pkt->dst      = hdr->dst;
                 pkt->data_len = _network_ic_len(hdr->typ);
                 return ESP_OK;

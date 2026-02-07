@@ -155,6 +155,14 @@ OpnPoolClimate::traits()
 void
 OpnPoolClimate::control(const climate::ClimateCall &call)
 {
+    if (!this->parent_) { ESP_LOGW(TAG, "Parent unknown"); return; }
+
+    datalink_addr_t controller_addr = this->parent_->get_controller_addr();
+    if (!controller_addr.is_controller()) {
+        ESP_LOGW(TAG, "Controller address still unknown, cannot send control message");
+        return;
+    }
+
     poolstate_thermo_typ_t const thermo_typ = get_thermo_typ();
     uint8_t const thermo_idx = enum_index(thermo_typ);
 
@@ -257,7 +265,7 @@ OpnPoolClimate::control(const climate::ClimateCall &call)
 
         network_msg_t msg = {};
         msg.src = datalink_addr_t::remote();
-        msg.dst = datalink_addr_t::suntouch_controller();
+        msg.dst = controller_addr;
         msg.typ = network_msg_typ_t::CTRL_HEAT_SET;
         msg.u.a5.ctrl_heat_set.pool_set_point = thermos_new[thermo_pool_idx].set_point_in_f.value;
         msg.u.a5.ctrl_heat_set.spa_set_point = thermos_new[thermo_spa_idx].set_point_in_f.value;

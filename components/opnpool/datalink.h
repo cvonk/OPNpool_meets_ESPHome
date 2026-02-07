@@ -75,7 +75,7 @@ struct datalink_addr_t {
     static constexpr uint8_t UNKNOWN_90           = 0x90;
 
         // factory methods
-    static constexpr datalink_addr_t dummy()                { return datalink_addr_t{ALL}; }
+    static constexpr datalink_addr_t unknown()              { return datalink_addr_t{ALL}; }
     static constexpr datalink_addr_t suntouch_controller()  { return datalink_addr_t{SUNTOUCH_CONTROLLER}; }
     static constexpr datalink_addr_t easytouch_controller() { return datalink_addr_t{EASYTOUCH_CONTROLLER}; }
     static constexpr datalink_addr_t remote()               { return datalink_addr_t{REMOTE}; }

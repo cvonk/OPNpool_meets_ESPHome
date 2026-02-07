@@ -554,7 +554,7 @@ union network_data_t {
  * @note In C++ empty structs have a size of 1, not 0.  For those we use 0 in this table.
  */
 #define NETWORK_MSG_TYP_LIST(X) \
-    X(IGNORE,                0,                                     false, A5_PUMP, datalink_pump_typ_t::REJECTING)    \
+    X(IGNORE,                1,                                     false, A5_PUMP, datalink_pump_typ_t::REJECTING)    \
     X(PUMP_REG_SET,          sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG)          \
     X(PUMP_REG_RESP,         sizeof(network_pump_reg_resp_t),       false, A5_PUMP, datalink_pump_typ_t::REG)          \
     X(PUMP_REG_VF_SET,       sizeof(network_pump_reg_set_t),        true,  A5_PUMP, datalink_pump_typ_t::REG_VF)       \

@@ -222,7 +222,7 @@ _publish_modes_if(OpnPoolBinarySensor * const * const  sensors, poolstate_modes_
  * @param[in] thermo_typ The thermostat type (POOL or SPA).
  * @return               The circuit index for the corresponding pool circuit.
  */
-[[nodiscard]] static uint8_t
+static uint8_t
 _thermo_typ_to_pool_circuit_idx(poolstate_thermo_typ_t const thermo_typ)
 {
     switch (thermo_typ) {
@@ -365,6 +365,11 @@ OpnPool::loop() {
 
             // reset global string buffer (as a new cycle begins)
         name_reset_idx();
+
+        if (msg.src.is_controller()) {
+                controller_addr_ = msg.src;
+                ESP_LOGV(TAG, "learned controller address: 0x%02X", msg.src.addr);
+        }
 
             // start with new_state being the current state
         poolstate_t new_state;

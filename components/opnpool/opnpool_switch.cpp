@@ -75,12 +75,20 @@ OpnPoolSwitch::dump_config()
 void
 OpnPoolSwitch::write_state(bool value)
 {
+    if (!this->parent_) { ESP_LOGW(TAG, "Parent unknown"); return; }
+
+    datalink_addr_t controller_addr = this->parent_->get_controller_addr();
+    if (!controller_addr.is_controller()) {
+        ESP_LOGW(TAG, "Controller address still unknown, cannot send control message");
+        return;
+    }
+
     network_pool_circuit_t const circuit = circuit_;
     uint8_t const circuit_idx = enum_index(circuit);
 
     network_msg_t msg;
     msg.src = datalink_addr_t::remote();
-    msg.dst = datalink_addr_t::suntouch_controller();
+    msg.dst = controller_addr;
     msg.typ = network_msg_typ_t::CTRL_CIRCUIT_SET;
     msg.u.a5 = {
         .ctrl_circuit_set = {

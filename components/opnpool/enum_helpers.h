@@ -7,6 +7,14 @@
 #include <esp_types.h>
 #include <esphome/core/log.h>
 
+#if defined(MAGIC_ENUM_RANGE_MIN)
+# undef MAGIC_ENUM_RANGE_MIN
+#endif
+#if defined(MAGIC_ENUM_RANGE_MAX)
+# undef MAGIC_ENUM_RANGE_MAX
+#endif
+#define MAGIC_ENUM_RANGE_MIN 0
+#define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
 
 #include "to_str.h"

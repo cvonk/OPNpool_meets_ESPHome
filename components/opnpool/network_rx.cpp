@@ -20,6 +20,7 @@
 #include <esphome/core/log.h>
 
 #include "to_str.h"
+
 #include "enum_helpers.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
@@ -55,6 +56,7 @@ _decode_msg_a5_pump(datalink_pkt_t const * const pkt, network_msg_t * const msg)
     }
 
     if (pkt->data_len != info->size) {
+
         ESP_LOGW(TAG, "{%s %u} => %s invalid length: expected %lu, got %u", enum_str(datalink_pump_typ), is_to_pump, enum_str(msg->typ), info->size, pkt->data_len);
         return ESP_FAIL;
     }
