@@ -203,12 +203,14 @@ _update_temps(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg, p
 
     temps[air_idx] = {
         .valid = true,
-        .value = msg->air_temp
+        .value = msg->solar_temp_1 // 2BD should probably be air_temp on other systems
     };
     temps[water_idx] = {
         .valid = true,
         .value = msg->pool_temp
     };
+
+    ESP_LOGVV(TAG, "Air %u, Spa %u, Water %u Solar1 %u, Solar2 %u", msg->air_temp, msg->spa_temp, msg->pool_temp, msg->solar_temp_1, msg->solar_temp_2);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_temps(dbg, poolstate_rx_log::KEY_TEMPS, temps);
@@ -724,11 +726,11 @@ _ctrl_state(cJSON * const dbg, network_ctrl_state_bcast_t const * const msg,  po
         return;
     }
 
-    _update_circuits(dbg, msg, state->circuits);
+    _update_temps(dbg, msg, state->temps);
     _update_thermos(dbg, msg, state->thermos, state->circuits); 
     _update_system_modes(dbg, msg, &state->system.modes);
     _update_system_time(dbg, msg, &state->system.tod.time);
-    _update_temps(dbg, msg, state->temps);
+    _update_circuits(dbg, msg, state->circuits);
 
     if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
         poolstate_rx_log::add_state(dbg, poolstate_rx_log::KEY_STATE, state);
