@@ -204,13 +204,13 @@ using datalink_data_t = uint8_t;
  * packets.
  */
 struct datalink_pkt_t {
-    datalink_prot_t    prot;      // protocol type as detected by `_read_head()`
-    datalink_typ_t     typ;       // message type from datalink_hdr_a5->typ
-    datalink_addr_t    src;       // source address from datalink_hdr_a5->src
-    datalink_addr_t    dst;       // destination address from datalink_hdr_a5->dst
-    datalink_data_t *  data;      // pointer to the data payload buffer
-    size_t             data_len;  // length of the data payload
-    skb_handle_t       skb;       // handle to the socket buffer containing the packet data
+    datalink_prot_t    prot;      ///< Protocol type as detected by `_read_head()`.
+    datalink_typ_t     typ;       ///< Message type from datalink_hdr_a5->typ.
+    datalink_addr_t    src;       ///< Source address from datalink_hdr_a5->src.
+    datalink_addr_t    dst;       ///< Destination address from datalink_hdr_a5->dst.
+    datalink_data_t *  data;      ///< Pointer to the data payload buffer.
+    size_t             data_len;  ///< Length of the data payload.
+    skb_handle_t       skb;       ///< Handle to the socket buffer containing the packet data.
 };
 
 } // namespace opnpool

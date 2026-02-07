@@ -1,3 +1,18 @@
+/**
+ * @file enum_helpers.h
+ * @brief Template helper functions for enum-to-string and string-to-enum conversions
+ *
+ * @details
+ * Provides type-safe template utilities that wrap the magic_enum library for converting
+ * between enum values and their string representations. Includes fallback mechanisms for
+ * values outside the magic_enum range. The MAGIC_ENUM_RANGE is configured for 0..256 to
+ * cover all uint8_t-based protocol enumerations used by the pool controller.
+ *
+ * @author Coert Vonk (@cvonk on GitHub)
+ * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
+ * @license SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #pragma once
 #ifndef __cplusplus
 # error "Requires C++ compilation"
@@ -24,9 +39,15 @@ namespace opnpool {
 
 static char const * const ENUM_HELPER_TAG = "enum_helpers";
 
-    // helper to convert an enum value to its string representation
+/**
+ * @brief Convert an enum value to its string representation.
+ *
+ * @tparam EnumT  Enum type to convert.
+ * @param[in] value  The enum value.
+ * @return           String name of the enum value, or hex fallback via uint8_str().
+ */
 template<typename EnumT>
-[[nodiscard]] inline const char * 
+[[nodiscard]] inline const char *
 enum_str(EnumT value)
 {
     auto name = magic_enum::enum_name(value);
@@ -36,9 +57,15 @@ enum_str(EnumT value)
     return uint8_str(static_cast<uint8_t>(value));  // fallback
 }
 
-    // helper to convert a string to its enum value representation
+/**
+ * @brief Convert a string to its enum value (as int).
+ *
+ * @tparam EnumT  Enum type to convert to.
+ * @param[in] enum_str  Null-terminated string to look up (case-insensitive).
+ * @return              Integer value of the matching enum, or 0 if not found.
+ */
 template<typename EnumT>
-[[nodiscard]] inline int 
+[[nodiscard]] inline int
 enum_nr(char const * const enum_str)
 {
     if (!enum_str) {
@@ -62,14 +89,25 @@ enum_nr(char const * const enum_str)
     return 0;  // can't return -1, will cause OOB array access
 }
 
-    // helper to return the total number of enum values
+/**
+ * @brief Return the total number of named values in an enum type.
+ *
+ * @tparam EnumT  Enum type to query.
+ * @return        Number of named enum values.
+ */
 template<typename EnumT>
-[[nodiscard]] constexpr size_t 
+[[nodiscard]] constexpr size_t
 enum_count() {
     return magic_enum::enum_count<EnumT>();
 }
 
-    // helper to to return the index (underlying value) of an enum
+/**
+ * @brief Return the underlying integer value of an enum.
+ *
+ * @tparam E  Enum type (must be an enum).
+ * @param[in] e  The enum value.
+ * @return       The underlying integer value.
+ */
 template <typename E>
 [[nodiscard]] constexpr auto
 enum_index(E e) noexcept -> std::underlying_type_t<E>

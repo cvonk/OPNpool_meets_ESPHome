@@ -23,22 +23,25 @@
 namespace esphome {
 namespace opnpool {
 
-    // should be at least ((sizeof(datalink_hdr_t) +
-    // sizeof(network_ctrl_state_bcast_t) + 1) * 3 + 50). that 3 bytes for each hex
-    // value when displaying raw, and another 50 for displaying date/time.
+    /// Buffer must be at least ((sizeof(datalink_hdr_t) +
+    /// sizeof(network_ctrl_state_bcast_t) + 1) * 3 + 50). That is 3 bytes for each hex
+    /// value when displaying raw, and another 50 for displaying date/time.
 constexpr size_t TO_STR_BUF_SIZE = 200;
 
-    // reusable global string buffer
+/// @brief Reusable global string buffer for to_str conversions.
 struct name_str_t {
-    char str[TO_STR_BUF_SIZE];
-    uint_least8_t idx;
-    char const * const noMem;
-    char const * const digits;
+    char str[TO_STR_BUF_SIZE];  ///< Shared conversion buffer.
+    uint_least8_t idx;           ///< Current write index into the buffer.
+    char const * const noMem;    ///< Returned when buffer space is exhausted.
+    char const * const digits;   ///< Hex digit lookup table.
 };
 
 extern name_str_t name_str;
 
-    // function prototypes for to_str.cpp
+/// @name String Conversion Functions
+/// @brief Convert values to string representations in the shared buffer.
+/// @{
+
 [[nodiscard]] char const * bool_str(bool const value);
 [[nodiscard]] char const * uint8_str(uint8_t const value);
 [[nodiscard]] char const * uint16_str(uint16_t const value);
@@ -46,7 +49,11 @@ extern name_str_t name_str;
 [[nodiscard]] char const * date_str(uint16_t const year, uint8_t const month, uint8_t const day);
 [[nodiscard]] char const * time_str(uint8_t const hour, uint8_t const minute);
 [[nodiscard]] char const * version_str(uint8_t const major, uint8_t const minor);
-void name_reset_idx();  // should be called periodically, e.g. before work on a packet starts
+
+/// @}
+
+/// @brief Reset the shared buffer write index. Call before processing each packet.
+void name_reset_idx();
 
 } // namespace opnpool
 } // namespace esphome

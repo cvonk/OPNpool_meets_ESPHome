@@ -59,7 +59,7 @@ using datalink_postamble_ic_t = uint8_t[2];
  * This struct provides accessor methods for extracting and setting each component.
  */
 struct datalink_addr_t {
-    uint8_t addr;  //< full address byte: high nibble = group, low nibble = device ID
+    uint8_t addr;  ///< Full address byte: high nibble = group, low nibble = device ID.
 
         // constants for common addresses
     static constexpr uint8_t ALL                  = 0x00;
@@ -102,34 +102,39 @@ struct datalink_addr_t {
 } PACK8;
 static_assert(sizeof(datalink_addr_t) == 1, "datalink_addr_t must be 1 byte");
 
+/// @brief IC protocol header structure.
 struct datalink_hdr_ic_t {
-    datalink_addr_t dst;  // destination address
-    uint8_t         typ;  // message type
+    datalink_addr_t dst;  ///< Destination address.
+    uint8_t         typ;  ///< Message type.
 } PACK8;
 
+/// @brief A5 protocol header structure.
 struct datalink_hdr_a5_t {
-    uint8_t         ver;  // protocol version id
-    datalink_addr_t dst;  // destination address
-    datalink_addr_t src;  // source address
-    uint8_t         typ;  // message type
-    uint8_t         len;  // # of data bytes following
+    uint8_t         ver;  ///< Protocol version ID.
+    datalink_addr_t dst;  ///< Destination address.
+    datalink_addr_t src;  ///< Source address.
+    uint8_t         typ;  ///< Message type.
+    uint8_t         len;  ///< Number of data bytes following.
 } PACK8;
 
+/// @brief Union of IC and A5 protocol headers.
 union datalink_hdr_t {
-    datalink_hdr_ic_t ic;
-    datalink_hdr_a5_t a5;
+    datalink_hdr_ic_t ic;  ///< IC protocol header.
+    datalink_hdr_a5_t a5;  ///< A5 protocol header.
 } PACK8;
 
+/// @brief A5 protocol head (preamble + header).
 struct datalink_head_a5_t {
-    uint8_t                ff;
-    datalink_preamble_a5_t preamble;
-    datalink_hdr_a5_t      hdr;
+    uint8_t                ff;        ///< Leading 0xFF byte.
+    datalink_preamble_a5_t preamble;  ///< A5 preamble bytes.
+    datalink_hdr_a5_t      hdr;       ///< A5 header.
 } PACK8;
 
+/// @brief IC protocol head (preamble + header).
 struct datalink_head_ic_t {
-    uint8_t                ff;
-    datalink_preamble_ic_t preamble;
-    datalink_hdr_ic_t      hdr;
+    uint8_t                ff;        ///< Leading 0xFF byte.
+    datalink_preamble_ic_t preamble;  ///< IC preamble bytes.
+    datalink_hdr_ic_t      hdr;       ///< IC header.
 } PACK8;
 
 /**
@@ -146,13 +151,15 @@ union datalink_head_t {
 
 uint8_t const DATALINK_MAX_HEAD_SIZE = sizeof(datalink_head_t);
 
+/// @brief A5 protocol tail (checksum).
 struct datalink_tail_a5_t {
-    uint8_t  checksum[2];
+    uint8_t  checksum[2];  ///< 16-bit checksum (big-endian).
 } PACK8;
 
+/// @brief IC protocol tail (checksum + postamble).
 struct datalink_tail_ic_t {
-    uint8_t                 checksum[1];
-    datalink_postamble_ic_t postamble;
+    uint8_t                 checksum[1];   ///< 8-bit checksum.
+    datalink_postamble_ic_t postamble;     ///< IC postamble bytes.
 } PACK8;
 
 /**
