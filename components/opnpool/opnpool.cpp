@@ -531,17 +531,19 @@ OpnPool::update_analog_sensors(poolstate_t const * const state)
     OpnPoolSensor * const air_temp_sensor = this->sensors_[enum_index(sensor_id_t::AIR_TEMPERATURE)];
     auto const air_temp = state->temps[enum_index(poolstate_temp_typ_t::AIR)];
     if (air_temp_sensor != nullptr && air_temp.valid) {
-        auto air_temp_c = fahrenheit_to_celsius(air_temp.value);
-        air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
-        air_temp_sensor->publish_value_if_changed(air_temp_c);    
+        //auto air_temp_c = fahrenheit_to_celsius(air_temp.value);
+        //air_temp_c = std::round(air_temp_c * 10.0f) / 10.0f;
+        auto air_temp_f =std::round(air_temp.value * 10.0f) / 10.0f;
+        air_temp_sensor->publish_value_if_changed(air_temp_f);    
     }
 
     OpnPoolSensor * const water_temperature_sensor = this->sensors_[enum_index(sensor_id_t::WATER_TEMPERATURE)];
     auto const water_temp = state->temps[enum_index(poolstate_temp_typ_t::WATER)];
     if (water_temperature_sensor != nullptr && water_temp.valid) {    
-        auto water_temp_c = fahrenheit_to_celsius(water_temp.value);
-        water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
-        water_temperature_sensor->publish_value_if_changed(water_temp_c);
+        //auto water_temp_c = fahrenheit_to_celsius(water_temp.value);
+        //water_temp_c = std::round(water_temp_c * 10.0f) / 10.0f;
+        auto water_temp_f =std::round(water_temp.value * 10.0f) / 10.0f;
+        water_temperature_sensor->publish_value_if_changed(water_temp_f);
     }   
     _publish_if(
         this->sensors_[enum_index(sensor_id_t::PRIMARY_PUMP_POWER)],        
