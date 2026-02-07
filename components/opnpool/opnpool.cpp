@@ -835,7 +835,7 @@ OpnPool::set_system_time_text_sensor(OpnPoolTextSensor * const ts)
 }
 
 void
-OpnPool::set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts)
+OpnPool::set_controller_type_text_sensor(OpnPoolTextSensor * const ts)
 { 
     this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_TYPE)] = ts; 
 }
