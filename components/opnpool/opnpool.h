@@ -110,7 +110,7 @@ class OpnPool : public Component {
     void set_chlorinator_name_text_sensor(OpnPoolTextSensor * const ts);
     void set_chlorinator_status_text_sensor(OpnPoolTextSensor * const ts);
     void set_system_time_text_sensor(OpnPoolTextSensor * const ts);
-    void set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts);
+    void set_controller_type_text_sensor(OpnPoolTextSensor * const ts);
     void set_interface_firmware_text_sensor(OpnPoolTextSensor * const ts);
 
 #ifdef USE_MATTER
