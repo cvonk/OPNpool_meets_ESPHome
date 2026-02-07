@@ -167,7 +167,7 @@ _publish_date_and_time_if(OpnPoolTextSensor * const sensor, poolstate_tod_t cons
 
     if (tod->date.valid) {
         snprintf(time_str, sizeof(time_str), "%04d-%02d-%02d %02d:%02d",
-                 tod->date.value.year, tod->date.value.month, tod->date.value.day,
+                 2000 +tod->date.value.year, tod->date.value.month, tod->date.value.day,
                  tod->time.value.hour, tod->time.value.minute);
     } else {
         snprintf(time_str, sizeof(time_str), "%02d:%02d",
