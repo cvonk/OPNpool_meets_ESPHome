@@ -162,7 +162,7 @@ date_str(uint16_t const year, uint8_t const month, uint8_t const day)
         return name_str.noMem;  // increase size of str.str[]
     }
     char * s = name_str.str + name_str.idx;
-    snprintf(s, len, "%04u-%02u-%02u", year, month, day);
+    snprintf(s, len, "%04u-%02u-%02u", 2000 + year, month, day);
     name_str.idx += len;
     return s;
 }

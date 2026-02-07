@@ -1,27 +1,35 @@
 /**
  * @file pool_task.cpp
- * @brief pool_task: packetizes RS-485 byte stream from bus
- * 
+ * @brief FreeRTOS task for RS-485 communication with pool controller.
+ *
  * This file implements the FreeRTOS task logic for the OPNpool component, responsible for
  * managing RS-485 communication with the pool controller. It handles both receiving and
- * transmitting protocol packets, supporting two distinct message formats used by the controller:
- *   - A5 protocol: Framed messages with headers, length, data, and checksums.
- *   - IC protocol: Framed with 0x10 0x02 ... <data> ... <ch> 0x10 0x03.
+ * transmitting protocol packets, supporting two distinct message formats:
+ *   - A5 protocol: Framed messages with preamble, headers, length, data, and 16-bit checksum.
+ *   - IC protocol: Framed with `{0x10, 0x02}` preamble, data, 8-bit checksum, `{0x10, 0x03}` postamble.
  *
- * Core responsibilities include:
+ * Core responsibilities:
  * - Continuously reading from the RS-485 bus, packetizing incoming byte streams, and parsing
  *   them into higher-level datalink and network messages.
  * - Relaying received network messages to the main ESPHome task via IPC queues.
  * - Handling requests from the main task, converting them into protocol packets, and transmitting
  *   them to the pool controller.
  * - Managing a transmit queue for outgoing packets, ensuring correct half-duplex operation
- *   (using RTS/flow control) and echoing sent messages back up the protocol stack for state
- *   consistency.
- * - Periodically sending control and status requests (such as heat and schedule queries) to
- *   keep the pool state up to date.
- * 
- * ESPHome operates in a single-threaded environment, so explicit thread safety measures
- * are not required within the pool_task context.
+ *   (using RTS for direction control) and echoing sent messages back up the protocol stack for
+ *   state consistency.
+ * - Periodically sending control and status requests (heat, schedule, version queries) to
+ *   keep the pool state synchronized.
+ *
+ * @note The pool controller broadcasts state every ~1 second. The task waits for these broadcasts
+ *       to identify transmit opportunities, avoiding bus collisions on the shared RS-485 bus.
+ *
+ * @note ESPHome's main loop is single-threaded, but this task runs on a separate FreeRTOS task.
+ *       Communication with the main task uses thread-safe IPC queues.
+ *
+ * @see datalink_rx.cpp for packet reception and parsing
+ * @see datalink_tx.cpp for packet transmission
+ * @see network_rx.cpp for network message decoding
+ * @see ipc.h for inter-task communication
  *
  * @author Coert Vonk (@cvonk on GitHub)
  * @copyright Copyright (c) 2014, 2019, 2022, 2026 Coert Vonk
@@ -52,23 +60,27 @@ namespace opnpool {
 
 constexpr char TAG[] = "pool_task";
 
-constexpr uint32_t POOL_TASK_DELAY_MS       = 100;
-constexpr uint32_t POOL_REQ_INTERVAL_MS     = 30 * 1000;
-constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;
+constexpr uint32_t POOL_TASK_DELAY_MS       = 100;        ///< Main loop delay between iterations [ms]
+constexpr uint32_t POOL_REQ_INTERVAL_MS     = 30 * 1000;  ///< Interval between periodic controller queries [ms]
+constexpr uint32_t POOL_REQ_TASK_STACK_SIZE = 2 * 4096;   ///< Stack size for pool_req_task [bytes]
 
-static datalink_addr_t _controller_addr = datalink_addr_t::unknown();  // until we learn it from the broadcast
+/// Controller address learned from broadcast messages. Used as destination for outgoing requests.
+static datalink_addr_t _controller_addr = datalink_addr_t::unknown();
 
 
 /**
- * @brief Processes incoming packets from the RS-485 bus and relays messages to the main
- * task.
+ * @brief Processes incoming packets from the RS-485 bus and relays messages to the main task.
  *
  * Receives a packet from RS-485, decodes it into a network message, and sends it to the
- * main task via IPC if successful. Frees the packet buffer after processing.
+ * main task via IPC if successful. Also snoops the controller address from broadcast messages
+ * for use in outgoing requests.
  *
- * @param[in] rs485 RS-485 handle.
- * @param[in] ipc   IPC structure pointer.
- * @return          True if a transmit opportunity is available, false otherwise.
+ * @param[in] rs485 RS-485 handle for bus communication.
+ * @param[in] ipc   IPC structure for inter-task communication.
+ * @return          True if a transmit opportunity is available (i.e., after receiving a
+ *                  controller broadcast, indicating the bus is momentarily idle).
+ *
+ * @note The packet buffer (pkt.skb) is freed after processing regardless of success/failure.
  */
 [[nodiscard]] static bool
 _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
@@ -104,11 +116,14 @@ _service_pkts_from_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
 /**
  * @brief Handles requests from the main task and queues them for RS-485 transmission.
  *
- * Receives network messages from the IPC queue, packetizes them, and queues them for
- * transmission to the pool controller. Frees the packet if creation fails.
+ * Non-blocking receive from the IPC queue. If a message is available, packetizes it and
+ * queues it for transmission to the pool controller. The actual transmission occurs later
+ * when a transmit opportunity is detected.
  *
- * @param[in] rs485 RS-485 handle.
- * @param[in] ipc   IPC structure pointer.
+ * @param[in] rs485 RS-485 handle for queuing outgoing packets.
+ * @param[in] ipc   IPC structure containing the to_pool_q queue.
+ *
+ * @see _forward_queued_pkt_to_rs485() for actual transmission
  */
 static void
 _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
@@ -130,13 +145,17 @@ _service_requests_from_main(rs485_handle_t rs485, ipc_t const * const ipc)
 }
 
 /**
- * @brief Queues a network message for transmission to the pool controller.
+ * @brief Queues a request message for transmission to the pool controller.
  *
- * Creates a network message of the specified type, packetizes it, and queues it for
- * transmission on the RS-485 bus. Frees the packet if creation fails.
+ * Creates a network message of the specified type with this device as source (pretending
+ * to be a remote control) and the learned controller address as destination. The message
+ * is packetized and queued for transmission.
  *
- * @param[in] rs485 RS-485 handle.
- * @param[in] typ   Network message type to send.
+ * @param[in] rs485 RS-485 handle for queuing outgoing packets.
+ * @param[in] typ   Network message type to send (typically a *_REQ type).
+ *
+ * @note Requires _controller_addr to be learned from a previous broadcast.
+ * @see pool_req_task() for periodic request scheduling
  */
 static void
 _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
@@ -161,11 +180,16 @@ _queue_req(rs485_handle_t const rs485, network_msg_typ_t const typ)
 /**
  * @brief Forwards a queued packet from the transmit queue to the RS-485 bus.
  *
- * Dequeues a packet, transmits it over RS-485, logs the transmission if verbose,
- * and simulates reception for protocol state consistency. Frees the packet after use.
+ * Dequeues a single packet from the RS-485 transmit queue and sends it on the bus.
+ * Uses RTS to switch the transceiver to transmit mode. After transmission, the packet
+ * is "echoed" back through the network layer to update local state as if the message
+ * was received, ensuring consistent state tracking.
  *
- * @param[in] rs485 RS-485 handle.
- * @param[in] ipc   IPC structure pointer.
+ * @param[in] rs485 RS-485 handle for bus communication.
+ * @param[in] ipc   IPC structure for relaying the echoed message to main task.
+ *
+ * @note Both pkt and pkt->skb are freed after processing.
+ * @note Only called when a transmit opportunity is available (bus idle after broadcast).
  */
 static void
 _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc)
@@ -209,10 +233,14 @@ _forward_queued_pkt_to_rs485(rs485_handle_t const rs485, ipc_t const * const ipc
 /**
  * @brief FreeRTOS sub-task for periodic pool controller requests.
  *
- * Periodically sends heat and schedule request messages to the pool controller
- * to keep the pool state up to date.
+ * Runs in an infinite loop, sending request messages to the pool controller at
+ * POOL_REQ_INTERVAL_MS intervals. Queries version, heat status, and schedules to
+ * keep the cached pool state synchronized with the controller.
  *
- * @param[in] rs485_void Pointer to the RS-485 handle (as void* for FreeRTOS compatibility).
+ * @param[in] rs485_void Pointer to the RS-485 handle (cast to void* for FreeRTOS API).
+ *
+ * @note Waits for _controller_addr to be learned before sending requests.
+ * @note Spawned by pool_task() during initialization.
  */
 void
 pool_req_task(void * rs485_void) 
@@ -237,20 +265,24 @@ pool_req_task(void * rs485_void)
 }
 
 /**
- * @brief FreeRTOS task for RS-485 communication and protocol handling.
+ * @brief Main FreeRTOS task for RS-485 communication and protocol handling.
  *
- * This function implements the main loop for the OPNpool component, responsible for:
- *   - Initializing the RS-485 interface and IPC structure.
- *   - Requesting initial controller information (version, time).
- *   - Spawning a periodic request sub-task for heat and schedule queries.
- *   - Continuously servicing requests from the main task and processing incoming RS-485
- *     packets.
- *   - Forwarding queued packets for transmission when a transmit opportunity is
- *     available.
- *   - Maintaining protocol state and relaying messages between the controller and main
- *     task.
+ * Entry point for the pool communication task. Runs in an infinite loop with
+ * POOL_TASK_DELAY_MS between iterations. Each iteration:
+ *   1. Services any pending requests from the main ESPHome task (non-blocking).
+ *   2. Attempts to receive and process a packet from the RS-485 bus.
+ *   3. If a transmit opportunity is detected (after controller broadcast), forwards
+ *      one queued packet to the bus.
  *
- * @param[in] ipc_void Pointer to the IPC structure (as void* for FreeRTOS compatibility).
+ * On startup:
+ *   - Initializes the RS-485 interface with pins from the IPC config.
+ *   - Spawns the pool_req_task() sub-task for periodic controller queries.
+ *
+ * @param[in] ipc_void Pointer to the IPC structure (cast to void* for FreeRTOS API).
+ *
+ * @note This task runs on a separate FreeRTOS task from ESPHome's main loop.
+ * @see pool_req_task() for periodic request handling
+ * @see ipc_t for the inter-task communication structure
  */
 void
 pool_task(void * ipc_void)

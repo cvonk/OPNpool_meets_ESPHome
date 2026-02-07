@@ -191,7 +191,7 @@ struct network_time_t {
 struct network_date_t {
     uint8_t day;   // 0
     uint8_t month; // 1
-    uint8_t year;  // 2
+    uint8_t year;  // 2 (offset from 2000, e.g. 23 for 2023)
 } PACK8;
 
 struct network_ctrl_state_bcast_t {
