@@ -77,7 +77,7 @@ enum class text_sensor_id_t : uint8_t {
     CHLORINATOR_NAME    = 4,  ///< Chlorinator device name.
     CHLORINATOR_STATUS  = 5,  ///< Chlorinator status description.
     SYSTEM_TIME         = 6,  ///< Pool controller system time.
-    CONTROLLER_FIRMWARE = 7,  ///< Pool controller firmware version.
+    CONTROLLER_TYPE = 7,  ///< Pool controller firmware version.
     INTERFACE_FIRMWARE  = 8   ///< Interface board firmware version.
 };
 

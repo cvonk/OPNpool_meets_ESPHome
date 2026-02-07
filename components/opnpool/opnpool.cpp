@@ -624,7 +624,7 @@ OpnPool::update_text_sensors(poolstate_t const * const state)
         &state->system.tod
     );
     _publish_version_if(
-        this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_FIRMWARE)],
+        this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_TYPE)],
         &state->system
     );
 }
@@ -837,7 +837,7 @@ OpnPool::set_system_time_text_sensor(OpnPoolTextSensor * const ts)
 void
 OpnPool::set_controller_firmware_text_sensor(OpnPoolTextSensor * const ts)
 { 
-    this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_FIRMWARE)] = ts; 
+    this->text_sensors_[enum_index(text_sensor_id_t::CONTROLLER_TYPE)] = ts; 
 }
 
 void

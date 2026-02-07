@@ -115,7 +115,7 @@ CONF_TEXT_SENSORS = [  # used to overwrite text_sensor_id_t enum in opnpool.h
     "chlorinator_name",
     "chlorinator_status",
     "system_time",
-    "controller_firmware",
+    "controller_type",
     "interface_firmware"
 ]
 
