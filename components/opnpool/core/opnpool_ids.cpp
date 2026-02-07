@@ -17,8 +17,8 @@
 #include <esp_types.h>
 
 #include "opnpool_ids.h"
-#include "network_msg.h"
-#include "poolstate.h"
+#include "network/network_msg.h"
+#include "poolstate/poolstate.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

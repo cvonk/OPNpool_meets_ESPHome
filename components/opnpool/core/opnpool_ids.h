@@ -17,6 +17,8 @@
  */
 
 #pragma once
+#ifndef ESPHOME_OPNPOOL_IDS_H_
+#define ESPHOME_OPNPOOL_IDS_H_
 
 #include <esp_system.h>
 #include <esp_types.h>
@@ -99,3 +101,5 @@ enum class text_sensor_id_t : uint8_t {
 
 } // namespace opnpool
 } // namespace esphome
+
+#endif // ESPHOME_OPNPOOL_IDS_H_

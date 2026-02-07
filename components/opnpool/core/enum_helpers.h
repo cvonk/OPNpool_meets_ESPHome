@@ -14,6 +14,8 @@
  */
 
 #pragma once
+#ifndef ESPHOME_OPNPOOL_ENUM_HELPERS_H_
+#define ESPHOME_OPNPOOL_ENUM_HELPERS_H_
 #ifndef __cplusplus
 # error "Requires C++ compilation"
 #endif
@@ -32,12 +34,12 @@
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
 
-#include "to_str.h"
+#include "to_str/to_str.h"
 
 namespace esphome {
 namespace opnpool {
 
-static char const * const ENUM_HELPER_TAG = "enum_helpers";
+constexpr char const * const ENUM_HELPER_TAG = "enum_helpers";
 
 /**
  * @brief Convert an enum value to its string representation.
@@ -118,3 +120,5 @@ enum_index(E e) noexcept -> std::underlying_type_t<E>
 
 } // namespace opnpool
 } // namespace esphome
+
+#endif // ESPHOME_OPNPOOL_ENUM_HELPERS_H_

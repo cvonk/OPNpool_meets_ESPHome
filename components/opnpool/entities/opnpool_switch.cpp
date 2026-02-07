@@ -27,12 +27,12 @@
 #include <esphome/core/log.h>
 
 #include "opnpool_switch.h"   // no other #includes that could make a circular dependency
-#include "opnpool.h"          // no other #includes that could make a circular dependency
-#include "ipc.h"              // no other #includes that could make a circular dependency
-#include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "opnpool_ids.h"      // conversion helper
-#include "enum_helpers.h"
-#include "poolstate.h"
+#include "core/opnpool.h"      // no other #includes that could make a circular dependency
+#include "ipc/ipc.h"          // no other #includes that could make a circular dependency
+#include "network/network_msg.h"  // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
+#include "core/opnpool_ids.h"      // conversion helper
+#include "core/enum_helpers.h"
+#include "poolstate/poolstate.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

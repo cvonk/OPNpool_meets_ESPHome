@@ -25,12 +25,12 @@
 #include <esp_err.h>
 #include <esphome/core/log.h>
 
-#include "rs485.h"
-#include "network.h"
-#include "skb.h"
+#include "rs485/rs485.h"
+#include "network/network.h"
+#include "skb/skb.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "network_msg.h"
+#include "network/network_msg.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

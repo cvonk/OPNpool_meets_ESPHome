@@ -27,7 +27,7 @@
 #include <driver/uart.h>
 #include <cstddef>
 
-#include "ipc.h"
+#include "ipc/ipc.h"
 
 namespace esphome {
 namespace opnpool {

@@ -6,7 +6,8 @@
       "WebFetch(domain:components.espressif.com)",
       "Bash(python -m idf_component_manager:*)",
       "Bash(dir:*)",
-      "WebFetch(domain:esphome.io)"
+      "WebFetch(domain:esphome.io)",
+      "Bash(git mv:*)"
     ]
   }
 }

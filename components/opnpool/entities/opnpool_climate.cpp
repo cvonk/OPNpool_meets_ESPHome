@@ -26,16 +26,15 @@
 #include <esphome/core/log.h>
 #include <type_traits>
 
-#include "to_str.h"
+#include "to_str/to_str.h"
 #include "opnpool_climate.h"  // no other #includes that could make a circular dependency
-#include "opnpool.h"          // no other #includes that could make a circular dependency
-#include "ipc.h"              // no other #includes that could make a circular dependency
-#include "network_msg.h"      // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "poolstate.h"
+#include "core/opnpool.h"      // no other #includes that could make a circular dependency
+#include "ipc/ipc.h"          // no other #includes that could make a circular dependency
+#include "network/network_msg.h"  // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
+#include "poolstate/poolstate.h"
 #include "opnpool_switch.h"
-#include "enum_helpers.h"
-#include "opnpool_ids.h"
-#include "poolstate.h"
+#include "core/enum_helpers.h"
+#include "core/opnpool_ids.h"
 
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"

@@ -19,7 +19,7 @@
 #include <esphome/core/component.h>
 #include <esphome/components/climate/climate.h>
 
-#include "opnpool_ids.h"
+#include "core/opnpool_ids.h"
 
 namespace esphome {
 namespace opnpool {

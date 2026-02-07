@@ -184,16 +184,28 @@ async def to_code(config):
     # add all source files to build
     cg.add_library("ESP32", None, "freertos")
 
-    # C++ entity implementation files (including matter subdirectory)
+    # C++ implementation files (including subdirectories)
     cg.add_platformio_option("build_src_filter", [
         "+<*>",
-        "+<esphome/components/opnpool/*.cpp>",
+        "+<esphome/components/opnpool/core/*.cpp>",
+        "+<esphome/components/opnpool/entities/*.cpp>",
+        "+<esphome/components/opnpool/datalink/*.cpp>",
+        "+<esphome/components/opnpool/ipc/*.cpp>",
+        "+<esphome/components/opnpool/network/*.cpp>",
+        "+<esphome/components/opnpool/pool_task/*.cpp>",
+        "+<esphome/components/opnpool/poolstate/*.cpp>",
+        "+<esphome/components/opnpool/rs485/*.cpp>",
+        "+<esphome/components/opnpool/skb/*.cpp>",
+        "+<esphome/components/opnpool/to_str/*.cpp>",
         "+<esphome/components/opnpool/matter/*.cpp>",
     ])
 
-    # larger app partitions for Matter/Thread
+    # add component directory to include path so subdirectory files can
+    # cross-reference each other with includes like "datalink/datalink.h"
     component_dir = os.path.dirname(os.path.abspath(__file__))
-    partitions_path = os.path.join(component_dir, "partitions.csv").replace("\\", "/")
+    component_dir_cmake = component_dir.replace("\\", "/")
+    cg.add_build_flag(f"-I{component_dir_cmake}")
+    partitions_path = os.path.join(component_dir, "core", "partitions.csv").replace("\\", "/")
     cg.add_platformio_option("board_build.partitions", partitions_path)
 
     # Flash size configuration (override board defaults)
@@ -253,11 +265,6 @@ async def to_code(config):
             matter_config[CONF_MATTER_DISCRIMINATOR],
             matter_config[CONF_MATTER_PASSCODE]
         ))
-
-        # add include path for matter subdirectory
-        component_dir = os.path.dirname(os.path.abspath(__file__))
-        component_dir_cmake = component_dir.replace("\\", "/")
-        cg.add_build_flag(f"-I{component_dir_cmake}")
 
         # log Matter configuration
         # NOTE: esp-matter integration requires manual setup:
@@ -378,5 +385,5 @@ def update_header(header_path, entity_enums):
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    header_path = os.path.join(script_dir, "opnpool_ids.h")
+    header_path = os.path.join(script_dir, "core", "opnpool_ids.h")
     update_header(header_path, ENTITY_ENUMS)

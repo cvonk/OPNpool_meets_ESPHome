@@ -27,9 +27,9 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 
-#include "../poolstate.h"
-#include "../network_msg.h"
-#include "../enum_helpers.h"
+#include "../poolstate/poolstate.h"
+#include "../network/network_msg.h"
+#include "../core/enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {

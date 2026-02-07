@@ -14,6 +14,8 @@
  */
 
 #pragma once
+#ifndef ESPHOME_OPNPOOL_OPNPOOL_H_
+#define ESPHOME_OPNPOOL_OPNPOOL_H_
 #ifndef __cplusplus
 # error "Requires C++ compilation"
 #endif
@@ -162,3 +164,5 @@ class OpnPool : public Component {
 
 } // namespace opnpool
 } // namespace esphome
+
+#endif // ESPHOME_OPNPOOL_OPNPOOL_H_

@@ -40,15 +40,15 @@
 #include <cJSON.h>
 #include <type_traits>
 
-#include "to_str.h"
-#include "enum_helpers.h"
-#include "network.h"
-#include "network_msg.h"
-#include "ipc.h"
+#include "to_str/to_str.h"
+#include "core/enum_helpers.h"
+#include "network/network.h"
+#include "network/network_msg.h"
+#include "ipc/ipc.h"
 #include "poolstate.h"
-#include "opnpool.h"
+#include "core/opnpool.h"
 #include "poolstate_rx_log.h"
-#include "opnpool_ids.h"
+#include "core/opnpool_ids.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

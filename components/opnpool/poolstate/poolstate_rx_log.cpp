@@ -28,9 +28,9 @@
 #include <string.h>
 #include <cstddef>
 
-#include "to_str.h"
-#include "enum_helpers.h"
-#include "network.h"
+#include "to_str/to_str.h"
+#include "core/enum_helpers.h"
+#include "network/network.h"
 #include "poolstate.h"
 #include "poolstate_rx_log.h"
 #pragma GCC diagnostic error "-Wall"
