@@ -184,27 +184,31 @@ async def to_code(config):
     # add all source files to build
     cg.add_library("ESP32", None, "freertos")
 
-    # C++ implementation files (including subdirectories)
-    cg.add_platformio_option("build_src_filter", [
-        "+<*>",
-        "+<esphome/components/opnpool/core/*.cpp>",
-        "+<esphome/components/opnpool/entities/*.cpp>",
-        "+<esphome/components/opnpool/datalink/*.cpp>",
-        "+<esphome/components/opnpool/ipc/*.cpp>",
-        "+<esphome/components/opnpool/network/*.cpp>",
-        "+<esphome/components/opnpool/pool_task/*.cpp>",
-        "+<esphome/components/opnpool/poolstate/*.cpp>",
-        "+<esphome/components/opnpool/rs485/*.cpp>",
-        "+<esphome/components/opnpool/skb/*.cpp>",
-        "+<esphome/components/opnpool/to_str/*.cpp>",
-        "+<esphome/components/opnpool/matter/*.cpp>",
-    ])
+    # component directory (used for include path and source file discovery)
+    component_dir = os.path.dirname(os.path.abspath(__file__))
+    component_dir_cmake = component_dir.replace("\\", "/")
 
     # add component directory to include path so subdirectory files can
     # cross-reference each other with includes like "datalink/datalink.h"
-    component_dir = os.path.dirname(os.path.abspath(__file__))
-    component_dir_cmake = component_dir.replace("\\", "/")
     cg.add_build_flag(f"-I{component_dir_cmake}")
+
+    # C++ implementation files — use absolute paths because ESPHome only copies
+    # root-level files to the build src/ directory; subdirectory files stay at
+    # the original component location and must be referenced by absolute path.
+    cg.add_platformio_option("build_src_filter", [
+        "+<*>",
+        f"+<{component_dir_cmake}/core/*.cpp>",
+        f"+<{component_dir_cmake}/entities/*.cpp>",
+        f"+<{component_dir_cmake}/datalink/*.cpp>",
+        f"+<{component_dir_cmake}/ipc/*.cpp>",
+        f"+<{component_dir_cmake}/network/*.cpp>",
+        f"+<{component_dir_cmake}/pool_task/*.cpp>",
+        f"+<{component_dir_cmake}/poolstate/*.cpp>",
+        f"+<{component_dir_cmake}/rs485/*.cpp>",
+        f"+<{component_dir_cmake}/skb/*.cpp>",
+        f"+<{component_dir_cmake}/to_str/*.cpp>",
+        f"+<{component_dir_cmake}/matter/*.cpp>",
+    ])
     partitions_path = os.path.join(component_dir, "core", "partitions.csv").replace("\\", "/")
     cg.add_platformio_option("board_build.partitions", partitions_path)
 
