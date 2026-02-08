@@ -25,8 +25,8 @@
 #include <esphome/core/log.h>
 
 #include "ipc.h"
-#include "skb/skb.h"
-#include "network/network_msg.h"
+#include "pool_task/skb.h"
+#include "pool_task/network_msg.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

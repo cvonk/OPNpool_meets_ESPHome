@@ -34,8 +34,8 @@
 #include <string.h>
 
 #include "rs485.h"
-#include "datalink/datalink.h"
-#include "datalink/datalink_pkt.h"
+#include "datalink.h"
+#include "datalink_pkt.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

@@ -39,11 +39,11 @@
 #endif
 #define MAGIC_ENUM_RANGE_MIN 0
 #define MAGIC_ENUM_RANGE_MAX 256
-#include "core/magic_enum.h"
+#include "utils/magic_enum.h"
 
-#include "datalink/datalink_pkt.h"
-#include "to_str/to_str.h"
-#include "core/enum_helpers.h"
+#include "datalink_pkt.h"
+#include "utils/to_str.h"
+#include "utils/enum_helpers.h"
 
 namespace esphome {
 namespace opnpool {

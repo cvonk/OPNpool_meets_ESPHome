@@ -24,11 +24,11 @@
 #include <esp_types.h>
 #include <esphome/core/log.h>
 
-#include "rs485/rs485.h"
-#include "skb/skb.h"
+#include "rs485.h"
+#include "skb.h"
 #include "datalink.h"
 #include "datalink_pkt.h"
-#include "core/enum_helpers.h"
+#include "utils/enum_helpers.h"
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"
 #pragma GCC diagnostic error "-Wunused-parameter"

@@ -34,7 +34,7 @@
 #define MAGIC_ENUM_RANGE_MAX 256
 #include "magic_enum.h"
 
-#include "to_str/to_str.h"
+#include "to_str.h"
 
 namespace esphome {
 namespace opnpool {

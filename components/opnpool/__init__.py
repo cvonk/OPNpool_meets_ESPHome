@@ -189,7 +189,7 @@ async def to_code(config):
     component_dir_cmake = component_dir.replace("\\", "/")
 
     # add component directory to include path so subdirectory files can
-    # cross-reference each other with includes like "datalink/datalink.h"
+    # cross-reference each other with includes like "pool_task/network.h"
     cg.add_build_flag(f"-I{component_dir_cmake}")
 
     # C++ implementation files — use absolute paths because ESPHome only copies
@@ -199,14 +199,9 @@ async def to_code(config):
         "+<*>",
         f"+<{component_dir_cmake}/core/*.cpp>",
         f"+<{component_dir_cmake}/entities/*.cpp>",
-        f"+<{component_dir_cmake}/datalink/*.cpp>",
         f"+<{component_dir_cmake}/ipc/*.cpp>",
-        f"+<{component_dir_cmake}/network/*.cpp>",
         f"+<{component_dir_cmake}/pool_task/*.cpp>",
-        f"+<{component_dir_cmake}/poolstate/*.cpp>",
-        f"+<{component_dir_cmake}/rs485/*.cpp>",
-        f"+<{component_dir_cmake}/skb/*.cpp>",
-        f"+<{component_dir_cmake}/to_str/*.cpp>",
+        f"+<{component_dir_cmake}/utils/*.cpp>",
         f"+<{component_dir_cmake}/matter/*.cpp>",
     ])
     partitions_path = os.path.join(component_dir, "core", "partitions.csv").replace("\\", "/")

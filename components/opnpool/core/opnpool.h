@@ -24,7 +24,7 @@
 #include <esp_types.h>
 #include <esphome/core/component.h>
 
-#include "enum_helpers.h"
+#include "utils/enum_helpers.h"
 #include "opnpool_ids.h"
 
 #ifdef USE_MATTER

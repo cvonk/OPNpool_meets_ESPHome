@@ -19,11 +19,11 @@
 #include <esp_types.h>
 #include <esphome/core/log.h>
 
-#include "to_str/to_str.h"
+#include "utils/to_str.h"
 
-#include "core/enum_helpers.h"
-#include "datalink/datalink.h"
-#include "datalink/datalink_pkt.h"
+#include "utils/enum_helpers.h"
+#include "datalink.h"
+#include "datalink_pkt.h"
 #include "network.h"
 #include "network_msg.h"
 #pragma GCC diagnostic error "-Wall"
