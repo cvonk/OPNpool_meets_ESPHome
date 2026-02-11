@@ -2,7 +2,7 @@
 ![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/cvonk/OPNpool_meets_ESPHome?include_prereleases&logo=DocuSign&logoColor=%23fff)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-> This is a port of my [original OPNpool](https://github.com/cvonk/OPNpool) to the ESPHome platform.
+> OPNpool Meets ESPHome has been merged with my [original OPNpool](https://github.com/cvonk/OPNpool) repo.  Please refer to that repo instead.
 
 Ever dreamed of making your pool smarter and easier to manage? If you’ve ever owned a backyard pool, you know it’s not just about swimming—there’s a whole world of chemicals, covers, vacuums, brushes, and fiddling with thermostats and circuits. Even with a saltwater pool, you’ve got to keep a close eye on things!
 
