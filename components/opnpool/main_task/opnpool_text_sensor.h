@@ -20,7 +20,7 @@
 #include <esphome/components/text_sensor/text_sensor.h>
 #include <string>
 
-#include "core/opnpool_ids.h"
+#include "opnpool_ids.h"
 
 namespace esphome {
 namespace opnpool {

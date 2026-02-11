@@ -28,8 +28,8 @@
 #include <app/server/Server.h>
 #include <credentials/FabricTable.h>
 
-#include "../pool_task/network.h"
-#include "../utils/to_str.h"
+#include "pool_task/network.h"
+#include "utils/to_str.h"
 
 namespace esphome {
 namespace opnpool {

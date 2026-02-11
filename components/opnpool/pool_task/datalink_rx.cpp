@@ -7,10 +7,10 @@
  * responsible for converting raw bytes from the RS485 transceiver into structured data
  * packets. It uses a state machine to detect protocol preambles, read packet headers,
  * data, and tails, and verify checksums for both A5 and IC protocols. The implementation
- * manages protocol-specific framing, handles checksum validation, and allocates socket buffers
- * for incoming packets. This layer ensures reliable and robust extraction of protocol
- * packets from the RS485 byte stream, providing validated data to higher-level network
- * processing in the OPNpool interface.
+ * manages protocol-specific framing, handles checksum validation, and allocates socket
+ * buffers for incoming packets. This layer ensures reliable and robust extraction of
+ * protocol packets from the RS485 byte stream, providing validated data to higher-level
+ * network processing in the OPNpool interface.
  *
  * ESPHome operates in a single-threaded environment, so explicit thread safety measures
  * are not required within the pool_task context.
@@ -69,6 +69,7 @@ static proto_info_t _proto_descr[] = {
 
     // size lookup table for message types
     // MUST MATCH enum datalink_chlor_typ_t in datalink_pkt.h
+    // This is not in the header to prevent a cyclic redundancy.
 inline constexpr size_t datalink_chlor_typ_sizes[] = {
     sizeof(network_chlor_control_req_t),    // 0x00 CONTROL_REQ
     sizeof(network_chlor_control_resp_t),   // 0x01 CONTROL_RESP
@@ -94,10 +95,12 @@ enum state_t {
     STATE_DONE,
 };
 
+using datalink_len_t = uint_least8_t;
+
     // temporary storage for packet header/tail during reception
 struct local_data_t {
-    size_t             head_len;
-    size_t             tail_len;
+    datalink_len_t     head_len;
+    datalink_len_t     tail_len;
     datalink_head_t *  head;
     datalink_tail_t *  tail;
     bool               checksum_ok;
@@ -163,14 +166,14 @@ _preamble_complete(proto_info_t * const pi, uint8_t const b, bool * part_of_prea
 [[nodiscard]] static esp_err_t
 _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_pkt_t * const pkt)
 {
-    uint8_t len = 0;
+    uint8_t dbg_len = 0;
     uint8_t const buf_size = 40;
     char dbg[buf_size];
 
     uint8_t byt;
     while (rs485->read_bytes(&byt, 1) == 1) {
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-            len += snprintf(dbg + len, buf_size - len, " %02X", byt);
+            dbg_len += snprintf(dbg + dbg_len, buf_size - dbg_len, " %02X", byt);
         }
         bool part_of_preamble = false;
         proto_info_t * info = _proto_descr;
@@ -218,7 +221,7 @@ _find_preamble(rs485_handle_t const rs485, local_data_t * const local, datalink_
 }
 
 /**
- * @brief            Returns the length of the IC network message for a given type.
+ * @brief Returns the length of the IC network message for a given type.
  *
  * Looks up the expected length of the IC protocol network message for the given type.
  *
@@ -315,9 +318,9 @@ _read_data(rs485_handle_t const rs485, [[maybe_unused]] local_data_t * const loc
 
     if (rs485->read_bytes((uint8_t *) pkt->data, pkt->data_len) == pkt->data_len) {
         if (ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE) {
-            uint8_t len = 0;
+            uint8_t dbg_len = 0;
             for (uint_least8_t ii = 0; ii < pkt->data_len; ii++) {
-                len += snprintf(buf + len, buf_size - len, " %02X", pkt->data[ii]);
+                dbg_len += snprintf(buf + dbg_len, buf_size - dbg_len, " %02X", pkt->data[ii]);
             }
             ESP_LOGV(TAG, "%s (data)", buf);
         }

@@ -53,31 +53,31 @@ enum class datalink_prot_t : uint8_t {
  * @brief Controller message types
  *
  * @details
- * This enum class defines the message types for the A5 controller protocol.
- * Each value corresponds to a specific request or response type used in the A5
- * controller protocol.
+ * This enum class defines the message types for the A5 controller protocol. Each value
+ * corresponds to a specific request or response type used in the A5 controller protocol.
+ * Some are left commented out, because I don't have the pool equipment to verify them.
  * 
- * @note Bit 6-7 (0xC0) indicate Request (0xC0), Response (0x40), or Set (0x00).
+ * @note Bit 6-7 (0xC0) indicates a REQuest (0xC0), RESPonse (0x40), or SET (0x00).
  */
 enum class datalink_ctrl_typ_t : uint8_t {
-    SET_ACK          = 0x01,
-    STATE_BCAST      = 0x02,
+    SET_ACK          = 0x01,  ///< Controller acknowledges for instance CIRCUIT_SET
+    STATE_BCAST      = 0x02,  ///< Controller broadcasts its state information
     CANCEL_DELAY     = 0x03,
-    TIME_RESP        = 0x05,
+    TIME_RESP        = 0x05,  ///< Controller replies with its time
     TIME_SET         = 0x85,
-    TIME_REQ         = 0xC5,
+    TIME_REQ         = 0xC5,  ///< Remote asks the controller what time it is (e.g from pooltask.cpp).
     CIRCUIT_RESP     = 0x06,
-    CIRCUIT_SET      = 0x86,
+    CIRCUIT_SET      = 0x86,  ///< Remote asks the controller to set a circuit on/off (e.g. from opnpool_switch.cpp)
     CIRCUIT_REQ      = 0xC6,
-    HEAT_RESP        = 0x08,
-    HEAT_SET         = 0x88,
-    HEAT_REQ         = 0xC8,
+    HEAT_RESP        = 0x08,  ///< Controller replies with its thermostat status
+    HEAT_SET         = 0x88,  ///< Remote asks the controller to set its thermostat (e.g. from opnpool_climate.cpp).
+    HEAT_REQ         = 0xC8,  ///< Remote asks the controller about its thermostat status (e.g from pooltask.cpp).
     HEAT_PUMP_RESP   = 0x10,
     HEAT_PUMP_SET    = 0x90,
     HEAT_PUMP_REQ    = 0xD0,
-    SCHED_RESP       = 0x1E,
+    SCHED_RESP       = 0x1E,  ///< Controller reply with its circuit schedules
     SCHED_SET        = 0x9E,
-    SCHED_REQ        = 0xDE,
+    SCHED_REQ        = 0xDE,  ///< Remote asks the controller about its circuit schedules (e.g from pooltask.cpp).
     LAYOUT_RESP      = 0x21,
     LAYOUT_SET       = 0xA1,
     LAYOUT_REQ       = 0xE1,
@@ -96,8 +96,8 @@ enum class datalink_ctrl_typ_t : uint8_t {
     DELAY_REQ        = 0xE3,
     HEAT_SETPT_RESP  = 0x28,
     HEAT_SETPT_REQ   = 0xE8,
-    VERSION_RESP     = 0xFC,
-    VERSION_REQ      = 0xFD
+    VERSION_RESP     = 0xFC,  ///< Controller replies with its firmware version
+    VERSION_REQ      = 0xFD   ///< Remote asks the controller about its firmware version (e.g from pooltask.cpp).
     // SPA_CTRL_REQ     = 0xD6,
     // SPA_CTRL_RESP    = 0x16,
     // INTELLICHOR_REQ  = 0xD9,
@@ -121,13 +121,13 @@ enum class datalink_ctrl_typ_t : uint8_t {
  * pump protocol.
  */
 enum class datalink_pump_typ_t : uint8_t {
-    REG         = 0x01,
+    REG         = 0x01,  ///< register read/write
     REMOTE_CTRL = 0x04,
-    RUN_MODE    = 0x05,  // intellicom uses this
-    RUN         = 0x06,  // naming it POWER would conflict with pump power measurement
+    RUN_MODE    = 0x05,  ///< perhaps IntelliCom uses this
+    RUN         = 0x06,
     STATUS      = 0x07,
-    REG_VF      = 0x09,  // variable flow rate (gal/min)
-    REG_VS      = 0x0A,  // variable speed (RPM)
+    REG_VF      = 0x09,  ///< maybe register read/write for variable flow rate (gal/min)
+    REG_VS      = 0x0A,  ///< maybe register read/write variable speed (RPM)
     REJECTING   = 0xFF
 };
 
@@ -143,10 +143,10 @@ enum class datalink_pump_typ_t : uint8_t {
  *        datalink_rx.cpp. A compile-time assertion validates the count.
  */
 enum class datalink_chlor_typ_t : uint8_t {
-    CONTROL_REQ  = 0x00,  ///< Control request message
-    CONTROL_RESP = 0x01,  ///< Control response message
+    CONTROL_REQ  = 0x00,  ///< Controller asks to be in charge
+    CONTROL_RESP = 0x01,  ///< Response from the chlorinator
     UNKNOWN_02   = 0x02,
-    MODEL_RESP   = 0x03,  ///< Name response message (only when chlor is active)
+    MODEL_RESP   = 0x03,  ///< Chlorinator responds with its model name (only when chlor is active)
     UNKNOWN_04   = 0x04,
     UNKNOWN_05   = 0x05,
     UNKNOWN_06   = 0x06,
@@ -160,11 +160,11 @@ enum class datalink_chlor_typ_t : uint8_t {
     UNKNOWN_0E   = 0x0E,
     UNKNOWN_0F   = 0x0F,
     UNKNOWN_10   = 0x10,
-    LEVEL_SET    = 0x11,  ///< Level set message [%]
-    LEVEL_RESP   = 0x12,  ///< Level response message (to LEVEL_SET or LEVEL_SET10)
-    ICHLOR_PING  = 0x13,  ///< maybe a keep-alive? has no payload.
-    MODEL_REQ    = 0x14,  ///< Name request message
-    LEVEL_SET10  = 0x15,  ///< Level set message percentage with one decimal place [%*10]
+    LEVEL_SET    = 0x11,  ///< Controller asks chlorinator to set its level [%]
+    LEVEL_RESP   = 0x12,  ///< Chlorinator reponds to level set request (to LEVEL_SET or LEVEL_SET10)
+    ICHLOR_PING  = 0x13,  ///< Maybe a keep-alive? Message has no payload.
+    MODEL_REQ    = 0x14,  ///< Controller requests the chlorinator model name
+    LEVEL_SET10  = 0x15,  ///< Controller asks chlorinator to set its level with one decimal place [%*10]
     ICHLOR_BCAST = 0x16   ///< iChlor status message  (level and temp on IC30)
 };
 
@@ -180,7 +180,7 @@ union datalink_typ_t {
     datalink_ctrl_typ_t  ctrl;  ///< Controller message type (datalink_ctrl_typ_t).
     datalink_pump_typ_t  pump;  ///< Pump message type (datalink_pump_typ_t).
     datalink_chlor_typ_t chlor; ///< Chlorinator message type (datalink_chlor_typ_t).
-    uint8_t              raw;   ///< Raw 8-bit value for generic or protocol-agnostic access.
+    uint8_t              raw;   ///< Raw 8-bit value for protocol-agnostic access.
 };
 
 /**
@@ -191,6 +191,15 @@ union datalink_typ_t {
  * It is a simple abstraction of a byte.
  */
 using datalink_data_t = uint8_t;
+
+/**
+ * @brief Represents the length of the datalayload.
+ *
+ * @details
+ * This type is used for length of the the payload buffer in data link layer packets.
+ * It is a simple abstraction of an unsigned integer.
+ */
+using datalink_data_len_t = uint_least8_t;
 
 /**
  * @brief Represents a data link layer packet in the Pentair protocol.
@@ -204,13 +213,13 @@ using datalink_data_t = uint8_t;
  * packets.
  */
 struct datalink_pkt_t {
-    datalink_prot_t    prot;      ///< Protocol type as detected by `_read_head()`.
-    datalink_typ_t     typ;       ///< Message type from datalink_hdr_a5->typ.
-    datalink_addr_t    src;       ///< Source address from datalink_hdr_a5->src.
-    datalink_addr_t    dst;       ///< Destination address from datalink_hdr_a5->dst.
-    datalink_data_t *  data;      ///< Pointer to the data payload buffer.
-    size_t             data_len;  ///< Length of the data payload.
-    skb_handle_t       skb;       ///< Handle to the socket buffer containing the packet data.
+    datalink_prot_t     prot;      ///< Protocol type as detected by `_read_head()`.
+    datalink_typ_t      typ;       ///< Message type from datalink_hdr_a5->typ.
+    datalink_addr_t     src;       ///< Source address from datalink_hdr_a5->src.
+    datalink_addr_t     dst;       ///< Destination address from datalink_hdr_a5->dst.
+    datalink_data_t *   data;      ///< Pointer to the data payload buffer.
+    datalink_data_len_t data_len;  ///< Length of the data payload.
+    skb_handle_t        skb;       ///< Handle to the socket buffer containing the packet data.
 };
 
 } // namespace opnpool

@@ -197,14 +197,12 @@ async def to_code(config):
     # the original component location and must be referenced by absolute path.
     cg.add_platformio_option("build_src_filter", [
         "+<*>",
-        f"+<{component_dir_cmake}/core/*.cpp>",
-        f"+<{component_dir_cmake}/entities/*.cpp>",
+        f"+<{component_dir_cmake}/main_task/*.cpp>",
         f"+<{component_dir_cmake}/ipc/*.cpp>",
         f"+<{component_dir_cmake}/pool_task/*.cpp>",
         f"+<{component_dir_cmake}/utils/*.cpp>",
-        f"+<{component_dir_cmake}/matter/*.cpp>",
     ])
-    partitions_path = os.path.join(component_dir, "core", "partitions.csv").replace("\\", "/")
+    partitions_path = os.path.join(component_dir, "partitions.csv").replace("\\", "/")
     cg.add_platformio_option("board_build.partitions", partitions_path)
 
     # Flash size configuration (override board defaults)
@@ -384,5 +382,5 @@ def update_header(header_path, entity_enums):
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    header_path = os.path.join(script_dir, "core", "opnpool_ids.h")
+    header_path = os.path.join(script_dir, "main_task", "opnpool_ids.h")
     update_header(header_path, ENTITY_ENUMS)

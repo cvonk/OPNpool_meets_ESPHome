@@ -28,13 +28,13 @@
 
 #include "utils/to_str.h"
 #include "opnpool_climate.h"  // no other #includes that could make a circular dependency
-#include "core/opnpool.h"      // no other #includes that could make a circular dependency
+#include "opnpool.h"           // no other #includes that could make a circular dependency
 #include "ipc/ipc.h"          // no other #includes that could make a circular dependency
 #include "pool_task/network_msg.h"  // #includes datalink_pkt.h, that doesn't #include others that could make a circular dependency
-#include "core/poolstate.h"
+#include "poolstate.h"
 #include "opnpool_switch.h"
 #include "utils/enum_helpers.h"
-#include "core/opnpool_ids.h"
+#include "opnpool_ids.h"
 
 #pragma GCC diagnostic error "-Wall"
 #pragma GCC diagnostic error "-Wextra"

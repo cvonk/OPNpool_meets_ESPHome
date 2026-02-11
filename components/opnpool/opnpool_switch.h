@@ -1,3 +1,3 @@
 /** @file opnpool_switch.h - Forwarding header for ESPHome code generation. */
 #pragma once
-#include "entities/opnpool_switch.h"
+#include "main_task/opnpool_switch.h"

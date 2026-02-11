@@ -28,7 +28,7 @@
 #include "opnpool_ids.h"
 
 #ifdef USE_MATTER
-#include "matter/matter_bridge.h"
+#include "matter_bridge.h"
 #endif
 
 namespace esphome {
